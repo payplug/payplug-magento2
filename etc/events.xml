@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="controller_action_predispatch_adminhtml_system_config_save">
+        <observer name="payplug_payments_section_payment_saved" instance="Payplug\Payments\Observer\PaymentConfigObserver"/>
+    </event>
+</config>

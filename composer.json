@@ -1,0 +1,26 @@
+{
+  "name": "payplug/payplug-payments",
+  "description": "Payplug Payments module for Magento 2",
+  "type": "magento2-module",
+  "version": "1.0.0",
+  "license": [
+    "MIT"
+  ],
+  "authors": [
+    {
+      "name": "PayPlug",
+      "email": "support@payplug.com"
+    }
+  ],
+  "require": {
+    "php": "~5.6.5|~7.0.13|~7.1.0",
+    "magento/framework": "~100.0.4",
+    "payplug/payplug-php": "^2.5"
+  },
+  "autoload": {
+    "files": [ "registration.php" ],
+    "psr-4": {
+      "Payplug\\Payments\\": ""
+    }
+  }
+}
