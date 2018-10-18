@@ -1,0 +1,22 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <payplug_payments>
+                <active>0</active>
+                <title>Credit card checkout</title>
+                <environmentmode>test</environmentmode>
+                <payment_page>redirect</payment_page>
+                <one_click>0</one_click>
+                <pendingpayment_order_status>pending_payment</pendingpayment_order_status>
+                <processing_order_status>processing</processing_order_status>
+                <canceled_order_status>canceled</canceled_order_status>
+                <allowspecific>0</allowspecific>
+                <generate_invoice>1</generate_invoice>
+                <connected>0</connected>
+                <verified>0</verified>
+                <premium>0</premium>
+                <sort_order>0</sort_order>
+            </payplug_payments>
+        </payment>
+    </default>
+</config>
