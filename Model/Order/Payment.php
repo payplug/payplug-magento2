@@ -9,6 +9,12 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
 {
     const CACHE_TAG = 'payplug_payments_order_payment';
 
+    const ORDER_ID = 'order_id';
+
+    const PAYMENT_ID = 'payment_id';
+
+    const IS_SANDBOX = 'is_sandbox';
+
     /**
      * @var PaymentMethod
      */
@@ -39,15 +45,72 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
         $this->_init('Payplug\Payments\Model\ResourceModel\Order\Payment');
     }
 
+    /**
+     * @return array
+     */
     public function getIdentities()
     {
         return [self::CACHE_TAG . '_' . $this->getId()];
     }
 
     /**
+     * @return int
+     */
+    public function getOrderId()
+    {
+        return $this->_getData(self::ORDER_ID);
+    }
+
+    /**
+     * @param int $orderId
+     *
+     * @return $this
+     */
+    public function setOrderId($orderId)
+    {
+        return $this->setData(self::ORDER_ID, $orderId);
+    }
+
+    /**
+     * @return string
+     */
+    public function getPaymentId()
+    {
+        return $this->_getData(self::PAYMENT_ID);
+    }
+
+    /**
+     * @param string $paymentId
+     *
+     * @return $this
+     */
+    public function setPaymentId($paymentId)
+    {
+        return $this->setData(self::PAYMENT_ID, $paymentId);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSandbox()
+    {
+        return (bool) $this->_getData(self::IS_SANDBOX);
+    }
+
+    /**
+     * @param bool $isSandbox
+     *
+     * @return $this
+     */
+    public function setIsSandbox($isSandbox)
+    {
+        return $this->setData(self::IS_SANDBOX, $isSandbox);
+    }
+
+    /**
      * Retrive a payment
      *
-     * @param int         $paymentId
+     * @param string      $paymentId
      * @param string|null $environmentMode
      * @param int|null    $store
      *

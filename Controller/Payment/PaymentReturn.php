@@ -32,7 +32,7 @@ class PaymentReturn extends AbstractPayment
             }
 
             $environmentMode = PaymentMethod::ENVIRONMENT_LIVE;
-            if ($orderPayment->getIsSandbox() == 1) {
+            if ($orderPayment->isSandbox()) {
                 $environmentMode = PaymentMethod::ENVIRONMENT_TEST;
             }
 
