@@ -8,6 +8,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Model\PaymentMethod;
 
 class Data extends AbstractHelper
 {
@@ -32,14 +33,26 @@ class Data extends AbstractHelper
     private $systemConfigType;
 
     /**
-     * @param Context         $context
-     * @param WriterInterface $configWriter
+     * @var \Payplug\Payments\Model\Order\PaymentFactory
      */
-    public function __construct(Context $context, WriterInterface $configWriter, System $systemConfigType)
-    {
+    protected $paymentFactory;
+
+    /**
+     * @param Context                                      $context
+     * @param WriterInterface                              $configWriter
+     * @param System                                       $systemConfigType
+     * @param \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory
+     */
+    public function __construct(
+        Context $context,
+        WriterInterface $configWriter,
+        System $systemConfigType,
+        \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory
+    ) {
         parent::__construct($context);
         $this->configWriter = $configWriter;
         $this->systemConfigType = $systemConfigType;
+        $this->paymentFactory = $paymentFactory;
     }
 
     public function initScopeData()
@@ -109,7 +122,9 @@ class Data extends AbstractHelper
     public function getConfigValue($field, $scope = ScopeInterface::SCOPE_STORE, $scopeId = null)
     {
         return $this->scopeConfig->getValue(
-            'payment/payplug_payments/' . $field, $scope, $scopeId
+            'payment/payplug_payments/' . $field,
+            $scope,
+            $scopeId
         );
     }
 
@@ -173,5 +188,32 @@ class Data extends AbstractHelper
             $this->configWriter->delete('payment/payplug_payments/' . $key, $this->scope, $this->scopeId);
         }
         $this->systemConfigType->clean();
+    }
+
+    /**
+     * Get is_sandbox flag depending on environment mode
+     *
+     * @param int $store
+     *
+     * @return bool
+     */
+    public function getIsSandbox($store = null)
+    {
+        $environmentMode = $this->getConfigValue('environment_mode', ScopeInterface::SCOPE_STORE, $store);
+
+        return $environmentMode == PaymentMethod::ENVIRONMENT_TEST;
+    }
+
+    /**
+     * @param int $orderId
+     *
+     * @return \Payplug\Payments\Model\Order\Payment
+     */
+    public function getOrderPayment($orderId)
+    {
+        $orderPayment = $this->paymentFactory->create();
+        $orderPayment->load($orderId, 'order_id'); // TODO prevent use of load / use repository instead
+
+        return $orderPayment;
     }
 }
