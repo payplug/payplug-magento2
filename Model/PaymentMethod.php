@@ -1167,7 +1167,42 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             // If auto generate invoice is not activated, keep current status
             $comment .= ' - ' . __("Invoice can be manually created.");
             $order->addCommentToStatusHistory($comment, false);
+            $this->orderRepository->save($order);
 //            $order->sendNewOrderEmail(); // TODO send order email
+        }
+    }
+
+    /**
+     * Cancel order
+     *
+     * @param Order       $order
+     * @param bool        $isCanceledByPayplug
+     * @param string|null $failureMessage
+     *
+     * @return void
+     *
+     * @throws \Exception
+     */
+    public function cancelOrder($order, $isCanceledByPayplug = true, $failureMessage = null)
+    {
+        if ($order->getState() != Order::STATE_CANCELED) {
+            if (!$order->canCancel()) {
+                throw new \Exception('Order cannot be canceled anymore.');
+            } else {
+                $comment = '';
+                if ($isCanceledByPayplug) {
+                    $comment = __('Canceled by Payment Provider');
+                }
+                if ($failureMessage !== null) {
+                    $comment = $failureMessage;
+                }
+
+                $status = $this->getConfigData('canceled_order_status', $order->getStoreId());
+                $order->cancel();
+
+                $order->addCommentToStatusHistory($comment, $status);
+                $this->orderRepository->save($order);
+            }
         }
     }
 }

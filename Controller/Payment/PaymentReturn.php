@@ -40,15 +40,15 @@ class PaymentReturn extends AbstractPayment
             $payment = $orderPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
 
             if ($payment->failure) {
-                return $this->_redirect(''); // TODO forward cancel
+                $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
+                $this->_forward('cancel', null, null, ['failure_message' => $failureMessage]);
             } else {
                 $this->paymentMethod->processOrder($order, $paymentId);
+                return $this->_redirect($redirectUrlSuccess);
             }
-
-            return $this->_redirect($redirectUrlSuccess);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            return $this->_redirect(''); // TODO forward cancel / add error message for customer
+            $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
         }
     }
 }
