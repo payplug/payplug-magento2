@@ -13,6 +13,7 @@ use Magento\Framework\DataObject;
 use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
+use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Core\HttpClient;
@@ -252,6 +253,16 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     protected $objectManager;
 
     /**
+     * @var OrderRepository
+     */
+    protected $orderRepository;
+
+    /**
+     * @var OrderPaymentRepository
+     */
+    protected $orderPaymentRepository;
+
+    /**
      * @param \Magento\Framework\Model\Context                             $context
      * @param \Magento\Framework\Registry                                  $registry
      * @param \Magento\Framework\Api\ExtensionAttributesFactory            $extensionFactory
@@ -265,6 +276,8 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      * @param PayplugHelper                                                $payplugHelper
      * @param InvoiceService                                               $invoiceService
      * @param \Magento\Framework\ObjectManagerInterface                    $objectManager
+     * @param OrderRepository                                              $orderRepository
+     * @param OrderPaymentRepository                                       $orderPaymentRepository
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null           $resourceCollection
      * @param array                                                        $data
@@ -284,6 +297,8 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         PayplugHelper $payplugHelper,
         InvoiceService $invoiceService,
         \Magento\Framework\ObjectManagerInterface $objectManager,
+        OrderRepository $orderRepository,
+        OrderPaymentRepository $orderPaymentRepository,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
@@ -309,6 +324,8 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         $this->payplugHelper = $payplugHelper;
         $this->invoiceService = $invoiceService;
         $this->objectManager = $objectManager;
+        $this->orderRepository = $orderRepository;
+        $this->orderPaymentRepository = $orderPaymentRepository;
 
         $validKey = self::setAPIKey();
         if ($validKey != null) {
@@ -995,9 +1012,6 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $this->buildPaymentData($order)
         );
 
-        $this->payplugLogger->error($paymentTab);
-        $this->payplugLogger->error(Payplug::getDefaultConfiguration());
-
         $payment = \Payplug\Payment::create($paymentTab);
 
         $isSandbox = $this->payplugHelper->getIsSandbox($order->getStoreId());
@@ -1005,7 +1019,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         $orderPayment->setOrderId($order->getId());
         $orderPayment->setPaymentId($payment->id);
         $orderPayment->setIsSandbox($isSandbox);
-        $orderPayment->save(); // TODO do not use deprecated save / use repository instead
+        $this->orderPaymentRepository->save($orderPayment);
 
         return $payment;
     }
@@ -1099,7 +1113,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
 
         $status = $this->getConfigData('pendingpayment_order_status', $order->getStoreId());
         $order->addCommentToStatusHistory('', $status);
-        $order->save(); // TODO prevent use of deprecated save
+        $this->orderRepository->save($order);
     }
 
     /**

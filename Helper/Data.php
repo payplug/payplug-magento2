@@ -8,6 +8,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Model\OrderPaymentRepository;
 use Payplug\Payments\Model\PaymentMethod;
 
 class Data extends AbstractHelper
@@ -38,21 +39,29 @@ class Data extends AbstractHelper
     protected $paymentFactory;
 
     /**
+     * @var OrderPaymentRepository
+     */
+    protected $orderPaymentRepository;
+
+    /**
      * @param Context                                      $context
      * @param WriterInterface                              $configWriter
      * @param System                                       $systemConfigType
      * @param \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory
+     * @param OrderPaymentRepository                       $orderPaymentRepository
      */
     public function __construct(
         Context $context,
         WriterInterface $configWriter,
         System $systemConfigType,
-        \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory
+        \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory,
+        OrderPaymentRepository $orderPaymentRepository
     ) {
         parent::__construct($context);
         $this->configWriter = $configWriter;
         $this->systemConfigType = $systemConfigType;
         $this->paymentFactory = $paymentFactory;
+        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     public function initScopeData()
@@ -211,9 +220,6 @@ class Data extends AbstractHelper
      */
     public function getOrderPayment($orderId)
     {
-        $orderPayment = $this->paymentFactory->create();
-        $orderPayment->load($orderId, 'order_id'); // TODO prevent use of load / use repository instead
-
-        return $orderPayment;
+        return $this->orderPaymentRepository->get($orderId, 'order_id');
     }
 }
