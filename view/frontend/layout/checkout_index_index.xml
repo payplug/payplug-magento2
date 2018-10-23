@@ -1,0 +1,65 @@
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="checkout.root">
+            <arguments>
+                <argument name="jsLayout" xsi:type="array">
+                    <item name="components" xsi:type="array">
+                        <item name="checkout" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="steps" xsi:type="array">
+                                    <item name="children" xsi:type="array">
+                                        <item name="billing-step" xsi:type="array">
+                                            <item name="component" xsi:type="string">uiComponent</item>
+                                            <item name="children" xsi:type="array">
+                                                <item name="payment" xsi:type="array">
+                                                    <item name="children" xsi:type="array">
+                                                        <!-- Declare additional before payment components. START -->
+                                                        <!--<item name="beforeMethods" xsi:type="array">-->
+                                                            <!--<item name="component" xsi:type="string">uiComponent</item>-->
+                                                            <!--<item name="displayArea" xsi:type="string">beforeMethods</item>-->
+                                                            <!--<item name="children" xsi:type="array">-->
+                                                                <!--<item name="%your_feature_name%" xsi:type="array">-->
+                                                                    <!--<item name="component" xsi:type="string">%path/to/your/feature_js_component%</item>-->
+                                                                <!--</item>-->
+                                                            <!--</item>-->
+                                                        <!--</item>-->
+                                                        <!-- Declare additional before payment components. END -->
+                                                        <!-- Declare the payment method (the component that registrates in the list). START -->
+                                                        <item name="renders" xsi:type="array">
+                                                            <item name="children" xsi:type="array">
+                                                                <item name="payplug_payments" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="payplug_payments" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
+                                                            </item>
+                                                            <!-- Declare the payment method (the component that registrates in the list). END -->
+                                                            <!-- Declare additional after payment components. START -->
+                                                            <!--<item name="afterMethods" xsi:type="array">-->
+                                                                <!--<item name="component" xsi:type="string">uiComponent</item>-->
+                                                                <!--<item name="displayArea" xsi:type="string">afterMethods</item>-->
+                                                                <!--<item name="children" xsi:type="array">-->
+                                                                    <!--<item name="%your_feature_name%" xsi:type="array">-->
+                                                                        <!--<item name="component" xsi:type="string">%path/to/your/feature_js_component%</item>-->
+                                                                    <!--</item>-->
+                                                                <!--</item>-->
+                                                            <!--</item>-->
+                                                            <!-- Declare additional after payment components. END -->
+                                                        </item>
+                                                    </item>
+                                                </item>
+                                            </item>
+                                        </item>
+                                    </item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </arguments>
+        </referenceBlock>
+    </body>
+</page>
