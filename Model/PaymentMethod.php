@@ -1205,4 +1205,57 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             }
         }
     }
+
+    /**
+     * Check if order's payment can be updated
+     *
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function canUpdatePayment($order)
+    {
+        if ($order->getPayment() === false) {
+            return false;
+        }
+
+        if ($order->getPayment()->getMethodInstance()->getCode() != $this->getCode()) {
+            return false;
+        }
+
+        $finalStates = [Order::STATE_CANCELED, Order::STATE_CLOSED];
+        if (in_array($order->getState(), $finalStates)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Update order's payment
+     *
+     * @param Order $order
+     *
+     * @return void
+     */
+    public function updatePayment($order)
+    {
+        $payplugPayment = $this->payplugHelper->getOrderPayment($order->getId());
+
+        if ($payplugPayment->getId()) {
+            $environmentMode = self::ENVIRONMENT_LIVE;
+            if ($payplugPayment->isSandbox()) {
+                $environmentMode = self::ENVIRONMENT_TEST;
+            }
+
+            $paymentId = $payplugPayment->getPaymentId();
+            $payment = $payplugPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
+            if ($payment->failure) {
+                $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
+                $this->cancelOrder($order, false, $failureMessage);
+            } else {
+                $this->processOrder($order, $payment->id);
+            }
+        }
+    }
 }
