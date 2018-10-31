@@ -10,6 +10,7 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Model\OrderPaymentRepository;
 use Payplug\Payments\Model\PaymentMethod;
+use Payplug\Resource\Payment;
 
 class Data extends AbstractHelper
 {
@@ -221,5 +222,23 @@ class Data extends AbstractHelper
     public function getOrderPayment($orderId)
     {
         return $this->orderPaymentRepository->get($orderId, 'order_id');
+    }
+
+    /**
+     * @param Payment $payment
+     *
+     * @return string
+     */
+    public function getPaymentErrorMessage($payment)
+    {
+        if ($payment->failure === null) {
+            return '';
+        }
+
+        if ($payment->failure->message) {
+            return $payment->failure->message;
+        }
+
+        return '';
     }
 }
