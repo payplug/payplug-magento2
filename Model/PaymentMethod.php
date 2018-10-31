@@ -72,7 +72,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     /**
      * @var string
      */
-    protected $_infoBlockType = \Magento\Payment\Block\Info::class;
+    protected $_infoBlockType = \Payplug\Payments\Block\Info::class;
 
     /**
      * Payment Method feature
