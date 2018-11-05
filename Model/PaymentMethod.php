@@ -163,7 +163,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      *
      * @var bool
      */
-    protected $_isInitializeNeeded = false;
+    protected $_isInitializeNeeded = true;
 
     /**
      * Payment Method feature
@@ -263,6 +263,11 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     protected $orderPaymentRepository;
 
     /**
+     * @var Order\Email\Sender\OrderSender
+     */
+    private $orderSender;
+
+    /**
      * @param \Magento\Framework\Model\Context                             $context
      * @param \Magento\Framework\Registry                                  $registry
      * @param \Magento\Framework\Api\ExtensionAttributesFactory            $extensionFactory
@@ -278,6 +283,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      * @param \Magento\Framework\ObjectManagerInterface                    $objectManager
      * @param OrderRepository                                              $orderRepository
      * @param OrderPaymentRepository                                       $orderPaymentRepository
+     * @param Order\Email\Sender\OrderSender                               $orderSender
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null           $resourceCollection
      * @param array                                                        $data
@@ -299,6 +305,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         \Magento\Framework\ObjectManagerInterface $objectManager,
         OrderRepository $orderRepository,
         OrderPaymentRepository $orderPaymentRepository,
+        Order\Email\Sender\OrderSender $orderSender,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
@@ -326,6 +333,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         $this->objectManager = $objectManager;
         $this->orderRepository = $orderRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->orderSender = $orderSender;
 
         $validKey = self::setAPIKey();
         if ($validKey != null) {
@@ -910,6 +918,10 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function initialize($paymentAction, $stateObject)
     {
+        $payment = $this->getInfoInstance();
+        $order = $payment->getOrder();
+        $order->setCanSendNewEmailFlag(false);
+
         return $this;
     }
 
@@ -921,7 +933,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function getConfigPaymentAction()
     {
-        return $this->getConfigData('payment_action');
+        return self::ACTION_AUTHORIZE_CAPTURE;
     }
 
     /**
@@ -1153,7 +1165,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
 
             $status = $this->getConfigData('processing_order_status', $order->getStoreId());
             $order->addCommentToStatusHistory($comment, $status);
-//            $order->sendNewOrderEmail(); // TODO send order email
+            $this->sentNewOrderEmail($order);
 
             $transactionSave = $this->objectManager->create(
                 \Magento\Framework\DB\Transaction::class
@@ -1168,7 +1180,19 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $comment .= ' - ' . __("Invoice can be manually created.");
             $order->addCommentToStatusHistory($comment, false);
             $this->orderRepository->save($order);
-//            $order->sendNewOrderEmail(); // TODO send order email
+            $this->sentNewOrderEmail($order);
+        }
+    }
+
+    /**
+     * @param Order $order
+     */
+    protected function sentNewOrderEmail($order)
+    {
+        try {
+            $this->orderSender->send($order);
+        } catch (\Exception $e) {
+            $this->payplugLogger->critical($e);
         }
     }
 
