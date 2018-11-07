@@ -64,6 +64,8 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
 
     const GROUP_OFFLINE = 'offline';
 
+    const METHOD_CODE = 'payplug_payments';
+
     /**
      * @var string
      */
@@ -220,7 +222,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     /**
      * @var string
      */
-    protected $_code = 'payplug_payments';
+    protected $_code = self::METHOD_CODE;
 
     /**
      * @var \Magento\Framework\UrlInterface
