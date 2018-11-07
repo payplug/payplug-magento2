@@ -958,7 +958,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     public function setAPIKey($storeId = null, $environmentMode = null)
     {
         if ($environmentMode === null) {
-            $environmentMode = $this->getConfigData('environment_mode', $storeId);
+            $environmentMode = $this->getConfigData('environmentmode', $storeId);
         }
         $validKey = null;
         if ($environmentMode == self::ENVIRONMENT_TEST) {

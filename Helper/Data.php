@@ -209,7 +209,7 @@ class Data extends AbstractHelper
      */
     public function getIsSandbox($store = null)
     {
-        $environmentMode = $this->getConfigValue('environment_mode', ScopeInterface::SCOPE_STORE, $store);
+        $environmentMode = $this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store);
 
         return $environmentMode == PaymentMethod::ENVIRONMENT_TEST;
     }
