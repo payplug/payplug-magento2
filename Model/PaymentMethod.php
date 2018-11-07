@@ -992,9 +992,9 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     public function createPayplugTransaction($order)
     {
         HttpClient::addDefaultUserAgentProduct(
-            'PayPlug-Magento',
-            '1.4.0.0',
-            'Magento 1.9.3.6'
+            'PayPlug-Magento2',
+            $this->payplugHelper->getModuleVersion(),
+            'Magento ' . $this->payplugHelper->getMagentoVersion()
         );
 
         $currency = $order->getOrderCurrencyCode();
