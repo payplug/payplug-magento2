@@ -879,6 +879,24 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             return false;
         }
 
+        if ($quote !== null) {
+            $testApiKey = $this->getConfigData('test_api_key', $quote->getStoreId());
+            $liveApiKey = $this->getConfigData('live_api_key', $quote->getStoreId());
+            if (empty($testApiKey) && empty($liveApiKey)) {
+                return false;
+            }
+
+            $currency = $quote->getCurrency()->getQuoteCurrencyCode();
+            if (!$amountsByCurrency = $this->getAmountsByCurrency($currency, $quote->getStoreId())) {
+                return false;
+            }
+            $amount = $quote->getGrandTotal() * 100;
+
+            if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
+                return false;
+            }
+        }
+
         $checkResult = new DataObject();
         $checkResult->setData('is_available', true);
 
@@ -1282,5 +1300,44 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
                 $this->processOrder($order, $payment->id);
             }
         }
+    }
+
+    /**
+     * Get valid range of amount for a given currency
+     *
+     * @param string $isoCode
+     * @param int    $storeId
+     *
+     * @return bool|array
+     */
+    public function getAmountsByCurrency($isoCode, $storeId)
+    {
+        $minAmounts = [];
+        $maxAmounts = [];
+        foreach (explode(';', $this->getConfigData('min_amounts', $storeId)) as $amountCur) {
+            $cur = [];
+            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
+                $minAmounts[$cur[1]] = (int)$cur[2];
+            } else {
+                return false;
+            }
+        }
+        foreach (explode(';', $this->getConfigData('max_amounts', $storeId)) as $amountCur) {
+            $cur = [];
+            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
+                $maxAmounts[$cur[1]] = (int)$cur[2];
+            } else {
+                return false;
+            }
+        }
+
+        if (!isset($minAmounts[$isoCode]) || !isset($maxAmounts[$isoCode])) {
+            return false;
+        } else {
+            $currentMinAmount = $minAmounts[$isoCode];
+            $currentMaxAmount = $maxAmounts[$isoCode];
+        }
+
+        return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
     }
 }
