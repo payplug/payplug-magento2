@@ -1144,6 +1144,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             return;
         }
 
+        $status = $this->getConfigData('processing_order_status', $order->getStoreId());
         $comment = sprintf(__('Payment has been captured by Payment Gateway. Transaction id: %s'), $paymentId);
         if ($this->payplugHelper->getConfigValue('generate_invoice', ScopeInterface::SCOPE_STORE, $order->getStoreId())) {
             if (!$order->canInvoice()) {
@@ -1163,7 +1164,6 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $invoice->getOrder()->setCustomerNoteNotify(false);
             $invoice->getOrder()->setIsInProcess(true);
 
-            $status = $this->getConfigData('processing_order_status', $order->getStoreId());
             $order->addCommentToStatusHistory($comment, $status);
             $this->sentNewOrderEmail($order);
 
@@ -1177,8 +1177,9 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $transactionSave->save();
         } else {
             // If auto generate invoice is not activated, keep current status
+            $order->setIsInProcess(true);
             $comment .= ' - ' . __("Invoice can be manually created.");
-            $order->addCommentToStatusHistory($comment, false);
+            $order->addCommentToStatusHistory($comment, $status);
             $this->orderRepository->save($order);
             $this->sentNewOrderEmail($order);
         }
