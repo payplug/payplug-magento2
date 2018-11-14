@@ -14,6 +14,9 @@ define([
 
         afterPlaceOrder: function () {
             redirectOnSuccessAction.execute();
+        },
+        getCardLogo: function() {
+            return window.checkoutConfig.payment.payplug_payments.logo;
         }
     });
 });
