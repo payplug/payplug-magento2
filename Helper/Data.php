@@ -7,6 +7,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Model\OrderPaymentRepository;
 use Payplug\Payments\Model\PaymentMethod;
@@ -45,24 +47,40 @@ class Data extends AbstractHelper
     protected $orderPaymentRepository;
 
     /**
+     * @var ModuleListInterface
+     */
+    protected $moduleList;
+
+    /**
+     * @var ProductMetadataInterface
+     */
+    protected $productMetadata;
+
+    /**
      * @param Context                                      $context
      * @param WriterInterface                              $configWriter
      * @param System                                       $systemConfigType
      * @param \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory
      * @param OrderPaymentRepository                       $orderPaymentRepository
+     * @param ModuleListInterface                          $moduleList
+     * @param ProductMetadataInterface                     $productMetadata
      */
     public function __construct(
         Context $context,
         WriterInterface $configWriter,
         System $systemConfigType,
         \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory,
-        OrderPaymentRepository $orderPaymentRepository
+        OrderPaymentRepository $orderPaymentRepository,
+        ModuleListInterface $moduleList,
+        ProductMetadataInterface $productMetadata
     ) {
         parent::__construct($context);
         $this->configWriter = $configWriter;
         $this->systemConfigType = $systemConfigType;
         $this->paymentFactory = $paymentFactory;
         $this->orderPaymentRepository = $orderPaymentRepository;
+        $this->moduleList = $moduleList;
+        $this->productMetadata = $productMetadata;
     }
 
     public function initScopeData()
@@ -240,5 +258,21 @@ class Data extends AbstractHelper
         }
 
         return '';
+    }
+
+    /**
+     * @return string
+     */
+    public function getModuleVersion()
+    {
+        return $this->moduleList->getOne('Payplug_Payments')['setup_version'];
+    }
+
+    /**
+     * @return string
+     */
+    public function getMagentoVersion()
+    {
+        return $this->productMetadata->getVersion();
     }
 }
