@@ -275,4 +275,12 @@ class Data extends AbstractHelper
     {
         return $this->productMetadata->getVersion();
     }
+
+    /**
+     * @return mixed
+     */
+    public function getAccountEmail()
+    {
+        return $this->getConfigValue('email', ScopeInterface::SCOPE_STORE, $this->scopeId);
+    }
 }
