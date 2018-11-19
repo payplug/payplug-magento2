@@ -49,13 +49,14 @@ class Logout extends \Magento\Config\Block\System\Config\Form\Field
         /** @var \Magento\Backend\Block\Widget\Button $buttonBlock  */
         $buttonBlock = $this->getForm()->getLayout()->createBlock(\Magento\Backend\Block\Widget\Button::class);
 
+        $html = '<p>' . $this->helper->getAccountEmail() . '</p>';
         $data = [
             'id' => 'payplug_payments_disconnectUrl',
             'label' => $element->getLabel(),
             'onclick' => "setLocation('" . $this->getButtonUrl() . "')",
         ];
 
-        $html = $buttonBlock->setData($data)->toHtml();
+        $html .= $buttonBlock->setData($data)->toHtml();
         return $html;
     }
 
