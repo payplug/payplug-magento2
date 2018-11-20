@@ -39,7 +39,7 @@ class InstallSchema implements InstallSchemaInterface
             ->addColumn(
                 'payment_id',
                 \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
-                null,
+                32,
                 ['nullable' => false, 'default' => 'pay_xxxxxxxxxxxxxxxxxxxxx'],
                 'Payment ID'
             )
