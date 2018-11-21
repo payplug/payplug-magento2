@@ -1144,7 +1144,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         }
 
         $status = $this->getConfigData('pendingpayment_order_status', $order->getStoreId());
-        $order->addCommentToStatusHistory('', $status);
+        $order->addStatusToHistory($status, '');
         $this->orderRepository->save($order);
     }
 
@@ -1184,7 +1184,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $invoice->getOrder()->setCustomerNoteNotify(false);
             $invoice->getOrder()->setIsInProcess(true);
 
-            $order->addCommentToStatusHistory($comment, $status);
+            $order->addStatusToHistory($status, $comment);
             $this->sentNewOrderEmail($order);
 
             $transactionSave = $this->objectManager->create(
@@ -1199,7 +1199,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             // If auto generate invoice is not activated, keep current status
             $order->setIsInProcess(true);
             $comment .= ' - ' . __("Invoice can be manually created.");
-            $order->addCommentToStatusHistory($comment, $status);
+            $order->addStatusToHistory($status, $comment);
             $this->orderRepository->save($order);
             $this->sentNewOrderEmail($order);
         }
@@ -1245,7 +1245,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
                 $status = $this->getConfigData('canceled_order_status', $order->getStoreId());
                 $order->cancel();
 
-                $order->addCommentToStatusHistory($comment, $status);
+                $order->addStatusToHistory($status, $comment);
                 $this->orderRepository->save($order);
             }
         }
