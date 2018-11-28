@@ -2,7 +2,7 @@
 
 namespace Payplug\Payments\Block;
 
-use Magento\Sales\Model\OrderRepository;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Model\PaymentMethod;
@@ -20,25 +20,17 @@ class Info extends \Magento\Payment\Block\Info
     protected $payplugHelper;
 
     /**
-     * @var OrderRepository
-     */
-    protected $orderRepository;
-
-    /**
      * @param \Magento\Framework\View\Element\Template\Context $context
      * @param Data                                             $payplugHelper
-     * @param OrderRepository                                  $orderRepository
      * @param array                                            $data
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         Data $payplugHelper,
-        OrderRepository $orderRepository,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->payplugHelper = $payplugHelper;
-        $this->orderRepository = $orderRepository;
     }
 
     /**
@@ -48,9 +40,12 @@ class Info extends \Magento\Payment\Block\Info
      */
     public function getAdminSpecificInformation()
     {
-        $orderId = $this->getRequest()->getParam('order_id');
-
-        $orderPayment = $this->payplugHelper->getOrderPayment($orderId);
+        try {
+            $orderId = $this->getInfo()->getOrder()->getId();
+            $orderPayment = $this->payplugHelper->getOrderPayment($orderId);
+        } catch (NoSuchEntityException $e) {
+            return [];
+        }
 
         if (!$orderPayment->getId()) {
             return [];
@@ -63,7 +58,7 @@ class Info extends \Magento\Payment\Block\Info
         }
 
         $paymentId = $orderPayment->getPaymentId();
-        $order = $this->orderRepository->get($orderId);
+        $order = $this->getInfo()->getOrder();
 
         try {
             $payment = $orderPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
