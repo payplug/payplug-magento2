@@ -83,8 +83,10 @@ class Info extends \Magento\Payment\Block\Info
         $amount = $order->getOrderCurrency()->formatPrecision((float)($payment->amount / 100), 2, [], false, false);
 
         $cardType = __('Other');
-        if (in_array(strtolower($payment->card->brand), ['visa', 'mastercard'])) {
+        if (in_array(strtolower($payment->card->brand), ['visa', 'mastercard', 'maestro'])) {
             $cardType = $payment->card->brand;
+        } elseif (strtolower($payment->card->brand) == 'carte_bancaire') {
+            $cardType = __('CB');
         }
 
         $country = __('n/c');
