@@ -30,12 +30,14 @@ require(
                 }
             });
 
-            one_click.observe('change', function () {
-                hidePwdField();
-                if (is_premium == 0 && one_click.value == 1 && environment_mode.value == 'live') {
-                    pwd.show();
-                }
-            });
+            if (one_click !== null) {
+                one_click.observe('change', function () {
+                    hidePwdField();
+                    if (is_premium == 0 && one_click.value == 1 && environment_mode.value == 'live') {
+                        pwd.show();
+                    }
+                });
+            }
         }
 
         var linkedFields = [
