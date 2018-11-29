@@ -3,6 +3,9 @@
 namespace Payplug\Payments\Model\Api;
 
 use Payplug\Authentication;
+use Payplug\Exception\BadRequestException;
+use Payplug\Exception\PayplugException;
+use Payplug\Payments\Logger\Logger;
 use Payplug\Payplug;
 
 class Login
@@ -12,9 +15,15 @@ class Login
      */
     private $authentication;
 
-    public function __construct(Authentication $authentication)
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    public function __construct(Authentication $authentication, Logger $logger)
     {
         $this->authentication = $authentication;
+        $this->logger = $logger;
     }
 
     /**
@@ -50,8 +59,16 @@ class Login
 
             $result['status'] = true;
             $result['api_keys'] = $apiKeys;
+        } catch (BadRequestException $e) {
+            // A BadRequestException is thrown after receiving a 400 from the API for bad credentials
+            $this->logger->error($e->__toString());
+            $result['message'] = __('The email and/or password was not correct.');
+        } catch (PayplugException $e) {
+            $this->logger->error($e->__toString());
+            $result['message'] = __('Error while executing cURL request. Please check payplug logs.');
         } catch (\Exception $e) {
-            $result['message'] = $e->getMessage();
+            $this->logger->error($e->getMessage());
+            $result['message'] = __('Error while executing cURL request. Please check payplug logs.');
         }
 
         return $result;
@@ -77,7 +94,11 @@ class Login
             $answer = $this->authentication->getAccount();
             $result['status'] = true;
             $result['answer'] = $answer['httpResponse'];
+        } catch (PayplugException $e) {
+            $this->logger->error($e->__toString());
+            $result['message'] = __('Error while executing cURL request. Please check payplug logs.');
         } catch (\Exception $e) {
+            $this->logger->error($e->getMessage());
             $result['message'] = $e->getMessage();
         }
 

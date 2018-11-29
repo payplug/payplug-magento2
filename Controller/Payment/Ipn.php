@@ -40,7 +40,7 @@ class Ipn extends AbstractPayment
                 if ((int) $this->getRequest()->getParam('cid') == $cid) {
                     $environmentMode = $this->payplugHelper->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $ipnStoreId);
                     $embeddedMode = $this->payplugHelper->getConfigValue('payment_page', ScopeInterface::SCOPE_STORE, $ipnStoreId);
-                    $oneClick = $this->payplugHelper->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $ipnStoreId);
+                    $oneClick = $this->payplugHelper->getConfigValue('one_click', ScopeInterface::SCOPE_STORE, $ipnStoreId);
 
                     $data = [
                         'is_module_active' => 1,
@@ -133,6 +133,10 @@ class Ipn extends AbstractPayment
                             }
                             $responseCode = 200;
                             $responseDetail = '200 Order updated.';
+                        } catch (PayplugException $e) {
+                            $this->logger->error($e->__toString());
+                            $responseCode = 500;
+                            $responseDetail = '500 Error while updating order.';
                         } catch (\Exception $e) {
                             $this->logger->error($e->getMessage());
                             $responseCode = 500;
@@ -158,7 +162,7 @@ class Ipn extends AbstractPayment
                 // TODO refund
             }
         } catch (PayplugException $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error($e->__toString());
 
             /** @var Json $response */
             $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);

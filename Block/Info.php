@@ -5,6 +5,7 @@ namespace Payplug\Payments\Block;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\PaymentMethod;
 
 class Info extends \Magento\Payment\Block\Info
@@ -20,17 +21,25 @@ class Info extends \Magento\Payment\Block\Info
     protected $payplugHelper;
 
     /**
+     * @var Logger
+     */
+    protected $payplugLogger;
+
+    /**
      * @param \Magento\Framework\View\Element\Template\Context $context
      * @param Data                                             $payplugHelper
+     * @param Logger                                           $payplugLogger
      * @param array                                            $data
      */
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         Data $payplugHelper,
+        Logger $payplugLogger,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->payplugHelper = $payplugHelper;
+        $this->payplugLogger = $payplugLogger;
     }
 
     /**
@@ -62,7 +71,11 @@ class Info extends \Magento\Payment\Block\Info
 
         try {
             $payment = $orderPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
-        } catch (PayplugException $exception) {
+        } catch (PayplugException $e) {
+            $this->payplugLogger->error($e->__toString());
+            return [];
+        } catch (\Exception $e) {
+            $this->payplugLogger->error($e->getMessage());
             return [];
         }
 
