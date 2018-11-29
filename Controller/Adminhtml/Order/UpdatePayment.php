@@ -5,6 +5,8 @@ namespace Payplug\Payments\Controller\Adminhtml\Order;
 use Magento\Backend\App\Action;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Payplug\Exception\PayplugException;
+use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\PaymentMethod;
 use Psr\Log\LoggerInterface;
 
@@ -14,6 +16,11 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
      * @var PaymentMethod
      */
     protected $paymentMethod;
+
+    /**
+     * @var Logger
+     */
+    protected $payplugLogger;
 
     /**
      * @param Action\Context                                   $context
@@ -28,6 +35,7 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
      * @param OrderRepositoryInterface                         $orderRepository
      * @param LoggerInterface                                  $logger
      * @param PaymentMethod                                    $paymentMethod
+     * @param Logger                                           $payplugLogger
      */
     public function __construct(
         Action\Context $context,
@@ -41,9 +49,11 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
         OrderManagementInterface $orderManagement,
         OrderRepositoryInterface $orderRepository,
         LoggerInterface $logger,
-        PaymentMethod $paymentMethod
+        PaymentMethod $paymentMethod,
+        Logger $payplugLogger
     ) {
         $this->paymentMethod = $paymentMethod;
+        $this->payplugLogger = $payplugLogger;
         parent::__construct(
             $context,
             $coreRegistry,
@@ -75,7 +85,11 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
             try {
                 $this->paymentMethod->updatePayment($order);
                 $this->messageManager->addSuccessMessage(__('Order payment was successfully updated.'));
+            } catch (PayplugException $e) {
+                $this->payplugLogger->error($e->__toString());
+                $this->messageManager->addErrorMessage(sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage()));
             } catch (\Exception $e) {
+                $this->payplugLogger->error($e->getMessage());
                 $this->messageManager->addErrorMessage(sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage()));
             }
 

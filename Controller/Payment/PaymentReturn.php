@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Payplug\Exception\PayplugException;
 use Payplug\Payments\Model\PaymentMethod;
 
 class PaymentReturn extends AbstractPayment
@@ -46,6 +47,9 @@ class PaymentReturn extends AbstractPayment
                 $this->paymentMethod->processOrder($order, $paymentId);
                 return $this->_redirect($redirectUrlSuccess);
             }
+        } catch (PayplugException $e) {
+            $this->logger->error($e->__toString());
+            $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);

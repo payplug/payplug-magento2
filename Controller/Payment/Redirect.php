@@ -2,6 +2,8 @@
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Payplug\Exception\PayplugException;
+
 class Redirect extends AbstractPayment
 {
     public function execute()
@@ -28,6 +30,9 @@ class Redirect extends AbstractPayment
             $url = $payment->hosted_payment->payment_url;
 
             return $this->resultRedirectFactory->create()->setUrl($url);
+        } catch (PayplugException $e) {
+            $this->logger->error($e->__toString());
+            $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
             $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
