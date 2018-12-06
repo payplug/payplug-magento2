@@ -29,12 +29,6 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     const PAYMENT_PAGE_REDIRECT = 'redirect';
     const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
-    const ACTION_ORDER = 'order';
-
-    const ACTION_AUTHORIZE = 'authorize';
-
-    const ACTION_AUTHORIZE_CAPTURE = 'authorize_capture';
-
     const STATUS_UNKNOWN = 'UNKNOWN';
 
     const STATUS_APPROVED = 'APPROVED';
@@ -50,19 +44,6 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     /**
      * Different payment method checks.
      */
-    const CHECK_USE_FOR_COUNTRY = 'country';
-
-    const CHECK_USE_FOR_CURRENCY = 'currency';
-
-    const CHECK_USE_CHECKOUT = 'checkout';
-
-    const CHECK_USE_INTERNAL = 'internal';
-
-    const CHECK_ORDER_TOTAL_MIN_MAX = 'total';
-
-    const CHECK_ZERO_TOTAL = 'zero_total';
-
-    const GROUP_OFFLINE = 'offline';
 
     const METHOD_CODE = 'payplug_payments';
 
@@ -81,119 +62,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      *
      * @var bool
      */
-    protected $_isGateway = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_isOffline = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canOrder = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canAuthorize = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canCapture = true;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canCapturePartial = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canCaptureOnce = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canRefund = true;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canRefundInvoicePartial = true;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canVoid = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canUseInternal = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canUseCheckout = true;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
     protected $_isInitializeNeeded = true;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canFetchTransactionInfo = false;
-
-    /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_canReviewPayment = false;
-
-    /**
-     * TODO: whether a captured transaction may be voided by this gateway
-     * This may happen when amount is captured, but not settled
-     * @var bool
-     */
-    protected $_canCancelInvoice = false;
-
-    /**
-     * Fields that should be replaced in debug with '***'
-     *
-     * @var array
-     */
-    protected $_debugReplacePrivateDataKeys = [];
 
     /**
      * Payment data
@@ -380,7 +249,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canOrder()
     {
-        return $this->_canOrder;
+        return false;
     }
 
     /**
@@ -390,7 +259,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canAuthorize()
     {
-        return $this->_canAuthorize;
+        return false;
     }
 
     /**
@@ -400,7 +269,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canCapture()
     {
-        return $this->_canCapture;
+        return true;
     }
 
     /**
@@ -410,7 +279,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canCapturePartial()
     {
-        return $this->_canCapturePartial;
+        return false;
     }
 
     /**
@@ -420,7 +289,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canCaptureOnce()
     {
-        return $this->_canCaptureOnce;
+        return false;
     }
 
     /**
@@ -430,7 +299,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canRefund()
     {
-        return $this->_canRefund;
+        return true;
     }
 
     /**
@@ -440,7 +309,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canRefundPartialPerInvoice()
     {
-        return $this->_canRefundInvoicePartial;
+        return true;
     }
 
     /**
@@ -450,7 +319,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canVoid()
     {
-        return $this->_canVoid;
+        return false;
     }
 
     /**
@@ -461,7 +330,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canUseInternal()
     {
-        return $this->_canUseInternal;
+        return false;
     }
 
     /**
@@ -471,7 +340,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canUseCheckout()
     {
-        return $this->_canUseCheckout;
+        return true;
     }
 
     /**
@@ -491,7 +360,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canFetchTransactionInfo()
     {
-        return $this->_canFetchTransactionInfo;
+        return false;
     }
 
     /**
@@ -514,7 +383,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function isGateway()
     {
-        return $this->_isGateway;
+        return false;
     }
 
     /**
@@ -524,7 +393,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function isOffline()
     {
-        return $this->_isOffline;
+        return false;
     }
 
     /**
@@ -769,7 +638,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function canReviewPayment()
     {
-        return $this->_canReviewPayment;
+        return false;
     }
 
     /**
@@ -953,7 +822,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function getConfigPaymentAction()
     {
-        return self::ACTION_AUTHORIZE_CAPTURE;
+        return $this->getConfigData('payment_action');
     }
 
     /**
