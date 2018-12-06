@@ -3,4 +3,7 @@
     <event name="controller_action_predispatch_adminhtml_system_config_save">
         <observer name="payplug_payments_section_payment_saved" instance="Payplug\Payments\Observer\PaymentConfigObserver"/>
     </event>
+    <event name="adminhtml_sales_order_creditmemo_register_before">
+        <observer name="payplug_payments_check_refunded_amount" instance="Payplug\Payments\Observer\CreditMemoCheckRefundedAmountObserver"/>
+    </event>
 </config>

@@ -3,6 +3,7 @@
 namespace Payplug\Payments\Model;
 
 use Magento\Directory\Helper\Data as DirectoryHelper;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractExtensibleModel;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\UrlInterface;
@@ -14,9 +15,11 @@ use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Model\Service\CreditmemoService;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Core\HttpClient;
+use Payplug\Exception\PayplugException;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Helper\Data as PayplugHelper;
 use Payplug\Payments\Model\Order\PaymentFactory as PayplugPaymentFactory;
@@ -724,12 +727,30 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      * @return $this
      *
      * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Exception
      */
     public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         if (!$this->canRefund()) {
             throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
         }
+
+        try {
+            $payplugPayment = $this->payplugHelper->getOrderPayment($payment->getOrder()->getId());
+            $paymentId = $payplugPayment->getPaymentId();
+            $metadata = ['reason' => "Refunded with Magento."];
+
+            $payplugPayment->makeRefund($paymentId, $amount, $metadata, $payment->getOrder()->getStoreId());
+        } catch (NoSuchEntityException $e) {
+            throw new \Exception(__('Could not find valid payplug order payment. Please try refunding offline.'));
+        } catch (PayplugException $e) {
+            $this->payplugLogger->error($e->__toString());
+            throw new \Exception(__('Error while refunding online. Please try again or contact us.'));
+        } catch (\Exception $e) {
+            $this->payplugLogger->error($e->getMessage());
+            throw new \Exception(__('Error while refunding online. Please try again or contact us.'));
+        }
+
         return $this;
     }
 
@@ -1181,6 +1202,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
 
             $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
             $invoice->register();
+            $invoice->setTransactionId($paymentId);
             $invoice->getOrder()->setCustomerNoteNotify(false);
             $invoice->getOrder()->setIsInProcess(true);
 
@@ -1341,5 +1363,30 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         }
 
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
+    }
+
+    /**
+     * Full refund order
+     *
+     * @param Order $order
+     * @param float $amountToRefund
+     */
+    public function fullRefundOrder($order, $amountToRefund)
+    {
+        if (!$order->canCreditmemo()) {
+            return;
+        }
+        if ($order->getCreditmemosCollection()->getSize() > 0) {
+            return;
+        }
+        if ($order->getTotalRefunded() > 0) {
+            return;
+        }
+        $amountToRefund = $amountToRefund / 100;
+        if ((float)$amountToRefund != (float)$order->getTotalPaid()) {
+            return;
+        }
+
+        $order->getPayment()->registerRefundNotification($amountToRefund);
     }
 }
