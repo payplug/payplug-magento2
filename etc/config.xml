@@ -17,6 +17,7 @@
                 <premium>0</premium>
                 <sort_order>0</sort_order>
                 <model>Payplug\Payments\Model\PaymentMethod</model>
+                <payment_action>authorize_capture</payment_action>
             </payplug_payments>
         </payment>
     </default>
