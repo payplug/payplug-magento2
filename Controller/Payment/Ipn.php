@@ -159,7 +159,16 @@ class Ipn extends AbstractPayment
             }
 
             if ($resource instanceof Refund) {
-                // TODO refund
+                $this->logger->info('This is a refund call.');
+                $this->logger->info('Refund ID : '.$resource->id);
+                $refund = $resource;
+
+                $orderIncrementId = $refund->metadata['Order'];
+
+                $order = $this->salesOrderFactory->create();
+                $order->loadByIncrementId($orderIncrementId);
+
+                $this->paymentMethod->fullRefundOrder($order, $refund->amount);
             }
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
