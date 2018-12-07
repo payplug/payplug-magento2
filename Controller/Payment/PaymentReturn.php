@@ -43,7 +43,7 @@ class PaymentReturn extends AbstractPayment
             if ($payment->failure) {
                 $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
                 $this->_forward('cancel', null, null, ['failure_message' => $failureMessage]);
-            } else {
+            } elseif ($payment->is_paid) {
                 $this->paymentMethod->processOrder($order, $paymentId);
                 return $this->_redirect($redirectUrlSuccess);
             }
