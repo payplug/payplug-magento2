@@ -283,4 +283,12 @@ class Data extends AbstractHelper
     {
         return $this->getConfigValue('email', ScopeInterface::SCOPE_STORE, $this->scopeId);
     }
+
+    /**
+     * @return bool
+     */
+    public function isEmbedded()
+    {
+        return $this->getConfigValue('payment_page') == PaymentMethod::PAYMENT_PAGE_EMBEDDED;
+    }
 }

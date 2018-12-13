@@ -1090,10 +1090,16 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $addressCity = $address->getCity();
             $addressCountryId = $address->getCountryId();
         }
+        $firstname = $order->getCustomerFirstname();
+        $lastname = $order->getCustomerLastname();
+        if ($order->getBillingAddress() !== false) {
+            $firstname = $order->getBillingAddress()->getFirstname();
+            $lastname = $order->getBillingAddress()->getLastname();
+        }
 
         return [
-            'first_name' => $order->getCustomerFirstname(),
-            'last_name' => $order->getCustomerLastname(),
+            'first_name' => $firstname,
+            'last_name' => $lastname,
             'email' => $order->getCustomerEmail(),
             'address1' => $addressStreet,
             'address2' => $addressStreet2,
