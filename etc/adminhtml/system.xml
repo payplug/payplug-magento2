@@ -25,7 +25,10 @@
                     <label>Mode</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Mode</source_model>
                 </field>
-                <field id="payment_page"></field>
+                <field id="payment_page" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment Page</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\PaymentPage</source_model>
+                </field>
                 <field id="one_click"></field>
                 <field id="account_details" translate="label" type="button" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Disconnect</label>

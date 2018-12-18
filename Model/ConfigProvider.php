@@ -9,6 +9,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Helper\Data;
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -38,21 +39,29 @@ class ConfigProvider implements ConfigProviderInterface
     private $request;
 
     /**
+     * @var Data
+     */
+    private $payplugHelper;
+
+    /**
      * @param ScopeConfigInterface $scopeConfig
      * @param Repository           $assetRepo
      * @param RequestInterface     $request
      * @param PaymentHelper        $paymentHelper
+     * @param Data                 $payplugHelper
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         Repository $assetRepo,
         RequestInterface $request,
-        PaymentHelper $paymentHelper
+        PaymentHelper $paymentHelper,
+        Data $payplugHelper
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->assetRepo = $assetRepo;
         $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
+        $this->payplugHelper = $payplugHelper;
     }
 
     /**
@@ -64,6 +73,7 @@ class ConfigProvider implements ConfigProviderInterface
             'payment' => [
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
+                    'is_embedded' => $this->payplugHelper->isEmbedded(),
                 ],
             ],
         ] : [];
