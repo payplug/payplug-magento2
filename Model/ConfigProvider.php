@@ -3,12 +3,14 @@
 namespace Payplug\Payments\Model;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
+use Magento\Customer\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Data;
 
 class ConfigProvider implements ConfigProviderInterface
@@ -44,24 +46,40 @@ class ConfigProvider implements ConfigProviderInterface
     private $payplugHelper;
 
     /**
+     * @var Card
+     */
+    private $payplugCardHelper;
+
+    /**
+     * @var Session
+     */
+    private $customerSession;
+
+    /**
      * @param ScopeConfigInterface $scopeConfig
      * @param Repository           $assetRepo
      * @param RequestInterface     $request
      * @param PaymentHelper        $paymentHelper
      * @param Data                 $payplugHelper
+     * @param Card                 $payplugCardHelper
+     * @param Session              $customerSession
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         Repository $assetRepo,
         RequestInterface $request,
         PaymentHelper $paymentHelper,
-        Data $payplugHelper
+        Data $payplugHelper,
+        Card $payplugCardHelper,
+        Session $customerSession
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->assetRepo = $assetRepo;
         $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
         $this->payplugHelper = $payplugHelper;
+        $this->payplugCardHelper = $payplugCardHelper;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -74,6 +92,9 @@ class ConfigProvider implements ConfigProviderInterface
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugHelper->isEmbedded(),
+                    'is_one_click' => $this->payplugHelper->isOneClick(),
+                    'brand_logos' => $this->getBrandLogos(),
+                    'selected_card_id' => $this->getSelectedCardId(),
                 ],
             ],
         ] : [];
@@ -92,6 +113,38 @@ class ConfigProvider implements ConfigProviderInterface
         }
 
         return $this->getViewFileUrl('Payplug_Payments::images/' . $filename . '.png');
+    }
+
+    /**
+     * @return array
+     */
+    public function getBrandLogos()
+    {
+        $cards = ['mastercard', 'visa', 'other'];
+        $logos = [];
+        foreach ($cards as $card) {
+            $logos[$card] = $this->getViewFileUrl('Payplug_Payments::images/' . $card . '.png');
+        }
+
+        return $logos;
+    }
+
+    /**
+     * @return int|string
+     */
+    public function getSelectedCardId()
+    {
+        if (!$this->customerSession->isLoggedIn()) {
+            return '';
+        }
+
+        $lastCardId = $this->payplugCardHelper->getLastCardIdByCustomer($this->customerSession->getCustomer()->getId());
+
+        if ($lastCardId != 0) {
+            return $lastCardId;
+        }
+
+        return '';
     }
 
     /**

@@ -1,0 +1,35 @@
+<li>
+    <!-- ko if: id -->
+        <input type="radio"
+               data-bind="attr: {
+                            name: 'payment[' + $parent.getCode() + '][customer_card_id]',
+                            id: 'payplug_payments_card_' + id,
+                            class: 'payplug-payments-customer-card',
+                            'checked': $parent.isCardSelected($data),
+                            'disabled': $parent.isCardDisabled(),
+                            'data-card-id': id
+                         },
+                         event: {click: $parent.selectCard.bind($parent, $data) },
+                         value: id">
+        <label data-bind="attr: {for: 'payplug_payments_card_' + id}">
+            <img data-bind="attr: {src: $parent.getBrandLogo(brand)}"/>&nbsp;
+            <!-- ko i18n: 'Your card' --><!-- /ko --> <span data-bind="text: '**** **** **** ' + last4" class="card-last4"></span><span data-bind="text: ' (' + exp_date + ')'"></span>
+        </label>
+    <!--/ko-->
+    <!-- ko ifnot: id -->
+    <input type="radio"
+           data-bind="attr: {
+                        name: 'payment[' + $parent.getCode() + '][customer_card_id]',
+                        id: 'payplug_payments_card_',
+                        class: 'payplug-payments-customer-card',
+                        'checked': $parent.isCardSelected($data),
+                        'disabled': $parent.isCardDisabled(),
+                        'data-card-id': ''
+                    },
+                    event: {click: $parent.selectCard.bind($parent, $data) },
+                    value: id">
+    <label data-bind="attr: {for: 'payplug_payments_card_'}">
+        <!-- ko i18n: 'Pay with another card' --><!-- /ko -->
+    </label>
+    <!--/ko-->
+</li>

@@ -10,6 +10,16 @@ use Payplug\Payments\Model\ResourceModel\Order\Payment as PaymentResource;
 class OrderPaymentRepository
 {
     /**
+     * @var PaymentResource
+     */
+    private $paymentResource;
+
+    /**
+     * @var PaymentFactory
+     */
+    private $paymentFactory;
+
+    /**
      * @param PaymentResource $paymentResource
      * @param PaymentFactory  $paymentFactory
      */

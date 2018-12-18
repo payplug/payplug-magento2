@@ -29,7 +29,10 @@
                     <label>Payment Page</label>
                     <source_model>Payplug\Payments\Model\Config\Source\PaymentPage</source_model>
                 </field>
-                <field id="one_click"></field>
+                <field id="one_click" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>One-click payment</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="account_details" translate="label" type="button" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Disconnect</label>
                     <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Logout</frontend_model>

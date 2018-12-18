@@ -291,4 +291,12 @@ class Data extends AbstractHelper
     {
         return $this->getConfigValue('payment_page') == PaymentMethod::PAYMENT_PAGE_EMBEDDED;
     }
+
+    /**
+     * @return bool
+     */
+    public function isOneClick()
+    {
+        return (bool) $this->getConfigValue('one_click');
+    }
 }
