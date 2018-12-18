@@ -1056,6 +1056,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
 
         $status = $this->getConfigData('processing_order_status', $order->getStoreId());
         $comment = sprintf(__('Payment has been captured by Payment Gateway. Transaction id: %s'), $paymentId);
+        $transactionSave = $this->objectManager->create(\Magento\Framework\DB\Transaction::class);
         if ($this->payplugHelper->getConfigValue('generate_invoice', ScopeInterface::SCOPE_STORE, $order->getStoreId())) {
             if (!$order->canInvoice()) {
                 throw new \Exception(__('Cannot create an invoice.'));
@@ -1073,27 +1074,19 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $invoice->register();
             $invoice->setTransactionId($paymentId);
             $invoice->getOrder()->setCustomerNoteNotify(false);
-            $invoice->getOrder()->setIsInProcess(true);
 
-            $order->addStatusToHistory($status, $comment);
-            $this->sentNewOrderEmail($order);
-
-            $transactionSave = $this->objectManager->create(
-                \Magento\Framework\DB\Transaction::class
-            )->addObject(
-                $invoice
-            )->addObject(
-                $invoice->getOrder()
-            );
-            $transactionSave->save();
+            $transactionSave->addObject($invoice);
         } else {
-            // If auto generate invoice is not activated, keep current status
-            $order->setIsInProcess(true);
             $comment .= ' - ' . __("Invoice can be manually created.");
-            $order->addStatusToHistory($status, $comment);
-            $this->orderRepository->save($order);
-            $this->sentNewOrderEmail($order);
         }
+
+        $order->setIsInProcess(true);
+        $order->addStatusToHistory($status, $comment);
+
+        $transactionSave->addObject($order);
+        $transactionSave->save();
+
+        $this->sentNewOrderEmail($order);
     }
 
     /**
@@ -1189,7 +1182,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             if ($payment->failure) {
                 $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
                 $this->cancelOrder($order, false, $failureMessage);
-            } else {
+            } elseif ($payment->is_paid) {
                 $this->processOrder($order, $payment->id);
             }
         }
