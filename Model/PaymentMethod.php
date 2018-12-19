@@ -5,18 +5,16 @@ namespace Payplug\Payments\Model;
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
-use Magento\Framework\Model\AbstractExtensibleModel;
-use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Model\InfoInterface;
-use Magento\Payment\Model\Method\TransparentInterface;
+use Magento\Payment\Model\MethodInterface;
 use Magento\Quote\Api\Data\PaymentMethodInterface;
 use Magento\Framework\DataObject;
 use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Sales\Model\OrderRepository;
-use Magento\Sales\Model\Service\CreditmemoService;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Core\HttpClient;
@@ -29,29 +27,12 @@ use Payplug\Payments\Model\Customer\CardFactory as PayplugCardFactory;
 use Payplug\Payments\Model\Order\PaymentFactory as PayplugPaymentFactory;
 use Payplug\Payplug;
 
-class PaymentMethod extends AbstractExtensibleModel implements TransparentInterface, PaymentMethodInterface
+class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMethodInterface
 {
     const ENVIRONMENT_TEST = 'test';
     const ENVIRONMENT_LIVE = 'live';
     const PAYMENT_PAGE_REDIRECT = 'redirect';
     const PAYMENT_PAGE_EMBEDDED = 'embedded';
-
-    const STATUS_UNKNOWN = 'UNKNOWN';
-
-    const STATUS_APPROVED = 'APPROVED';
-
-    const STATUS_ERROR = 'ERROR';
-
-    const STATUS_DECLINED = 'DECLINED';
-
-    const STATUS_VOID = 'VOID';
-
-    const STATUS_SUCCESS = 'SUCCESS';
-
-    /**
-     * Different payment method checks.
-     */
-
     const METHOD_CODE = 'payplug_payments';
 
     /**
@@ -65,30 +46,11 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     protected $_infoBlockType = \Payplug\Payments\Block\Info::class;
 
     /**
-     * Payment Method feature
-     *
-     * @var bool
-     */
-    protected $_isInitializeNeeded = true;
-
-    /**
-     * Payment data
-     *
-     * @var \Magento\Payment\Helper\Data
-     */
-    protected $_paymentData;
-
-    /**
      * Core store config
      *
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    protected $_scopeConfig;
-
-    /**
-     * @var \Magento\Payment\Model\Method\Logger
-     */
-    protected $logger;
+    protected $scopeConfig;
 
     /**
      * @var DirectoryHelper
@@ -143,37 +105,33 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     /**
      * @var Order\Email\Sender\OrderSender
      */
-    private $orderSender;
+    protected $orderSender;
 
     /**
      * @var PayplugCardFactory
      */
-    private $cardFactory;
+    protected $cardFactory;
 
     /**
      * @var CustomerCardRepository
      */
-    private $customerCardRepository;
+    protected $customerCardRepository;
 
     /**
      * @var CardHelper
      */
-    private $cardHelper;
+    protected $cardHelper;
 
     /**
      * @param \Magento\Framework\Model\Context                             $context
      * @param \Magento\Framework\Registry                                  $registry
-     * @param \Magento\Framework\Api\ExtensionAttributesFactory            $extensionFactory
-     * @param \Magento\Framework\Api\AttributeValueFactory                 $customAttributeFactory
-     * @param \Magento\Payment\Helper\Data                                 $paymentData
      * @param \Magento\Framework\App\Config\ScopeConfigInterface           $scopeConfig
-     * @param \Magento\Payment\Model\Method\Logger                         $logger
+     * @param \Magento\Framework\ObjectManagerInterface                    $objectManager
      * @param UrlInterface                                                 $urlBuilder
      * @param Logger                                                       $payplugLogger
      * @param PayplugPaymentFactory                                        $paymentFactory
      * @param PayplugHelper                                                $payplugHelper
      * @param InvoiceService                                               $invoiceService
-     * @param \Magento\Framework\ObjectManagerInterface                    $objectManager
      * @param OrderRepository                                              $orderRepository
      * @param OrderPaymentRepository                                       $orderPaymentRepository
      * @param Order\Email\Sender\OrderSender                               $orderSender
@@ -188,17 +146,13 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
-        \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory,
-        \Magento\Payment\Helper\Data $paymentData,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\Payment\Model\Method\Logger $logger,
+        \Magento\Framework\ObjectManagerInterface $objectManager,
         UrlInterface $urlBuilder,
         Logger $payplugLogger,
         PayplugPaymentFactory $paymentFactory,
         PayplugHelper $payplugHelper,
         InvoiceService $invoiceService,
-        \Magento\Framework\ObjectManagerInterface $objectManager,
         OrderRepository $orderRepository,
         OrderPaymentRepository $orderPaymentRepository,
         Order\Email\Sender\OrderSender $orderSender,
@@ -210,29 +164,19 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         array $data = [],
         DirectoryHelper $directory = null
     ) {
-        parent::__construct(
-            $context,
-            $registry,
-            $extensionFactory,
-            $customAttributeFactory,
-            $resource,
-            $resourceCollection,
-            $data
-        );
-        $this->_paymentData = $paymentData;
-        $this->_scopeConfig = $scopeConfig;
-        $this->logger = $logger;
-        $this->directory = $directory ?: ObjectManager::getInstance()->get(DirectoryHelper::class);
-        $this->initializeData($data);
+        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
+
+        $this->scopeConfig = $scopeConfig;
+        $this->objectManager = $objectManager;
         $this->urlBuilder = $urlBuilder;
         $this->payplugLogger = $payplugLogger;
         $this->payplugPaymentFactory = $paymentFactory;
         $this->payplugHelper = $payplugHelper;
         $this->invoiceService = $invoiceService;
-        $this->objectManager = $objectManager;
         $this->orderRepository = $orderRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSender = $orderSender;
+        $this->directory = $directory ?: $objectManager->get(DirectoryHelper::class);
         $this->cardFactory = $cardFactory;
         $this->customerCardRepository = $customerCardRepository;
         $this->cardHelper = $cardHelper;
@@ -240,20 +184,6 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         $validKey = self::setAPIKey();
         if ($validKey != null) {
             Payplug::setSecretKey($validKey);
-        }
-    }
-
-    /**
-     * Initializes injected data
-     *
-     * @param array $data
-     *
-     * @return void
-     */
-    protected function initializeData($data = [])
-    {
-        if (!empty($data['formBlockType'])) {
-            $this->_formBlockType = $data['formBlockType'];
         }
     }
 
@@ -434,7 +364,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      */
     public function isInitializeNeeded()
     {
-        return $this->_isInitializeNeeded;
+        return true;
     }
 
     /**
@@ -751,7 +681,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             $storeId = $this->getStore();
         }
         $path = 'payment/' . $this->getCode() . '/' . $field;
-        return $this->_scopeConfig->getValue($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+        return $this->scopeConfig->getValue($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
     }
 
     /**
@@ -872,14 +802,6 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     public function getConfigPaymentAction()
     {
         return $this->getConfigData('payment_action');
-    }
-
-    /**
-     * @return $this
-     */
-    public function getConfigInterface()
-    {
-        return $this;
     }
 
     /**
