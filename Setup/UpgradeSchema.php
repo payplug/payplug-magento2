@@ -13,6 +13,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '0.0.2', '<')) {
             $this->addCustomerCardTable($setup);
         }
+        if (version_compare($context->getVersion(), '0.0.3', '<')) {
+            $this->addOrderProcessingTable($setup);
+        }
     }
 
     private function addCustomerCardTable(SchemaSetupInterface $setup)
@@ -119,6 +122,72 @@ class UpgradeSchema implements UpgradeSchemaInterface
         ;
 
         $installer->getConnection()->createTable($table);
+
+        /**
+         * Prepare database after install
+         */
+        $installer->endSetup();
+    }
+
+    private function addOrderProcessingTable(SchemaSetupInterface $setup)
+    {
+        $installer = $setup;
+
+        /**
+         * Prepare database for install
+         */
+        $installer->startSetup();
+
+        //START table setup
+        $table = $installer->getConnection()->newTable($installer->getTable('payplug_payments_order_processing'))
+            ->addColumn(
+                'entity_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'nullable' => false, 'primary' => true, 'unsigned' => true],
+                'Entity ID'
+            )
+            ->addColumn(
+                'order_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => false,'nullable' => false,'primary' => false,'unsigned' => true],
+                'Order ID'
+            )
+            ->addColumn(
+                'created_at',
+                \Magento\Framework\DB\Ddl\Table::TYPE_DATETIME,
+                null,
+                ['nullable' => false],
+                'Created at'
+            )
+            ->addForeignKey(
+                $installer->getFkName(
+                    'payplug_payments_order_processing',
+                    'order_id',
+                    'sales_order',
+                    'entity_id'
+                ),
+                'order_id',
+                $installer->getTable('sales_order'),
+                'entity_id',
+                \Magento\Framework\DB\Ddl\Table::ACTION_CASCADE
+            )
+            ->setComment('PayPlug Order Processing Table')
+        ;
+
+        $installer->getConnection()->createTable($table);
+
+        $installer->getConnection()->addIndex(
+            $setup->getTable('payplug_payments_order_processing'),
+            $setup->getIdxName(
+                'payplug_payments_order_processing',
+                'order_id',
+                \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE
+            ),
+            'order_id',
+            \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE
+        );
 
         /**
          * Prepare database after install
