@@ -6,8 +6,9 @@ define([
     'Payplug_Payments/js/action/oneclick-on-success',
     'jquery',
     'Magento_Customer/js/customer-data',
-    'Magento_Checkout/js/model/quote'
-], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, oneClickOnSuccessAction, jQuery, customerData, quote) {
+    'Magento_Checkout/js/model/quote',
+    'Magento_Checkout/js/model/full-screen-loader'
+], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, oneClickOnSuccessAction, jQuery, customerData, quote, fullScreenLoader) {
     'use strict';
 
     return Component.extend({
@@ -27,6 +28,7 @@ define([
         },
 
         afterPlaceOrder: function () {
+            fullScreenLoader.stopLoader();
             sessionStorage.removeItem(this.sessionCardId);
             var customerCard = jQuery('.payplug-payments-customer-card:checked');
             if (customerCard.length > 0 && customerCard.data('card-id') !== '') {
