@@ -25,6 +25,8 @@ use Payplug\Payments\Helper\Data as PayplugHelper;
 use Payplug\Payments\Model\Customer\Card;
 use Payplug\Payments\Model\Customer\CardFactory as PayplugCardFactory;
 use Payplug\Payments\Model\Order\PaymentFactory as PayplugPaymentFactory;
+use Payplug\Payments\Model\Order\Processing;
+use Payplug\Payments\Model\Order\ProcessingFactory as PayplugOrderProcessingFactory;
 use Payplug\Payplug;
 
 class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMethodInterface
@@ -123,6 +125,16 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     protected $cardHelper;
 
     /**
+     * @var PayplugOrderProcessingFactory
+     */
+    protected $orderProcessingFactory;
+
+    /**
+     * @var OrderProcessingRepository
+     */
+    protected $orderProcessingRepository;
+
+    /**
      * @param \Magento\Framework\Model\Context                             $context
      * @param \Magento\Framework\Registry                                  $registry
      * @param \Magento\Framework\App\Config\ScopeConfigInterface           $scopeConfig
@@ -138,6 +150,8 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
      * @param PayplugCardFactory                                           $cardFactory
      * @param CardHelper                                                   $cardHelper
      * @param CustomerCardRepository                                       $customerCardRepository
+     * @param PayplugOrderProcessingFactory                                $orderProcessingFactory
+     * @param OrderProcessingRepository                                    $orderProcessingRepository
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null           $resourceCollection
      * @param array                                                        $data
@@ -159,6 +173,8 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
         PayplugCardFactory $cardFactory,
         CustomerCardRepository $customerCardRepository,
         CardHelper $cardHelper,
+        PayplugOrderProcessingFactory $orderProcessingFactory,
+        OrderProcessingRepository $orderProcessingRepository,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
@@ -180,6 +196,8 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
         $this->cardFactory = $cardFactory;
         $this->customerCardRepository = $customerCardRepository;
         $this->cardHelper = $cardHelper;
+        $this->orderProcessingFactory = $orderProcessingFactory;
+        $this->orderProcessingRepository = $orderProcessingRepository;
 
         $validKey = self::setAPIKey();
         if ($validKey != null) {
@@ -1125,45 +1143,90 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
      */
     public function processOrder($order, $paymentId)
     {
-        if ($order->getState() != Order::STATE_PENDING_PAYMENT &&
-            $order->getState() != Order::STATE_NEW
-        ) {
+        try {
+            $orderProcessing = $this->orderProcessingRepository->get($order->getId(), 'order_id');
+            $createdAt = new \DateTime($orderProcessing->getCreatedAt());
+
+            if ($createdAt > new \DateTime("now - 1 min")) {
+                // Order is currently being processed
+                return;
+            }
+            // Order has been set as processing for more than a minute
+            // Delete and recreate a new flag
+            $this->orderProcessingRepository->delete($orderProcessing);
+        } catch (NoSuchEntityException $e) {
+            // Order is not currently being processed
+            // Create a new flag to block concurrent process
+        }
+
+        try {
+            $orderProcessing = $this->createOrderProcessing($order);
+        } catch (\Exception $e) {
             return;
         }
 
-        $status = $this->getConfigData('processing_order_status', $order->getStoreId());
-        $comment = sprintf(__('Payment has been captured by Payment Gateway. Transaction id: %s'), $paymentId);
-        $transactionSave = $this->objectManager->create(\Magento\Framework\DB\Transaction::class);
-        if ($this->payplugHelper->getConfigValue('generate_invoice', ScopeInterface::SCOPE_STORE, $order->getStoreId())) {
-            if (!$order->canInvoice()) {
-                throw new \Exception(__('Cannot create an invoice.'));
+        try {
+            $order = $this->orderRepository->get($order->getId());
+            if ($order->getState() != Order::STATE_PENDING_PAYMENT &&
+                $order->getState() != Order::STATE_NEW
+            ) {
+                $this->orderProcessingRepository->delete($orderProcessing);
+                return;
             }
 
-            $invoice = $this->invoiceService->prepareInvoice($order, []);
-            if (!$invoice) {
-                throw new \Exception(__('Cannot create an invoice.'));
-            }
-            if (!$invoice->getTotalQty()) {
-                throw new \Exception(__('Cannot create an invoice without products.'));
+            $status = $this->getConfigData('processing_order_status', $order->getStoreId());
+            $comment = sprintf(__('Payment has been captured by Payment Gateway. Transaction id: %s'), $paymentId);
+            $transactionSave = $this->objectManager->create(\Magento\Framework\DB\Transaction::class);
+            if ($this->payplugHelper->getConfigValue('generate_invoice', ScopeInterface::SCOPE_STORE, $order->getStoreId())) {
+                if (!$order->canInvoice()) {
+                    throw new \Exception(__('Cannot create an invoice.'));
+                }
+
+                $invoice = $this->invoiceService->prepareInvoice($order, []);
+                if (!$invoice) {
+                    throw new \Exception(__('Cannot create an invoice.'));
+                }
+                if (!$invoice->getTotalQty()) {
+                    throw new \Exception(__('Cannot create an invoice without products.'));
+                }
+
+                $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
+                $invoice->register();
+                $invoice->setTransactionId($paymentId);
+                $invoice->getOrder()->setCustomerNoteNotify(false);
+
+                $transactionSave->addObject($invoice);
+            } else {
+                $comment .= ' - ' . __("Invoice can be manually created.");
             }
 
-            $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
-            $invoice->register();
-            $invoice->setTransactionId($paymentId);
-            $invoice->getOrder()->setCustomerNoteNotify(false);
+            $order->setIsInProcess(true);
+            $order->addStatusToHistory($status, $comment);
 
-            $transactionSave->addObject($invoice);
-        } else {
-            $comment .= ' - ' . __("Invoice can be manually created.");
+            $transactionSave->addObject($order);
+            $transactionSave->save();
+
+            $this->sentNewOrderEmail($order);
+        } finally {
+            $this->orderProcessingRepository->delete($orderProcessing);
         }
+    }
 
-        $order->setIsInProcess(true);
-        $order->addStatusToHistory($status, $comment);
+    /**
+     * @param Order $order
+     *
+     * @return Processing
+     */
+    protected function createOrderProcessing($order)
+    {
+        /** @var Processing $orderProcessing */
+        $orderProcessing = $this->orderProcessingFactory->create();
+        $orderProcessing->setOrderId($order->getId());
+        $date = new \DateTime();
+        $orderProcessing->setCreatedAt($date->format('Y-m-d H:i:s'));
+        $this->orderProcessingRepository->save($orderProcessing);
 
-        $transactionSave->addObject($order);
-        $transactionSave->save();
-
-        $this->sentNewOrderEmail($order);
+        return $orderProcessing;
     }
 
     /**
