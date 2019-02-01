@@ -45,6 +45,7 @@ class PaymentReturn extends AbstractPayment
                 $this->_forward('cancel', null, null, ['failure_message' => $failureMessage]);
             } elseif ($payment->is_paid) {
                 $this->paymentMethod->processOrder($order, $paymentId);
+                $this->paymentMethod->saveCustomerCard($payment, $order->getCustomerId());
                 return $this->_redirect($redirectUrlSuccess);
             }
         } catch (PayplugException $e) {

@@ -4,6 +4,7 @@ namespace Payplug\Payments\Model;
 
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\PaymentException;
 use Magento\Framework\Model\AbstractExtensibleModel;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\UrlInterface;
@@ -21,7 +22,10 @@ use Magento\Store\Model\ScopeInterface;
 use Payplug\Core\HttpClient;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Helper\Card as CardHelper;
 use Payplug\Payments\Helper\Data as PayplugHelper;
+use Payplug\Payments\Model\Customer\Card;
+use Payplug\Payments\Model\Customer\CardFactory as PayplugCardFactory;
 use Payplug\Payments\Model\Order\PaymentFactory as PayplugPaymentFactory;
 use Payplug\Payplug;
 
@@ -142,6 +146,21 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     private $orderSender;
 
     /**
+     * @var PayplugCardFactory
+     */
+    private $cardFactory;
+
+    /**
+     * @var CustomerCardRepository
+     */
+    private $customerCardRepository;
+
+    /**
+     * @var CardHelper
+     */
+    private $cardHelper;
+
+    /**
      * @param \Magento\Framework\Model\Context                             $context
      * @param \Magento\Framework\Registry                                  $registry
      * @param \Magento\Framework\Api\ExtensionAttributesFactory            $extensionFactory
@@ -158,6 +177,9 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
      * @param OrderRepository                                              $orderRepository
      * @param OrderPaymentRepository                                       $orderPaymentRepository
      * @param Order\Email\Sender\OrderSender                               $orderSender
+     * @param PayplugCardFactory                                           $cardFactory
+     * @param CardHelper                                                   $cardHelper
+     * @param CustomerCardRepository                                       $customerCardRepository
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null           $resourceCollection
      * @param array                                                        $data
@@ -180,6 +202,9 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         OrderRepository $orderRepository,
         OrderPaymentRepository $orderPaymentRepository,
         Order\Email\Sender\OrderSender $orderSender,
+        PayplugCardFactory $cardFactory,
+        CustomerCardRepository $customerCardRepository,
+        CardHelper $cardHelper,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
@@ -208,6 +233,9 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
         $this->orderRepository = $orderRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSender = $orderSender;
+        $this->cardFactory = $cardFactory;
+        $this->customerCardRepository = $customerCardRepository;
+        $this->cardHelper = $cardHelper;
 
         $validKey = self::setAPIKey();
         if ($validKey != null) {
@@ -895,11 +923,12 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     /**
      * Generate payplug transaction
      *
-     * @param Order $order
+     * @param Order    $order
+     * @param int|null $customerCardId
      *
      * @return \Payplug\Resource\Payment
      */
-    public function createPayplugTransaction($order)
+    public function createPayplugTransaction($order, $customerCardId = null)
     {
         HttpClient::addDefaultUserAgentProduct(
             'PayPlug-Magento2',
@@ -931,12 +960,13 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
 
         $paymentTab = array_merge(
             $paymentTab,
-            $this->buildPaymentData($order)
+            $this->buildPaymentData($order, $customerCardId)
         );
 
         $payment = \Payplug\Payment::create($paymentTab);
 
         $isSandbox = $this->payplugHelper->getIsSandbox($order->getStoreId());
+        /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
         $orderPayment = $this->payplugPaymentFactory->create();
         $orderPayment->setOrderId($order->getId());
         $orderPayment->setPaymentId($payment->id);
@@ -1002,30 +1032,149 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
     /**
      * Build payment data for payment transaction
      *
-     * @param Order $order
+     * @param Order    $order
+     * @param int|null $customerCardId
      *
      * @return array
      */
-    protected function buildPaymentData($order)
+    protected function buildPaymentData($order, $customerCardId)
     {
         $paymentData = [];
         $paymentData['notification_url'] = $this->urlBuilder->getUrl('payplug_payments/payment/ipn', ['ipn_store_id' => $order->getStoreId()]);
         $paymentData['force_3ds'] = false;
 
-        $paymentData['allow_save_card'] = false;
+        $currentCard = $this->getCustomerCardToken($customerCardId, $order->getCustomerId());
+        $paymentData['allow_save_card'] = $this->canSaveCard($currentCard, $order->getCustomerId());
 
-        $paymentData['hosted_payment'] = [
-            'return_url' => $this->urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
-                '_secure' => true,
-                'quote_id' => $order->getQuoteId(),
-            ]),
-            'cancel_url' => $this->urlBuilder->getUrl('payplug_payments/payment/cancel', [
-                '_secure' => true,
-                'quote_id' => $order->getQuoteId(),
-            ]),
-        ];
+        if ($this->isOneClick() && $currentCard != null) {
+            $paymentData['payment_method'] = $currentCard;
+        } else {
+            $paymentData['hosted_payment'] = [
+                'return_url' => $this->urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
+                    '_secure'  => true,
+                    'quote_id' => $order->getQuoteId(),
+                ]),
+                'cancel_url' => $this->urlBuilder->getUrl('payplug_payments/payment/cancel', [
+                    '_secure'  => true,
+                    'quote_id' => $order->getQuoteId(),
+                ]),
+            ];
+        }
 
         return $paymentData;
+    }
+
+    /**
+     * Check if card can be saved on payment page
+     *
+     * @param string|null $currentCard
+     * @param int|null    $customerId
+     *
+     * @return bool
+     */
+    protected function canSaveCard($currentCard, $customerId)
+    {
+        if (!$this->isOneClick()) {
+            return false;
+        }
+
+        if ($currentCard !== null) {
+            return false;
+        }
+
+        if (empty($customerId)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Save customer card
+     *
+     * @param \Payplug\Resource\Payment $payment
+     * @param int|null                  $customerId
+     * @param int|null                  $storeId
+     */
+    public function saveCustomerCard($payment, $customerId, $storeId = null)
+    {
+        if ($customerId == null) {
+            return;
+        }
+
+        if ($payment->save_card == 1 || ($payment->card->id != '' && $payment->hosted_payment != '')) {
+
+            try {
+                $this->customerCardRepository->get($payment->card->id, 'card_token');
+                return;
+            } catch (NoSuchEntityException $e) {
+                // Nothing to do, we want to create card if it does not already exist
+            }
+
+            /** @var Card $card */
+            $card = $this->cardFactory->create();
+            $customerCardId = $this->cardHelper->getLastCardIdByCustomer($customerId) + 1;
+            $companyId = (int) $this->getConfigData('company_id', $storeId);
+            $cardDate = $payment->card->exp_year . '-' . $payment->card->exp_month;
+            $expDate = date('Y-m-t 23:59:59', strtotime($cardDate));
+            $brand = $payment->card->brand;
+            if (!in_array(strtolower($payment->card->brand), ['visa', 'mastercard', 'maestro', 'carte_bancaire'])) {
+                $brand = 'other';
+            }
+
+            $card->setCustomerId($customerId);
+            $card->setCustomerCardId($customerCardId);
+            $card->setCompanyId($companyId);
+            $card->setIsSandbox(!$payment->is_live);
+            $card->setCardToken($payment->card->id);
+            $card->setLastFour($payment->card->last4);
+            $card->setExpDate($expDate);
+            $card->setBrand($brand);
+            $card->setCountry($payment->card->country);
+            $card->setMetadata($payment->card->metadata);
+
+            $this->customerCardRepository->save($card);
+        }
+    }
+
+    /**
+     * Get customer card token
+     *
+     * @param int|null $customerCardId
+     * @param int|null $customerId
+     *
+     * @return string|null
+     *
+     * @throws PaymentException
+     */
+    protected function getCustomerCardToken($customerCardId, $customerId)
+    {
+        $this->payplugLogger->error("[$customerCardId][$customerId]");
+        if ($customerCardId === null) {
+            return null;
+        }
+
+        if (empty($customerId)) {
+            return null;
+        }
+
+        try {
+            $currentCard = $this->cardHelper->getCustomerCard($customerId, $customerCardId);
+        } catch (NoSuchEntityException $e) {
+            throw new PaymentException(__('This card does not exists or has been deleted.'));
+        }
+
+        return $currentCard->getCardToken();
+    }
+
+    /**
+     * Check if PayPlug One-click payment is enable
+     *
+     * @return bool
+     */
+    public function isOneClick()
+    {
+        return $this->payplugHelper->isOneClick();
     }
 
     /**
@@ -1191,6 +1340,7 @@ class PaymentMethod extends AbstractExtensibleModel implements TransparentInterf
             } elseif ($payment->is_paid) {
                 $this->processOrder($order, $payment->id);
             }
+            $this->saveCustomerCard($payment, $order->getCustomerId(), $order->getStoreId());
         }
     }
 
