@@ -60,17 +60,10 @@ class Info extends \Magento\Payment\Block\Info
             return [];
         }
 
-        $isSandbox = $orderPayment->isSandbox();
-        $environmentMode = AbstractPaymentMethod::ENVIRONMENT_TEST;
-        if (!$isSandbox) {
-            $environmentMode = AbstractPaymentMethod::ENVIRONMENT_LIVE;
-        }
-
-        $paymentId = $orderPayment->getPaymentId();
         $order = $this->getInfo()->getOrder();
 
         try {
-            $payment = $orderPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
+            $payment = $orderPayment->retrieve($order->getStoreId());
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
             return [];

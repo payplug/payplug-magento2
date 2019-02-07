@@ -96,7 +96,8 @@ class Ipn extends AbstractPayment
 
             $this->logger->info('This is not a debug call.');
 
-            $this->payplugConfig->setPayplugApiKey($ipnStoreId);
+            $ipnSandbox = $this->getRequest()->getParam('ipn_sandbox');
+            $this->payplugConfig->setPayplugApiKey($ipnStoreId, (bool) $ipnSandbox);
             $this->logger->info('Key submited');
 
             $resource = Notification::treat($body);

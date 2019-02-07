@@ -110,38 +110,35 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     /**
      * Retrive a payment
      *
-     * @param string      $paymentId
-     * @param string|null $environmentMode
-     * @param int|null    $store
+     * @param int|null $store
      *
      * @return \Payplug\Resource\Payment
      */
-    public function retrieve($paymentId, $environmentMode = null, $store = null)
+    public function retrieve($store = null)
     {
-        $this->payplugConfig->setPayplugApiKey($store, $environmentMode);
+        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
 
-        return \Payplug\Payment::retrieve($paymentId);
+        return \Payplug\Payment::retrieve($this->getPaymentId());
     }
 
     /**
      * Attempt to refund partially or totally a payment
      *
-     * @param string   $paymentId
      * @param float    $amount
      * @param array    $metadata
      * @param int|null $store
      *
      * @return \Payplug\Resource\Refund
      */
-    public function makeRefund($paymentId, $amount, $metadata, $store = null)
+    public function makeRefund($amount, $metadata, $store = null)
     {
         $data = [
             'amount' => $amount * 100,
             'metadata' => $metadata
         ];
 
-        $this->payplugConfig->setPayplugApiKey($store);
+        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
 
-        return \Payplug\Refund::create($paymentId, $data);
+        return \Payplug\Refund::create($this->getPaymentId(), $data);
     }
 }
