@@ -9,13 +9,41 @@ use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
-use Payplug\Payments\Model\PaymentMethod;
-use Payplug\Payplug;
+use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 use Payplug\Resource\Payment;
 use Payplug\Resource\Refund;
 
 class Ipn extends AbstractPayment
 {
+    /**
+     * @var Config
+     */
+    private $payplugConfig;
+
+    /**
+     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Magento\Checkout\Model\Session       $checkoutSession
+     * @param \Magento\Sales\Model\OrderFactory     $salesOrderFactory
+     * @param Logger                                $logger
+     * @param Data                                  $payplugHelper
+     * @param Config                                $payplugConfig
+     */
+    public function __construct(
+        \Magento\Framework\App\Action\Context $context,
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Sales\Model\OrderFactory $salesOrderFactory,
+        Logger $logger,
+        Data $payplugHelper,
+        Config $payplugConfig
+    ) {
+        parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
+
+        $this->payplugConfig = $payplugConfig;
+    }
+
     /**
      * Action called when IPN is received
      * Can update order status when payment or refund notification is received
@@ -36,16 +64,16 @@ class Ipn extends AbstractPayment
             if ($debug == 1) {
                 $this->logger->info('This is a debug call.');
 
-                $cid = (int) $this->payplugHelper->getConfigValue('company_id');
+                $cid = (int) $this->payplugConfig->getConfigValue('company_id');
                 if ((int) $this->getRequest()->getParam('cid') == $cid) {
-                    $environmentMode = $this->payplugHelper->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $ipnStoreId);
-                    $embeddedMode = $this->payplugHelper->getConfigValue('payment_page', ScopeInterface::SCOPE_STORE, $ipnStoreId);
-                    $oneClick = $this->payplugHelper->getConfigValue('one_click', ScopeInterface::SCOPE_STORE, $ipnStoreId);
+                    $environmentMode = $this->payplugConfig->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $ipnStoreId);
+                    $embeddedMode = $this->payplugConfig->getConfigValue('payment_page', ScopeInterface::SCOPE_STORE, $ipnStoreId);
+                    $oneClick = $this->payplugConfig->getConfigValue('one_click', ScopeInterface::SCOPE_STORE, $ipnStoreId, 'payment/payplug_payments_standard/');
 
                     $data = [
                         'is_module_active' => 1,
-                        'sandbox_mode' => (int) ($environmentMode === PaymentMethod::ENVIRONMENT_TEST),
-                        'embedded_mode' => (int) ($embeddedMode === PaymentMethod::PAYMENT_PAGE_EMBEDDED),
+                        'sandbox_mode' => (int) ($environmentMode === AbstractPaymentMethod::ENVIRONMENT_TEST),
+                        'embedded_mode' => (int) ($embeddedMode === AbstractPaymentMethod::PAYMENT_PAGE_EMBEDDED),
                         'one_click' => (int) $oneClick,
                         'cid' => 1
                     ];
@@ -68,11 +96,9 @@ class Ipn extends AbstractPayment
 
             $this->logger->info('This is not a debug call.');
 
-            $validKey = $this->paymentMethod->setAPIKey();
-            if ($validKey != null) {
-                Payplug::setSecretKey($validKey);
-                $this->logger->info('Key submited');
-            }
+            $this->payplugConfig->setPayplugApiKey($ipnStoreId);
+            $this->logger->info('Key submited');
+
             $resource = Notification::treat($body);
 
             if ($resource instanceof Payment) {
@@ -99,6 +125,7 @@ class Ipn extends AbstractPayment
                     $currentState = $order->getState();
                 }
 
+                $paymentMethod = $order->getPayment()->getMethodInstance();
 
                 if (!$payment->is_paid) {
 
@@ -106,7 +133,7 @@ class Ipn extends AbstractPayment
                     $this->logger->info('Canceling order');
 
                     $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
-                    $this->paymentMethod->cancelOrder($order, true, $failureMessage);
+                    $paymentMethod->cancelOrder($order, true, $failureMessage);
 
                     $this->logger->info('Order canceled.');
 
@@ -125,8 +152,8 @@ class Ipn extends AbstractPayment
                     case $newState:
                     case $pendingState:
                         try {
-                            $this->paymentMethod->processOrder($order, $payment->id);
-                            if ($this->payplugHelper->getConfigValue('generate_invoice', ScopeInterface::SCOPE_STORE, $order->getStoreId())) {
+                            $paymentMethod->processOrder($order, $payment->id);
+                            if ($paymentMethod->getConfigData('generate_invoice', $order->getStoreId())) {
                                 $this->logger->info('Generating invoice');
                             } else {
                                 $this->logger->info('Invoice generating is disabled.');
@@ -168,7 +195,8 @@ class Ipn extends AbstractPayment
                 $order = $this->salesOrderFactory->create();
                 $order->loadByIncrementId($orderIncrementId);
 
-                $this->paymentMethod->fullRefundOrder($order, $refund->amount);
+                $paymentMethod = $order->getPayment()->getMethodInstance();
+                $paymentMethod->fullRefundOrder($order, $refund->amount);
             }
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());

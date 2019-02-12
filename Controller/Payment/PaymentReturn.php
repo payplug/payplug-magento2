@@ -3,7 +3,7 @@
 namespace Payplug\Payments\Controller\Payment;
 
 use Payplug\Exception\PayplugException;
-use Payplug\Payments\Model\PaymentMethod;
+use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class PaymentReturn extends AbstractPayment
 {
@@ -32,9 +32,9 @@ class PaymentReturn extends AbstractPayment
                 return $this->_redirect($redirectUrlSuccess);
             }
 
-            $environmentMode = PaymentMethod::ENVIRONMENT_LIVE;
+            $environmentMode = AbstractPaymentMethod::ENVIRONMENT_LIVE;
             if ($orderPayment->isSandbox()) {
-                $environmentMode = PaymentMethod::ENVIRONMENT_TEST;
+                $environmentMode = AbstractPaymentMethod::ENVIRONMENT_TEST;
             }
 
             $paymentId = $orderPayment->getPaymentId();
@@ -44,8 +44,9 @@ class PaymentReturn extends AbstractPayment
                 $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
                 $this->_forward('cancel', null, null, ['failure_message' => $failureMessage]);
             } elseif ($payment->is_paid) {
-                $this->paymentMethod->processOrder($order, $paymentId);
-                $this->paymentMethod->saveCustomerCard($payment, $order->getCustomerId());
+                $paymentMethod = $order->getPayment()->getMethodInstance();
+                $paymentMethod->processOrder($order, $paymentId);
+                $paymentMethod->saveCustomerCard($payment, $order->getCustomerId());
                 return $this->_redirect($redirectUrlSuccess);
             }
         } catch (PayplugException $e) {

@@ -1,25 +1,25 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
-        <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
-            <group id="payplug_payments" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>PayPlug Payments</label>
+        <section id="payplug_payments" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1">
+            <label>PayPlug Payments</label>
+            <tab>sales</tab>
+            <resource>Payplug_Payments::general</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>PayPlug Payments - General configuration</label>
                 <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Login</frontend_model>
-                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Enabled</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Title</label>
-                </field>
-                <field id="email" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="email" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Email</label>
                     <validate>validate-email</validate>
                     <backend_model>Magento\Config\Model\Config\Backend\Email\Address</backend_model>
                 </field>
-                <field id="pwd" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="pwd" translate="label" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Password</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="account_details" translate="label" type="button" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Disconnect</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Logout</frontend_model>
                 </field>
                 <field id="environmentmode" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Mode</label>
@@ -29,13 +29,29 @@
                     <label>Payment Page</label>
                     <source_model>Payplug\Payments\Model\Config\Source\PaymentPage</source_model>
                 </field>
+                <field id="test_api_key"/>
+                <field id="live_api_key"/>
+                <field id="min_amounts"/>
+                <field id="max_amounts"/>
+                <field id="currencies"/>
+                <field id="company_id"/>
+                <field id="connected"/>
+                <field id="verified"/>
+            </group>
+        </section>
+        <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_standard" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>PayPlug Payments - Standard</label>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
                 <field id="one_click" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>One-click payment</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="account_details" translate="label" type="button" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Disconnect</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Logout</frontend_model>
                 </field>
                 <field id="pendingpayment_order_status" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Pending Payment order status</label>
@@ -67,15 +83,6 @@
                     <frontend_class>validate-number</frontend_class>
                 </field>
                 <field id="model"></field>
-                <field id="test_api_key"></field>
-                <field id="live_api_key"></field>
-                <field id="min_amounts"></field>
-                <field id="max_amounts"></field>
-                <field id="currencies"></field>
-                <field id="company_id"></field>
-                <field id="connected"></field>
-                <field id="verified"></field>
-                <field id="premium"></field>
             </group>
         </section>
     </system>

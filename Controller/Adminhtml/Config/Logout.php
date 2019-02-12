@@ -2,20 +2,20 @@
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
-use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Helper\Config;
 
 class Logout extends \Magento\Backend\App\Action
 {
     /**
-     * @var Data
+     * @var Config
      */
     private $helper;
 
     /**
      * @param \Magento\Backend\App\Action\Context $context
-     * @param Data                                $helper
+     * @param Config                              $helper
      */
-    public function __construct(\Magento\Backend\App\Action\Context $context, Data $helper)
+    public function __construct(\Magento\Backend\App\Action\Context $context, Config $helper)
     {
         $this->helper = $helper;
         parent::__construct($context);
@@ -31,7 +31,7 @@ class Logout extends \Magento\Backend\App\Action
 
         $params = [
             '_secure' => true,
-            'section' => 'payment',
+            'section' => 'payplug_payments',
         ];
 
         if ($website = $this->_request->getParam('website')) {

@@ -10,7 +10,7 @@ use Magento\Sales\Model\Order\Creditmemo;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Model\PaymentMethod;
+use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
 {
@@ -54,9 +54,9 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
 
         try {
             $payplugPayment = $this->helper->getOrderPayment($order->getId());
-            $environmentMode = PaymentMethod::ENVIRONMENT_LIVE;
+            $environmentMode = AbstractPaymentMethod::ENVIRONMENT_LIVE;
             if ($payplugPayment->isSandbox()) {
-                $environmentMode = PaymentMethod::ENVIRONMENT_TEST;
+                $environmentMode = AbstractPaymentMethod::ENVIRONMENT_TEST;
             }
 
             $paymentId = $payplugPayment->getPaymentId();

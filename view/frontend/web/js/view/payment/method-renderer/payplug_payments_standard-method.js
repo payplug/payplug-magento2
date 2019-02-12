@@ -13,7 +13,7 @@ define([
 
     return Component.extend({
         defaults: {
-            template: 'Payplug_Payments/payment/payplug_payments'
+            template: 'Payplug_Payments/payment/payplug_payments_standard'
         },
 
         redirectAfterPlaceOrder: false,
@@ -35,14 +35,14 @@ define([
                 oneClickOnSuccessAction.execute(customerCard.data('card-id'));
                 return;
             }
-            if (window.checkoutConfig.payment.payplug_payments.is_embedded) {
+            if (window.checkoutConfig.payment.payplug_payments_standard.is_embedded) {
                 lightboxOnSuccessAction.execute();
                 return;
             }
             redirectOnSuccessAction.execute();
         },
         getCardLogo: function() {
-            return window.checkoutConfig.payment.payplug_payments.logo;
+            return window.checkoutConfig.payment.payplug_payments_standard.logo;
         },
         getCards: function() {
             return this.cards;
@@ -51,7 +51,7 @@ define([
             return this.cards.length > 0;
         },
         loadCards: function () {
-            if (window.checkoutConfig.payment.payplug_payments.is_one_click) {
+            if (window.checkoutConfig.payment.payplug_payments_standard.is_one_click) {
                 var cacheKey = 'payplug-payments-cards';
                 var dataObject = customerData.get(cacheKey);
                 var data = dataObject();
@@ -65,7 +65,7 @@ define([
             if (sessionStorage.getItem(this.sessionCardId) !== null) {
                 selectedCard = sessionStorage.getItem(this.sessionCardId);
             } else {
-                selectedCard = window.checkoutConfig.payment.payplug_payments.selected_card_id;
+                selectedCard = window.checkoutConfig.payment.payplug_payments_standard.selected_card_id;
             }
 
             if (data.id === selectedCard) {
@@ -82,10 +82,10 @@ define([
         },
         getBrandLogo: function (brand) {
             brand = brand.toLowerCase();
-            if (window.checkoutConfig.payment.payplug_payments.brand_logos[brand]) {
-                return window.checkoutConfig.payment.payplug_payments.brand_logos[brand];
+            if (window.checkoutConfig.payment.payplug_payments_standard.brand_logos[brand]) {
+                return window.checkoutConfig.payment.payplug_payments_standard.brand_logos[brand];
             }
-            return window.checkoutConfig.payment.payplug_payments.brand_logos.other;
+            return window.checkoutConfig.payment.payplug_payments_standard.brand_logos.other;
         },
         getCardTemplate: function () {
             return 'Payplug_Payments/payment/card';

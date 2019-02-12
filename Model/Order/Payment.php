@@ -2,7 +2,7 @@
 
 namespace Payplug\Payments\Model\Order;
 
-use Payplug\Payments\Model\PaymentMethod;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payplug;
 
 class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
@@ -16,14 +16,14 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     const IS_SANDBOX = 'is_sandbox';
 
     /**
-     * @var PaymentMethod
+     * @var Config
      */
-    protected $paymentMethod;
+    protected $payplugConfig;
 
     /**
      * @param \Magento\Framework\Model\Context                        $context
      * @param \Magento\Framework\Registry                             $registry
-     * @param PaymentMethod                                           $paymentMethod
+     * @param Config                                                  $payplugConfig
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb           $resourceCollection
      * @param array                                                   $data
@@ -31,13 +31,13 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
-        PaymentMethod $paymentMethod,
+        Config $payplugConfig,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
-        $this->paymentMethod = $paymentMethod;
+        $this->payplugConfig = $payplugConfig;
     }
 
     protected function _construct()
@@ -118,10 +118,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
      */
     public function retrieve($paymentId, $environmentMode = null, $store = null)
     {
-        $validKey = $this->paymentMethod->setAPIKey($store, $environmentMode);
-        if ($validKey != null) {
-            Payplug::setSecretKey($validKey);
-        }
+        $this->payplugConfig->setPayplugApiKey($store, $environmentMode);
 
         return \Payplug\Payment::retrieve($paymentId);
     }
@@ -143,10 +140,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
             'metadata' => $metadata
         ];
 
-        $validKey = $this->paymentMethod->setAPIKey($store);
-        if ($validKey != null) {
-            Payplug::setSecretKey($validKey);
-        }
+        $this->payplugConfig->setPayplugApiKey($store);
 
         return \Payplug\Refund::create($paymentId, $data);
     }

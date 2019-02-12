@@ -4,21 +4,18 @@ require(
         'domReady!'
     ],
     function () {
-        var environment_mode = $('payment_us_payplug_payments_environmentmode');
+        var environment_mode = $('payplug_payments_general_environmentmode');
         if (environment_mode === null) {
             return;
         }
-        var one_click = $('payment_us_payplug_payments_one_click');
-        var pwd = $('row_payment_us_payplug_payments_pwd');
+        var pwd = $('row_payplug_payments_general_pwd');
         var is_verified = $('payplug_payments_is_verified').value;
-
-        var is_premium = $('payplug_payments_is_premium').value;
 
         if (pwd !== null) {
             hidePwdField();
 
-            if ($('payment_us_payplug_payments_pwd')) {
-                var pwd_field = $('payment_us_payplug_payments_pwd');
+            if ($('payplug_payments_general_pwd')) {
+                var pwd_field = $('payplug_payments_general_pwd');
                 pwd_field.value = '';
                 pwd_field.observe('keypress', keypressHandler);
             }
@@ -29,23 +26,13 @@ require(
                     pwd.show();
                 }
             });
-
-            if (one_click !== null) {
-                one_click.observe('change', function () {
-                    hidePwdField();
-                    if (is_premium == 0 && one_click.value == 1 && environment_mode.value == 'live') {
-                        pwd.show();
-                    }
-                });
-            }
         }
 
         var linkedFields = [
-            'payment_us_payplug_payments_email',
-            'payment_us_payplug_payments_pwd',
-            'payment_us_payplug_payments_environmentmode',
-            'payment_us_payplug_payments_payment_page',
-            'payment_us_payplug_payments_one_click'
+            'payplug_payments_general_email',
+            'payplug_payments_general_pwd',
+            'payplug_payments_general_environmentmode',
+            'payplug_payments_general_page'
         ];
 
         if ($('payplug_payments_can_override_default') !== null) {
@@ -66,7 +53,7 @@ require(
         }
 
         if ($('payplug_payments_prevent_default') !== null) {
-            linkedFields.push('payment_us_payplug_payments_account_details');
+            linkedFields.push('payplug_payments_general_account_details');
             for (var i=0; i < linkedFields.length; i++) {
                 if ($(linkedFields[i] + '_inherit') !== null) {
                     if ($(linkedFields[i] + '_inherit').checked) {
@@ -97,7 +84,7 @@ require(
 
         function hidePwdField(){
             if ($('payplug_payments_is_connected').value == 1) {
-                $('row_payment_us_payplug_payments_pwd').hide();
+                $('row_payplug_payments_general_pwd').hide();
             }
         }
     }

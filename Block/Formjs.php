@@ -3,21 +3,21 @@
 namespace Payplug\Payments\Block;
 
 use Magento\Framework\View\Element\Template;
-use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Helper\Config;
 
 class Formjs extends \Magento\Framework\View\Element\Template
 {
     /**
-     * @var Data
+     * @var Config
      */
     private $helper;
 
     /**
      * @param Template\Context $context
-     * @param Data             $helper
+     * @param Config           $helper
      * @param array            $data
      */
-    public function __construct(Template\Context $context, Data $helper, array $data = [])
+    public function __construct(Template\Context $context, Config $helper, array $data = [])
     {
         parent::__construct($context, $data);
         $this->helper = $helper;

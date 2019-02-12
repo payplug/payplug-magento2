@@ -2,21 +2,21 @@
 
 namespace Payplug\Payments\Plugin\Adminhtml\Widget;
 
-use Payplug\Payments\Model\PaymentMethod;
+use Payplug\Payments\Helper\Data;
 
 class SalesOrderViewContext
 {
     /**
-     * @var PaymentMethod
+     * @var Data
      */
-    protected $paymentMethod;
+    protected $payplugHelper;
 
     /**
-     * @param PaymentMethod $paymentMethod
+     * @param Data $payplugHelper
      */
-    public function __construct(PaymentMethod $paymentMethod)
+    public function __construct(Data $payplugHelper)
     {
-        $this->paymentMethod = $paymentMethod;
+        $this->payplugHelper = $payplugHelper;
     }
 
     /**
@@ -28,7 +28,7 @@ class SalesOrderViewContext
      */
     public function beforeSetLayout(\Magento\Sales\Block\Adminhtml\Order\View $subject)
     {
-        if ($this->paymentMethod->canUpdatePayment($subject->getOrder())) {
+        if ($this->payplugHelper->canUpdatePayment($subject->getOrder())) {
             $subject->addButton('payplug_update_payment', [
                 'label'   => __('Update Payment'),
                 'onclick' => 'setLocation(\'' . $subject->getUrl('payplug_payments_admin/order/updatePayment') . '\')',

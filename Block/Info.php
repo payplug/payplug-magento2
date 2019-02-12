@@ -6,7 +6,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Model\PaymentMethod;
+use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class Info extends \Magento\Payment\Block\Info
 {
@@ -61,9 +61,9 @@ class Info extends \Magento\Payment\Block\Info
         }
 
         $isSandbox = $orderPayment->isSandbox();
-        $environmentMode = PaymentMethod::ENVIRONMENT_TEST;
+        $environmentMode = AbstractPaymentMethod::ENVIRONMENT_TEST;
         if (!$isSandbox) {
-            $environmentMode = PaymentMethod::ENVIRONMENT_LIVE;
+            $environmentMode = AbstractPaymentMethod::ENVIRONMENT_LIVE;
         }
 
         $paymentId = $orderPayment->getPaymentId();

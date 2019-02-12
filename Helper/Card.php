@@ -46,7 +46,7 @@ class Card extends AbstractHelper
     protected $sortOrderBuilderFactory;
 
     /**
-     * @var Data
+     * @var Config
      */
     protected $helper;
 
@@ -57,7 +57,7 @@ class Card extends AbstractHelper
      * @param FilterBuilderFactory           $filterBuilderFactory
      * @param FilterGroupBuilderFactory      $filterGroupBuilderFactory
      * @param SortOrderBuilderFactory        $sortOrderBuilderFactory
-     * @param Data                           $helper
+     * @param Config                         $helper
      */
     public function __construct(
         Context $context,
@@ -66,7 +66,7 @@ class Card extends AbstractHelper
         FilterBuilderFactory $filterBuilderFactory,
         FilterGroupBuilderFactory $filterGroupBuilderFactory,
         SortOrderBuilderFactory $sortOrderBuilderFactory,
-        Data $helper
+        Config $helper
     ) {
         parent::__construct($context);
         $this->customerCardRepository = $customerCardRepository;

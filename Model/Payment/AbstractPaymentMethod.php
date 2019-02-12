@@ -1,10 +1,8 @@
 <?php
 
-namespace Payplug\Payments\Model;
+namespace Payplug\Payments\Model\Payment;
 
 use Magento\Directory\Helper\Data as DirectoryHelper;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Exception\PaymentException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Model\InfoInterface;
@@ -19,23 +17,20 @@ use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Core\HttpClient;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Helper\Card as CardHelper;
 use Payplug\Payments\Helper\Data as PayplugHelper;
-use Payplug\Payments\Model\Customer\Card;
-use Payplug\Payments\Model\Customer\CardFactory as PayplugCardFactory;
-use Payplug\Payments\Model\Order\PaymentFactory as PayplugPaymentFactory;
-use Payplug\Payments\Model\Order\Processing;
 use Payplug\Payments\Model\Order\ProcessingFactory as PayplugOrderProcessingFactory;
+use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Model\OrderProcessingRepository;
 use Payplug\Payplug;
 
-class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMethodInterface
+abstract class AbstractPaymentMethod extends AbstractModel implements MethodInterface, PaymentMethodInterface
 {
     const ENVIRONMENT_TEST = 'test';
     const ENVIRONMENT_LIVE = 'live';
     const PAYMENT_PAGE_REDIRECT = 'redirect';
     const PAYMENT_PAGE_EMBEDDED = 'embedded';
-    const METHOD_CODE = 'payplug_payments';
 
     /**
      * @var string
@@ -45,7 +40,7 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     /**
      * @var string
      */
-    protected $_infoBlockType = \Payplug\Payments\Block\Info::class;
+    protected $_infoBlockType = \Magento\Payment\Block\Info::class;
 
     /**
      * Core store config
@@ -62,7 +57,7 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     /**
      * @var string
      */
-    protected $_code = self::METHOD_CODE;
+    protected $_code = '';
 
     /**
      * @var \Magento\Framework\UrlInterface
@@ -73,11 +68,6 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
      * @var Logger
      */
     protected $payplugLogger;
-
-    /**
-     * @var PayplugPaymentFactory
-     */
-    protected $payplugPaymentFactory;
 
     /**
      * @var PayplugHelper
@@ -110,21 +100,6 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     protected $orderSender;
 
     /**
-     * @var PayplugCardFactory
-     */
-    protected $cardFactory;
-
-    /**
-     * @var CustomerCardRepository
-     */
-    protected $customerCardRepository;
-
-    /**
-     * @var CardHelper
-     */
-    protected $cardHelper;
-
-    /**
      * @var PayplugOrderProcessingFactory
      */
     protected $orderProcessingFactory;
@@ -135,23 +110,25 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     protected $orderProcessingRepository;
 
     /**
+     * @var Config
+     */
+    protected $payplugConfig;
+
+    /**
      * @param \Magento\Framework\Model\Context                             $context
      * @param \Magento\Framework\Registry                                  $registry
      * @param \Magento\Framework\App\Config\ScopeConfigInterface           $scopeConfig
      * @param \Magento\Framework\ObjectManagerInterface                    $objectManager
      * @param UrlInterface                                                 $urlBuilder
      * @param Logger                                                       $payplugLogger
-     * @param PayplugPaymentFactory                                        $paymentFactory
      * @param PayplugHelper                                                $payplugHelper
      * @param InvoiceService                                               $invoiceService
      * @param OrderRepository                                              $orderRepository
      * @param OrderPaymentRepository                                       $orderPaymentRepository
      * @param Order\Email\Sender\OrderSender                               $orderSender
-     * @param PayplugCardFactory                                           $cardFactory
-     * @param CardHelper                                                   $cardHelper
-     * @param CustomerCardRepository                                       $customerCardRepository
      * @param PayplugOrderProcessingFactory                                $orderProcessingFactory
      * @param OrderProcessingRepository                                    $orderProcessingRepository
+     * @param Config                                                       $payplugConfig
      * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
      * @param \Magento\Framework\Data\Collection\AbstractDb|null           $resourceCollection
      * @param array                                                        $data
@@ -164,17 +141,14 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
         \Magento\Framework\ObjectManagerInterface $objectManager,
         UrlInterface $urlBuilder,
         Logger $payplugLogger,
-        PayplugPaymentFactory $paymentFactory,
         PayplugHelper $payplugHelper,
         InvoiceService $invoiceService,
         OrderRepository $orderRepository,
         OrderPaymentRepository $orderPaymentRepository,
         Order\Email\Sender\OrderSender $orderSender,
-        PayplugCardFactory $cardFactory,
-        CustomerCardRepository $customerCardRepository,
-        CardHelper $cardHelper,
         PayplugOrderProcessingFactory $orderProcessingFactory,
         OrderProcessingRepository $orderProcessingRepository,
+        Config $payplugConfig,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = [],
@@ -186,23 +160,15 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
         $this->objectManager = $objectManager;
         $this->urlBuilder = $urlBuilder;
         $this->payplugLogger = $payplugLogger;
-        $this->payplugPaymentFactory = $paymentFactory;
         $this->payplugHelper = $payplugHelper;
         $this->invoiceService = $invoiceService;
         $this->orderRepository = $orderRepository;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->orderSender = $orderSender;
         $this->directory = $directory ?: $objectManager->get(DirectoryHelper::class);
-        $this->cardFactory = $cardFactory;
-        $this->customerCardRepository = $customerCardRepository;
-        $this->cardHelper = $cardHelper;
         $this->orderProcessingFactory = $orderProcessingFactory;
         $this->orderProcessingRepository = $orderProcessingRepository;
-
-        $validKey = self::setAPIKey();
-        if ($validKey != null) {
-            Payplug::setSecretKey($validKey);
-        }
+        $this->payplugConfig = $payplugConfig;
     }
 
     /**
@@ -564,42 +530,6 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     }
 
     /**
-     * Refund specified amount for payment
-     *
-     * @param \Magento\Framework\DataObject|InfoInterface $payment
-     * @param float $amount
-     *
-     * @return $this
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
-     * @throws \Exception
-     */
-    public function refund(\Magento\Payment\Model\InfoInterface $payment, $amount)
-    {
-        if (!$this->canRefund()) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('The refund action is not available.'));
-        }
-
-        try {
-            $payplugPayment = $this->payplugHelper->getOrderPayment($payment->getOrder()->getId());
-            $paymentId = $payplugPayment->getPaymentId();
-            $metadata = ['reason' => "Refunded with Magento."];
-
-            $payplugPayment->makeRefund($paymentId, $amount, $metadata, $payment->getOrder()->getStoreId());
-        } catch (NoSuchEntityException $e) {
-            throw new \Exception(__('Could not find valid payplug order payment. Please try refunding offline.'));
-        } catch (PayplugException $e) {
-            $this->payplugLogger->error($e->__toString());
-            throw new \Exception(__('Error while refunding online. Please try again or contact us.'));
-        } catch (\Exception $e) {
-            $this->payplugLogger->error($e->getMessage());
-            throw new \Exception(__('Error while refunding online. Please try again or contact us.'));
-        }
-
-        return $this;
-    }
-
-    /**
      * Cancel payment abstract method
      *
      * @param \Magento\Framework\DataObject|InfoInterface $payment
@@ -699,7 +629,8 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
             $storeId = $this->getStore();
         }
         $path = 'payment/' . $this->getCode() . '/' . $field;
-        return $this->scopeConfig->getValue($path, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $storeId);
+
+        return $this->scopeConfig->getValue($path, ScopeInterface::SCOPE_STORE, $storeId);
     }
 
     /**
@@ -748,8 +679,8 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
         }
 
         if ($quote !== null) {
-            $testApiKey = $this->getConfigData('test_api_key', $quote->getStoreId());
-            $liveApiKey = $this->getConfigData('live_api_key', $quote->getStoreId());
+            $testApiKey = $this->payplugConfig->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $quote->getStoreId());
+            $liveApiKey = $this->payplugConfig->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $quote->getStoreId());
             if (empty($testApiKey) && empty($liveApiKey)) {
                 return false;
             }
@@ -823,396 +754,6 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     }
 
     /**
-     * Return url to redirect after confirming the order
-     *
-     * @return string
-     */
-    public function getOrderPlaceRedirectUrl()
-    {
-        $url = $this->urlBuilder->getUrl(
-            'payplug_payments/payment/redirect',
-            ['_secure' => true, '_nosid' => true]
-        );
-
-        return $url;
-    }
-
-    /**
-     * Set up the right API Key in current context
-     *
-     * @param int|null    $storeId
-     * @param string|null $environmentMode
-     *
-     * @return string
-     */
-    public function setAPIKey($storeId = null, $environmentMode = null)
-    {
-        if ($environmentMode === null) {
-            $environmentMode = $this->getConfigData('environmentmode', $storeId);
-        }
-        $validKey = null;
-        if ($environmentMode == self::ENVIRONMENT_TEST) {
-            $validKey = $this->getConfigData('test_api_key', $storeId);
-        } elseif ($environmentMode == self::ENVIRONMENT_LIVE) {
-            $validKey = $this->getConfigData('live_api_key', $storeId);
-        }
-
-        return $validKey;
-    }
-
-    /**
-     * Generate payplug transaction
-     *
-     * @param Order    $order
-     * @param int|null $customerCardId
-     *
-     * @return \Payplug\Resource\Payment
-     */
-    public function createPayplugTransaction($order, $customerCardId = null)
-    {
-        HttpClient::addDefaultUserAgentProduct(
-            'PayPlug-Magento2',
-            $this->payplugHelper->getModuleVersion(),
-            'Magento ' . $this->payplugHelper->getMagentoVersion()
-        );
-
-        $currency = $order->getOrderCurrencyCode();
-        $quoteId = $order->getQuoteId();
-
-        if ($currency === null) {
-            $currency = 'EUR';
-        }
-
-        //metadata
-        $metadata = [
-            'ID Quote' => $quoteId,
-            'Order'    => $order->getIncrementId(),
-            'Website'  => $_SERVER['HTTP_HOST']
-        ];
-
-        //payment
-        $paymentTab = [
-            'amount' => $order->getGrandTotal() * 100,
-            'currency' => $currency,
-            'customer' => $this->buildCustomerData($order),
-            'metadata' => $metadata
-        ];
-
-        $paymentTab = array_merge(
-            $paymentTab,
-            $this->buildPaymentData($order, $customerCardId)
-        );
-
-        $payment = \Payplug\Payment::create($paymentTab);
-
-        $isSandbox = $this->payplugHelper->getIsSandbox($order->getStoreId());
-        /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
-        $orderPayment = $this->payplugPaymentFactory->create();
-        $orderPayment->setOrderId($order->getId());
-        $orderPayment->setPaymentId($payment->id);
-        $orderPayment->setIsSandbox($isSandbox);
-        $this->orderPaymentRepository->save($orderPayment);
-
-        return $payment;
-    }
-
-    /**
-     * Build customer data for payment transaction
-     *
-     * @param Order $order
-     *
-     * @return array
-     */
-    protected function buildCustomerData($order)
-    {
-        $address = null;
-        if ($order->getShippingAddress() !== false) {
-            $address = $order->getShippingAddress();
-        } elseif ($order->getBillingAddress() !== false) {
-            $address = $order->getBillingAddress();
-        }
-
-        $addressStreet    = 'no data';
-        $addressStreet2   = null;
-        $addressPostcode  = '00000';
-        $addressCity      = 'no data';
-        $addressCountryId = 'FR';
-        if ($address !== null) {
-            $street1 = $address->getStreetLine(1);
-            if (!empty($street1)) {
-                $addressStreet = $street1;
-            }
-            $street2 = $address->getStreetLine(2);
-            if (!empty($street2)) {
-                $addressStreet2 = $street2;
-            }
-            $addressPostcode = $address->getPostcode();
-            $addressCity = $address->getCity();
-            $addressCountryId = $address->getCountryId();
-        }
-        $firstname = $order->getCustomerFirstname();
-        $lastname = $order->getCustomerLastname();
-        if ($order->getBillingAddress() !== false) {
-            $firstname = $order->getBillingAddress()->getFirstname();
-            $lastname = $order->getBillingAddress()->getLastname();
-        }
-
-        return [
-            'first_name' => $firstname,
-            'last_name' => $lastname,
-            'email' => $order->getCustomerEmail(),
-            'address1' => $addressStreet,
-            'address2' => $addressStreet2,
-            'postcode' => $addressPostcode,
-            'city' => $addressCity,
-            'country' => $addressCountryId,
-        ];
-    }
-
-    /**
-     * Build payment data for payment transaction
-     *
-     * @param Order    $order
-     * @param int|null $customerCardId
-     *
-     * @return array
-     */
-    protected function buildPaymentData($order, $customerCardId)
-    {
-        $paymentData = [];
-        $paymentData['notification_url'] = $this->urlBuilder->getUrl('payplug_payments/payment/ipn', ['ipn_store_id' => $order->getStoreId()]);
-        $paymentData['force_3ds'] = false;
-
-        $currentCard = $this->getCustomerCardToken($customerCardId, $order->getCustomerId());
-        $paymentData['allow_save_card'] = $this->canSaveCard($currentCard, $order->getCustomerId());
-
-        if ($this->isOneClick() && $currentCard != null) {
-            $paymentData['payment_method'] = $currentCard;
-        } else {
-            $paymentData['hosted_payment'] = [
-                'return_url' => $this->urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
-                    '_secure'  => true,
-                    'quote_id' => $order->getQuoteId(),
-                ]),
-                'cancel_url' => $this->urlBuilder->getUrl('payplug_payments/payment/cancel', [
-                    '_secure'  => true,
-                    'quote_id' => $order->getQuoteId(),
-                ]),
-            ];
-        }
-
-        return $paymentData;
-    }
-
-    /**
-     * Check if card can be saved on payment page
-     *
-     * @param string|null $currentCard
-     * @param int|null    $customerId
-     *
-     * @return bool
-     */
-    protected function canSaveCard($currentCard, $customerId)
-    {
-        if (!$this->isOneClick()) {
-            return false;
-        }
-
-        if ($currentCard !== null) {
-            return false;
-        }
-
-        if (empty($customerId)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Save customer card
-     *
-     * @param \Payplug\Resource\Payment $payment
-     * @param int|null                  $customerId
-     * @param int|null                  $storeId
-     */
-    public function saveCustomerCard($payment, $customerId, $storeId = null)
-    {
-        if ($customerId == null) {
-            return;
-        }
-
-        if ($payment->save_card == 1 || ($payment->card->id != '' && $payment->hosted_payment != '')) {
-
-            try {
-                $this->customerCardRepository->get($payment->card->id, 'card_token');
-                return;
-            } catch (NoSuchEntityException $e) {
-                // Nothing to do, we want to create card if it does not already exist
-            }
-
-            /** @var Card $card */
-            $card = $this->cardFactory->create();
-            $customerCardId = $this->cardHelper->getLastCardIdByCustomer($customerId) + 1;
-            $companyId = (int) $this->getConfigData('company_id', $storeId);
-            $cardDate = $payment->card->exp_year . '-' . $payment->card->exp_month;
-            $expDate = date('Y-m-t 23:59:59', strtotime($cardDate));
-            $brand = $payment->card->brand;
-            if (!in_array(strtolower($payment->card->brand), ['visa', 'mastercard', 'maestro', 'carte_bancaire'])) {
-                $brand = 'other';
-            }
-
-            $card->setCustomerId($customerId);
-            $card->setCustomerCardId($customerCardId);
-            $card->setCompanyId($companyId);
-            $card->setIsSandbox(!$payment->is_live);
-            $card->setCardToken($payment->card->id);
-            $card->setLastFour($payment->card->last4);
-            $card->setExpDate($expDate);
-            $card->setBrand($brand);
-            $card->setCountry($payment->card->country);
-            $card->setMetadata($payment->card->metadata);
-
-            $this->customerCardRepository->save($card);
-        }
-    }
-
-    /**
-     * Get customer card token
-     *
-     * @param int|null $customerCardId
-     * @param int|null $customerId
-     *
-     * @return string|null
-     *
-     * @throws PaymentException
-     */
-    protected function getCustomerCardToken($customerCardId, $customerId)
-    {
-        $this->payplugLogger->error("[$customerCardId][$customerId]");
-        if ($customerCardId === null) {
-            return null;
-        }
-
-        if (empty($customerId)) {
-            return null;
-        }
-
-        try {
-            $currentCard = $this->cardHelper->getCustomerCard($customerId, $customerCardId);
-        } catch (NoSuchEntityException $e) {
-            throw new PaymentException(__('This card does not exists or has been deleted.'));
-        }
-
-        return $currentCard->getCardToken();
-    }
-
-    /**
-     * Check if PayPlug One-click payment is enable
-     *
-     * @return bool
-     */
-    public function isOneClick()
-    {
-        return $this->payplugHelper->isOneClick();
-    }
-
-    /**
-     * Change order status to Pending Payment
-     *
-     * @param Order $order
-     */
-    public function setOrderPendingPayment($order)
-    {
-        if ($order->getState() != Order::STATE_NEW) {
-            return;
-        }
-
-        $status = $this->getConfigData('pendingpayment_order_status', $order->getStoreId());
-        $order->addStatusToHistory($status, '');
-        $this->orderRepository->save($order);
-    }
-
-    /**
-     * Process order after payment validation
-     *
-     * @param Order  $order
-     * @param string $paymentId
-     *
-     * @throws \Exception
-     */
-    public function processOrder($order, $paymentId)
-    {
-        try {
-            $orderProcessing = $this->orderProcessingRepository->get($order->getId(), 'order_id');
-            $createdAt = new \DateTime($orderProcessing->getCreatedAt());
-
-            if ($createdAt > new \DateTime("now - 1 min")) {
-                // Order is currently being processed
-                return;
-            }
-            // Order has been set as processing for more than a minute
-            // Delete and recreate a new flag
-            $this->orderProcessingRepository->delete($orderProcessing);
-        } catch (NoSuchEntityException $e) {
-            // Order is not currently being processed
-            // Create a new flag to block concurrent process
-        }
-
-        try {
-            $orderProcessing = $this->createOrderProcessing($order);
-        } catch (\Exception $e) {
-            return;
-        }
-
-        try {
-            $order = $this->orderRepository->get($order->getId());
-            if ($order->getState() != Order::STATE_PENDING_PAYMENT &&
-                $order->getState() != Order::STATE_NEW
-            ) {
-                $this->orderProcessingRepository->delete($orderProcessing);
-                return;
-            }
-
-            $status = $this->getConfigData('processing_order_status', $order->getStoreId());
-            $comment = sprintf(__('Payment has been captured by Payment Gateway. Transaction id: %s'), $paymentId);
-            $transactionSave = $this->objectManager->create(\Magento\Framework\DB\Transaction::class);
-            if ($this->payplugHelper->getConfigValue('generate_invoice', ScopeInterface::SCOPE_STORE, $order->getStoreId())) {
-                if (!$order->canInvoice()) {
-                    throw new \Exception(__('Cannot create an invoice.'));
-                }
-
-                $invoice = $this->invoiceService->prepareInvoice($order, []);
-                if (!$invoice) {
-                    throw new \Exception(__('Cannot create an invoice.'));
-                }
-                if (!$invoice->getTotalQty()) {
-                    throw new \Exception(__('Cannot create an invoice without products.'));
-                }
-
-                $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_ONLINE);
-                $invoice->register();
-                $invoice->setTransactionId($paymentId);
-                $invoice->getOrder()->setCustomerNoteNotify(false);
-
-                $transactionSave->addObject($invoice);
-            } else {
-                $comment .= ' - ' . __("Invoice can be manually created.");
-            }
-
-            $order->setIsInProcess(true);
-            $order->addStatusToHistory($status, $comment);
-
-            $transactionSave->addObject($order);
-            $transactionSave->save();
-
-            $this->sentNewOrderEmail($order);
-        } finally {
-            $this->orderProcessingRepository->delete($orderProcessing);
-        }
-    }
-
-    /**
      * @param Order $order
      *
      * @return Processing
@@ -1276,60 +817,6 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     }
 
     /**
-     * Check if order's payment can be updated
-     *
-     * @param Order $order
-     *
-     * @return bool
-     */
-    public function canUpdatePayment($order)
-    {
-        if ($order->getPayment() === false) {
-            return false;
-        }
-
-        if ($order->getPayment()->getMethodInstance()->getCode() != $this->getCode()) {
-            return false;
-        }
-
-        $finalStates = [Order::STATE_CANCELED, Order::STATE_CLOSED];
-        if (in_array($order->getState(), $finalStates)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Update order's payment
-     *
-     * @param Order $order
-     *
-     * @return void
-     */
-    public function updatePayment($order)
-    {
-        $payplugPayment = $this->payplugHelper->getOrderPayment($order->getId());
-
-        if ($payplugPayment->getId()) {
-            $environmentMode = self::ENVIRONMENT_LIVE;
-            if ($payplugPayment->isSandbox()) {
-                $environmentMode = self::ENVIRONMENT_TEST;
-            }
-
-            $paymentId = $payplugPayment->getPaymentId();
-            $payment = $payplugPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
-            if ($payment->failure) {
-                $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
-                $this->cancelOrder($order, false, $failureMessage);
-            } elseif ($payment->is_paid) {
-                $this->processOrder($order, $payment->id);
-            }
-            $this->saveCustomerCard($payment, $order->getCustomerId(), $order->getStoreId());
-        }
-    }
-
-    /**
      * Get valid range of amount for a given currency
      *
      * @param string $isoCode
@@ -1341,7 +828,9 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
     {
         $minAmounts = [];
         $maxAmounts = [];
-        foreach (explode(';', $this->getConfigData('min_amounts', $storeId)) as $amountCur) {
+        $minAmountsConfig = $this->payplugConfig->getConfigValue('min_amounts', ScopeInterface::SCOPE_STORE, $storeId);
+        $maxAmountsConfig = $this->payplugConfig->getConfigValue('max_amounts', ScopeInterface::SCOPE_STORE, $storeId);
+        foreach (explode(';', $minAmountsConfig) as $amountCur) {
             $cur = [];
             if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
                 $minAmounts[$cur[1]] = (int)$cur[2];
@@ -1349,7 +838,7 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
                 return false;
             }
         }
-        foreach (explode(';', $this->getConfigData('max_amounts', $storeId)) as $amountCur) {
+        foreach (explode(';', $maxAmountsConfig) as $amountCur) {
             $cur = [];
             if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
                 $maxAmounts[$cur[1]] = (int)$cur[2];
@@ -1366,30 +855,5 @@ class PaymentMethod extends AbstractModel implements MethodInterface, PaymentMet
         }
 
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
-    }
-
-    /**
-     * Full refund order
-     *
-     * @param Order $order
-     * @param float $amountToRefund
-     */
-    public function fullRefundOrder($order, $amountToRefund)
-    {
-        if (!$order->canCreditmemo()) {
-            return;
-        }
-        if ($order->getCreditmemosCollection()->getSize() > 0) {
-            return;
-        }
-        if ($order->getTotalRefunded() > 0) {
-            return;
-        }
-        $amountToRefund = $amountToRefund / 100;
-        if ((float)$amountToRefund != (float)$order->getTotalPaid()) {
-            return;
-        }
-
-        $order->getPayment()->registerRefundNotification($amountToRefund);
     }
 }

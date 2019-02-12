@@ -3,31 +3,21 @@
 namespace Payplug\Payments\Block\Adminhtml\Config;
 
 use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Helper\Config;
 
 class Logout extends \Magento\Config\Block\System\Config\Form\Field
 {
     /**
-     * @var Data
+     * @var Config
      */
     private $helper;
 
     /**
-     * @var string
-     */
-    private $scope;
-
-    /**
-     * @var string
-     */
-    private $scopeId;
-
-    /**
      * @param \Magento\Backend\Block\Template\Context $context
-     * @param Data                                    $helper
+     * @param Config                                  $helper
      * @param array                                   $data
      */
-    public function __construct(\Magento\Backend\Block\Template\Context $context, Data $helper, array $data = [])
+    public function __construct(\Magento\Backend\Block\Template\Context $context, Config $helper, array $data = [])
     {
         $this->helper = $helper;
         parent::__construct($context, $data);
@@ -44,12 +34,12 @@ class Logout extends \Magento\Config\Block\System\Config\Form\Field
      */
     protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
     {
-        $this->initScopeData();
+        $this->helper->initScopeData();
 
         /** @var \Magento\Backend\Block\Widget\Button $buttonBlock  */
         $buttonBlock = $this->getForm()->getLayout()->createBlock(\Magento\Backend\Block\Widget\Button::class);
 
-        $html = '<p>' . $this->helper->getAccountEmail() . '</p>';
+        $html = '<p>' . $this->helper->getConfigValue('email') . '</p>';
         $data = [
             'id' => 'payplug_payments_disconnectUrl',
             'label' => $element->getLabel(),
@@ -66,22 +56,17 @@ class Logout extends \Magento\Config\Block\System\Config\Form\Field
     private function getButtonUrl()
     {
         $parameters = [];
-        if ($this->scope == ScopeInterface::SCOPE_STORES) {
-            $parameters['store'] = $this->scopeId;
+        $scope = $this->helper->getConfigScope();
+        $scopeId = $this->helper->getConfigScopeId();
+        if ($scope == ScopeInterface::SCOPE_STORES) {
+            $parameters['store'] = $scopeId;
         }
-        if ($this->scope == ScopeInterface::SCOPE_WEBSITES) {
-            $parameters['website'] = $this->scopeId;
+        if ($scope == ScopeInterface::SCOPE_WEBSITES) {
+            $parameters['website'] = $scopeId;
         }
 
         $disconnectUrl = $this->getUrl('payplug_payments_admin/config/logout', $parameters);
 
         return $disconnectUrl;
-    }
-
-    private function initScopeData()
-    {
-        $this->helper->initScopeData();
-        $this->scope = $this->helper->getConfigScope();
-        $this->scopeId = $this->helper->getConfigScopeId();
     }
 }

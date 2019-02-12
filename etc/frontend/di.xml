@@ -3,7 +3,7 @@
     <type name="Magento\Checkout\Model\CompositeConfigProvider">
         <arguments>
             <argument name="configProviders" xsi:type="array">
-                <item name="payplug_payments_config_provider" xsi:type="object">Payplug\Payments\Model\ConfigProvider</item>
+                <item name="payplug_payments_standard_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Standard\ConfigProvider</item>
             </argument>
         </arguments>
     </type>
