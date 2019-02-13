@@ -1,6 +1,6 @@
 <?php
 
-namespace Payplug\Payments\Model;
+namespace Payplug\Payments\Model\Payment\Standard;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Customer\Model\Session;
@@ -11,17 +11,18 @@ use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Card;
-use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Model\Payment\Standard;
 
 class ConfigProvider implements ConfigProviderInterface
 {
     /**
      * @var string
      */
-    protected $methodCode = PaymentMethod::METHOD_CODE;
+    protected $methodCode = Standard::METHOD_CODE;
 
     /**
-     * @var PaymentMethod
+     * @var Standard
      */
     protected $method;
 
@@ -41,9 +42,9 @@ class ConfigProvider implements ConfigProviderInterface
     private $request;
 
     /**
-     * @var Data
+     * @var Config
      */
-    private $payplugHelper;
+    private $payplugConfig;
 
     /**
      * @var Card
@@ -60,7 +61,7 @@ class ConfigProvider implements ConfigProviderInterface
      * @param Repository           $assetRepo
      * @param RequestInterface     $request
      * @param PaymentHelper        $paymentHelper
-     * @param Data                 $payplugHelper
+     * @param Config               $payplugConfig
      * @param Card                 $payplugCardHelper
      * @param Session              $customerSession
      */
@@ -69,7 +70,7 @@ class ConfigProvider implements ConfigProviderInterface
         Repository $assetRepo,
         RequestInterface $request,
         PaymentHelper $paymentHelper,
-        Data $payplugHelper,
+        Config $payplugConfig,
         Card $payplugCardHelper,
         Session $customerSession
     ) {
@@ -77,7 +78,7 @@ class ConfigProvider implements ConfigProviderInterface
         $this->assetRepo = $assetRepo;
         $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
-        $this->payplugHelper = $payplugHelper;
+        $this->payplugConfig = $payplugConfig;
         $this->payplugCardHelper = $payplugCardHelper;
         $this->customerSession = $customerSession;
     }
@@ -91,8 +92,8 @@ class ConfigProvider implements ConfigProviderInterface
             'payment' => [
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
-                    'is_embedded' => $this->payplugHelper->isEmbedded(),
-                    'is_one_click' => $this->payplugHelper->isOneClick(),
+                    'is_embedded' => $this->payplugConfig->isEmbedded(),
+                    'is_one_click' => $this->method->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
                 ],

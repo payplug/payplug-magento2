@@ -3,12 +3,12 @@
 namespace Payplug\Payments\Block\Adminhtml\Config;
 
 use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Helper\Config;
 
 class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
 {
     /**
-     * @var Data
+     * @var Config
      */
     private $helper;
 
@@ -18,27 +18,17 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
     private $request;
 
     /**
-     * @var string
-     */
-    private $scope;
-
-    /**
-     * @var string
-     */
-    private $scopeId;
-
-    /**
      * @param \Magento\Backend\Block\Context      $context
      * @param \Magento\Backend\Model\Auth\Session $authSession
      * @param \Magento\Framework\View\Helper\Js   $jsHelper
-     * @param Data                                $helper
+     * @param Config                              $helper
      * @param array                               $data
      */
     public function __construct(
         \Magento\Backend\Block\Context $context,
         \Magento\Backend\Model\Auth\Session $authSession,
         \Magento\Framework\View\Helper\Js $jsHelper,
-        Data $helper,
+        Config $helper,
         array $data = []
     ) {
         $this->helper = $helper;
@@ -57,15 +47,14 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
         $this->setElement($element);
         $header = $this->_getHeaderHtml($element);
 
-        $this->initScopeData();
+        $this->helper->initScopeData();
 
         $connected = $this->helper->isConnected();
-        $isVerified = $this->helper->getAdminConfigValue('verified');
-        $isPremium = $this->helper->getAdminConfigValue('premium');
+        $isVerified = $this->helper->getConfigValue('verified');
 
-        $connexionFields = ['payment_us_payplug_payments_email'];
+        $connexionFields = ['payplug_payments_general_email'];
 
-        $disconnectionFields = ['payment_us_payplug_payments_account_details'];
+        $disconnectionFields = ['payplug_payments_general_account_details'];
 
         $elements = '';
         foreach ($element->getElements() as $field) {
@@ -95,10 +84,7 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
         $extraElements .= '<input id="payplug_payments_is_verified" type="hidden" name="payplug_payments_is_verified" 
         value="'.(int)$isVerified.'" />';
 
-        $extraElements .= '<input id="payplug_payments_is_premium" type="hidden" name="payplug_payments_is_premium" 
-        value="'.(int)$isPremium.'" />';
-
-        if ($this->scope == ScopeInterface::SCOPE_WEBSITES) {
+        if ($this->helper->getConfigScope() == ScopeInterface::SCOPE_WEBSITES) {
 
             $input = 'payplug_payments_prevent_default';
             if (!$connected) {
@@ -111,12 +97,5 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
         $footer = $this->_getFooterHtml($element);
 
         return $header . $elements . $footer . $extraElements;
-    }
-
-    private function initScopeData()
-    {
-        $this->helper->initScopeData();
-        $this->scope = $this->helper->getConfigScope();
-        $this->scopeId = $this->helper->getConfigScopeId();
     }
 }

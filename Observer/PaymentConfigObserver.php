@@ -6,9 +6,9 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Message\ManagerInterface;
-use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
-use Payplug\Payments\Model\PaymentMethod;
+use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class PaymentConfigObserver implements ObserverInterface
 {
@@ -23,7 +23,7 @@ class PaymentConfigObserver implements ObserverInterface
     private $login;
 
     /**
-     * @var Data
+     * @var Config
      */
     private $helper;
 
@@ -48,17 +48,22 @@ class PaymentConfigObserver implements ObserverInterface
     private $payplugConfigVerified;
 
     /**
-     * @var bool
+     * @var string
      */
-    private $payplugConfigPremium;
+    private $testApiKey;
+
+    /**
+     * @var string
+     */
+    private $liveApiKey;
 
     /**
      * @param Http             $request
      * @param Login            $login
-     * @param Data             $helper
+     * @param Config           $helper
      * @param ManagerInterface $messageManager
      */
-    public function __construct(Http $request, Login $login, Data $helper, ManagerInterface $messageManager)
+    public function __construct(Http $request, Login $login, Config $helper, ManagerInterface $messageManager)
     {
         $this->request = $request;
         $this->login = $login;
@@ -70,79 +75,44 @@ class PaymentConfigObserver implements ObserverInterface
     {
         $postParams = $this->request->getPost();
 
-        if (!isset($postParams['groups']['payplug_payments']['fields'])) {
+        if (!isset($postParams['config_state'])) {
             return;
         }
 
-        $groups = $postParams['groups'];
-        $fields = $groups['payplug_payments']['fields'];
+        $sections = $postParams['config_state'];
+        if (isset($sections['payplug_payments_general']) && isset($postParams['groups']['general']['fields'])) {
+            $this->processGeneralConfig($postParams['groups']);
+            return;
+        }
+        if (isset($sections['payment_us_payplug_payments_standard']) && isset($postParams['groups']['payplug_payments_standard']['fields'])) {
+            $this->processStandardConfig($postParams['groups']);
+            return;
+        }
+    }
 
-        $this->initScopeData();
+    private function processGeneralConfig($groups)
+    {
+        $fields = $groups['general']['fields'];
+
+        $this->helper->initScopeData();
 
         $this->payplugConfigConnected = $this->helper->isConnected();
         $this->payplugConfigVerified = (bool) $this->getConfig('verified');
-        $this->payplugConfigPremium = (bool) $this->getConfig('premium');
 
-        if ($this->scope == 'websites') {
-            $fieldsRequiredForInit = [
-                'email',
-                'pwd',
-                'environmentmode',
-                'payment_page',
-                'one_click',
-            ];
-            if (!$this->payplugConfigConnected) {
-                // To connect on website level, all fields must be provided
-                $allDefined = true;
-                foreach ($fieldsRequiredForInit as $field) {
-                    if (isset($fields[$field]['value'])) {
-                        foreach ($fieldsRequiredForInit as $fieldCheck) {
-                            if (!isset($fields[$fieldCheck]['value'])) {
-                                $allDefined = false;
-                            }
-                        }
-                    }
-                }
-
-                if (!$allDefined) {
-                    foreach ($fieldsRequiredForInit as $field) {
-                        if (isset($fields[$field]['value'])) {
-                            unset($fields[$field]['value']);
-                        }
-                        if (isset($groups['payplug_payments']['fields'][$field])) {
-                            unset($groups['payplug_payments']['fields'][$field]);
-                        }
-                    }
-                    $this->messageManager->addErrorMessage(__('All fields must be defined when trying to connect at website level.'));
-                }
-            } else {
-                // Once connected on website level, the only way to use global configuration is to disconnect
-                foreach ($fieldsRequiredForInit as $field) {
-                    if (isset($fields[$field]['inherit'])) {
-                        unset($groups['payplug_payments']['fields'][$field]);
-                    }
-                }
-            }
-        }
+        $this->checkWebsiteScopeData($groups, $fields);
 
         //determine which kind of config is this call
         $config = [
             'init' => false,
             'live' => false,
-            'one_click' => false,
         ];
         if (isset($fields['email']['value'])) {
             $config['init'] = true;
         }
         if (isset($fields['environmentmode']['value'])
-            && $fields['environmentmode']['value'] == PaymentMethod::ENVIRONMENT_LIVE
+            && $fields['environmentmode']['value'] == AbstractPaymentMethod::ENVIRONMENT_LIVE
         ) {
             $config['live'] = true;
-        }
-        if (isset($fields['one_click']['value'])
-            && $fields['one_click']['value'] == 1
-        ) {
-            $config['one_click'] = true;
         }
 
         $pwd = null;
@@ -150,15 +120,164 @@ class PaymentConfigObserver implements ObserverInterface
             $pwd = $fields['pwd']['value'];
         }
 
+        $this->processInit($config, $pwd, $fields);
+        $this->processLive($config, $pwd);
+
+        if (!$this->payplugConfigConnected) {
+            unset($groups['general']['fields']['pwd']);
+            unset($groups['general']['fields']['email']);
+            $this->saveConfig('connected', 0);
+        }
+        if (!$this->payplugConfigVerified) {
+            $groups['general']['fields']['environmentmode']['value']
+                = AbstractPaymentMethod::ENVIRONMENT_TEST;
+            $this->saveConfig('verified', 0);
+            $this->messageManager->addErrorMessage(__('You are able to perform only TEST transactions.'));
+        }
+
+        if ($this->payplugConfigConnected) {
+            $apiKey = $this->testApiKey;
+        }
+        // Get live permissions only if account is verified and environment is switched to live
+        if ($this->payplugConfigVerified && $config['live']) {
+            $apiKey = $this->liveApiKey;
+        }
+        if (!empty($apiKey)) {
+            $this->getAccountPermissions($apiKey);
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    private function processStandardConfig($groups)
+    {
+        $fields = $groups['payplug_payments_standard']['fields'];
+
+        $this->helper->initScopeData();
+
+        if (!empty($fields['active']['value']) && !$this->helper->isConnected()) {
+            $this->messageManager->addErrorMessage(
+                __('You are not connected to a payplug account. ' .
+                    'Please go to section Sales > Payplug Payments to log in.')
+            );
+
+            $groups['payplug_payments_standard']['fields']['active']['value'] = 0;
+        }
+
+        if (!empty($fields['one_click']['value'])) {
+            $environmentMode = $this->getConfig('environmentmode');
+
+            $apiKey = $this->getConfig('test_api_key');
+            if ($environmentMode == AbstractPaymentMethod::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('live_api_key');
+            }
+
+            if (empty($apiKey)) {
+                $this->messageManager->addErrorMessage(
+                    __('We are not able to retrieve your account information. ' .
+                        'Please go to section Sales > Payplug Payments to log in again.')
+                );
+            } else {
+                $permissions = $this->getAccountPermissions($apiKey);
+
+                if (empty($permissions['can_save_cards'])) {
+                    $groups['payplug_payments_standard']['fields']['one_click']['value'] = 0;
+                    if ($environmentMode == AbstractPaymentMethod::ENVIRONMENT_LIVE) {
+                        $this->messageManager->addErrorMessage(
+                            __('Only Premium accounts can use one click in LIVE mode.')
+                        );
+                    }
+                }
+            }
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    /**
+     * @param array &$groups
+     * @param array &$fields
+     */
+    private function checkWebsiteScopeData(&$groups, &$fields)
+    {
+        if ($this->helper->getConfigScope() != 'websites') {
+            return;
+        }
+        $fieldsRequiredForInit = [
+            'email',
+            'pwd',
+            'environmentmode',
+            'payment_page',
+        ];
+        if (!$this->payplugConfigConnected) {
+            // To connect on website level, all fields must be provided
+            if (!$this->checkRequiredFields($fieldsRequiredForInit, $fields)) {
+                return;
+            }
+            foreach ($fieldsRequiredForInit as $field) {
+                if (isset($fields[$field]['value'])) {
+                    unset($fields[$field]['value']);
+                }
+                if (isset($groups['general']['fields'][$field])) {
+                    unset($groups['general']['fields'][$field]);
+                }
+            }
+            $this->messageManager->addErrorMessage(
+                __('All fields must be defined when trying to connect at website level.')
+            );
+            return;
+        }
+        // Once connected on website level, the only way to use global configuration is to disconnect
+        foreach ($fieldsRequiredForInit as $field) {
+            if (isset($fields[$field]['inherit'])) {
+                unset($groups['general']['fields'][$field]);
+            }
+        }
+    }
+
+    /**
+     * @param array $fieldsRequiredForInit
+     * @param array $fields
+     *
+     * @return bool
+     */
+    private function checkRequiredFields($fieldsRequiredForInit, $fields)
+    {
+        foreach ($fieldsRequiredForInit as $field) {
+            if (isset($fields[$field]['value'])) {
+                foreach ($fieldsRequiredForInit as $fieldCheck) {
+                    if (!isset($fields[$fieldCheck]['value'])) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array       $config
+     * @param string|null $pwd
+     * @param array       $fields
+     */
+    private function processInit($config, $pwd, $fields)
+    {
         if ($config['init']) {
             $email = $fields['email']['value'];
             if (!$this->payplugLogin($email, $pwd, true)) {
                 $this->payplugConfigConnected = false;
                 $this->payplugConfigVerified = false;
-                $this->payplugConfigPremium = false;
             }
         }
+    }
 
+    /**
+     * @param array       $config
+     * @param string|null $pwd
+     */
+    private function processLive($config, $pwd)
+    {
         if ($config['live']) {
             $error = false;
             if (!$this->payplugConfigConnected) {
@@ -175,57 +294,8 @@ class PaymentConfigObserver implements ObserverInterface
             }
             if ($error) {
                 $this->payplugConfigVerified = false;
-                $this->payplugConfigPremium = false;
             }
         }
-
-        if ($config['one_click']) {
-            $error = false;
-            if (!$this->payplugConfigConnected) {
-                $error = true;
-            } elseif ((!$this->payplugConfigVerified || !$this->payplugConfigPremium)
-                && $fields['environmentmode']['value']
-                == PaymentMethod::ENVIRONMENT_LIVE
-            ) {
-                if ($pwd != null) {
-                    $email = $this->getConfig('email');
-                    if (!$this->payplugLogin($email, $pwd)) {
-                        $error = true;
-                    }
-                } else {
-                    $error = true;
-                }
-            }
-            if ($error) {
-                $this->payplugConfigPremium = false;
-            }
-        }
-
-        if (!$this->payplugConfigConnected) {
-            unset($groups['payplug_payments']['fields']['pwd']);
-            unset($groups['payplug_payments']['fields']['email']);
-            $this->saveConfig('connected', 0);
-        } elseif (!$this->payplugConfigVerified) {
-            $groups['payplug_payments']['fields']['environmentmode']['value']
-                = PaymentMethod::ENVIRONMENT_TEST;
-            $this->saveConfig('verified', 0);
-            $this->messageManager->addErrorMessage(__('You are able to perform only TEST transactions.'));
-        } elseif (!$this->payplugConfigPremium
-            && $config['one_click']
-            && $fields['environmentmode']['value'] == PaymentMethod::ENVIRONMENT_LIVE
-        ) {
-            $groups['payplug_payments']['fields']['one_click']['value'] = 0;
-            $this->saveConfig('premium', 0);
-            $this->messageManager->addErrorMessage(__('Only Premium accounts can use one click in LIVE mode.'));
-        }
-
-        $this->request->setPostValue('groups', $groups);
-    }
-
-    private function initScopeData()
-    {
-        $this->helper->initScopeData();
-        $this->scope = $this->helper->getConfigScope();
     }
 
     /**
@@ -235,7 +305,7 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function getConfig($field)
     {
-        return $this->helper->getAdminConfigValue($field);
+        return $this->helper->getConfigValue($field);
     }
 
     /**
@@ -244,12 +314,12 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function saveConfig($field, $value)
     {
-        $this->helper->setAdminConfigValue($field, $value);
+        $this->helper->setConfigValue($field, $value);
     }
 
     /**
      * Connect to payplug account
-     * Handle flags for account connection, verification and premium
+     * Handle flags for account connection, verification
      *
      * @param string $email
      * @param string $pwd
@@ -281,39 +351,40 @@ class PaymentConfigObserver implements ObserverInterface
             return false;
         }
 
-        $testApiKey = $login['api_keys']['test_key'];
-        $liveApiKey = $login['api_keys']['live_key'];
+        $this->testApiKey = $login['api_keys']['test_key'];
+        $this->liveApiKey = $login['api_keys']['live_key'];
 
-        $this->saveConfig('test_api_key', $testApiKey);
-        $this->saveConfig('live_api_key', $liveApiKey);
-
-        $apiKeyToUse = null;
+        $this->saveConfig('test_api_key', $this->testApiKey);
+        $this->saveConfig('live_api_key', $this->liveApiKey);
 
         if ($canChangeConfigConnected) {
             $this->payplugConfigConnected = true;
             $this->saveConfig('connected', 1);
         }
 
-        if (!empty($liveApiKey)) {
+        if (!empty($this->liveApiKey)) {
             $this->payplugConfigVerified = true;
-            $apiKeyToUse = $liveApiKey;
             $this->saveConfig('verified', 1);
-        } elseif (!empty($testApiKey)) {
-            $apiKeyToUse = $testApiKey;
-        }
-
-        if (!empty($apiKeyToUse)) {
-            $result = $this->login->getAccount($apiKeyToUse);
-            if (!$result['status']) {
-                $this->messageManager->addErrorMessage(__($result['message']));
-                return false;
-            }
-            $permissions = $this->treatAccountResponse($result['answer']);
-            $this->payplugConfigPremium = $permissions['can_save_cards'];
-            $this->saveConfig('premium', (int) $this->payplugConfigPremium);
         }
 
         return true;
+    }
+
+    /**
+     * @param string $apiKey
+     *
+     * @return array
+     */
+    private function getAccountPermissions($apiKey)
+    {
+        $result = $this->login->getAccount($apiKey);
+        if (!$result['status']) {
+            $this->messageManager->addErrorMessage(__($result['message']));
+
+            return [];
+        }
+
+        return $this->treatAccountResponse($result['answer']);
     }
 
     /**

@@ -35,8 +35,9 @@ class LightboxUrl extends AbstractPayment
                 return $response;
             }
 
-            $payment = $this->paymentMethod->createPayplugTransaction($order);
-            $this->paymentMethod->setOrderPendingPayment($order);
+            $paymentMethod = $order->getPayment()->getMethodInstance();
+            $payment = $paymentMethod->createPayplugTransaction($order);
+            $paymentMethod->setOrderPendingPayment($order);
             $url = $payment->hosted_payment->payment_url;
 
             $response->setData([

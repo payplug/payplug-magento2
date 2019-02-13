@@ -27,7 +27,8 @@ class OneClick extends AbstractPayment
                 throw new PaymentException(__('Could not retrieve customer card id'));
             }
 
-            $payment = $this->paymentMethod->createPayplugTransaction($order, $customerCardId);
+            $paymentMethod = $order->getPayment()->getMethodInstance();
+            $payment = $paymentMethod->createPayplugTransaction($order, $customerCardId);
 
             if (!$payment->is_paid) {
                 $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
@@ -35,7 +36,7 @@ class OneClick extends AbstractPayment
                 return;
             }
 
-            $this->paymentMethod->setOrderPendingPayment($order);
+            $paymentMethod->setOrderPendingPayment($order);
             $this->_forward('paymentReturn', null, null, array('_secure' => true, 'quote_id' => $order->getQuoteId()));
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());

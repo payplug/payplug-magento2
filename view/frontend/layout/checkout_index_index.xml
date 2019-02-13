@@ -16,41 +16,17 @@
                                             <item name="children" xsi:type="array">
                                                 <item name="payment" xsi:type="array">
                                                     <item name="children" xsi:type="array">
-                                                        <!-- Declare additional before payment components. START -->
-                                                        <!--<item name="beforeMethods" xsi:type="array">-->
-                                                            <!--<item name="component" xsi:type="string">uiComponent</item>-->
-                                                            <!--<item name="displayArea" xsi:type="string">beforeMethods</item>-->
-                                                            <!--<item name="children" xsi:type="array">-->
-                                                                <!--<item name="%your_feature_name%" xsi:type="array">-->
-                                                                    <!--<item name="component" xsi:type="string">%path/to/your/feature_js_component%</item>-->
-                                                                <!--</item>-->
-                                                            <!--</item>-->
-                                                        <!--</item>-->
-                                                        <!-- Declare additional before payment components. END -->
-                                                        <!-- Declare the payment method (the component that registrates in the list). START -->
                                                         <item name="renders" xsi:type="array">
                                                             <item name="children" xsi:type="array">
-                                                                <item name="payplug_payments" xsi:type="array">
-                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments</item>
+                                                                <item name="payplug_payments_standard" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments_standard</item>
                                                                     <item name="methods" xsi:type="array">
-                                                                        <item name="payplug_payments" xsi:type="array">
+                                                                        <item name="payplug_payments_standard" xsi:type="array">
                                                                             <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
                                                                         </item>
                                                                     </item>
                                                                 </item>
                                                             </item>
-                                                            <!-- Declare the payment method (the component that registrates in the list). END -->
-                                                            <!-- Declare additional after payment components. START -->
-                                                            <!--<item name="afterMethods" xsi:type="array">-->
-                                                                <!--<item name="component" xsi:type="string">uiComponent</item>-->
-                                                                <!--<item name="displayArea" xsi:type="string">afterMethods</item>-->
-                                                                <!--<item name="children" xsi:type="array">-->
-                                                                    <!--<item name="%your_feature_name%" xsi:type="array">-->
-                                                                        <!--<item name="component" xsi:type="string">%path/to/your/feature_js_component%</item>-->
-                                                                    <!--</item>-->
-                                                                <!--</item>-->
-                                                            <!--</item>-->
-                                                            <!-- Declare additional after payment components. END -->
                                                         </item>
                                                     </item>
                                                 </item>

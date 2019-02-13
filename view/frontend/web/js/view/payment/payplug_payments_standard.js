@@ -7,8 +7,8 @@ define([
 
     rendererList.push(
         {
-            type: 'payplug_payments',
-            component: 'Payplug_Payments/js/view/payment/method-renderer/payplug_payments-method'
+            type: 'payplug_payments_standard',
+            component: 'Payplug_Payments/js/view/payment/method-renderer/payplug_payments_standard-method'
         }
     );
 

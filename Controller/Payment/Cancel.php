@@ -26,7 +26,7 @@ class Cancel extends AbstractPayment
 
             $isCanceledByProvider = $this->_request->getParam('is_canceled_by_provider', false);
             $failureMessage = $this->_request->getParam('failure_message', null);
-            $this->paymentMethod->cancelOrder($order, $isCanceledByProvider, $failureMessage);
+            $order->getPayment()->getMethodInstance()->cancelOrder($order, $isCanceledByProvider, $failureMessage);
             if ($failureMessage !== null) {
                 $this->messageManager->addErrorMessage(__($failureMessage));
             }
