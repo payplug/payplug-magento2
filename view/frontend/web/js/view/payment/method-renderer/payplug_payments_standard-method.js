@@ -13,7 +13,8 @@ define([
 
     return Component.extend({
         defaults: {
-            template: 'Payplug_Payments/payment/payplug_payments_standard'
+            template: 'Payplug_Payments/payment/payplug_payments_standard',
+            tracks: { cards: true }
         },
 
         redirectAfterPlaceOrder: false,
@@ -53,10 +54,19 @@ define([
         loadCards: function () {
             if (window.checkoutConfig.payment.payplug_payments_standard.is_one_click) {
                 var cacheKey = 'payplug-payments-cards';
-                var dataObject = customerData.get(cacheKey);
-                var data = dataObject();
-                if (data.cards) {
-                    this.cards = data.cards;
+
+                if (window.checkoutConfig.payment.payplug_payments_standard.should_refresh_cards) {
+                    // Issue in Magento 2.1 with private content not refreshed properly by Magento
+                    var self = this;
+                    customerData.reload([cacheKey], false).done(function(jqXHR) {
+                        self.cards = jqXHR[cacheKey].cards;
+                    });
+                } else {
+                    var dataObject = customerData.get(cacheKey);
+                    var data = dataObject();
+                    if (data.cards) {
+                        this.cards = data.cards;
+                    }
                 }
             }
         },

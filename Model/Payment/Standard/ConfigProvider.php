@@ -96,6 +96,7 @@ class ConfigProvider implements ConfigProviderInterface
                     'is_one_click' => $this->method->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
+                    'should_refresh_cards' => $this->shouldRefreshCards(),
                 ],
             ],
         ] : [];
@@ -146,6 +147,15 @@ class ConfigProvider implements ConfigProviderInterface
         }
 
         return '';
+    }
+
+    /**
+     * @return bool
+     */
+    public function shouldRefreshCards()
+    {
+        // Issue in Magento 2.1 with private content not refreshed properly by Magento
+        return strpos($this->payplugConfig->getMagentoVersion(), '2.1.') === 0;
     }
 
     /**
