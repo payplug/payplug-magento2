@@ -54,13 +54,7 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
 
         try {
             $payplugPayment = $this->helper->getOrderPayment($order->getId());
-            $environmentMode = AbstractPaymentMethod::ENVIRONMENT_LIVE;
-            if ($payplugPayment->isSandbox()) {
-                $environmentMode = AbstractPaymentMethod::ENVIRONMENT_TEST;
-            }
-
-            $paymentId = $payplugPayment->getPaymentId();
-            $payment = $payplugPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
+            $payment = $payplugPayment->retrieve($order->getStoreId());
 
             $refundedAmount = $payment->amount_refunded / 100;
             if ($refundedAmount == 0) {

@@ -32,13 +32,8 @@ class PaymentReturn extends AbstractPayment
                 return $this->_redirect($redirectUrlSuccess);
             }
 
-            $environmentMode = AbstractPaymentMethod::ENVIRONMENT_LIVE;
-            if ($orderPayment->isSandbox()) {
-                $environmentMode = AbstractPaymentMethod::ENVIRONMENT_TEST;
-            }
-
             $paymentId = $orderPayment->getPaymentId();
-            $payment = $orderPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
+            $payment = $orderPayment->retrieve($order->getStoreId());
 
             if ($payment->failure) {
                 $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);

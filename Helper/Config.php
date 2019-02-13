@@ -110,38 +110,20 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get the right API Key in current context
-     *
-     * @param int|null    $storeId
-     * @param string|null $environmentMode
-     *
-     * @return string
-     */
-    public function getAPIKey($storeId = null, $environmentMode = null)
-    {
-        if ($environmentMode === null) {
-            $environmentMode = $this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $storeId);
-        }
-        $validKey = null;
-        if ($environmentMode == AbstractPaymentMethod::ENVIRONMENT_TEST) {
-            $validKey = $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        } elseif ($environmentMode == AbstractPaymentMethod::ENVIRONMENT_LIVE) {
-            $validKey = $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        }
-
-        return $validKey;
-    }
-
-    /**
      * Set API secret key
      *
      * @param int|null $storeId
-     * @param int|null $environmentMode
+     * @param bool     $isSandbox
      */
-    public function setPayplugApiKey($storeId = null, $environmentMode = null)
+    public function setPayplugApiKey($storeId = null, $isSandbox)
     {
-        $key = $this->getAPIKey($storeId, $environmentMode);
-        if ($key != null) {
+        if ($isSandbox) {
+            $key = $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        } else {
+            $key = $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        }
+
+        if (!empty($key)) {
             Payplug::setSecretKey($key);
         }
     }

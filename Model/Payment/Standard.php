@@ -158,10 +158,9 @@ class Standard extends AbstractPaymentMethod
 
         try {
             $payplugPayment = $this->payplugHelper->getOrderPayment($payment->getOrder()->getId());
-            $paymentId = $payplugPayment->getPaymentId();
             $metadata = ['reason' => "Refunded with Magento."];
 
-            $payplugPayment->makeRefund($paymentId, $amount, $metadata, $payment->getOrder()->getStoreId());
+            $payplugPayment->makeRefund($amount, $metadata, $payment->getOrder()->getStoreId());
         } catch (NoSuchEntityException $e) {
             throw new \Exception(__('Could not find valid payplug order payment. Please try refunding offline.'));
         } catch (PayplugException $e) {
@@ -228,15 +227,16 @@ class Standard extends AbstractPaymentMethod
             'metadata' => $metadata
         ];
 
+        $isSandbox = $this->payplugConfig->getIsSandbox($order->getStoreId());
+
         $paymentTab = array_merge(
             $paymentTab,
-            $this->buildPaymentData($order, $customerCardId)
+            $this->buildPaymentData($order, $isSandbox, $customerCardId)
         );
 
-        $this->payplugConfig->setPayplugApiKey($order->getStoreId());
+        $this->payplugConfig->setPayplugApiKey($order->getStoreId(), $isSandbox);
         $payment = \Payplug\Payment::create($paymentTab);
 
-        $isSandbox = $this->payplugConfig->getIsSandbox($order->getStoreId());
         /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
         $orderPayment = $this->payplugPaymentFactory->create();
         $orderPayment->setOrderId($order->getId());
@@ -304,14 +304,18 @@ class Standard extends AbstractPaymentMethod
      * Build payment data for payment transaction
      *
      * @param Order    $order
+     * @param bool     $isSandbox
      * @param int|null $customerCardId
      *
      * @return array
      */
-    protected function buildPaymentData($order, $customerCardId)
+    protected function buildPaymentData($order, $isSandbox, $customerCardId)
     {
         $paymentData = [];
-        $paymentData['notification_url'] = $this->urlBuilder->getUrl('payplug_payments/payment/ipn', ['ipn_store_id' => $order->getStoreId()]);
+        $paymentData['notification_url'] = $this->urlBuilder->getUrl('payplug_payments/payment/ipn', [
+            'ipn_store_id' => $order->getStoreId(),
+            'ipn_sandbox' => (int) $isSandbox,
+        ]);
         $paymentData['force_3ds'] = false;
 
         $currentCard = $this->getCustomerCardToken($customerCardId, $order->getCustomerId());
@@ -554,13 +558,7 @@ class Standard extends AbstractPaymentMethod
         $payplugPayment = $this->payplugHelper->getOrderPayment($order->getId());
 
         if ($payplugPayment->getId()) {
-            $environmentMode = self::ENVIRONMENT_LIVE;
-            if ($payplugPayment->isSandbox()) {
-                $environmentMode = self::ENVIRONMENT_TEST;
-            }
-
-            $paymentId = $payplugPayment->getPaymentId();
-            $payment = $payplugPayment->retrieve($paymentId, $environmentMode, $order->getStoreId());
+            $payment = $payplugPayment->retrieve($order->getStoreId());
             if ($payment->failure) {
                 $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
                 $this->cancelOrder($order, false, $failureMessage);
