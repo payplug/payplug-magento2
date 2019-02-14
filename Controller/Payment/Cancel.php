@@ -40,7 +40,9 @@ class Cancel extends AbstractPayment
                 }
             } catch (\Exception $e) {
                 $cart->truncate();
-                $this->messageManager->addErrorMessage(__('At least one item is not available anymore. Please try again.'));
+                $this->messageManager->addErrorMessage(
+                    __('At least one item is not available anymore. Please try again.')
+                );
             }
 
             $cart->save();

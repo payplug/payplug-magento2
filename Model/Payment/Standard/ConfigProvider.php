@@ -19,12 +19,12 @@ class ConfigProvider implements ConfigProviderInterface
     /**
      * @var string
      */
-    protected $methodCode = Standard::METHOD_CODE;
+    private $methodCode = Standard::METHOD_CODE;
 
     /**
      * @var Standard
      */
-    protected $method;
+    private $method;
 
     /**
      * @var ScopeConfigInterface

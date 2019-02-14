@@ -28,7 +28,9 @@ class PaymentReturn extends AbstractPayment
             $orderPayment = $this->payplugHelper->getOrderPayment($order->getId());
 
             if (!$orderPayment->getId()) {
-                $this->logger->error(sprintf("Could not retrieve order payment for order %s", $order->getIncrementId()));
+                $this->logger->error(
+                    sprintf("Could not retrieve order payment for order %s", $order->getIncrementId())
+                );
                 return $this->_redirect($redirectUrlSuccess);
             }
 

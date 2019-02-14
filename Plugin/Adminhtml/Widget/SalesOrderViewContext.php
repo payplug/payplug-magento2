@@ -9,7 +9,7 @@ class SalesOrderViewContext
     /**
      * @var Data
      */
-    protected $payplugHelper;
+    private $payplugHelper;
 
     /**
      * @param Data $payplugHelper

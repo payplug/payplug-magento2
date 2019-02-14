@@ -37,10 +37,12 @@ class OneClick extends AbstractPayment
             }
 
             $paymentMethod->setOrderPendingPayment($order);
-            $this->_forward('paymentReturn', null, null, array('_secure' => true, 'quote_id' => $order->getQuoteId()));
+            $this->_forward('paymentReturn', null, null, ['_secure' => true, 'quote_id' => $order->getQuoteId()]);
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
-            $this->messageManager->addErrorMessage(__('An error occured while processing your payment. Please try again.'));
+            $this->messageManager->addErrorMessage(
+                __('An error occured while processing your payment. Please try again.')
+            );
             $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
         } catch (PaymentException $e) {
             $this->logger->error($e->getMessage());
@@ -48,7 +50,9 @@ class OneClick extends AbstractPayment
             $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            $this->messageManager->addErrorMessage(__('An error occured while processing your payment. Please try again.'));
+            $this->messageManager->addErrorMessage(
+                __('An error occured while processing your payment. Please try again.')
+            );
             $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
         }
     }

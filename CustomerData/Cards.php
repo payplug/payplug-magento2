@@ -8,7 +8,7 @@ use Payplug\Payments\Helper\Card;
 class Cards implements SectionSourceInterface
 {
     /**
-     * @var \Magento\Checkout\Model\Session
+     * @var \Magento\Checkout\Model\Session\Proxy
      */
     private $checkoutSession;
 
@@ -18,14 +18,13 @@ class Cards implements SectionSourceInterface
     private $helper;
 
     /**
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param Card                            $helper
+     * @param \Magento\Checkout\Model\Session\Proxy $checkoutSession
+     * @param Card                                  $helper
      */
     public function __construct(
-        \Magento\Checkout\Model\Session $checkoutSession,
+        \Magento\Checkout\Model\Session\Proxy $checkoutSession,
         Card $helper
     ) {
-
         $this->checkoutSession = $checkoutSession;
         $this->helper = $helper;
     }
@@ -47,7 +46,7 @@ class Cards implements SectionSourceInterface
                 'exp_date' => $this->helper->getFormattedExpDate($card->getExpDate()),
             ];
         }
-        if (count($cards) > 0) {
+        if (!empty($cards)) {
             $cards[] = [
                 'id' => '',
             ];

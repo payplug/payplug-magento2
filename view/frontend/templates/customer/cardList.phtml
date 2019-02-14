@@ -1,6 +1,6 @@
-<?php /** @var \Payplug\Payments\Block\Customer\CardList $this */?>
-<?php $payplugCards = $this->getPayplugCards(); ?>
-<?php if (count($payplugCards) > 0) : ?>
+<?php /** @var \Payplug\Payments\Block\Customer\CardList $block */?>
+<?php $payplugCards = $block->getPayplugCards(); ?>
+<?php if (!empty($payplugCards)) : ?>
     <table class="data-table saved-cards" id="my-saved-cards-table">
         <col width="1" />
         <col width="1" />
@@ -24,10 +24,10 @@
                 <td class="brand"><?php echo $payplugCard->getBrand() ?></td>
                 <td class="last4"><?php echo $payplugCard->getLastFour() ?></td>
                 <td class="exp_date">
-                    <span class="nobr"><?php echo $this->getFormattedExpDate($payplugCard->getExpDate()) ?></span>
+                    <span class="nobr"><?php echo $block->getFormattedExpDate($payplugCard->getExpDate()) ?></span>
                 </td>
                 <td class="delete">
-                    <a href="<?php echo $this->getDeleteCardUrl($payplugCard->getCustomerCardId()) ?>">
+                    <a href="<?php echo $block->getDeleteCardUrl($payplugCard->getCustomerCardId()) ?>">
                         <?php echo __('Delete this card') ?>
                     </a>
                 </td>
@@ -35,6 +35,6 @@
         <?php endforeach; ?>
         </tbody>
     </table>
-<?php else: ?>
+<?php else : ?>
     <p><?php echo __('You have no saved cards.'); ?></p>
 <?php endif ?>

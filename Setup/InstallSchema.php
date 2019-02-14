@@ -50,8 +50,7 @@ class InstallSchema implements InstallSchemaInterface
                 ['nullable' => false, 'default' => 0],
                 'Is Sandbox'
             )
-            ->setComment('PayPlug Order Payment Table')
-        ;
+            ->setComment('PayPlug Order Payment Table');
 
         $installer->getConnection()->createTable($table);
 

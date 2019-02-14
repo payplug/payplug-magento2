@@ -35,19 +35,19 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
     /**
      * @var string
      */
-    protected $_formBlockType = \Magento\Payment\Block\Form::class;
+    protected $formBlockType = \Magento\Payment\Block\Form::class;
 
     /**
      * @var string
      */
-    protected $_infoBlockType = \Magento\Payment\Block\Info::class;
+    protected $infoBlockType = \Magento\Payment\Block\Info::class;
 
     /**
      * Core store config
      *
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    protected $scopeConfig;
+    private $scopeConfig;
 
     /**
      * @var DirectoryHelper
@@ -57,7 +57,7 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
     /**
      * @var string
      */
-    protected $_code = '';
+    protected $code = '';
 
     /**
      * @var \Magento\Framework\UrlInterface
@@ -97,12 +97,12 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
     /**
      * @var Order\Email\Sender\OrderSender
      */
-    protected $orderSender;
+    private $orderSender;
 
     /**
      * @var PayplugOrderProcessingFactory
      */
-    protected $orderProcessingFactory;
+    private $orderProcessingFactory;
 
     /**
      * @var OrderProcessingRepository
@@ -393,10 +393,12 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
      */
     public function getCode()
     {
-        if (empty($this->_code)) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('We cannot retrieve the payment method code.'));
+        if (empty($this->code)) {
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('We cannot retrieve the payment method code.')
+            );
         }
-        return $this->_code;
+        return $this->code;
     }
 
     /**
@@ -406,7 +408,7 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
      */
     public function getFormBlockType()
     {
-        return $this->_formBlockType;
+        return $this->formBlockType;
     }
 
     /**
@@ -416,7 +418,7 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
      */
     public function getInfoBlockType()
     {
-        return $this->_infoBlockType;
+        return $this->infoBlockType;
     }
 
     /**
@@ -430,7 +432,9 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
     {
         $instance = $this->getData('info_instance');
         if (!$instance instanceof InfoInterface) {
-            throw new \Magento\Framework\Exception\LocalizedException(__('We cannot retrieve the payment information object instance.'));
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __('We cannot retrieve the payment information object instance.')
+            );
         }
         return $instance;
     }
@@ -679,8 +683,16 @@ abstract class AbstractPaymentMethod extends AbstractModel implements MethodInte
         }
 
         if ($quote !== null) {
-            $testApiKey = $this->payplugConfig->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $quote->getStoreId());
-            $liveApiKey = $this->payplugConfig->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $quote->getStoreId());
+            $testApiKey = $this->payplugConfig->getConfigValue(
+                'test_api_key',
+                ScopeInterface::SCOPE_STORE,
+                $quote->getStoreId()
+            );
+            $liveApiKey = $this->payplugConfig->getConfigValue(
+                'live_api_key',
+                ScopeInterface::SCOPE_STORE,
+                $quote->getStoreId()
+            );
             if (empty($testApiKey) && empty($liveApiKey)) {
                 return false;
             }

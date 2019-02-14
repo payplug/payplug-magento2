@@ -27,7 +27,7 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
     /**
      * @var Logger
      */
-    protected $logger;
+    private $logger;
 
     /**
      * @param Data             $helper

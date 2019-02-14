@@ -85,7 +85,6 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
         value="'.(int)$isVerified.'" />';
 
         if ($this->helper->getConfigScope() == ScopeInterface::SCOPE_WEBSITES) {
-
             $input = 'payplug_payments_prevent_default';
             if (!$connected) {
                 $input = 'payplug_payments_can_override_default';

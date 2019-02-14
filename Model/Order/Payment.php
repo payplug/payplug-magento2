@@ -18,7 +18,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     /**
      * @var Config
      */
-    protected $payplugConfig;
+    private $payplugConfig;
 
     /**
      * @param \Magento\Framework\Model\Context                        $context

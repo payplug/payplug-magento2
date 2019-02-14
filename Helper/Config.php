@@ -15,7 +15,7 @@ use Payplug\Payplug;
 
 class Config extends AbstractHelper
 {
-    CONST CONFIG_PATH = 'payplug_payments/general/';
+    const CONFIG_PATH = 'payplug_payments/general/';
 
     /**
      * @var WriterInterface
@@ -30,12 +30,12 @@ class Config extends AbstractHelper
     /**
      * @var ModuleListInterface
      */
-    protected $moduleList;
+    private $moduleList;
 
     /**
      * @var ProductMetadataInterface
      */
-    protected $productMetadata;
+    private $productMetadata;
 
     /**
      * @var string
@@ -112,10 +112,10 @@ class Config extends AbstractHelper
     /**
      * Set API secret key
      *
-     * @param int|null $storeId
-     * @param bool     $isSandbox
+     * @param int  $storeId
+     * @param bool $isSandbox
      */
-    public function setPayplugApiKey($storeId = null, $isSandbox)
+    public function setPayplugApiKey($storeId, $isSandbox)
     {
         if ($isSandbox) {
             $key = $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
@@ -191,8 +191,12 @@ class Config extends AbstractHelper
      *
      * @return mixed
      */
-    public function getConfigValue($field, $scope = ScopeInterface::SCOPE_STORE, $scopeId = null, $path = self::CONFIG_PATH)
-    {
+    public function getConfigValue(
+        $field,
+        $scope = ScopeInterface::SCOPE_STORE,
+        $scopeId = null,
+        $path = self::CONFIG_PATH
+    ) {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
             $scopeId = $this->scopeId;

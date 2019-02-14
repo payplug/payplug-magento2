@@ -118,8 +118,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'entity_id',
                 \Magento\Framework\DB\Ddl\Table::ACTION_CASCADE
             )
-            ->setComment('PayPlug Card Table')
-        ;
+            ->setComment('PayPlug Card Table');
 
         $installer->getConnection()->createTable($table);
 
@@ -173,8 +172,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'entity_id',
                 \Magento\Framework\DB\Ddl\Table::ACTION_CASCADE
             )
-            ->setComment('PayPlug Order Processing Table')
-        ;
+            ->setComment('PayPlug Order Processing Table');
 
         $installer->getConnection()->createTable($table);
 

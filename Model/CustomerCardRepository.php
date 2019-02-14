@@ -35,11 +35,17 @@ class CustomerCardRepository
     private $collectionFactory;
 
     /**
-     * @param CardResource $cardResource
-     * @param CardFactory  $cardFactory
+     * @param CardResource                  $cardResource
+     * @param CardFactory                   $cardFactory
+     * @param SearchResultsInterfaceFactory $searchResultsFactory
+     * @param CollectionFactory             $collectionFactory
      */
-    public function __construct(CardResource $cardResource, CardFactory $cardFactory, SearchResultsInterfaceFactory $searchResultsFactory, CollectionFactory $collectionFactory)
-    {
+    public function __construct(
+        CardResource $cardResource,
+        CardFactory $cardFactory,
+        SearchResultsInterfaceFactory $searchResultsFactory,
+        CollectionFactory $collectionFactory
+    ) {
         $this->cardResource = $cardResource;
         $this->cardFactory = $cardFactory;
         $this->searchResultsFactory = $searchResultsFactory;

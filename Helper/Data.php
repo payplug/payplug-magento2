@@ -14,12 +14,12 @@ class Data extends AbstractHelper
     /**
      * @var \Payplug\Payments\Model\Order\PaymentFactory
      */
-    protected $paymentFactory;
+    private $paymentFactory;
 
     /**
      * @var OrderPaymentRepository
      */
-    protected $orderPaymentRepository;
+    private $orderPaymentRepository;
 
     /**
      * @param Context                                      $context

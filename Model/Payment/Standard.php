@@ -32,37 +32,37 @@ class Standard extends AbstractPaymentMethod
     /**
      * @var string
      */
-    protected $_formBlockType = \Magento\Payment\Block\Form::class;
+    protected $formBlockType = \Magento\Payment\Block\Form::class;
 
     /**
      * @var string
      */
-    protected $_infoBlockType = \Payplug\Payments\Block\Info::class;
+    protected $infoBlockType = \Payplug\Payments\Block\Info::class;
 
     /**
      * @var string
      */
-    protected $_code = self::METHOD_CODE;
+    protected $code = self::METHOD_CODE;
 
     /**
      * @var PayplugPaymentFactory
      */
-    protected $payplugPaymentFactory;
+    private $payplugPaymentFactory;
 
     /**
      * @var PayplugCardFactory
      */
-    protected $cardFactory;
+    private $cardFactory;
 
     /**
      * @var CustomerCardRepository
      */
-    protected $customerCardRepository;
+    private $customerCardRepository;
 
     /**
      * @var CardHelper
      */
-    protected $cardHelper;
+    private $cardHelper;
 
     /**
      * @param \Magento\Framework\Model\Context                             $context
@@ -216,7 +216,7 @@ class Standard extends AbstractPaymentMethod
         $metadata = [
             'ID Quote' => $quoteId,
             'Order'    => $order->getIncrementId(),
-            'Website'  => $_SERVER['HTTP_HOST']
+            'Website'  => $this->urlBuilder->getUrl(''),
         ];
 
         //payment
@@ -254,7 +254,7 @@ class Standard extends AbstractPaymentMethod
      *
      * @return array
      */
-    protected function buildCustomerData($order)
+    private function buildCustomerData($order)
     {
         $address = null;
         if ($order->getShippingAddress() !== false) {
@@ -309,7 +309,7 @@ class Standard extends AbstractPaymentMethod
      *
      * @return array
      */
-    protected function buildPaymentData($order, $isSandbox, $customerCardId)
+    private function buildPaymentData($order, $isSandbox, $customerCardId)
     {
         $paymentData = [];
         $paymentData['notification_url'] = $this->urlBuilder->getUrl('payplug_payments/payment/ipn', [
@@ -347,7 +347,7 @@ class Standard extends AbstractPaymentMethod
      *
      * @return bool
      */
-    protected function canSaveCard($currentCard, $customerId)
+    private function canSaveCard($currentCard, $customerId)
     {
         if (!$this->isOneClick()) {
             return false;
@@ -378,7 +378,6 @@ class Standard extends AbstractPaymentMethod
         }
 
         if ($payment->save_card == 1 || ($payment->card->id != '' && $payment->hosted_payment != '')) {
-
             try {
                 $this->customerCardRepository->get($payment->card->id, 'card_token');
                 return;
@@ -389,7 +388,11 @@ class Standard extends AbstractPaymentMethod
             /** @var Card $card */
             $card = $this->cardFactory->create();
             $customerCardId = $this->cardHelper->getLastCardIdByCustomer($customerId) + 1;
-            $companyId = (int) $this->payplugConfig->getConfigValue('company_id',ScopeInterface::SCOPE_STORE, $storeId);
+            $companyId = (int) $this->payplugConfig->getConfigValue(
+                'company_id',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
             $cardDate = $payment->card->exp_year . '-' . $payment->card->exp_month;
             $expDate = date('Y-m-t 23:59:59', strtotime($cardDate));
             $brand = $payment->card->brand;
@@ -422,7 +425,7 @@ class Standard extends AbstractPaymentMethod
      *
      * @throws PaymentException
      */
-    protected function getCustomerCardToken($customerCardId, $customerId)
+    private function getCustomerCardToken($customerCardId, $customerId)
     {
         if ($customerCardId === null) {
             return null;

@@ -84,7 +84,9 @@ class PaymentConfigObserver implements ObserverInterface
             $this->processGeneralConfig($postParams['groups']);
             return;
         }
-        if (isset($sections['payment_us_payplug_payments_standard']) && isset($postParams['groups']['payplug_payments_standard']['fields'])) {
+        if (isset($sections['payment_us_payplug_payments_standard']) &&
+            isset($postParams['groups']['payplug_payments_standard']['fields'])
+        ) {
             $this->processStandardConfig($postParams['groups']);
             return;
         }
@@ -394,7 +396,7 @@ class PaymentConfigObserver implements ObserverInterface
      *
      * @return array
      */
-    public function treatAccountResponse($jsonAnswer)
+    private function treatAccountResponse($jsonAnswer)
     {
         $id = $jsonAnswer['id'];
 
@@ -404,32 +406,20 @@ class PaymentConfigObserver implements ObserverInterface
             'max_amounts' => $this->getConfig('max_amounts'),
         ];
         if (isset($jsonAnswer['configuration'])) {
-            if (
-                isset($jsonAnswer['configuration']['currencies'])
-                && !empty($jsonAnswer['configuration']['currencies'])
-                && sizeof($jsonAnswer['configuration']['currencies'])
-            ) {
+            if (!empty($jsonAnswer['configuration']['currencies'])) {
                 $configuration['currencies'] = [];
                 foreach ($jsonAnswer['configuration']['currencies'] as $value) {
                     $configuration['currencies'][] = $value;
                 }
             }
-            if (
-                isset($jsonAnswer['configuration']['min_amounts'])
-                && !empty($jsonAnswer['configuration']['min_amounts'])
-                && sizeof($jsonAnswer['configuration']['min_amounts'])
-            ) {
+            if (!empty($jsonAnswer['configuration']['min_amounts'])) {
                 $configuration['min_amounts'] = '';
                 foreach ($jsonAnswer['configuration']['min_amounts'] as $key => $value) {
                     $configuration['min_amounts'] .= $key.':'.$value.';';
                 }
                 $configuration['min_amounts'] = substr($configuration['min_amounts'], 0, -1);
             }
-            if (
-                isset($jsonAnswer['configuration']['max_amounts'])
-                && !empty($jsonAnswer['configuration']['max_amounts'])
-                && sizeof($jsonAnswer['configuration']['max_amounts'])
-            ) {
+            if (!empty($jsonAnswer['configuration']['max_amounts'])) {
                 $configuration['max_amounts'] = '';
                 foreach ($jsonAnswer['configuration']['max_amounts'] as $key => $value) {
                     $configuration['max_amounts'] .= $key.':'.$value.';';

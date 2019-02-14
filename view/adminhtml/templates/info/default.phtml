@@ -5,7 +5,7 @@
 $specificInfo = $block->getAdminSpecificInformation();
 ?>
 <?= $block->escapeHtml($block->getMethod()->getTitle()) ?>
-<?php if ($specificInfo): ?>
+<?php if ($specificInfo) : ?>
     <table class="data-table admin__table-secondary">
         <?php foreach ($specificInfo as $label => $value) : ?>
             <tr>

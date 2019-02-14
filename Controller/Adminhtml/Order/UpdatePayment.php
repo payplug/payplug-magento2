@@ -15,12 +15,12 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
     /**
      * @var Logger
      */
-    protected $payplugLogger;
+    private $payplugLogger;
 
     /**
      * @var Data
      */
-    protected $payplugHelper;
+    private $payplugHelper;
 
     /**
      * @param Action\Context                                   $context
@@ -86,10 +86,14 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
                 $this->messageManager->addSuccessMessage(__('Order payment was successfully updated.'));
             } catch (PayplugException $e) {
                 $this->payplugLogger->error($e->__toString());
-                $this->messageManager->addErrorMessage(sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage()));
+                $this->messageManager->addErrorMessage(
+                    sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage())
+                );
             } catch (\Exception $e) {
                 $this->payplugLogger->error($e->getMessage());
-                $this->messageManager->addErrorMessage(sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage()));
+                $this->messageManager->addErrorMessage(
+                    sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage())
+                );
             }
 
             return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
