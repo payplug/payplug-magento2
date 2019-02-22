@@ -7,7 +7,7 @@ define(
         'use strict';
 
         return {
-            redirectUrl: 'payplug_payments/payment/lightboxUrl',
+            redirectUrl: 'payplug_payments/payment/standard',
             cancelUrl: 'payplug_payments/payment/cancel',
 
             initialize: function(context) {
@@ -52,7 +52,7 @@ define(
             getPayplugPaymentUrl: function() {
                 var paymentUrl = false;
                 jQuery.ajax({
-                    url: url.build(this.redirectUrl),
+                    url: url.build(this.redirectUrl) + '?should_redirect=0',
                     type: "GET",
                     dataType: 'json',
                     async: false,

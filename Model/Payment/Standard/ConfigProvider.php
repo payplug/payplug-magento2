@@ -9,10 +9,11 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
+use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
-use Payplug\Payments\Model\Payment\Standard;
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -22,7 +23,7 @@ class ConfigProvider implements ConfigProviderInterface
     private $methodCode = Standard::METHOD_CODE;
 
     /**
-     * @var Standard
+     * @var MethodInterface
      */
     private $method;
 
@@ -93,7 +94,7 @@ class ConfigProvider implements ConfigProviderInterface
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
-                    'is_one_click' => $this->method->isOneClick(),
+                    'is_one_click' => $this->method->getConfigData('one_click'),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
                     'should_refresh_cards' => $this->shouldRefreshCards(),

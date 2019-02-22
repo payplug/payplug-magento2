@@ -10,7 +10,6 @@ use Magento\Sales\Model\Order\Creditmemo;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
 {
@@ -53,7 +52,7 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
         $order = $creditMemo->getOrder();
 
         try {
-            $payplugPayment = $this->helper->getOrderPayment($order->getId());
+            $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
             $payment = $payplugPayment->retrieve($order->getStoreId());
 
             $refundedAmount = $payment->amount_refunded / 100;

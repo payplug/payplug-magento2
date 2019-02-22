@@ -2,7 +2,7 @@
 
 namespace Payplug\Payments\Model\Config\Source;
 
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
+use Payplug\Payments\Helper\Config;
 
 class Mode implements \Magento\Framework\Option\ArrayInterface
 {
@@ -13,11 +13,11 @@ class Mode implements \Magento\Framework\Option\ArrayInterface
     {
         $options = [
             [
-                'value' => AbstractPaymentMethod::ENVIRONMENT_TEST,
+                'value' => Config::ENVIRONMENT_TEST,
                 'label' => __('Test'),
             ],
             [
-                'value' => AbstractPaymentMethod::ENVIRONMENT_LIVE,
+                'value' => Config::ENVIRONMENT_LIVE,
                 'label' => __('Live'),
             ],
         ];

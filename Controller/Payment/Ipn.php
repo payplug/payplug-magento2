@@ -12,7 +12,6 @@ use Payplug\Notification;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 use Payplug\Resource\Payment;
 use Payplug\Resource\Refund;
 
@@ -138,8 +137,8 @@ class Ipn extends AbstractPayment
 
             $data = [
                 'is_module_active' => 1,
-                'sandbox_mode' => (int) ($environmentMode === AbstractPaymentMethod::ENVIRONMENT_TEST),
-                'embedded_mode' => (int) ($embeddedMode === AbstractPaymentMethod::PAYMENT_PAGE_EMBEDDED),
+                'sandbox_mode' => (int) ($environmentMode === Config::ENVIRONMENT_TEST),
+                'embedded_mode' => (int) ($embeddedMode === Config::PAYMENT_PAGE_EMBEDDED),
                 'one_click' => (int) $oneClick,
                 'cid' => 1
             ];
@@ -169,9 +168,7 @@ class Ipn extends AbstractPayment
         $payment = $resource;
         $this->logger->info('Payment ID : ' . $payment->id);
 
-        $newState = Order::STATE_NEW;
-        $pendingState = Order::STATE_PENDING_PAYMENT;
-        $processingState = Order::STATE_PROCESSING;
+        $paymentReview = Order::STATE_PAYMENT_REVIEW;
 
         $orderIncrementId = $payment->metadata['Order'];
 
@@ -181,7 +178,7 @@ class Ipn extends AbstractPayment
         $currentState = $order->getState();
         if ($currentState == ''
             || $currentState == null
-            || $currentState == $newState
+            || $currentState == $paymentReview
         ) {
             usleep(3000000);
             $order->loadByIncrementId($orderIncrementId);
@@ -191,47 +188,30 @@ class Ipn extends AbstractPayment
         if (!$payment->is_paid) {
             $this->logger->info('Transaction was not paid.');
             $this->logger->info('Canceling order');
-
-            $failureMessage = $this->payplugHelper->getPaymentErrorMessage($payment);
-            $order->getPayment()->getMethodInstance()->cancelOrder($order, true, $failureMessage);
-
-            $this->logger->info('Order canceled.');
-
-            $response->setStatusHeader(200, null, '200 Order canceled.');
-
-            return;
         }
 
         $this->logger->info('Gathering payment details...');
         $this->logger->info($payment);
         $this->logger->info('Order state current: ' . $currentState);
 
-        $this->processOrder($response, $payment, $order);
+        $this->processOrder($response, $order);
     }
+
     /**
      * @param Raw     $response
-     * @param Payment $resource
      * @param Order   $order
      */
-    private function processOrder($response, $resource, $order)
+    private function processOrder($response, $order)
     {
-        $newState = Order::STATE_NEW;
-        $pendingState = Order::STATE_PENDING_PAYMENT;
         $processingState = Order::STATE_PROCESSING;
-        $paymentMethod = $order->getPayment()->getMethodInstance();
+        $paymentReview = Order::STATE_PAYMENT_REVIEW;
 
         $responseCode = null;
         $responseDetail = null;
         switch ($order->getState()) {
-            case $newState:
-            case $pendingState:
+            case $paymentReview:
                 try {
-                    $paymentMethod->processOrder($order, $resource->id);
-                    if ($paymentMethod->getConfigData('generate_invoice', $order->getStoreId())) {
-                        $this->logger->info('Generating invoice');
-                    } else {
-                        $this->logger->info('Invoice generating is disabled.');
-                    }
+                    $this->payplugHelper->updateOrder($order);
                     $responseCode = 200;
                     $responseDetail = '200 Order updated.';
                 } catch (PayplugException $e) {
@@ -271,9 +251,16 @@ class Ipn extends AbstractPayment
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
 
-        $paymentMethod = $order->getPayment()->getMethodInstance();
-        $paymentMethod->fullRefundOrder($order, $refund->amount);
-
-        $response->setStatusHeader(200, null, '200 Order updated.');
+        try {
+            $amountToRefund = $refund->amount / 100;
+            $order->getPayment()->registerRefundNotification($amountToRefund);
+            $response->setStatusHeader(200, null, '200 Order updated.');
+        } catch (\Exception $e) {
+            $response->setStatusHeader(
+                500,
+                null,
+                sprintf('500 Error while creating full refund %s.', $e->getMessage())
+            );
+        }
     }
 }

@@ -6,7 +6,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class Info extends \Magento\Payment\Block\Info
 {
@@ -50,8 +49,8 @@ class Info extends \Magento\Payment\Block\Info
     public function getAdminSpecificInformation()
     {
         try {
-            $orderId = $this->getInfo()->getOrder()->getId();
-            $orderPayment = $this->payplugHelper->getOrderPayment($orderId);
+            $orderIncrementId = $this->getInfo()->getOrder()->getIncrementId();
+            $orderPayment = $this->payplugHelper->getOrderPayment($orderIncrementId);
         } catch (NoSuchEntityException $e) {
             return [];
         }

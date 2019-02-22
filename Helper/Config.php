@@ -10,12 +10,16 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 use Payplug\Payplug;
 
 class Config extends AbstractHelper
 {
     const CONFIG_PATH = 'payplug_payments/general/';
+
+    const ENVIRONMENT_TEST = 'test';
+    const ENVIRONMENT_LIVE = 'live';
+    const PAYMENT_PAGE_REDIRECT = 'redirect';
+    const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
     /**
      * @var WriterInterface
@@ -156,7 +160,7 @@ class Config extends AbstractHelper
     {
         $environmentMode = $this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store);
 
-        return $environmentMode == AbstractPaymentMethod::ENVIRONMENT_TEST;
+        return $environmentMode == self::ENVIRONMENT_TEST;
     }
 
     /**
@@ -164,7 +168,7 @@ class Config extends AbstractHelper
      */
     public function isEmbedded()
     {
-        return $this->getConfigValue('payment_page') == AbstractPaymentMethod::PAYMENT_PAGE_EMBEDDED;
+        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED;
     }
 
     /**

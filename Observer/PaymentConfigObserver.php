@@ -8,7 +8,6 @@ use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Message\ManagerInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class PaymentConfigObserver implements ObserverInterface
 {
@@ -112,7 +111,7 @@ class PaymentConfigObserver implements ObserverInterface
             $config['init'] = true;
         }
         if (isset($fields['environmentmode']['value'])
-            && $fields['environmentmode']['value'] == AbstractPaymentMethod::ENVIRONMENT_LIVE
+            && $fields['environmentmode']['value'] == Config::ENVIRONMENT_LIVE
         ) {
             $config['live'] = true;
         }
@@ -132,7 +131,7 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if (!$this->payplugConfigVerified) {
             $groups['general']['fields']['environmentmode']['value']
-                = AbstractPaymentMethod::ENVIRONMENT_TEST;
+                = Config::ENVIRONMENT_TEST;
             $this->saveConfig('verified', 0);
             $this->messageManager->addErrorMessage(__('You are able to perform only TEST transactions.'));
         }
@@ -170,7 +169,7 @@ class PaymentConfigObserver implements ObserverInterface
             $environmentMode = $this->getConfig('environmentmode');
 
             $apiKey = $this->getConfig('test_api_key');
-            if ($environmentMode == AbstractPaymentMethod::ENVIRONMENT_LIVE) {
+            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
                 $apiKey = $this->getConfig('live_api_key');
             }
 
@@ -184,7 +183,7 @@ class PaymentConfigObserver implements ObserverInterface
 
                 if (empty($permissions['can_save_cards'])) {
                     $groups['payplug_payments_standard']['fields']['one_click']['value'] = 0;
-                    if ($environmentMode == AbstractPaymentMethod::ENVIRONMENT_LIVE) {
+                    if ($environmentMode == Config::ENVIRONMENT_LIVE) {
                         $this->messageManager->addErrorMessage(
                             __('Only Premium accounts can use one click in LIVE mode.')
                         );

@@ -2,7 +2,7 @@
 
 namespace Payplug\Payments\Model\Config\Source;
 
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
+use Payplug\Payments\Helper\Config;
 
 class PaymentPage implements \Magento\Framework\Option\ArrayInterface
 {
@@ -13,11 +13,11 @@ class PaymentPage implements \Magento\Framework\Option\ArrayInterface
     {
         $options = [
             [
-                'value' => AbstractPaymentMethod::PAYMENT_PAGE_REDIRECT,
+                'value' => Config::PAYMENT_PAGE_REDIRECT,
                 'label' => __('Redirect'),
             ],
             [
-                'value' => AbstractPaymentMethod::PAYMENT_PAGE_EMBEDDED,
+                'value' => Config::PAYMENT_PAGE_EMBEDDED,
                 'label' => __('Embedded'),
             ],
         ];
