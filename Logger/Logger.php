@@ -11,10 +11,10 @@ class Logger extends \Monolog\Logger
      *
      * @return Boolean Whether the record has been processed
      */
-    public function addRecord($level, $message, array $context = array())
+    public function addRecord($level, $message, array $context = [])
     {
         if (is_array($message) || is_object($message)) {
-            $message = print_r($message, true);
+            $message = var_export($message, true);
         }
 
         return parent::addRecord($level, $message, $context);

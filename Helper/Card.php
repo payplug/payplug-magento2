@@ -23,32 +23,32 @@ class Card extends AbstractHelper
     /**
      * @var CustomerCardRepository
      */
-    protected $customerCardRepository;
+    private $customerCardRepository;
 
     /**
      * @var SearchCriteriaInterfaceFactory
      */
-    protected $searchCriteriaInterfaceFactory;
+    private $searchCriteriaInterfaceFactory;
 
     /**
      * @var FilterBuilderFactory
      */
-    protected $filterBuilderFactory;
+    private $filterBuilderFactory;
 
     /**
      * @var FilterGroupBuilderFactory
      */
-    protected $filterGroupBuilderFactory;
+    private $filterGroupBuilderFactory;
 
     /**
      * @var SortOrderBuilderFactory
      */
-    protected $sortOrderBuilderFactory;
+    private $sortOrderBuilderFactory;
 
     /**
      * @var Config
      */
-    protected $helper;
+    private $helper;
 
     /**
      * @param Context                        $context
@@ -104,7 +104,7 @@ class Card extends AbstractHelper
         $cards = $result->getItems();
 
         $maxCardId = 0;
-        if (count($cards) > 0) {
+        if (!empty($cards)) {
             $maxCardId = $cards[0]->getCustomerCardId();
         }
 

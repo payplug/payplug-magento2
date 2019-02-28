@@ -2,7 +2,8 @@
 
 namespace Payplug\Payments\Model\Order;
 
-class Processing extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
+class Processing extends \Magento\Framework\Model\AbstractModel implements
+    \Magento\Framework\DataObject\IdentityInterface
 {
     const CACHE_TAG = 'payplug_payments_order_processing';
 

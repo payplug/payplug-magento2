@@ -7,22 +7,13 @@ define(
         'use strict';
 
         return {
-            redirectUrl: 'payplug_payments/payment/oneClick',
+            redirectUrl: 'payplug_payments/payment/paymentReturn',
 
             /**
              * Provide redirect to page
              */
-            execute: function (customerCardId) {
-                var newForm = jQuery('<form>', {
-                    'action': url.build(this.redirectUrl),
-                    'method': 'POST'
-                }).append(jQuery('<input>', {
-                    'name': 'customer_card_id',
-                    'value': customerCardId,
-                    'type': 'hidden'
-                }));
-                jQuery('body').append(newForm);
-                newForm.submit();
+            execute: function () {
+                window.location.replace(url.build(this.redirectUrl));
             }
         };
     }

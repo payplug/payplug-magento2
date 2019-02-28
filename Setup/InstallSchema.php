@@ -31,10 +31,10 @@ class InstallSchema implements InstallSchemaInterface
             )
             ->addColumn(
                 'order_id',
-                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
-                null,
-                ['identity' => false,'nullable' => false,'primary' => false,'unsigned' => true],
-                'Order ID'
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                32,
+                ['nullable' => false],
+                'Order Increment ID'
             )
             ->addColumn(
                 'payment_id',
@@ -50,8 +50,7 @@ class InstallSchema implements InstallSchemaInterface
                 ['nullable' => false, 'default' => 0],
                 'Is Sandbox'
             )
-            ->setComment('PayPlug Order Payment Table')
-        ;
+            ->setComment('PayPlug Order Payment Table');
 
         $installer->getConnection()->createTable($table);
 

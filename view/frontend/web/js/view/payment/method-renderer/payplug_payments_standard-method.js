@@ -33,7 +33,7 @@ define([
             sessionStorage.removeItem(this.sessionCardId);
             var customerCard = jQuery('.payplug-payments-customer-card:checked');
             if (customerCard.length > 0 && customerCard.data('card-id') !== '') {
-                oneClickOnSuccessAction.execute(customerCard.data('card-id'));
+                oneClickOnSuccessAction.execute();
                 return;
             }
             if (window.checkoutConfig.payment.payplug_payments_standard.is_embedded) {
@@ -120,6 +120,18 @@ define([
             }
 
             return true;
+        },
+        getData: function () {
+            var parentData = this._super();
+
+            var customerCard = jQuery('.payplug-payments-customer-card:checked');
+            if (customerCard.length > 0 && customerCard.data('card-id') !== '') {
+                parentData['additional_data'] = {
+                    'payplug_payments_customer_card_id': customerCard.data('card-id')
+                };
+            }
+
+            return parentData;
         }
     });
 });

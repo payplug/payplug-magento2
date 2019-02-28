@@ -6,4 +6,10 @@
     <event name="adminhtml_sales_order_creditmemo_register_before">
         <observer name="payplug_payments_check_refunded_amount" instance="Payplug\Payments\Observer\CreditMemoCheckRefundedAmountObserver"/>
     </event>
+    <event name="payment_method_assign_data_payplug_payments_standard">
+        <observer name="payplug_payments_standard_gateway_data_assign" instance="Payplug\Payments\Observer\PaymentDataAssignObserver" />
+    </event>
+    <event name="payment_method_is_active">
+        <observer name="payplug_payments_standard_is_available" instance="Payplug\Payments\Observer\StandardAvailabilityObserver" />
+    </event>
 </config>

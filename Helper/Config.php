@@ -10,12 +10,16 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 use Payplug\Payplug;
 
 class Config extends AbstractHelper
 {
-    CONST CONFIG_PATH = 'payplug_payments/general/';
+    const CONFIG_PATH = 'payplug_payments/general/';
+
+    const ENVIRONMENT_TEST = 'test';
+    const ENVIRONMENT_LIVE = 'live';
+    const PAYMENT_PAGE_REDIRECT = 'redirect';
+    const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
     /**
      * @var WriterInterface
@@ -30,12 +34,12 @@ class Config extends AbstractHelper
     /**
      * @var ModuleListInterface
      */
-    protected $moduleList;
+    private $moduleList;
 
     /**
      * @var ProductMetadataInterface
      */
-    protected $productMetadata;
+    private $productMetadata;
 
     /**
      * @var string
@@ -112,10 +116,10 @@ class Config extends AbstractHelper
     /**
      * Set API secret key
      *
-     * @param int|null $storeId
-     * @param bool     $isSandbox
+     * @param int  $storeId
+     * @param bool $isSandbox
      */
-    public function setPayplugApiKey($storeId = null, $isSandbox)
+    public function setPayplugApiKey($storeId, $isSandbox)
     {
         if ($isSandbox) {
             $key = $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
@@ -156,7 +160,7 @@ class Config extends AbstractHelper
     {
         $environmentMode = $this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store);
 
-        return $environmentMode == AbstractPaymentMethod::ENVIRONMENT_TEST;
+        return $environmentMode == self::ENVIRONMENT_TEST;
     }
 
     /**
@@ -164,7 +168,7 @@ class Config extends AbstractHelper
      */
     public function isEmbedded()
     {
-        return $this->getConfigValue('payment_page') == AbstractPaymentMethod::PAYMENT_PAGE_EMBEDDED;
+        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED;
     }
 
     /**
@@ -191,8 +195,12 @@ class Config extends AbstractHelper
      *
      * @return mixed
      */
-    public function getConfigValue($field, $scope = ScopeInterface::SCOPE_STORE, $scopeId = null, $path = self::CONFIG_PATH)
-    {
+    public function getConfigValue(
+        $field,
+        $scope = ScopeInterface::SCOPE_STORE,
+        $scopeId = null,
+        $path = self::CONFIG_PATH
+    ) {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
             $scopeId = $this->scopeId;

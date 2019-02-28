@@ -6,7 +6,7 @@ define(
         'use strict';
 
         return {
-            redirectUrl: 'payplug_payments/payment/redirect',
+            redirectUrl: 'payplug_payments/payment/standard',
 
             /**
              * Provide redirect to page

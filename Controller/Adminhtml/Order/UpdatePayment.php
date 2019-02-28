@@ -5,6 +5,7 @@ namespace Payplug\Payments\Controller\Adminhtml\Order;
 use Magento\Backend\App\Action;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -15,12 +16,12 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
     /**
      * @var Logger
      */
-    protected $payplugLogger;
+    private $payplugLogger;
 
     /**
      * @var Data
      */
-    protected $payplugHelper;
+    private $payplugHelper;
 
     /**
      * @param Action\Context                                   $context
@@ -82,14 +83,18 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
             }
 
             try {
-                $order->getPayment()->getMethodInstance()->updatePayment($order);
+                $this->payplugHelper->updateOrder($order);
                 $this->messageManager->addSuccessMessage(__('Order payment was successfully updated.'));
             } catch (PayplugException $e) {
                 $this->payplugLogger->error($e->__toString());
-                $this->messageManager->addErrorMessage(sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage()));
+                $this->messageManager->addErrorMessage(
+                    sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage())
+                );
             } catch (\Exception $e) {
                 $this->payplugLogger->error($e->getMessage());
-                $this->messageManager->addErrorMessage(sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage()));
+                $this->messageManager->addErrorMessage(
+                    sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage())
+                );
             }
 
             return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);

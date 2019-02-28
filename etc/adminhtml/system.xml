@@ -53,10 +53,6 @@
                     <label>One-click payment</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="pendingpayment_order_status" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Pending Payment order status</label>
-                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\PendingPayment</source_model>
-                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -73,10 +69,6 @@
                     <label>Payment from Specific Countries</label>
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
-                </field>
-                <field id="generate_invoice" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Automatically generate invoice when processing order</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>

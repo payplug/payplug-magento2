@@ -6,7 +6,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Model\Payment\AbstractPaymentMethod;
 
 class Info extends \Magento\Payment\Block\Info
 {
@@ -18,12 +17,12 @@ class Info extends \Magento\Payment\Block\Info
     /**
      * @var Data
      */
-    protected $payplugHelper;
+    private $payplugHelper;
 
     /**
      * @var Logger
      */
-    protected $payplugLogger;
+    private $payplugLogger;
 
     /**
      * @param \Magento\Framework\View\Element\Template\Context $context
@@ -50,8 +49,8 @@ class Info extends \Magento\Payment\Block\Info
     public function getAdminSpecificInformation()
     {
         try {
-            $orderId = $this->getInfo()->getOrder()->getId();
-            $orderPayment = $this->payplugHelper->getOrderPayment($orderId);
+            $orderIncrementId = $this->getInfo()->getOrder()->getIncrementId();
+            $orderPayment = $this->payplugHelper->getOrderPayment($orderIncrementId);
         } catch (NoSuchEntityException $e) {
             return [];
         }
@@ -71,7 +70,17 @@ class Info extends \Magento\Payment\Block\Info
             $this->payplugLogger->error($e->getMessage());
             return [];
         }
+        return $this->buildPaymentDetails($payment, $order);
+    }
 
+    /**
+     * @param \Payplug\Resource\Payment $payment
+     * @param Order                     $order
+     *
+     * @return array
+     */
+    private function buildPaymentDetails($payment, $order)
+    {
         $status = __('Not Paid');
         if ($payment->is_refunded) {
             $status = __('Refunded');
@@ -105,7 +114,7 @@ class Info extends \Magento\Payment\Block\Info
             $expirationDate = date('m/y', strtotime('01.'.$payment->card->exp_month.'.'.$payment->card->exp_year));
         }
 
-        $paymentInfo = [
+        return [
             'Payplug Payment ID' => $payment->id,
             'Status' => $status,
             'Amount' => $amount,
@@ -116,7 +125,5 @@ class Info extends \Magento\Payment\Block\Info
             'Expiration Date' => $expirationDate,
             'Mode' => $payment->is_live ? __('Live') : __('Test'),
         ];
-
-        return $paymentInfo;
     }
 }

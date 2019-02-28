@@ -3,7 +3,6 @@
 namespace Payplug\Payments\Model\Order;
 
 use Payplug\Payments\Helper\Config;
-use Payplug\Payplug;
 
 class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
@@ -18,7 +17,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     /**
      * @var Config
      */
-    protected $payplugConfig;
+    private $payplugConfig;
 
     /**
      * @param \Magento\Framework\Model\Context                        $context
