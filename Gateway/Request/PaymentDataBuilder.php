@@ -120,7 +120,7 @@ class PaymentDataBuilder implements BuilderInterface
         try {
             $currentCard = $this->cardHelper->getCustomerCard($customerId, $customerCardId);
         } catch (NoSuchEntityException $e) {
-            throw new PaymentException(__('This card does not exists or has been deleted.'));
+            throw new PaymentException(__('This card does not exist or has been deleted.'));
         }
 
         return $currentCard->getCardToken();
