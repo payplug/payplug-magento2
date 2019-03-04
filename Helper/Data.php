@@ -141,6 +141,8 @@ class Data extends AbstractHelper
 
     /**
      * @param Order $order
+     *
+     * @return Order
      */
     public function updateOrder($order)
     {
@@ -149,7 +151,7 @@ class Data extends AbstractHelper
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
             if ($createdAt > new \DateTime("now - 1 min")) {
                 // Order is currently being processed
-                return;
+                return $order;
             }
             // Order has been set as processing for more than a minute
             // Delete and recreate a new flag
@@ -162,14 +164,14 @@ class Data extends AbstractHelper
         try {
             $orderProcessing = $this->createOrderProcessing($order);
         } catch (\Exception $e) {
-            return;
+            return $order;
         }
 
         try {
             $order = $this->orderRepository->get($order->getId());
             if ($order->getState() != Order::STATE_PAYMENT_REVIEW) {
                 $this->orderProcessingRepository->delete($orderProcessing);
-                return;
+                return $order;
             }
 
             $order->getPayment()->update();
@@ -178,6 +180,8 @@ class Data extends AbstractHelper
         } finally {
             $this->orderProcessingRepository->delete($orderProcessing);
         }
+
+        return $order;
     }
 
     /**
