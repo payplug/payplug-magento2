@@ -211,7 +211,7 @@ class Ipn extends AbstractPayment
         switch ($order->getState()) {
             case $paymentReview:
                 try {
-                    $this->payplugHelper->updateOrder($order);
+                    $order = $this->payplugHelper->updateOrder($order);
                     $responseCode = 200;
                     $responseDetail = '200 Order updated.';
                 } catch (PayplugException $e) {

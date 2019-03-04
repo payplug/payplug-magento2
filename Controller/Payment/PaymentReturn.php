@@ -53,7 +53,7 @@ class PaymentReturn extends AbstractPayment
                 return $this->_redirect($redirectUrlSuccess);
             }
 
-            $this->payplugHelper->updateOrder($order);
+            $order = $this->payplugHelper->updateOrder($order);
 
             if ($order->getState() == Order::STATE_PROCESSING) {
                 return $this->_redirect($redirectUrlSuccess);

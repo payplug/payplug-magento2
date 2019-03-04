@@ -83,7 +83,7 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
             }
 
             try {
-                $this->payplugHelper->updateOrder($order);
+                $order = $this->payplugHelper->updateOrder($order);
                 $this->messageManager->addSuccessMessage(__('Order payment was successfully updated.'));
             } catch (PayplugException $e) {
                 $this->payplugLogger->error($e->__toString());
