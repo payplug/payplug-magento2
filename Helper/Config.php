@@ -237,6 +237,7 @@ class Config extends AbstractHelper
     public function clearConfig()
     {
         $keys = [
+            // General configuration
             'payplug_payments/general/test_api_key',
             'payplug_payments/general/live_api_key',
             'payplug_payments/general/connected',
@@ -249,11 +250,23 @@ class Config extends AbstractHelper
             'payplug_payments/general/pwd',
             'payplug_payments/general/environmentmode',
             'payplug_payments/general/payment_page',
+            // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
+            'payment/payplug_payments_standard/title',
             'payment/payplug_payments_standard/one_click',
-            'payment/payplug_payments_standard/generate_invoice',
+            'payment/payplug_payments_standard/processing_order_status',
+            'payment/payplug_payments_standard/canceled_order_status',
             'payment/payplug_payments_standard/allow_specific',
             'payment/payplug_payments_standard/specificcountry',
+            // Payplug payment Installment plan configuration
+            'payment/payplug_payments_installment_plan/active',
+            'payment/payplug_payments_installment_plan/title',
+            'payment/payplug_payments_installment_plan/count',
+            'payment/payplug_payments_installment_plan/threshold',
+            'payment/payplug_payments_installment_plan/processing_order_status',
+            'payment/payplug_payments_installment_plan/canceled_order_status',
+            'payment/payplug_payments_installment_plan/allow_specific',
+            'payment/payplug_payments_installment_plan/specificcountry',
         ];
 
         foreach ($keys as $key) {

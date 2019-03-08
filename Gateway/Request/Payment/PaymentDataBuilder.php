@@ -1,6 +1,6 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Request;
+namespace Payplug\Payments\Gateway\Request\Payment;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;

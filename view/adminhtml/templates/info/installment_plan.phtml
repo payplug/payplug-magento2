@@ -1,0 +1,67 @@
+<?php
+/**
+ * @var \Payplug\Payments\Block\InstallmentPlanInfo $block
+ */
+$specificInfo = $block->getAdminSpecificInformation();
+?>
+<?= $block->escapeHtml($block->getMethod()->getTitle()) ?>
+<?php if ($specificInfo) : ?>
+    <p><?php echo $specificInfo['status']; ?></p>
+    <p><?php echo __('Installment plan id'); ?> : <?php echo $specificInfo['installment_plan_id']; ?></p>
+
+    <table class="data-table admin__table-primary">
+        <tr>
+            <th><?php echo __('Date'); ?></th>
+            <th><?php echo __('Amount'); ?></th>
+            <th><?php echo __('Status'); ?></th>
+            <th></th>
+        </tr>
+        <?php foreach ($specificInfo['payments'] as $key => $paymentInfo) : ?>
+            <tr>
+                <td><?php echo $paymentInfo['date']; ?></td>
+                <td><?php echo $paymentInfo['amount']; ?></td>
+                <td><?php echo $paymentInfo['status']; ?></td>
+                <td>
+                    <?php if (!empty($paymentInfo['details'])) : ?>
+                        <button type="button" data-toggle="collapse" data-target="#payment-detail-<?php echo $key; ?>" role="button" aria-expanded="false" aria-controls="payment-detail-<?php echo $key; ?>">
+                            <?php echo __('Details'); ?>
+                        </button>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php if (!empty($paymentInfo['details'])) : ?>
+                <tr class="collapse" id="payment-detail-<?php echo $key; ?>" style="display: none;">
+                    <td colspan="4">
+                        <table class="data-table admin__table-secondary">
+                            <?php foreach ($paymentInfo['details'] as $label => $value) : ?>
+                                <tr>
+                                    <th><?= $block->escapeHtml(__($label)) ?>:</th>
+                                    <td>
+                                        <?= /* @noEscape */ nl2br($block->escapeHtml(implode("\n", $block->getValueAsArray($value, true)))) ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </table>
+                    </td>
+                </tr>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </table>
+
+    <?php if ($specificInfo['can_abort']) : ?>
+        <a class="action-default"
+           href="<?php echo $block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $block->getInfo()->getOrder()->getId()]); ?>"
+           onclick="return confirmAbortInstallmentPlan()"
+        >
+            <?php echo __('Abort'); ?>
+        </a>
+    <?php endif; ?>
+<?php endif;?>
+
+<?= $block->getChildHtml() ?>
+
+<script type="text/javascript">
+    function confirmAbortInstallmentPlan() {
+        return confirm('<?php echo __('Are you sure you want to abort the installment plan?'); ?>');
+    }
+</script>

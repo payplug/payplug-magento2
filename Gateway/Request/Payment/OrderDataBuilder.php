@@ -1,6 +1,6 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Request;
+namespace Payplug\Payments\Gateway\Request\Payment;
 
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Gateway\Request\BuilderInterface;
@@ -61,7 +61,6 @@ class OrderDataBuilder implements BuilderInterface
         ];
 
         $paymentTab = [
-            'amount' => (int) ($order->getGrandTotalAmount() * 100),
             'currency' => $currency,
             'metadata' => $metadata,
             'store_id' => $order->getStoreId(),

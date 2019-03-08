@@ -17,12 +17,12 @@ class Info extends \Magento\Payment\Block\Info
     /**
      * @var Data
      */
-    private $payplugHelper;
+    protected $payplugHelper;
 
     /**
      * @var Logger
      */
-    private $payplugLogger;
+    protected $payplugLogger;
 
     /**
      * @param \Magento\Framework\View\Element\Template\Context $context
@@ -70,6 +70,7 @@ class Info extends \Magento\Payment\Block\Info
             $this->payplugLogger->error($e->getMessage());
             return [];
         }
+
         return $this->buildPaymentDetails($payment, $order);
     }
 
@@ -79,7 +80,7 @@ class Info extends \Magento\Payment\Block\Info
      *
      * @return array
      */
-    private function buildPaymentDetails($payment, $order)
+    protected function buildPaymentDetails($payment, $order)
     {
         $status = __('Not Paid');
         if ($payment->is_refunded) {

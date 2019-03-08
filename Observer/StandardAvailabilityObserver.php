@@ -10,7 +10,9 @@ use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Helper\Data;
 
 class StandardAvailabilityObserver implements ObserverInterface
 {
@@ -20,13 +22,17 @@ class StandardAvailabilityObserver implements ObserverInterface
     private $payplugConfig;
 
     /**
-     * CurrencyValidator constructor.
-     *
-     * @param Config                 $payplugConfig
+     * @var Data
      */
-    public function __construct(Config $payplugConfig)
+    private $payplugHelper;
+
+    /**
+     * @param Config $payplugConfig
+     */
+    public function __construct(Config $payplugConfig, Data $payplugHelper)
     {
         $this->payplugConfig = $payplugConfig;
+        $this->payplugHelper = $payplugHelper;
     }
 
     /**
@@ -46,7 +52,7 @@ class StandardAvailabilityObserver implements ObserverInterface
         /** @var Adapter $adapter */
         $adapter = $observer->getData('method_instance');
 
-        if ($adapter->getCode() != 'payplug_payments_standard') {
+        if (!$this->payplugHelper->isCodePayplugPayment($adapter->getCode())) {
             return;
         }
 
@@ -82,6 +88,13 @@ class StandardAvailabilityObserver implements ObserverInterface
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
             $checkResult->setData('is_available', false);
             return;
+        }
+        
+        if ($adapter->getCode() == InstallmentPlan::METHOD_CODE) {
+            if ($quote->getGrandTotal() < $adapter->getConfigData('threshold')) {
+                $checkResult->setData('is_available', false);
+                return;
+            }
         }
     }
 

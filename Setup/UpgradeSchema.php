@@ -5,6 +5,7 @@ namespace Payplug\Payments\Setup;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
+use Payplug\Payments\Model\Order\InstallmentPlan;
 
 class UpgradeSchema implements UpgradeSchemaInterface
 {
@@ -15,6 +16,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         }
         if (version_compare($context->getVersion(), '0.0.3', '<')) {
             $this->addOrderProcessingTable($setup);
+        }
+        if (version_compare($context->getVersion(), '1.0.1', '<')) {
+            $this->addInstallmentPlanTable($setup);
         }
     }
 
@@ -185,6 +189,82 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ),
             'order_id',
             \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE
+        );
+
+        /**
+         * Prepare database after install
+         */
+        $installer->endSetup();
+    }
+
+    private function addInstallmentPlanTable(SchemaSetupInterface $setup)
+    {
+        $installer = $setup;
+
+        /**
+         * Prepare database for install
+         */
+        $installer->startSetup();
+
+        //START table setup
+        $table = $installer->getConnection()->newTable($installer->getTable('payplug_payments_order_installment_plan'))
+            ->addColumn(
+                'entity_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true,'nullable' => false,'primary' => true,'unsigned' => true],
+                'Entity ID'
+            )
+            ->addColumn(
+                'order_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                32,
+                ['nullable' => false],
+                'Order Increment ID'
+            )
+            ->addColumn(
+                'installment_plan_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                32,
+                ['nullable' => false, 'default' => 'inst_xxxxxxxxxxxxxxxxxxxxx'],
+                'Installment Plan ID'
+            )
+            ->addColumn(
+                'is_sandbox',
+                \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                null,
+                ['nullable' => false, 'default' => 0],
+                'Is Sandbox'
+            )
+            ->addColumn(
+                'status',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false, 'default' => InstallmentPlan::STATUS_NEW],
+                'Installment Plan Status'
+            )
+            ->setComment('PayPlug Order Installment Plan Table');
+
+        $installer->getConnection()->createTable($table);
+
+        $installer->getConnection()->addColumn(
+            $installer->getTable('sales_order_grid'),
+            'payplug_payments_installment_plan_status',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                'length' => null,
+                'nullable' => true,
+                'comment' => 'Payplug Payments Installment Plan Status'
+            ]
+        );
+        $installer->getConnection()->addColumn(
+            $installer->getTable('sales_order_grid'),
+            'payplug_payments_total_due',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_DECIMAL,
+                'length' => '12,4',
+                'comment' => 'Total due'
+            ]
         );
 
         /**

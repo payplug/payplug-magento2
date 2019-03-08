@@ -1,12 +1,12 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Request;
+namespace Payplug\Payments\Gateway\Request\Standard;
 
 use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Request\BuilderInterface;
 use Payplug\Payments\Helper\Data;
 
-class RefundDataBuilder implements BuilderInterface
+class RetrieveDataBuilder implements BuilderInterface
 {
     /**
      * @var SubjectReader
@@ -43,7 +43,6 @@ class RefundDataBuilder implements BuilderInterface
         return [
             'payment' => $payplugPayment,
             'store_id' => $order->getStoreId(),
-            'amount' => $this->subjectReader->readAmount($buildSubject),
         ];
     }
 }

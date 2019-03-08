@@ -4,5 +4,6 @@
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <head>
         <link src="Payplug_Payments::js/login.js"/>
+        <link src="Payplug_Payments::js/installment_plan.js"/>
     </head>
 </page>

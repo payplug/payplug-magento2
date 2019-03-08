@@ -76,6 +76,50 @@
                 </field>
                 <field id="model"></field>
             </group>
+            <group id="payplug_payments_installment_plan" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>PayPlug Payments - Payments by installments</label>
+                <frontend_model>Payplug\Payments\Block\Adminhtml\Config\InstallmentPlan</frontend_model>
+                <field id="active" translate="label comment" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Allow customers to spread out payments over 2, 3 or 4 installments. <a href="TODO" target="_blank">Learn more.</a>]]></comment>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="count" translate="label" type="radios" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Number of installments</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\InstallmentPlanCount</source_model>
+                    <comment>Installments explanation</comment>
+                </field>
+                <field id="threshold" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable this option from</label>
+                    <frontend_class>validate-number validate-number-range number-range-4-</frontend_class>
+                    <comment>Amount must be greater than 4€.</comment>
+                </field>
+                <field id="processing_order_status" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Processing order status</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
+                </field>
+                <field id="canceled_order_status" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Canceled order status</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
+                </field>
+                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment from Applicable Countries</label>
+                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
+                </field>
+                <field id="specificcountry" translate="label" type="multiselect" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment from Specific Countries</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                    <can_be_empty>1</can_be_empty>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="model"></field>
+            </group>
         </section>
     </system>
 </config>
