@@ -112,24 +112,31 @@ class Card extends AbstractHelper
     }
 
     /**
-     * @param $customerId
+     * @param int  $customerId
+     * @param bool $includeExpiredCards
      *
      * @return \Magento\Framework\Api\ExtensibleDataInterface[]|\Payplug\Payments\Model\Customer\Card[]
      */
-    public function getCardsByCustomer($customerId)
+    public function getCardsByCustomer($customerId, $includeExpiredCards = false)
     {
         /** @var SearchCriteriaInterface $criteria */
         $criteria = $this->searchCriteriaInterfaceFactory->create();
 
         $isSandbox = $this->helper->getIsSandbox();
         $companyId = $this->helper->getConfigValue('company_id');
-        $currentDate = date('Y-m-d H:i:s');
-        $criteria->setFilterGroups([
+
+        $filterGroups = [
             $this->getFieldFilter('customer_id', $customerId),
-            $this->getFieldFilter('exp_date', $currentDate, 'gt'),
             $this->getFieldFilter('is_sandbox', $isSandbox),
             $this->getFieldFilter('company_id', $companyId),
-        ]);
+        ];
+
+        if (!$includeExpiredCards) {
+            $currentDate = date('Y-m-d H:i:s');
+            $filterGroups[] = $this->getFieldFilter('exp_date', $currentDate, 'gt');
+        }
+
+        $criteria->setFilterGroups($filterGroups);
 
         /** @var SortOrder $sortOrder */
         /** @var SortOrderBuilder $sortBuilder */
