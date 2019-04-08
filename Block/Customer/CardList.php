@@ -36,7 +36,7 @@ class CardList extends \Magento\Framework\View\Element\Template
      */
     public function getPayplugCards()
     {
-        return $this->helper->getCardsByCustomer($this->customerSession->getCustomer()->getId());
+        return $this->helper->getCardsByCustomer($this->customerSession->getCustomer()->getId(), true);
     }
 
     /**
