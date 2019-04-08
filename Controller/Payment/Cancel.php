@@ -47,24 +47,7 @@ class Cancel extends AbstractPayment
                 return $this->_redirect($redirectUrlCart);
             }
 
-            if ($order->getState() == Order::STATE_PAYMENT_REVIEW) {
-                // Manually execute Payment::cancelInvoiceAndRegisterCancellation which is protected
-                $orderInvoice = null;
-                foreach ($order->getInvoiceCollection() as $invoice) {
-                    if ($invoice->getState() == \Magento\Sales\Model\Order\Invoice::STATE_OPEN &&
-                        $invoice->load($invoice->getId())
-                    ) {
-                        $orderInvoice = $invoice;
-                    }
-                }
-                if ($orderInvoice instanceof Order\Invoice) {
-                    $orderInvoice->cancel();
-                    $order->addRelatedObject($orderInvoice);
-                }
-                $order->registerCancellation('Denied the payment online', false);
-                $this->payplugHelper->updateOrderStatus($order, false);
-                $this->orderRepository->save($order);
-            }
+            $this->payplugHelper->cancelOrderAndInvoice($order);
 
             $failureMessage = $this->_request->getParam('failure_message', null);
             if ($failureMessage !== null) {

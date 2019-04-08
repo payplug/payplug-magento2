@@ -1,6 +1,6 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Response;
+namespace Payplug\Payments\Gateway\Response\Standard;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Payment\Gateway\Helper\SubjectReader;

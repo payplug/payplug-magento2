@@ -87,7 +87,11 @@ class PaymentConfigObserver implements ObserverInterface
             isset($postParams['groups']['payplug_payments_standard']['fields'])
         ) {
             $this->processStandardConfig($postParams['groups']);
-            return;
+        }
+        if (isset($sections['payment_us_payplug_payments_installment_plan']) &&
+            isset($postParams['groups']['payplug_payments_installment_plan']['fields'])
+        ) {
+            $this->processInstallmentPlanConfig($postParams['groups']);
         }
     }
 
@@ -190,6 +194,56 @@ class PaymentConfigObserver implements ObserverInterface
                     }
                 }
             }
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    private function processInstallmentPlanConfig($groups)
+    {
+        $fields = $groups['payplug_payments_installment_plan']['fields'];
+
+        $this->helper->initScopeData();
+
+        if (!empty($fields['active']['value']) && !$this->helper->isConnected()) {
+            $this->messageManager->addErrorMessage(
+                __('You are not connected to a payplug account. ' .
+                    'Please go to section Sales > Payplug Payments to log in.')
+            );
+
+            $groups['payplug_payments_installment_plan']['fields']['active']['value'] = 0;
+        }
+
+        if (!empty($fields['active']['value'])) {
+            $environmentMode = $this->getConfig('environmentmode');
+
+            $apiKey = $this->getConfig('test_api_key');
+            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('live_api_key');
+            }
+
+            if (empty($apiKey)) {
+                $this->messageManager->addErrorMessage(
+                    __('We are not able to retrieve your account information. ' .
+                        'Please go to section Sales > Payplug Payments to log in again.')
+                );
+            } else {
+                $permissions = $this->getAccountPermissions($apiKey);
+
+                if (empty($permissions['can_create_installment_plan'])) {
+                    $groups['payplug_payments_installment_plan']['fields']['active']['value'] = 0;
+                    if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                        $this->messageManager->addErrorMessage(
+                            __('Only Premium accounts can use installment plan in LIVE mode.')
+                        );
+                    }
+                }
+            }
+        }
+
+        if (isset($fields['threshold']['value']) && $fields['threshold']['value'] < 4) {
+            $this->messageManager->addErrorMessage(__('Amount must be greater than 4€.'));
+            $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 4;
         }
 
         $this->request->setPostValue('groups', $groups);
@@ -427,17 +481,12 @@ class PaymentConfigObserver implements ObserverInterface
             }
         }
 
-        $permissions = [
-            'use_live_mode' => $jsonAnswer['permissions']['use_live_mode'],
-            'can_save_cards' => $jsonAnswer['permissions']['can_save_cards'],
-        ];
-
         $currencies = implode(';', $configuration['currencies']);
         $this->saveConfig('currencies', $currencies);
         $this->saveConfig('min_amounts', $configuration['min_amounts']);
         $this->saveConfig('max_amounts', $configuration['max_amounts']);
         $this->saveConfig('company_id', $id);
 
-        return $permissions;
+        return $jsonAnswer['permissions'];
     }
 }

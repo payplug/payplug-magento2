@@ -1,0 +1,80 @@
+<?php
+
+namespace Payplug\Payments\Block\Adminhtml\Config;
+
+class InstallmentPlan extends \Magento\Config\Block\System\Config\Form\Fieldset
+{
+    /**
+     * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
+     *
+     * @return string
+     */
+    public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    {
+        $extraElements =
+            '<div id="payplug_payments_installment_plan_2" style="display: none;">' .
+                '<table>' .
+                    '<tr>' .
+                        '<td>' . __('Receive') . '</td>' .
+                        '<td>' . __('50%') . '</td>' .
+                        '<td>' . __('of order amount on the first day') . '</td>' .
+                    '</tr>' .
+                    '<tr>' .
+                        '<td></td>' .
+                        '<td>' . __('50%') . '</td>' .
+                        '<td>' . __('of order amount on D+30') . '</td>' .
+                    '</tr>' .
+                '</table>' .
+            '</div>'
+        ;
+        $extraElements .=
+            '<div id="payplug_payments_installment_plan_3" style="display: none;">' .
+                '<table>' .
+                    '<tr>' .
+                        '<td>' . __('Receive') . '</td>' .
+                        '<td>' . __('34%') . '</td>' .
+                        '<td>' . __('of order amount on the first day') . '</td>' .
+                    '</tr>' .
+                    '<tr>' .
+                        '<td></td>' .
+                        '<td>' . __('33%') . '</td>' .
+                        '<td>' . __('of order amount on D+30') . '</td>' .
+                    '</tr>' .
+                    '<tr>' .
+                        '<td></td>' .
+                        '<td>' . __('33%') . '</td>' .
+                        '<td>' . __('of order amount on D+60') . '</td>' .
+                    '</tr>' .
+                '</table>' .
+            '</div>'
+        ;
+        $extraElements .=
+            '<div id="payplug_payments_installment_plan_4" style="display: none;">' .
+                '<table>' .
+                    '<tr>' .
+                        '<td>' . __('Receive') . '</td>' .
+                        '<td>' . __('25%') . '</td>' .
+                        '<td>' . __('of order amount on the first day') . '</td>' .
+                    '</tr>' .
+                    '<tr>' .
+                        '<td></td>' .
+                        '<td>' . __('25%') . '</td>' .
+                        '<td>' . __('of order amount on D+30') . '</td>' .
+                    '</tr>' .
+                    '<tr>' .
+                        '<td></td>' .
+                        '<td>' . __('25%') . '</td>' .
+                        '<td>' . __('of order amount on D+60') . '</td>' .
+                    '</tr>' .
+                    '<tr>' .
+                        '<td></td>' .
+                        '<td>' . __('25%') . '</td>' .
+                        '<td>' . __('of order amount on D+90') . '</td>' .
+                    '</tr>' .
+                '</table>' .
+            '</div>'
+        ;
+
+        return parent::render($element) . $extraElements;
+    }
+}

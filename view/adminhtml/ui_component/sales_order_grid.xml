@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <columns name="sales_order_columns">
+        <column name="payplug_payments_installment_plan_status" class="Payplug\Payments\Ui\Component\Listing\Column\InstallmentPlanStatus">
+            <settings>
+                <filter>select</filter>
+                <options class="Payplug\Payments\Ui\Component\Listing\Column\InstallmentPlanStatus\Options"/>
+                <dataType>select</dataType>
+                <label translate="true">Payplug Payments Installment plan status</label>
+                <visible>false</visible>
+            </settings>
+        </column>
+        <column name="payplug_payments_total_due" class="Magento\Sales\Ui\Component\Listing\Column\Price">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Total due</label>
+                <visible>false</visible>
+            </settings>
+        </column>
+    </columns>
+</listing>

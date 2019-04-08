@@ -1,6 +1,6 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Http\Client;
+namespace Payplug\Payments\Gateway\Http\Client\Standard;
 
 use Magento\Payment\Gateway\Http\ClientInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;

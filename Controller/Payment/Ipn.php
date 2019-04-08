@@ -5,6 +5,7 @@ namespace Payplug\Payments\Controller\Payment;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
@@ -12,6 +13,7 @@ use Payplug\Notification;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Resource\InstallmentPlan;
 use Payplug\Resource\Payment;
 use Payplug\Resource\Refund;
 
@@ -77,6 +79,12 @@ class Ipn extends AbstractPayment
 
             if ($resource instanceof Payment) {
                 $this->processPayment($response, $resource);
+
+                return $response;
+            }
+
+            if ($resource instanceof InstallmentPlan) {
+                $this->processInstallmentPlan($response, $resource);
 
                 return $response;
             }
@@ -168,21 +176,18 @@ class Ipn extends AbstractPayment
         $payment = $resource;
         $this->logger->info('Payment ID : ' . $payment->id);
 
-        $paymentReview = Order::STATE_PAYMENT_REVIEW;
-
         $orderIncrementId = $payment->metadata['Order'];
 
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
 
-        $currentState = $order->getState();
-        if ($currentState == ''
-            || $currentState == null
-            || $currentState == $paymentReview
-        ) {
-            usleep(3000000);
-            $order->loadByIncrementId($orderIncrementId);
-            $currentState = $order->getState();
+        try {
+            $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
+            $response->setStatusHeader(200, null, "200 payment for installment plan not processed");
+
+            return;
+        } catch (NoSuchEntityException $e) {
+            // We want to process payment IPN for orders not linked to an installment plan
         }
 
         if (!$payment->is_paid) {
@@ -192,7 +197,7 @@ class Ipn extends AbstractPayment
 
         $this->logger->info('Gathering payment details...');
         $this->logger->info($payment);
-        $this->logger->info('Order state current: ' . $currentState);
+        $this->logger->info('Order state current: ' . $order->getState());
 
         $this->processOrder($response, $order);
     }
@@ -203,38 +208,65 @@ class Ipn extends AbstractPayment
      */
     private function processOrder($response, $order)
     {
-        $processingState = Order::STATE_PROCESSING;
-        $paymentReview = Order::STATE_PAYMENT_REVIEW;
-
         $responseCode = null;
         $responseDetail = null;
-        switch ($order->getState()) {
-            case $paymentReview:
-                try {
-                    $order = $this->payplugHelper->updateOrder($order);
-                    $responseCode = 200;
-                    $responseDetail = '200 Order updated.';
-                } catch (PayplugException $e) {
-                    $this->logger->error($e->__toString());
-                    $responseCode = 500;
-                    $responseDetail = '500 Error while updating order.';
-                } catch (\Exception $e) {
-                    $this->logger->error($e->getMessage());
-                    $responseCode = 500;
-                    $responseDetail = '500 Error while updating order.';
-                }
-                break;
-            case $processingState:
+        if ($this->payplugHelper->canUpdatePayment($order)) {
+            try {
+                $this->payplugHelper->updateOrder($order);
                 $responseCode = 200;
-                $responseDetail = '200 IPN already received.';
-                break;
-            default:
-                break;
+                $responseDetail = '200 Order updated.';
+            } catch (PayplugException $e) {
+                $this->logger->error($e->__toString());
+                $responseCode = 500;
+                $responseDetail = '500 Error while updating order.';
+            } catch (\Exception $e) {
+                $this->logger->error($e->getMessage());
+                $responseCode = 500;
+                $responseDetail = '500 Error while updating order.';
+            }
+        } else {
+            $responseCode = 200;
+            $responseDetail = '200 IPN already received.';
         }
 
         if ($responseCode !== null) {
             $response->setStatusHeader($responseCode, null, $responseDetail);
         }
+    }
+
+    /**
+     * @param Raw             $response
+     * @param InstallmentPlan $resource
+     */
+    private function processInstallmentPlan($response, $resource)
+    {
+        $this->logger->info('This is an installment plan call.');
+        $installmentPlan = $resource;
+        $this->logger->info('Installment Plan ID : ' . $installmentPlan->id);
+
+        $orderIncrementId = $installmentPlan->metadata['Order'];
+
+        $order = $this->salesOrderFactory->create();
+        $order->loadByIncrementId($orderIncrementId);
+
+        try {
+            $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
+        } catch (NoSuchEntityException $e) {
+            $response->setStatusHeader(500, null, "500 installment plan not found for order [$orderIncrementId]");
+
+            return;
+        }
+
+        if ($installmentPlan->failure) {
+            $this->logger->info('Transaction was not paid.');
+            $this->logger->info('Canceling order');
+        }
+
+        $this->logger->info('Gathering installment plan details...');
+        $this->logger->info($installmentPlan);
+        $this->logger->info('Order state current: ' . $order->getState());
+
+        $this->processOrder($response, $order);
     }
 
     /**
@@ -250,6 +282,15 @@ class Ipn extends AbstractPayment
         $orderIncrementId = $refund->metadata['Order'];
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
+
+        try {
+            $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
+            $response->setStatusHeader(200, null, "200 refund for installment plan not processed");
+
+            return;
+        } catch (NoSuchEntityException $e) {
+            // We want to process refund IPN for orders not linked to an installment plan
+        }
 
         try {
             $amountToRefund = $refund->amount / 100;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Request;
+namespace Payplug\Payments\Gateway\Request\Payment;
 
 use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Request\BuilderInterface;
