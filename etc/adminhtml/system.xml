@@ -82,7 +82,7 @@
                 <field id="active" translate="label comment" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[Allow customers to spread out payments over 2, 3 or 4 installments. <a href="TODO" target="_blank">Learn more.</a>]]></comment>
+                    <comment><![CDATA[Allow customers to spread out payments over 2, 3 or 4 installments.]]></comment>
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
