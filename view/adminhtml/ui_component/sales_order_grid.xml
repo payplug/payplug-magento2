@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
     <columns name="sales_order_columns">
-        <column name="payplug_payments_installment_plan_status" class="Payplug\Payments\Ui\Component\Listing\Column\InstallmentPlanStatus">
-            <settings>
-                <filter>select</filter>
-                <options class="Payplug\Payments\Ui\Component\Listing\Column\InstallmentPlanStatus\Options"/>
-                <dataType>select</dataType>
-                <label translate="true">Payplug Payments Installment plan status</label>
-                <visible>false</visible>
-            </settings>
+        <column name="payplug_payments_installment_plan_status">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Payplug\Payments\Ui\Component\Listing\Column\InstallmentPlanStatus\Options</item>
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="label" xsi:type="string" translate="true">Payplug Payments Installment plan status</item>
+                </item>
+            </argument>
         </column>
         <column name="payplug_payments_total_due" class="Magento\Sales\Ui\Component\Listing\Column\Price">
-            <settings>
-                <filter>textRange</filter>
-                <label translate="true">Total due</label>
-                <visible>false</visible>
-            </settings>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">textRange</item>
+                    <item name="label" xsi:type="string" translate="true">Total due</item>
+                </item>
+            </argument>
         </column>
     </columns>
 </listing>

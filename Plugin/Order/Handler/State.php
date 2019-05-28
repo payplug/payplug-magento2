@@ -25,13 +25,18 @@ class State
      * Force CLOSED state for fully refunded orders linked to an aborted installment plan
      *
      * @param \Magento\Sales\Model\ResourceModel\Order\Handler\State $subject
-     * @param \Magento\Sales\Model\ResourceModel\Order\Handler\State $result
+     * @param callable                                               $proceed
      * @param Order                                                  $order
      *
      * @return \Magento\Sales\Model\ResourceModel\Order\Handler\State
      */
-    public function afterCheck(\Magento\Sales\Model\ResourceModel\Order\Handler\State $subject, $result, Order $order)
-    {
+    public function aroundCheck(
+        \Magento\Sales\Model\ResourceModel\Order\Handler\State $subject,
+        callable $proceed,
+        Order $order
+    ) {
+        $result = $proceed($order);
+
         if ($order->getState() !== Order::STATE_PROCESSING && $order->getState() !== Order::STATE_COMPLETE) {
             return $result;
         }
