@@ -37,6 +37,6 @@ It’s likely that the Payplug PHP library was not installed along with the Mage
 To fix it, you should require the missing dependency with composer :
 
 ```
-composer require payplug/payplug-php
+composer require payplug/payplug-php:^2.7
 ```
 
