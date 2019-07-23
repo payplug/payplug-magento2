@@ -9,6 +9,7 @@
                 <canceled_order_status>canceled</canceled_order_status>
                 <allowspecific>0</allowspecific>
                 <sort_order>0</sort_order>
+                <default_country>FR</default_country>
                 <model>PayplugPaymentStandardFacade</model>
                 <payment_action>authorize_capture</payment_action>
                 <is_gateway>1</is_gateway>
@@ -33,6 +34,7 @@
                 <canceled_order_status>canceled</canceled_order_status>
                 <allowspecific>0</allowspecific>
                 <sort_order>0</sort_order>
+                <default_country>FR</default_country>
                 <model>PayplugPaymentInstallmentPlanFacade</model>
                 <payment_action>authorize_capture</payment_action>
                 <is_gateway>1</is_gateway>

@@ -14,11 +14,11 @@ class Mode implements \Magento\Framework\Option\ArrayInterface
         $options = [
             [
                 'value' => Config::ENVIRONMENT_TEST,
-                'label' => __('Test'),
+                'label' => __('PayPlug TEST mode'),
             ],
             [
                 'value' => Config::ENVIRONMENT_LIVE,
-                'label' => __('Live'),
+                'label' => __('PayPlug LIVE mode'),
             ],
         ];
 

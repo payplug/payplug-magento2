@@ -55,7 +55,7 @@ class PaymentReturn extends AbstractPayment
 
             $order = $this->payplugHelper->updateOrder($order);
 
-            if ($order->getState() == Order::STATE_PROCESSING) {
+            if ($order->getState() == Order::STATE_PROCESSING || $order->getState() == Order::STATE_COMPLETE) {
                 return $this->_redirect($redirectUrlSuccess);
             } else {
                 $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
