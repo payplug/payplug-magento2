@@ -33,7 +33,7 @@ class Formjs extends \Magento\Framework\View\Element\Template
             $url = $_SERVER['PAYPLUG_API_URL'];
         }
 
-        $url .= '/js/1.3/form.js';
+        $url .= '/js/1/form.latest.js';
 
         return $url;
     }

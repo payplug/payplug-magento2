@@ -11,31 +11,15 @@ define(
             cancelUrl: 'payplug_payments/payment/cancel',
 
             initialize: function(context) {
-                if (typeof Payplug !== 'undefined') {
-                    Payplug._closeIframe = function (callback) {
-                        var node = document.getElementById("payplug-spinner");
-                        if (node) {
-                            node.style.display = "none";
-                            node.parentNode.removeChild(node);
-                        }
-                        node = document.getElementById("wrapper-payplug-iframe");
-                        if (node) {
-                            this._fadeOut(node, function () {
-                                if (callback) {
-                                    callback();
-                                }
-                            });
-                        }
-                        // Hard Remove iframe
-                        node.parentNode.removeChild(node);
-                        node = document.getElementById("iframe-payplug-close");
-                        if (node && node.parentNode) {
-                            node.parentNode.removeChild(node);
-                        }
-
-                        context.cancelPayplugPayment();
+                var closeIframe = Payplug._closeIframe;
+                Payplug._closeIframe = function(callback) {
+                    closeIframe.apply(this, callback);
+                    if (typeof window.redirection_url !== 'undefined' && window.redirection_url) {
+                        // Payment is completed and redirection is handled by PayPlug form.js
+                        return;
                     }
-                }
+                    context.cancelPayplugPayment();
+                };
             },
             /**
              * Provide redirect to page
