@@ -49,7 +49,7 @@ define([
             return this.cards;
         },
         canDisplayCards: function() {
-            return this.cards.length > 0;
+            return window.checkoutConfig.payment.payplug_payments_standard.is_one_click && this.cards.length > 0;
         },
         loadCards: function () {
             if (window.checkoutConfig.payment.payplug_payments_standard.is_one_click) {

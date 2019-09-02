@@ -37,6 +37,10 @@ It’s likely that the Payplug PHP library was not installed along with the Mage
 To fix it, you should require the missing dependency with composer :
 
 ```
-composer require payplug/payplug-php:^2.7
+composer require payplug/payplug-php:^3.0
 ```
 
+You will then need to install another library which we use to normalize the customers' phone number
+```
+composer require giggsey/libphonenumber-for-php:^8.10
+```

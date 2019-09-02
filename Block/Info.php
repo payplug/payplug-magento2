@@ -124,7 +124,7 @@ class Info extends \Magento\Payment\Block\Info
             'Card mask' => $cardMask,
             '3-D Secure' => $payment->is_3ds ? __('Yes') : __('No'),
             'Expiration Date' => $expirationDate,
-            'Mode' => $payment->is_live ? __('Live') : __('Test'),
+            'Mode' => $payment->is_live ? __('PayPlug LIVE mode') : __('PayPlug TEST mode'),
         ];
     }
 }
