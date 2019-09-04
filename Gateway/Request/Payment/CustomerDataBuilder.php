@@ -85,10 +85,12 @@ class CustomerDataBuilder implements BuilderInterface
         if ($order->getShippingAddress() !== null) {
             $deliveryType = 'NEW';
             $quote = $this->subjectReader->getQuote();
-            if ($quote->getShippingAddress()->getSameAsBilling() ||
-                $quote->getShippingAddress()->getCustomerAddressId() ==
-                $quote->getBillingAddress()->getCustomerAddressId()
-            ) {
+            $shippingCustomerAddressId = $quote->getShippingAddress()->getCustomerAddressId();
+            if (!empty($shippingCustomerAddressId)) {
+                if ($shippingCustomerAddressId == $quote->getBillingAddress()->getCustomerAddressId()) {
+                    $deliveryType = 'BILLING';
+                }
+            } elseif ($quote->getShippingAddress()->getSameAsBilling()) {
                 $deliveryType = 'BILLING';
             }
             $shippingData = $this->buildAddressData($order->getShippingAddress(), $language, $allowedCountries, $defaultCountry);
