@@ -42,6 +42,9 @@ class Phone extends AbstractHelper
                     $landline = true;
                     $mobile = true;
                     break;
+                case PhoneNumberType::VOIP:
+                    $landline = true;
+                    break;
             }
 
             return [
