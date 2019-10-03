@@ -49,7 +49,7 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
 
     protected function _construct()
     {
-        $this->_init('Payplug\Payments\Model\ResourceModel\Order\InstallmentPlan');
+        $this->_init(\Payplug\Payments\Model\ResourceModel\Order\InstallmentPlan::class);
     }
 
     /**

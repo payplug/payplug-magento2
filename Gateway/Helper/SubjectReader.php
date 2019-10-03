@@ -2,21 +2,21 @@
 
 namespace Payplug\Payments\Gateway\Helper;
 
-use Magento\Checkout\Model\Session\Proxy;
+use Magento\Checkout\Model\Session;
 
 class SubjectReader extends \Magento\Payment\Gateway\Helper\SubjectReader
 {
     /**
-     * @var Proxy
+     * @var Session
      */
     private $checkoutSession;
 
     /**
      * SubjectReader constructor.
      *
-     * @param Proxy $checkoutSession
+     * @param Session $checkoutSession
      */
-    public function __construct(Proxy $checkoutSession)
+    public function __construct(Session $checkoutSession)
     {
         $this->checkoutSession = $checkoutSession;
     }
