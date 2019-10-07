@@ -28,7 +28,7 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
 
     protected function _construct()
     {
-        $this->_init('Payplug\Payments\Model\ResourceModel\Customer\Card');
+        $this->_init(\Payplug\Payments\Model\ResourceModel\Customer\Card::class);
     }
 
     /**

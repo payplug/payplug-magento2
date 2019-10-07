@@ -14,9 +14,17 @@ class Cancel extends AbstractPayment
      */
     private $orderRepository;
 
+    /**
+     * @param \Magento\Framework\App\Action\Context $context
+     * @param \Magento\Checkout\Model\Session       $checkoutSession
+     * @param \Magento\Sales\Model\OrderFactory     $salesOrderFactory
+     * @param Logger                                $logger
+     * @param Data                                  $payplugHelper
+     * @param OrderRepository                       $orderRepository
+     */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Session\Proxy $checkoutSession,
+        \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Sales\Model\OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,

@@ -13,7 +13,7 @@ class Processing extends \Magento\Framework\Model\AbstractModel implements
 
     protected function _construct()
     {
-        $this->_init('Payplug\Payments\Model\ResourceModel\Order\Processing');
+        $this->_init(\Payplug\Payments\Model\ResourceModel\Order\Processing::class);
     }
 
     /**
