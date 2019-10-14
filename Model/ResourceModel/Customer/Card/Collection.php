@@ -6,6 +6,9 @@ class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\Ab
 {
     protected function _construct()
     {
-        $this->_init('Payplug\Payments\Model\Customer\Card', 'Payplug\Payments\Model\ResourceModel\Customer\Card');
+        $this->_init(
+            \Payplug\Payments\Model\Customer\Card::class,
+            \Payplug\Payments\Model\ResourceModel\Customer\Card::class
+        );
     }
 }

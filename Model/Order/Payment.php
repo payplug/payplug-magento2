@@ -14,6 +14,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
 
     const IS_SANDBOX = 'is_sandbox';
 
+    const IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED = 'is_installment_plan_payment_processed';
+
     /**
      * @var Config
      */
@@ -41,7 +43,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
 
     protected function _construct()
     {
-        $this->_init('Payplug\Payments\Model\ResourceModel\Order\Payment');
+        $this->_init(\Payplug\Payments\Model\ResourceModel\Order\Payment::class);
     }
 
     /**
@@ -104,6 +106,24 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     public function setIsSandbox($isSandbox)
     {
         return $this->setData(self::IS_SANDBOX, $isSandbox);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isInstallmentPlanPaymentProcessed()
+    {
+        return (bool) $this->_getData(self::IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED);
+    }
+
+    /**
+     * @param bool $isProcessed
+     *
+     * @return $this
+     */
+    public function setIsInstallmentPlanPaymentProcessed($isProcessed)
+    {
+        return $this->setData(self::IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED, $isProcessed);
     }
 
     /**

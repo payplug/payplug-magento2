@@ -8,7 +8,7 @@ use Payplug\Payments\Helper\Card;
 class Cards implements SectionSourceInterface
 {
     /**
-     * @var \Magento\Checkout\Model\Session\Proxy
+     * @var \Magento\Checkout\Model\Session
      */
     private $checkoutSession;
 
@@ -18,11 +18,11 @@ class Cards implements SectionSourceInterface
     private $helper;
 
     /**
-     * @param \Magento\Checkout\Model\Session\Proxy $checkoutSession
-     * @param Card                                  $helper
+     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @param Card                            $helper
      */
     public function __construct(
-        \Magento\Checkout\Model\Session\Proxy $checkoutSession,
+        \Magento\Checkout\Model\Session $checkoutSession,
         Card $helper
     ) {
         $this->checkoutSession = $checkoutSession;

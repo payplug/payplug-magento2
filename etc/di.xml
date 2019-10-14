@@ -240,4 +240,34 @@
     <type name="Magento\Sales\Model\ResourceModel\Order\Handler\State">
         <plugin name="payplug_payment_installment_plan_aborted_force_close" type="Payplug\Payments\Plugin\Order\Handler\State" sortOrder="1"/>
     </type>
+    <type name="Payplug\Payments\Controller\Payment\Cancel">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Payplug\Payments\Controller\Payment\Ipn">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Payplug\Payments\Controller\Payment\PaymentReturn">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Payplug\Payments\Controller\Payment\Standard">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Payplug\Payments\CustomerData\Cards">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Payplug\Payments\Gateway\Helper\SubjectReader">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
 </config>

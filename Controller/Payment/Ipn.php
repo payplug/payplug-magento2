@@ -26,7 +26,7 @@ class Ipn extends AbstractPayment
 
     /**
      * @param \Magento\Framework\App\Action\Context $context
-     * @param \Magento\Checkout\Model\Session\Proxy $checkoutSession
+     * @param \Magento\Checkout\Model\Session       $checkoutSession
      * @param \Magento\Sales\Model\OrderFactory     $salesOrderFactory
      * @param Logger                                $logger
      * @param Data                                  $payplugHelper
@@ -34,7 +34,7 @@ class Ipn extends AbstractPayment
      */
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Session\Proxy $checkoutSession,
+        \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Sales\Model\OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
@@ -43,6 +43,7 @@ class Ipn extends AbstractPayment
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
         $this->payplugConfig = $payplugConfig;
+        $this->getRequest()->setParam('isAjax', true);
     }
 
     /**
@@ -132,7 +133,7 @@ class Ipn extends AbstractPayment
     private function processDebugCall($response)
     {
         $this->logger->info('This is a debug call.');
-        $cid = (int) $this->payplugHelper->getConfigValue('company_id');
+        $cid = (int) $this->payplugConfig->getConfigValue('company_id');
         if ((int) $this->getRequest()->getParam('cid') == $cid) {
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
             $environmentMode = $this->getConfigValue('environmentmode', $ipnStoreId);

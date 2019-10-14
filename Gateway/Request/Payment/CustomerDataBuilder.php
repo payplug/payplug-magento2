@@ -78,7 +78,12 @@ class CustomerDataBuilder implements BuilderInterface
 
         $email = $order->getBillingAddress()->getEmail();
 
-        $billingData = $this->buildAddressData($order->getBillingAddress(), $language, $allowedCountries, $defaultCountry);
+        $billingData = $this->buildAddressData(
+            $order->getBillingAddress(),
+            $language,
+            $allowedCountries,
+            $defaultCountry
+        );
         $billingData['email'] = $email;
         $shippingData = $billingData;
         $deliveryType = 'OTHER';
@@ -93,7 +98,12 @@ class CustomerDataBuilder implements BuilderInterface
             } elseif ($quote->getShippingAddress()->getSameAsBilling()) {
                 $deliveryType = 'BILLING';
             }
-            $shippingData = $this->buildAddressData($order->getShippingAddress(), $language, $allowedCountries, $defaultCountry);
+            $shippingData = $this->buildAddressData(
+                $order->getShippingAddress(),
+                $language,
+                $allowedCountries,
+                $defaultCountry
+            );
             $shippingData['email'] = $email;
         }
         $shippingData['delivery_type'] = $deliveryType;

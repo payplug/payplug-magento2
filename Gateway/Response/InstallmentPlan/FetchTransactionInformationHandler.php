@@ -101,42 +101,42 @@ class FetchTransactionInformationHandler implements HandlerInterface
                 return;
             }
 
-            $this->sendOrderEmail($order);
-            $this->updateInvoiceState($order, $payment);
-
-            $payment->setTransactionPending(false);
-            $payment->setIsFraudDetected(false);
-
             $schedules = $payplugInstallmentPlan->schedule;
             foreach ($schedules as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
 
                     try {
-                        $this->orderPaymentRepository->get($paymentId, 'payment_id');
-                        // If order payment is found, it means it has already been processed
-                        continue;
+                        $orderPayment = $this->orderPaymentRepository->get($paymentId, 'payment_id');
                     } catch (NoSuchEntityException $e) {
-                        // Order payment hasn't been found
-                        // We can create it and process it
+                        /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
+                        $orderPayment = $this->payplugPaymentFactory->create();
+                        $orderPayment->setOrderId($order->getIncrementId());
+                        $orderPayment->setPaymentId($paymentId);
+                        $orderPayment->setIsSandbox(!$payplugInstallmentPlan->is_live);
+                    }
+                    $payplugPayment = $orderPayment->retrieve($order->getStoreId());
+
+                    if ($payplugPayment->is_paid && !$orderPayment->isInstallmentPlanPaymentProcessed()) {
+                        $this->sendOrderEmail($order);
+                        $this->updateInvoiceState($order, $payment);
+
+                        $payment->setTransactionPending(false);
+                        $payment->setIsFraudDetected(false);
+
+                        $amount = $schedule->amount / 100;
+
+                        $order->setTotalPaid($order->getTotalPaid() + $amount);
+                        $order->setBaseTotalPaid($order->getBaseTotalPaid() + $amount);
+                        if ($order->getState() == Order::STATE_PAYMENT_REVIEW) {
+                            $order->setState(Order::STATE_PROCESSING);
+                        }
+
+                        $payment->registerCaptureNotification($amount, true);
+                        $orderPayment->setIsInstallmentPlanPaymentProcessed(true);
                     }
 
-                    /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
-                    $orderPayment = $this->payplugPaymentFactory->create();
-                    $orderPayment->setOrderId($order->getIncrementId());
-                    $orderPayment->setPaymentId($paymentId);
-                    $orderPayment->setIsSandbox(!$payplugInstallmentPlan->is_live);
                     $this->orderPaymentRepository->save($orderPayment);
-
-                    $amount = $schedule->amount / 100;
-
-                    $order->setTotalPaid($order->getTotalPaid() + $amount);
-                    $order->setBaseTotalPaid($order->getBaseTotalPaid() + $amount);
-                    if ($order->getState() == Order::STATE_PAYMENT_REVIEW) {
-                        $order->setState(Order::STATE_PROCESSING);
-                    }
-
-                    $payment->registerCaptureNotification($amount, true);
                 }
             }
         }

@@ -20,6 +20,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '1.0.1', '<')) {
             $this->addInstallmentPlanTable($setup);
         }
+        if (version_compare($context->getVersion(), '1.5.4', '<')) {
+            $this->addInstallmentPlanPaymentColumn($setup);
+        }
     }
 
     private function addCustomerCardTable(SchemaSetupInterface $setup)
@@ -264,6 +267,32 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type' => \Magento\Framework\DB\Ddl\Table::TYPE_DECIMAL,
                 'length' => '12,4',
                 'comment' => 'Total due'
+            ]
+        );
+
+        /**
+         * Prepare database after install
+         */
+        $installer->endSetup();
+    }
+
+    private function addInstallmentPlanPaymentColumn(SchemaSetupInterface $setup)
+    {
+        $installer = $setup;
+
+        /**
+         * Prepare database for install
+         */
+        $installer->startSetup();
+
+        $installer->getConnection()->addColumn(
+            $installer->getTable('payplug_payments_order_payment'),
+            'is_installment_plan_payment_processed',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                'length' => null,
+                'nullable' => true,
+                'comment' => 'Payplug Payments Installment Plan Payment Processed Flag',
             ]
         );
 
