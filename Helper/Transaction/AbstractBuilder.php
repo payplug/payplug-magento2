@@ -1,67 +1,107 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Request\Payment;
+namespace Payplug\Payments\Helper\Transaction;
 
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
 use Magento\Payment\Gateway\Data\AddressAdapterInterface;
+use Magento\Payment\Gateway\Data\OrderAdapterInterface;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Gateway\Helper\SubjectReader;
-use Magento\Payment\Gateway\Request\BuilderInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Phone;
+use Payplug\Payments\Logger\Logger;
 
-class CustomerDataBuilder implements BuilderInterface
+abstract class AbstractBuilder extends AbstractHelper
 {
-    /**
-     * @var SubjectReader
-     */
-    private $subjectReader;
-
     /**
      * @var Config
      */
-    private $payplugConfig;
+    protected $payplugConfig;
 
     /**
      * @var Country
      */
-    private $countryHelper;
+    protected $countryHelper;
 
     /**
      * @var Phone
      */
-    private $phoneHelper;
+    protected $phoneHelper;
 
     /**
-     * Constructor
-     *
-     * @param SubjectReader $subjectReader
-     * @param Config        $payplugConfig
-     * @param Country       $countryHelper
-     * @param Phone         $phoneHelper
+     * @var Logger
+     */
+    protected $logger;
+
+    /**
+     * @param Context      $context
+     * @param Config       $payplugConfig
+     * @param Country      $countryHelper
+     * @param Phone        $phoneHelper
+     * @param Logger       $logger
      */
     public function __construct(
-        SubjectReader $subjectReader,
+        Context $context,
         Config $payplugConfig,
         Country $countryHelper,
-        Phone $phoneHelper
+        Phone $phoneHelper,
+        Logger $logger
     ) {
-        $this->subjectReader = $subjectReader;
+        parent::__construct($context);
+
         $this->payplugConfig = $payplugConfig;
         $this->countryHelper = $countryHelper;
         $this->phoneHelper = $phoneHelper;
+        $this->logger = $logger;
     }
 
     /**
-     * @inheritdoc
+     * @param OrderAdapterInterface $order
+     * @param InfoInterface         $payment
+     * @param Quote                 $quote
+     *
+     * @return array
      */
-    public function build(array $buildSubject)
+    public function buildTransaction($order, $payment, $quote)
     {
-        $paymentDO = $this->subjectReader->readPayment($buildSubject);
+        $transaction = array_merge(
+            $this->buildAmountData($order),
+            $this->buildCustomerData($order, $payment, $quote),
+            $this->buildOrderData($order, $quote),
+            $this->buildPaymentData($order, $payment, $quote)
+        );
 
-        $order = $paymentDO->getOrder();
-        $payment = $paymentDO->getPayment();
+        $this->logger->info($transaction);
 
+        return $transaction;
+    }
+
+    /**
+     * @param OrderAdapterInterface $order
+     *
+     * @return array
+     */
+    public function buildAmountData($order)
+    {
+        $paymentTab = [
+            'amount' => (int) ($order->getGrandTotalAmount() * 100),
+        ];
+
+        return $paymentTab;
+    }
+
+    /**
+     * @param OrderAdapterInterface $order
+     * @param InfoInterface         $payment
+     * @param Quote                 $quote
+     *
+     * @return array
+     */
+    public function buildCustomerData($order, $payment, $quote)
+    {
         $language = $this->payplugConfig->getConfigValue(
             'code',
             ScopeInterface::SCOPE_STORE,
@@ -89,7 +129,6 @@ class CustomerDataBuilder implements BuilderInterface
         $deliveryType = 'OTHER';
         if ($order->getShippingAddress() !== null) {
             $deliveryType = 'NEW';
-            $quote = $this->subjectReader->getQuote();
             $shippingCustomerAddressId = $quote->getShippingAddress()->getCustomerAddressId();
             if (!empty($shippingCustomerAddressId)) {
                 if ($shippingCustomerAddressId == $quote->getBillingAddress()->getCustomerAddressId()) {
@@ -161,5 +200,73 @@ class CustomerDataBuilder implements BuilderInterface
             'country' => $country,
             'language' => $language,
         ];
+    }
+
+    /**
+     * @param OrderAdapterInterface $order
+     * @param Quote                 $quote
+     *
+     * @return array
+     */
+    public function buildOrderData($order, $quote)
+    {
+        $currency = $order->getCurrencyCode();
+        $quoteId = $quote->getId();
+
+        if ($currency === null) {
+            $currency = 'EUR';
+        }
+
+        $metadata = [
+            'ID Quote' => $quoteId,
+            'Order'    => $order->getOrderIncrementId(),
+            'Website'  => $this->_urlBuilder->getUrl('', ['_nosid' => true]),
+        ];
+
+        $paymentTab = [
+            'currency' => $currency,
+            'metadata' => $metadata,
+            'store_id' => $order->getStoreId(),
+        ];
+
+        return $paymentTab;
+    }
+
+    /**
+     * @param OrderAdapterInterface $order
+     * @param InfoInterface         $payment
+     * @param Quote                 $quote
+     *
+     * @return array
+     */
+    public function buildPaymentData($order, $payment, $quote)
+    {
+        $quoteId = $quote->getId();
+        $storeId = $order->getStoreId();
+
+        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
+
+        $paymentData = [];
+        $paymentData['notification_url'] = $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
+            'ipn_store_id' => $storeId,
+            'ipn_sandbox'  => (int)$isSandbox,
+            '_nosid' => true,
+        ]);
+        $paymentData['force_3ds'] = false;
+
+        $paymentData['hosted_payment'] = [
+            'return_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
+                '_secure'  => true,
+                'quote_id' => $quoteId,
+                '_nosid' => true,
+            ]),
+            'cancel_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/cancel', [
+                '_secure'  => true,
+                'quote_id' => $quoteId,
+                '_nosid' => true,
+            ]),
+        ];
+
+        return $paymentData;
     }
 }

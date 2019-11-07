@@ -1,0 +1,65 @@
+<?php
+/**
+ * @var \Payplug\Payments\Block\Form\Ondemand $block
+ */
+$code = $block->escapeHtml($block->getMethodCode());
+$sentBy = $block->getAdditionalData('sent_by');
+$language = $block->getAdditionalData('language');
+?>
+<fieldset class="admin__fieldset payment-method" id="payment_form_<?= /* @noEscape */ $code ?>"
+          style="display:none">
+    <div class="field-type admin__field _required payment-link-sent-by">
+        <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_sent_by">
+            <span><?= $block->escapeHtml(__('Sent by method')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <select id="<?= /* @noEscape */ $code ?>_sent_by" name="payment[sent_by]"
+                    class="required-entry admin__control-select">
+                <?php foreach ($block->getSentByOptions() as $typeCode => $typeName) : ?>
+                    <option value="<?= $block->escapeHtml($typeCode) ?>" <?php if ($typeCode == $sentBy) : ?>selected="selected"<?php endif ?>>
+                        <?= $block->escapeHtml($typeName) ?>
+                    </option>
+                <?php endforeach ?>
+            </select>
+        </div>
+    </div>
+    <div class="field-number admin__field _required payment-link-sent-by-value">
+        <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_sent_by_value">
+            <span><?= $block->escapeHtml(__('Mobile')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input type="text" id="<?= /* @noEscape */ $code ?>_sent_by_value" name="payment[sent_by_value]"
+                   title="<?= $block->escapeHtml(__('Mobile / Email')) ?>" class="admin__control-text required-entry"
+                   value="<?= /* @noEscape */ $block->getAdditionalData('sent_by_value') ?>"/>
+        </div>
+    </div>
+    <div class="field-type admin__field _required">
+        <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_language">
+            <span><?= $block->escapeHtml(__('Language')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <select id="<?= /* @noEscape */ $code ?>_language"
+                    name="payment[language]"
+                    class="required-entry admin__control-select"
+            >
+                <?php foreach ($block->getLanguages() as $languageCode => $languageName) : ?>
+                    <option value="<?= $block->escapeHtml($languageCode) ?>" <?php if ($languageCode == $language) : ?>selected="selected"<?php endif ?>>
+                        <?= $block->escapeHtml($languageName) ?>
+                    </option>
+                <?php endforeach ?>
+            </select>
+        </div>
+    </div>
+    <div class="field-number admin__field">
+        <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_description">
+            <span><?= $block->escapeHtml(__('Description')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <textarea id="<?= /* @noEscape */ $code ?>_description"
+                      name="payment[description]"
+                      title="<?= $block->escapeHtml(__('Description')) ?>"
+                      class="admin__control-text"
+            ><?= /* @noEscape */ $block->getAdditionalData('description') ?></textarea>
+        </div>
+    </div>
+</fieldset>

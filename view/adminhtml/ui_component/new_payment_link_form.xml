@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">new_payment_link_form.payment_link_data_source</item>
+            <item name="deps" xsi:type="string">new_payment_link_form.payment_link_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Payment Link</item>
+        <item name="layout" xsi:type="array">
+            <item name="type" xsi:type="string">tabs</item>
+        </item>
+
+        <item name="buttons" xsi:type="array">
+            <item name="back" xsi:type="string">Payplug\Payments\Block\Adminhtml\NewPaymentLink\BackButton</item>
+            <item name="save" xsi:type="string">Payplug\Payments\Block\Adminhtml\NewPaymentLink\SaveButton</item>
+        </item>
+    </argument>
+
+    <dataSource name="payment_link_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Payplug\Payments\Model\NewPaymentLink\DataProvider</argument>
+            <argument name="name" xsi:type="string">payment_link_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">order_id</argument>
+            <argument name="requestFieldName" xsi:type="string">order_id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="payplug_payments_admin/order/sendNewPaymentLink"/>
+                </item>
+            </argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+
+    <fieldset name="form">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">Payment Link</item>
+            </item>
+        </argument>
+
+        <field name="order_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="visible" xsi:type="boolean">false</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">form</item>
+                </item>
+            </argument>
+        </field>
+
+        <field name="sent_by">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Payplug\Payments\Model\NewPaymentLink\SentBy</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="component" xsi:type="string">Payplug_Payments/js/ui_component/ondemand</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="source" xsi:type="string">form</item>
+                    <item name="label" xsi:type="string" translate="true">Sent by method</item>
+                    <item name="additionalClasses" xsi:type="string">payment-link-sent-by</item>
+                </item>
+            </argument>
+        </field>
+        <field name="sent_by_value">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="source" xsi:type="string">form</item>
+                    <item name="label" xsi:type="string" translate="true">Mobile / Email</item>
+                    <item name="additionalClasses" xsi:type="string">payment-link-sent-by-value</item>
+                </item>
+            </argument>
+        </field>
+        <field name="language">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Payplug\Payments\Model\NewPaymentLink\Language</item>
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">select</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="source" xsi:type="string">form</item>
+                    <item name="label" xsi:type="string" translate="true">Language</item>
+                </item>
+            </argument>
+        </field>
+        <field name="description">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">textarea</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">false</item>
+                    </item>
+                    <item name="source" xsi:type="string">form</item>
+                    <item name="label" xsi:type="string" translate="true">Description</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+</form>

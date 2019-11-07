@@ -16,6 +16,17 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
 
     const IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED = 'is_installment_plan_payment_processed';
 
+    const SENT_BY = 'sent_by';
+
+    const SENT_BY_VALUE = 'sent_by_value';
+
+    const LANGUAGE = 'language';
+
+    const DESCRIPTION = 'description';
+
+    const SENT_BY_SMS = 'SMS';
+    const SENT_BY_EMAIL = 'EMAIL';
+
     /**
      * @var Config
      */
@@ -127,6 +138,78 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * @return string|null
+     */
+    public function getSentBy()
+    {
+        return $this->_getData(self::SENT_BY);
+    }
+
+    /**
+     * @param string|null $sentBy
+     *
+     * @return $this
+     */
+    public function setSentBy($sentBy = null)
+    {
+        return $this->setData(self::SENT_BY, $sentBy);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSentByValue()
+    {
+        return $this->_getData(self::SENT_BY_VALUE);
+    }
+
+    /**
+     * @param string|null $sentByValue
+     *
+     * @return $this
+     */
+    public function setSentByValue($sentByValue = null)
+    {
+        return $this->setData(self::SENT_BY_VALUE, $sentByValue);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLanguage()
+    {
+        return $this->_getData(self::LANGUAGE);
+    }
+
+    /**
+     * @param string|null $language
+     *
+     * @return $this
+     */
+    public function setLanguage($language = null)
+    {
+        return $this->setData(self::LANGUAGE, $language);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDescription()
+    {
+        return $this->_getData(self::DESCRIPTION);
+    }
+
+    /**
+     * @param string|null $description
+     *
+     * @return $this
+     */
+    public function setDescription($description = null)
+    {
+        return $this->setData(self::DESCRIPTION, $description);
+    }
+
+    /**
      * Retrive a payment
      *
      * @param int|null $store
@@ -159,5 +242,42 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
         $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
 
         return \Payplug\Refund::create($this->getPaymentId(), $data);
+    }
+
+    /**
+     * Abort an installment plan
+     *
+     * @param int|null $store
+     *
+     * @return \Payplug\Resource\Payment
+     */
+    public function abort($store = null)
+    {
+        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+
+        return \Payplug\Payment::abort($this->getPaymentId());
+    }
+
+    /**
+     * @return array
+     */
+    public static function getAvailableOndemandSentBy()
+    {
+        return [
+            self::SENT_BY_SMS => __('SMS'),
+            self::SENT_BY_EMAIL => __('Email'),
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public static function getAvailableOndemandLanguage()
+    {
+        return [
+            'fr' => __('French'),
+            'en' => __('English'),
+            'it' => __('Italian'),
+        ];
     }
 }

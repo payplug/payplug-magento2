@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Gateway\Request\Standard;
 
+use Magento\Framework\Exception\PaymentException;
 use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Request\BuilderInterface;
 use Payplug\Payments\Helper\Data;
@@ -38,7 +39,10 @@ class RefundDataBuilder implements BuilderInterface
 
         $order = $paymentDO->getOrder();
 
-        $payplugPayment = $this->payplugHelper->getOrderPayment($order->getOrderIncrementId());
+        $payplugPayment = $this->payplugHelper->getOrderLastPayment($order->getOrderIncrementId());
+        if ($payplugPayment === null) {
+            throw new PaymentException(__('Unable to find payment linked to order %1', $order->getOrderIncrementId()));
+        }
 
         return [
             'payment' => $payplugPayment,
