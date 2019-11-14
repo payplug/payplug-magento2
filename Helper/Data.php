@@ -322,7 +322,7 @@ class Data extends AbstractHelper
         }
         if ($field !== null) {
             $orderStatus = $order->getPayment()->getMethodInstance()->getConfigData($field, $order->getStoreId());
-            if ($orderStatus !== $order->getStatus()) {
+            if (!empty($orderStatus) && $orderStatus !== $order->getStatus()) {
                 $order->addStatusToHistory($orderStatus, __('Custom Payplug Payments status'));
                 if ($save) {
                     $this->orderRepository->save($order);
