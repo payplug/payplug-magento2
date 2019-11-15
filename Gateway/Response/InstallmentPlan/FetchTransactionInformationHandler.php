@@ -121,6 +121,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
                         $this->sendOrderEmail($order);
                         $this->updateInvoiceState($order, $payment);
 
+                        $payment->setTransactionId($payplugInstallmentPlan->id);
                         $payment->setTransactionPending(false);
                         $payment->setIsFraudDetected(false);
 
