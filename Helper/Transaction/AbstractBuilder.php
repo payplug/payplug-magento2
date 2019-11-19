@@ -87,7 +87,7 @@ abstract class AbstractBuilder extends AbstractHelper
     public function buildAmountData($order)
     {
         $paymentTab = [
-            'amount' => (int) ($order->getGrandTotalAmount() * 100),
+            'amount' => (int) (round($order->getGrandTotalAmount(), 2) * 100),
         ];
 
         return $paymentTab;
