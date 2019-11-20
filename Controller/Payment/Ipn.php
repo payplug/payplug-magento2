@@ -280,7 +280,20 @@ class Ipn extends AbstractPayment
         $this->logger->info('Refund ID : '.$resource->id);
         $refund = $resource;
 
-        $orderIncrementId = $refund->metadata['Order'];
+        $paymentId = $refund->payment_id;
+        try {
+            $orderPayment = $this->payplugHelper->getOrderPaymentByPaymentId($paymentId);
+        } catch (NoSuchEntityException $e) {
+            $response->setStatusHeader(
+                500,
+                null,
+                sprintf('500 Unknown payment %s.', $paymentId)
+            );
+
+            return;
+        }
+
+        $orderIncrementId = $orderPayment->getOrderId();
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
 

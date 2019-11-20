@@ -150,6 +150,16 @@ class Data extends AbstractHelper
     }
 
     /**
+     * @param string $paymentId
+     *
+     * @return \Payplug\Payments\Model\Order\Payment
+     */
+    public function getOrderPaymentByPaymentId($paymentId)
+    {
+        return $this->orderPaymentRepository->get($paymentId, 'payment_id');
+    }
+
+    /**
      * @param int $orderId
      *
      * @return \Payplug\Payments\Model\Order\InstallmentPlan
