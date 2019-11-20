@@ -140,6 +140,12 @@ class FetchTransactionInformationHandler implements HandlerInterface
                     $this->orderPaymentRepository->save($orderPayment);
                 }
             }
+            if ($payplugInstallmentPlan->is_fully_paid) {
+                // Avoid totalDue 0.01 issue
+                // When installment plan is fully paid, set total paid to order's total
+                $order->setTotalPaid($order->getGrandTotal());
+                $order->setBaseTotalPaid($order->getBaseGrandTotal());
+            }
         }
     }
 
