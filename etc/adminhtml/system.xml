@@ -81,7 +81,7 @@
                 </field>
                 <field id="model"></field>
             </group>
-            <group id="payplug_payments_installment_plan" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_installment_plan" translate="label" type="text" sortOrder="31" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Payments by installments</label>
                 <frontend_model>Payplug\Payments\Block\Adminhtml\Config\InstallmentPlan</frontend_model>
                 <field id="active" translate="label comment" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -130,7 +130,7 @@
                 </field>
                 <field id="model"></field>
             </group>
-            <group id="payplug_payments_ondemand" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_ondemand" translate="label" type="text" sortOrder="32" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - On demand</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
