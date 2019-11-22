@@ -138,7 +138,7 @@ class PaymentConfigObserver implements ObserverInterface
             unset($groups['general']['fields']['email']);
             $this->saveConfig('connected', 0);
         }
-        if (!$this->payplugConfigVerified) {
+        if (!$this->payplugConfigVerified && $config['init']) {
             $groups['general']['fields']['environmentmode']['value']
                 = Config::ENVIRONMENT_TEST;
             $this->saveConfig('verified', 0);
