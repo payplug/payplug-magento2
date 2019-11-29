@@ -43,7 +43,8 @@ class Ipn extends AbstractPayment
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
         $this->payplugConfig = $payplugConfig;
-        $this->getRequest()->setParam('isAjax', true);
+        $formKey = $this->_objectManager->get(\Magento\Framework\Data\Form\FormKey::class);
+        $this->getRequest()->setParam('form_key', $formKey->getFormKey());
     }
 
     /**
