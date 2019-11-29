@@ -285,6 +285,7 @@ class Ipn extends AbstractPayment
         try {
             $orderPayment = $this->payplugHelper->getOrderPaymentByPaymentId($paymentId);
         } catch (NoSuchEntityException $e) {
+            $this->logger->info(sprintf('500 Unknown payment %s.', $paymentId));
             $response->setStatusHeader(
                 500,
                 null,
@@ -297,9 +298,20 @@ class Ipn extends AbstractPayment
         $orderIncrementId = $orderPayment->getOrderId();
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
+        if (!$order->getId()) {
+            $this->logger->info(sprintf('500 Unknown order %s.', $orderIncrementId));
+            $response->setStatusHeader(
+                500,
+                null,
+                sprintf('500 Unknown order %s.', $orderIncrementId)
+            );
+
+            return;
+        }
 
         try {
             $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
+            $this->logger->info("200 refund for installment plan not processed");
             $response->setStatusHeader(200, null, "200 refund for installment plan not processed");
 
             return;
@@ -310,8 +322,11 @@ class Ipn extends AbstractPayment
         try {
             $amountToRefund = $refund->amount / 100;
             $order->getPayment()->registerRefundNotification($amountToRefund);
+            $order->save();
+            $this->logger->info('200 Order updated.');
             $response->setStatusHeader(200, null, '200 Order updated.');
         } catch (\Exception $e) {
+            $this->logger->info(sprintf('500 Error while creating full refund %s.', $e->getMessage()));
             $response->setStatusHeader(
                 500,
                 null,
