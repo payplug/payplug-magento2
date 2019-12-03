@@ -62,4 +62,12 @@ $language = $block->getAdditionalData('language');
             ><?= /* @noEscape */ $block->getAdditionalData('description') ?></textarea>
         </div>
     </div>
+    <div class="field-number admin__field">
+        <div class="admin__field-control">
+            <?php $buttonTitle = __('Save'); ?>
+            <button title="<?= $block->escapeHtml($buttonTitle); ?>" type="button" class="action-default scalable action-secondary">
+                <span><?= $buttonTitle; ?></span>
+            </button>
+        </div>
+    </div>
 </fieldset>
