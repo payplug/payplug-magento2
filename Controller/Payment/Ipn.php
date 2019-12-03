@@ -57,6 +57,7 @@ class Ipn extends AbstractPayment
 
         /** @var Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
+        $response->setContents('');
 
         try {
             /** @var \Magento\Framework\App\Request\Http $this->getRequest() */
