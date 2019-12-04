@@ -106,7 +106,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
                 try {
                     $this->orderSender->send($order);
                 } catch (\Exception $e) {
-                    $this->payplugLogger->critical($e);
+                    $this->payplugLogger->critical($e->getMessage());
                 }
 
                 $this->saveCustomerCard($payplugPayment, $order->getCustomerId(), $order->getStoreId());

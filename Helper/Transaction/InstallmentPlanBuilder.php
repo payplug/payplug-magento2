@@ -1,42 +1,31 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Request\Payment;
+namespace Payplug\Payments\Helper\Transaction;
 
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
-use Magento\Payment\Gateway\Request\BuilderInterface;
 use Magento\Payment\Model\InfoInterface;
-use Payplug\Payments\Gateway\Helper\SubjectReader;
 
-class ScheduleDataBuilder implements BuilderInterface
+class InstallmentPlanBuilder extends AbstractBuilder
 {
     /**
-     * @var SubjectReader
+     * @inheritdoc
      */
-    private $subjectReader;
-
-    /**
-     * @param SubjectReader $subjectReader
-     */
-    public function __construct(SubjectReader $subjectReader)
+    public function buildAmountData($order)
     {
-        $this->subjectReader = $subjectReader;
+        return [];
     }
 
     /**
      * @inheritdoc
      */
-    public function build(array $buildSubject)
+    public function buildPaymentData($order, $payment, $quote)
     {
-        $paymentDO = $this->subjectReader->readPayment($buildSubject);
+        $paymentData = parent::buildPaymentData($order, $payment, $quote);
+        unset($paymentData['force_3ds']);
 
-        $order = $paymentDO->getOrder();
-        $payment = $paymentDO->getPayment();
+        $paymentData['schedule'] = $this->generateSchedule($order, $payment);
 
-        $paymentTab = [
-            'schedule' => $this->generateSchedule($order, $payment),
-        ];
-
-        return $paymentTab;
+        return $paymentData;
     }
 
     /**

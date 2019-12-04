@@ -12,4 +12,10 @@
     <event name="payment_method_is_active">
         <observer name="payplug_payments_standard_is_available" instance="Payplug\Payments\Observer\StandardAvailabilityObserver" />
     </event>
+    <event name="payment_method_assign_data_payplug_payments_ondemand">
+        <observer name="payplug_payments_ondemand_gateway_data_assign" instance="Payplug\Payments\Observer\OndemandPaymentDataAssignObserver" />
+    </event>
+    <event name="adminhtml_sales_order_create_process_data">
+        <observer name="payplug_payments_ondemand_admin_order_process_data" instance="Payplug\Payments\Observer\OndemandPaymentOrderCreateProcessDataObserver" />
+    </event>
 </config>

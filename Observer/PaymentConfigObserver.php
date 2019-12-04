@@ -93,6 +93,11 @@ class PaymentConfigObserver implements ObserverInterface
         ) {
             $this->processInstallmentPlanConfig($postParams['groups']);
         }
+        if (isset($sections['payment_us_payplug_payments_ondemand']) &&
+            isset($postParams['groups']['payplug_payments_ondemand']['fields'])
+        ) {
+            $this->processOndemandConfig($postParams['groups']);
+        }
     }
 
     private function processGeneralConfig($groups)
@@ -133,7 +138,7 @@ class PaymentConfigObserver implements ObserverInterface
             unset($groups['general']['fields']['email']);
             $this->saveConfig('connected', 0);
         }
-        if (!$this->payplugConfigVerified) {
+        if (!$this->payplugConfigVerified && $config['init']) {
             $groups['general']['fields']['environmentmode']['value']
                 = Config::ENVIRONMENT_TEST;
             $this->saveConfig('verified', 0);
@@ -159,15 +164,7 @@ class PaymentConfigObserver implements ObserverInterface
         $fields = $groups['payplug_payments_standard']['fields'];
 
         $this->helper->initScopeData();
-
-        if (!empty($fields['active']['value']) && !$this->helper->isConnected()) {
-            $this->messageManager->addErrorMessage(
-                __('You are not connected to a payplug account. ' .
-                    'Please go to section Sales > Payplug Payments to log in.')
-            );
-
-            $groups['payplug_payments_standard']['fields']['active']['value'] = 0;
-        }
+        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_standard');
 
         if (!empty($fields['one_click']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -204,15 +201,7 @@ class PaymentConfigObserver implements ObserverInterface
         $fields = $groups['payplug_payments_installment_plan']['fields'];
 
         $this->helper->initScopeData();
-
-        if (!empty($fields['active']['value']) && !$this->helper->isConnected()) {
-            $this->messageManager->addErrorMessage(
-                __('You are not connected to a payplug account. ' .
-                    'Please go to section Sales > Payplug Payments to log in.')
-            );
-
-            $groups['payplug_payments_installment_plan']['fields']['active']['value'] = 0;
-        }
+        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_installment_plan');
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -247,6 +236,30 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         $this->request->setPostValue('groups', $groups);
+    }
+
+    private function processOndemandConfig($groups)
+    {
+        $fields = $groups['payplug_payments_ondemand']['fields'];
+
+        $this->helper->initScopeData();
+        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_ondemand');
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    private function validatePayplugConnection($fields, $groups, $fieldGroup)
+    {
+        if (!empty($fields['active']['value']) && !$this->helper->isConnected()) {
+            $this->messageManager->addErrorMessage(
+                __('You are not connected to a payplug account. ' .
+                    'Please go to section Sales > Payplug Payments to log in.')
+            );
+
+            $groups[$fieldGroup]['fields']['active']['value'] = 0;
+        }
+
+        return $groups;
     }
 
     /**

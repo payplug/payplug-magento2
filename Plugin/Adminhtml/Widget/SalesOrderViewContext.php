@@ -2,23 +2,8 @@
 
 namespace Payplug\Payments\Plugin\Adminhtml\Widget;
 
-use Payplug\Payments\Helper\Data;
-
-class SalesOrderViewContext
+class SalesOrderViewContext extends SalesViewContext
 {
-    /**
-     * @var Data
-     */
-    private $payplugHelper;
-
-    /**
-     * @param Data $payplugHelper
-     */
-    public function __construct(Data $payplugHelper)
-    {
-        $this->payplugHelper = $payplugHelper;
-    }
-
     /**
      * Add Payplug update payment button on admin order view
      *
@@ -28,13 +13,6 @@ class SalesOrderViewContext
      */
     public function beforeSetLayout(\Magento\Sales\Block\Adminhtml\Order\View $subject)
     {
-        if ($this->payplugHelper->canUpdatePayment($subject->getOrder())) {
-            $subject->addButton('payplug_update_payment', [
-                'label'   => __('Update Payment'),
-                'onclick' => 'setLocation(\'' . $subject->getUrl('payplug_payments_admin/order/updatePayment') . '\')',
-            ]);
-        }
-
-        return null;
+        return $this->addPayplugLinks($subject->getOrder(), $subject);
     }
 }

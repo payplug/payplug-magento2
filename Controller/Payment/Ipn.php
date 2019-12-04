@@ -43,7 +43,8 @@ class Ipn extends AbstractPayment
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
         $this->payplugConfig = $payplugConfig;
-        $this->getRequest()->setParam('isAjax', true);
+        $formKey = $this->_objectManager->get(\Magento\Framework\Data\Form\FormKey::class);
+        $this->getRequest()->setParam('form_key', $formKey->getFormKey());
     }
 
     /**
@@ -56,6 +57,7 @@ class Ipn extends AbstractPayment
 
         /** @var Raw $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_RAW);
+        $response->setContents('');
 
         try {
             /** @var \Magento\Framework\App\Request\Http $this->getRequest() */
@@ -280,12 +282,37 @@ class Ipn extends AbstractPayment
         $this->logger->info('Refund ID : '.$resource->id);
         $refund = $resource;
 
-        $orderIncrementId = $refund->metadata['Order'];
+        $paymentId = $refund->payment_id;
+        try {
+            $orderPayment = $this->payplugHelper->getOrderPaymentByPaymentId($paymentId);
+        } catch (NoSuchEntityException $e) {
+            $this->logger->info(sprintf('500 Unknown payment %s.', $paymentId));
+            $response->setStatusHeader(
+                500,
+                null,
+                sprintf('500 Unknown payment %s.', $paymentId)
+            );
+
+            return;
+        }
+
+        $orderIncrementId = $orderPayment->getOrderId();
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
+        if (!$order->getId()) {
+            $this->logger->info(sprintf('500 Unknown order %s.', $orderIncrementId));
+            $response->setStatusHeader(
+                500,
+                null,
+                sprintf('500 Unknown order %s.', $orderIncrementId)
+            );
+
+            return;
+        }
 
         try {
             $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
+            $this->logger->info("200 refund for installment plan not processed");
             $response->setStatusHeader(200, null, "200 refund for installment plan not processed");
 
             return;
@@ -296,8 +323,11 @@ class Ipn extends AbstractPayment
         try {
             $amountToRefund = $refund->amount / 100;
             $order->getPayment()->registerRefundNotification($amountToRefund);
+            $order->save();
+            $this->logger->info('200 Order updated.');
             $response->setStatusHeader(200, null, '200 Order updated.');
         } catch (\Exception $e) {
+            $this->logger->info(sprintf('500 Error while creating full refund %s.', $e->getMessage()));
             $response->setStatusHeader(
                 500,
                 null,

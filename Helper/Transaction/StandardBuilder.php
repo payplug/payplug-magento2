@@ -1,97 +1,62 @@
 <?php
 
-namespace Payplug\Payments\Gateway\Request\Payment;
+namespace Payplug\Payments\Helper\Transaction;
 
+use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
-use Magento\Framework\UrlInterface;
-use Magento\Payment\Gateway\Request\BuilderInterface;
 use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Helper\Country;
+use Payplug\Payments\Helper\Phone;
+use Payplug\Payments\Logger\Logger;
 
-class PaymentDataBuilder implements BuilderInterface
+class StandardBuilder extends AbstractBuilder
 {
-    /**
-     * @var SubjectReader
-     */
-    private $subjectReader;
-
-    /**
-     * @var UrlInterface
-     */
-    private $urlBuilder;
-
-    /**
-     * @var Config
-     */
-    private $payplugConfig;
-
     /**
      * @var Card
      */
     private $cardHelper;
 
     /**
-     * Constructor
-     *
-     * @param SubjectReader $subjectReader
-     * @param UrlInterface  $urlBuilder
-     * @param Config        $payplugConfig
-     * @param Card          $cardHelper
+     * @param Context      $context
+     * @param Config       $payplugConfig
+     * @param Country      $countryHelper
+     * @param Phone        $phoneHelper
+     * @param Logger       $logger
+     * @param Card         $cardHelper
      */
     public function __construct(
-        SubjectReader $subjectReader,
-        UrlInterface $urlBuilder,
+        Context $context,
         Config $payplugConfig,
+        Country $countryHelper,
+        Phone $phoneHelper,
+        Logger $logger,
         Card $cardHelper
     ) {
-        $this->subjectReader = $subjectReader;
-        $this->urlBuilder = $urlBuilder;
-        $this->payplugConfig = $payplugConfig;
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger);
+
         $this->cardHelper = $cardHelper;
     }
 
     /**
      * @inheritdoc
      */
-    public function build(array $buildSubject)
+    public function buildPaymentData($order, $payment, $quote)
     {
-        $paymentDO = $this->subjectReader->readPayment($buildSubject);
+        $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
-        $order = $paymentDO->getOrder();
-        $quoteId = $this->subjectReader->getQuote()->getId();
         $storeId = $order->getStoreId();
-
-        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
-
-        $paymentData = [];
-        $paymentData['notification_url'] = $this->urlBuilder->getUrl('payplug_payments/payment/ipn', [
-            'ipn_store_id' => $storeId,
-            'ipn_sandbox'  => (int)$isSandbox,
-        ]);
-        $paymentData['force_3ds'] = false;
-
-        $customerCardId = $paymentDO->getPayment()->getAdditionalInformation('payplug_payments_customer_card_id');
-        $paymentDO->getPayment()->unsAdditionalInformation('payplug_payments_customer_card_id');
+        $customerCardId = $payment->getAdditionalInformation('payplug_payments_customer_card_id');
+        $payment->unsAdditionalInformation('payplug_payments_customer_card_id');
 
         $currentCard = $this->getCustomerCardToken($customerCardId, $order->getCustomerId());
         $paymentData['allow_save_card'] = $this->canSaveCard($storeId, $currentCard, $order->getCustomerId());
 
         if ($this->isOneClick($storeId) && $currentCard != null) {
             $paymentData['payment_method'] = $currentCard;
-        } else {
-            $paymentData['hosted_payment'] = [
-                'return_url' => $this->urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
-                    '_secure'  => true,
-                    'quote_id' => $quoteId,
-                ]),
-                'cancel_url' => $this->urlBuilder->getUrl('payplug_payments/payment/cancel', [
-                    '_secure'  => true,
-                    'quote_id' => $quoteId,
-                ]),
-            ];
+            unset($paymentData['hosted_payment']);
         }
 
         return $paymentData;
