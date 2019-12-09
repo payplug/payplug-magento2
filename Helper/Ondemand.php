@@ -82,7 +82,6 @@ class Ondemand extends AbstractHelper
      */
     public function sendNewPaymentLink($order, $lastOrderPayment, $paymentLinkData)
     {
-        $this->payplugLogger->info(__METHOD__);
         if ($lastOrderPayment === null) {
             throw new PaymentException(__('Unable to find payment linked to order %1', $order->getIncrementId()));
         }
