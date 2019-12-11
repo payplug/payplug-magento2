@@ -124,7 +124,7 @@
 "New payment link was successfully sent.","Nouveau lien de paiement envoyé avec succès"
 "An error occured while sending new payment link: %s.","Erreur lors de l'envoi du lien de paiement : %s"
 "PayPlug Payments - On demand","Paiements PayPlug - Demande de Paiement"
-"Unable to find payment linked to order %1","Impossible de trouver le paiement lié à la commande % 1"
+"Unable to find payment linked to order %1","Impossible de trouver le paiement lié à la commande %1"
 "Invalid sent by option: %1","L'envoi a échoué par %1"
 "Please fill in mobile / email to which the payment link must be sent to","Veuillez renseigner le numéro de mobile ou l'email du destinataire pour envoyer le lien de paiement "
 "Allowed languages are: %1","Langues acceptées : %1"
