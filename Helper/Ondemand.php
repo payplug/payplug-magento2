@@ -15,6 +15,8 @@ use Payplug\Payments\Model\OrderPaymentRepository;
 
 class Ondemand extends AbstractHelper
 {
+    const DESCRIPTION_MAX_LENGTH = 80;
+
     /**
      * @var \Payplug\Payments\Model\Order\PaymentFactory
      */

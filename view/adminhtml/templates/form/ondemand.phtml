@@ -59,6 +59,7 @@ $language = $block->getAdditionalData('language');
                       name="payment[description]"
                       title="<?= $block->escapeHtml(__('Description')) ?>"
                       class="admin__control-text"
+                      maxlength="<?= \Payplug\Payments\Helper\Ondemand::DESCRIPTION_MAX_LENGTH ?>"
             ><?= /* @noEscape */ $block->getAdditionalData('description') ?></textarea>
         </div>
     </div>
