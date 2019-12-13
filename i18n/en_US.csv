@@ -123,7 +123,7 @@
 "New payment link for order %1","New payment link for order %1"
 "New payment link was successfully sent.","New payment link was successfully sent."
 "An error occured while sending new payment link: %s.","An error occured while sending new payment link: %s."
-"PayPlug Payments - On demand","PayPlug Payments - On demand"
+"PayPlug Payments - On demand","PayPlug Payments - Payment Request"
 "Unable to find payment linked to order %1","Unable to find payment linked to order %1"
 "Invalid sent by option: %1","Invalid sent by option: %1"
 "Please fill in mobile / email to which the payment link must be sent to","Please fill in mobile / email to which the payment link must be sent to"
