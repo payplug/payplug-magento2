@@ -15,6 +15,8 @@ use Payplug\Payments\Model\OrderPaymentRepository;
 
 class Ondemand extends AbstractHelper
 {
+    const DESCRIPTION_MAX_LENGTH = 80;
+
     /**
      * @var \Payplug\Payments\Model\Order\PaymentFactory
      */
@@ -82,7 +84,6 @@ class Ondemand extends AbstractHelper
      */
     public function sendNewPaymentLink($order, $lastOrderPayment, $paymentLinkData)
     {
-        $this->payplugLogger->info(__METHOD__);
         if ($lastOrderPayment === null) {
             throw new PaymentException(__('Unable to find payment linked to order %1', $order->getIncrementId()));
         }

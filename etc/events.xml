@@ -18,4 +18,7 @@
     <event name="adminhtml_sales_order_create_process_data">
         <observer name="payplug_payments_ondemand_admin_order_process_data" instance="Payplug\Payments\Observer\OndemandPaymentOrderCreateProcessDataObserver" />
     </event>
+    <event name="order_cancel_after">
+        <observer name="payplug_payments_ondemand_order_cancel" instance="Payplug\Payments\Observer\OrderCancelObserver" />
+    </event>
 </config>

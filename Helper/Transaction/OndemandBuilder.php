@@ -3,6 +3,7 @@
 namespace Payplug\Payments\Helper\Transaction;
 
 use Magento\Framework\Exception\PaymentException;
+use Payplug\Payments\Helper\Ondemand;
 use Payplug\Payments\Model\Order\Payment;
 
 class OndemandBuilder extends AbstractBuilder
@@ -48,6 +49,7 @@ class OndemandBuilder extends AbstractBuilder
             }
         }
 
+        $description = substr($description, 0, Ondemand::DESCRIPTION_MAX_LENGTH);
         $paymentData['extra'] = [
             'sent_by' => $sentBy,
             'sent_by_value' => $sentByValue,
