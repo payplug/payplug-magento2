@@ -27,18 +27,25 @@ composer install
 php bin/magento module:enable Payplug_Payments --clear-static-content
 php bin/magento setup:upgrade
 php bin/magento setup:di:compile
-php bin/magento setup:static-content:deploy <languages>  # (**)
+php bin/magento setup:static-content:deploy <languages>  # (**)(***)
 php bin/magento cache:clean
 ```
 
 (\*) If you didn’t save them when you installed Magento 2, this command will ask for your Magento authentication keys (https://devdocs.magento.com/guides/v2.3/install-gde/prereq/connect-auth.html).
+Login = Public Key
+Password = Private Key
 
-(\*\*) With the `languages` option, you can define for which language you want to generate your static content. Languages should be separated with a space.
-If you are not running on production mode, use the `--force` option. Otherwise the command will fail.
-
+(\*\*) With the languages option, you can define for which language you want to generate your static content. Languages should be separated with a space. 
 For example, to generate content for locales en_US and fr_FR, you can run the command:
 ```
-php bin/magento setup:static-content:deploy en_US fr_FR  # --force # if you are not running on production mode
+php bin/magento setup:static-content:deploy en_US fr_FR
+```
+
+(\*\*\*) If you are not running on production mode, use the --force option. Otherwise the command will fail.
+For example, to generate content for locales en_US and fr_FR, you can run the command:
+
+```
+php bin/magento setup:static-content:deploy --force en_US fr_FR  # --force # if you are not running on production mode
 ```
 
 **Troubleshooting:**
