@@ -49,7 +49,7 @@ class OndemandBuilder extends AbstractBuilder
             }
         }
 
-        $description = substr($description, 0, Ondemand::DESCRIPTION_MAX_LENGTH);
+        $description = mb_substr($description, 0, Ondemand::DESCRIPTION_MAX_LENGTH, 'UTF-8');
         $paymentData['extra'] = [
             'sent_by' => $sentBy,
             'sent_by_value' => $sentByValue,
