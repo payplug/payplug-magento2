@@ -83,7 +83,7 @@ class StandardAvailabilityObserver implements ObserverInterface
             $checkResult->setData('is_available', false);
             return;
         }
-        $amount = $quote->getGrandTotal() * 100;
+        $amount = (int) round($quote->getGrandTotal() * 100);
 
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
             $checkResult->setData('is_available', false);

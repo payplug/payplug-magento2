@@ -256,8 +256,10 @@ class Config extends AbstractHelper
             'payment/payplug_payments_standard/one_click',
             'payment/payplug_payments_standard/processing_order_status',
             'payment/payplug_payments_standard/canceled_order_status',
-            'payment/payplug_payments_standard/allow_specific',
+            'payment/payplug_payments_standard/allowspecific',
             'payment/payplug_payments_standard/specificcountry',
+            'payment/payplug_payments_standard/default_country',
+            'payment/payplug_payments_standard/sort_order',
             // Payplug payment Installment plan configuration
             'payment/payplug_payments_installment_plan/active',
             'payment/payplug_payments_installment_plan/title',
@@ -265,8 +267,19 @@ class Config extends AbstractHelper
             'payment/payplug_payments_installment_plan/threshold',
             'payment/payplug_payments_installment_plan/processing_order_status',
             'payment/payplug_payments_installment_plan/canceled_order_status',
-            'payment/payplug_payments_installment_plan/allow_specific',
+            'payment/payplug_payments_installment_plan/allowspecific',
             'payment/payplug_payments_installment_plan/specificcountry',
+            'payment/payplug_payments_installment_plan/default_country',
+            'payment/payplug_payments_installment_plan/sort_order',
+            // Payplug payment On demand configuration
+            'payment/payplug_payments_ondemand/active',
+            'payment/payplug_payments_ondemand/title',
+            'payment/payplug_payments_ondemand/processing_order_status',
+            'payment/payplug_payments_ondemand/canceled_order_status',
+            'payment/payplug_payments_ondemand/allowspecific',
+            'payment/payplug_payments_ondemand/specificcountry',
+            'payment/payplug_payments_ondemand/default_country',
+            'payment/payplug_payments_ondemand/sort_order',
         ];
 
         foreach ($keys as $key) {

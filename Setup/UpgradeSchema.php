@@ -23,6 +23,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (version_compare($context->getVersion(), '1.5.4', '<')) {
             $this->addInstallmentPlanPaymentColumn($setup);
         }
+        if (version_compare($context->getVersion(), '1.6.0', '<')) {
+            $this->addOndemandPaymentColumns($setup);
+        }
     }
 
     private function addCustomerCardTable(SchemaSetupInterface $setup)
@@ -295,6 +298,57 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'comment' => 'Payplug Payments Installment Plan Payment Processed Flag',
             ]
         );
+
+        /**
+         * Prepare database after install
+         */
+        $installer->endSetup();
+    }
+
+    private function addOndemandPaymentColumns(SchemaSetupInterface $setup)
+    {
+        $installer = $setup;
+
+        /**
+         * Prepare database for install
+         */
+        $installer->startSetup();
+
+        $columns = [
+            'sent_by' => [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 255,
+                'nullable' => true,
+                'comment' => 'Payplug Payments On demand - sent by',
+            ],
+            'sent_by_value' => [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 255,
+                'nullable' => true,
+                'comment' => 'Payplug Payments On demand - sent by value',
+            ],
+            'language' => [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 255,
+                'nullable' => true,
+                'comment' => 'Payplug Payments On demand - language',
+            ],
+            'description' => [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => '', // default text size: 1024
+                'nullable' => true,
+                'comment' => 'Payplug Payments On demand - description',
+            ],
+        ];
+
+        $orderPaymentTable = $installer->getTable('payplug_payments_order_payment');
+        foreach ($columns as $columnName => $columnDefinition) {
+            $installer->getConnection()->addColumn(
+                $orderPaymentTable,
+                $columnName,
+                $columnDefinition
+            );
+        }
 
         /**
          * Prepare database after install
