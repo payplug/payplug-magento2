@@ -250,6 +250,7 @@ class Config extends AbstractHelper
             'payplug_payments/general/pwd',
             'payplug_payments/general/environmentmode',
             'payplug_payments/general/payment_page',
+            'payplug_payments/general/invoice_on_payment',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',

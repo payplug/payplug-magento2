@@ -61,6 +61,7 @@
     <virtualType name="PayplugPaymentStandardCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
         <arguments>
             <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentStandardCaptureCommand</item>
                 <item name="capture" xsi:type="string">PayplugPaymentStandardCaptureCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
                 <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
@@ -170,6 +171,7 @@
     <virtualType name="PayplugPaymentInstallmentPlanCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
         <arguments>
             <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentInstallmentPlanCaptureCommand</item>
                 <item name="capture" xsi:type="string">PayplugPaymentInstallmentPlanCaptureCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentInstallmentPlanFetchTransactionInfoCommand</item>
                 <item name="refund" xsi:type="string">PayplugPaymentInstallmentPlanRefundCommand</item>
@@ -280,6 +282,7 @@
     <virtualType name="PayplugPaymentOndemandCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
         <arguments>
             <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentOndemandCaptureCommand</item>
                 <item name="capture" xsi:type="string">PayplugPaymentOndemandCaptureCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
                 <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
