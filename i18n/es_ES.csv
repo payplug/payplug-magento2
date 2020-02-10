@@ -116,3 +116,5 @@
 "Allow customers to spread out payments over 2, 3 or 4 installments.","Allow customers to spread out payments over 2, 3 or 4 installments."
 "Default Country","País predeterminado"
 "The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard","El país propuesto por defecto para el pago si el cliente rellena un país que no tiene código de país conforme a la norma ISO 3166-1"
+"Invoice on payment validation","Invoice on payment validation"
+"By activating this option, only validated payments will create invoices.","By activating this option, only validated payments will create invoices."

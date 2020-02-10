@@ -376,11 +376,7 @@ class Data extends AbstractHelper
                 return $order;
             }
 
-            if (in_array($order->getPayment()->getMethod(), [Standard::METHOD_CODE, Ondemand::METHOD_CODE])) {
-                $order->getPayment()->update();
-            } elseif ($order->getPayment()->getMethod() == InstallmentPlan::METHOD_CODE) {
-                $this->updateInstallmentPlanPayment($order);
-            }
+            $this->updateOrderPayment($order);
             $this->updateOrderStatus($order, false);
             $this->orderRepository->save($order);
             $this->refreshSalesGrid($order->getId());
@@ -533,16 +529,45 @@ class Data extends AbstractHelper
     /**
      * @param Order $order
      */
-    private function updateInstallmentPlanPayment($order)
+    private function updateOrderPayment($order)
     {
         $payment = $order->getPayment();
         $transactionId = $payment->getLastTransId();
+        $isInstallmentPlan = $order->getPayment()->getMethod() == InstallmentPlan::METHOD_CODE;
+
+        if (count($order->getInvoiceCollection()) > 0 && !$isInstallmentPlan) {
+            $order->getPayment()->update();
+
+            return;
+        }
 
         $method = $payment->getMethodInstance();
         $method->setStore($order->getStoreId());
         $method->fetchTransactionInfo($payment, $transactionId);
 
-        if ($payment->getIsTransactionDenied()) {
+        if ($payment->getIsTransactionApproved() || ($isInstallmentPlan && !$payment->getTransactionPending())) {
+            if (count($order->getInvoiceCollection()) === 0) {
+                $invoice = $order->prepareInvoice();
+                $invoice->register();
+                $order->addRelatedObject($invoice);
+                $invoice->setTransactionId($transactionId);
+
+                if (!$isInstallmentPlan) {
+                    $order->setState(Order::STATE_PROCESSING);
+                    $invoice->pay();
+                    $payment->setBaseAmountPaidOnline($order->getBaseGrandTotal());
+                    $message = __('Registered update about approved payment.') . ' ' . __('Transaction ID: "%1"', $transactionId);
+                    $order->addStatusToHistory(
+                        $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING),
+                        $message
+                    );
+                } else {
+                    // Order amounts and status history are already handled
+                    // in \Payplug\Payments\Gateway\Response\InstallmentPlan\FetchTransactionInformationHandler::handle
+                    $invoice->setState(Order\Invoice::STATE_PAID);
+                }
+            }
+        } elseif ($payment->getIsTransactionDenied()) {
             $this->cancelOrderAndInvoice($order);
         }
     }

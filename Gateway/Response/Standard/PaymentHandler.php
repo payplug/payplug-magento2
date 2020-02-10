@@ -55,13 +55,15 @@ class PaymentHandler implements HandlerInterface
             /** @var Payment $payment */
             $payment = $paymentDO->getPayment();
 
-            if ($payplugPayment->is_paid) {
-                // Successfull one click payment
-                $this->setUpdatePayment($payment, $payplugPayment, false);
-            } else {
-                // Failed one click payment or pending redirect/lightbox payment
-                $this->setUpdatePayment($payment, $payplugPayment);
+            if (!$payplugPayment->is_paid) {
+                // save payment url for pending redirect/lightbox payment
+                $payment->setAdditionalInformation('payment_url', $payplugPayment->hosted_payment->payment_url);
             }
+
+            $payment->setTransactionId($payplugPayment->id);
+            $payment->setIsTransactionPending(true);
+            $payment->setIsTransactionClosed(false);
+            $payment->setShouldCloseParentTransaction(false);
 
             /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
             $orderPayment = $this->payplugPaymentFactory->create();
@@ -70,21 +72,5 @@ class PaymentHandler implements HandlerInterface
             $orderPayment->setIsSandbox(!$payplugPayment->is_live);
             $this->orderPaymentRepository->save($orderPayment);
         }
-    }
-
-    /**
-     * @param Payment                   $payment
-     * @param \Payplug\Resource\Payment $payplugPayment
-     * @param bool                      $pending
-     */
-    private function setUpdatePayment($payment, $payplugPayment, $pending = true)
-    {
-        $payment->setTransactionId($payplugPayment->id);
-        if ($pending) {
-            $payment->setAdditionalInformation('payment_url', $payplugPayment->hosted_payment->payment_url);
-        }
-        $payment->setIsTransactionPending($pending);
-        $payment->setIsTransactionClosed(!$pending);
-        $payment->setShouldCloseParentTransaction(!$pending);
     }
 }

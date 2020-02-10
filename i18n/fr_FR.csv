@@ -146,3 +146,5 @@
 "Description","Description"
 "Payment Link","Lien de paiement"
 "Save","Sauvegarder"
+"Invoice on payment validation","Facturation post paiement"
+"By activating this option, only validated payments will create invoices.","En activant cette option, vos factures ne seront créées que pour les paiements validés."
