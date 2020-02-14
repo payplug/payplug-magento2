@@ -32,11 +32,6 @@ class PaymentConfigObserver implements ObserverInterface
     private $messageManager;
 
     /**
-     * @var string
-     */
-    private $scope;
-
-    /**
      * @var bool
      */
     private $payplugConfigConnected;
@@ -70,6 +65,9 @@ class PaymentConfigObserver implements ObserverInterface
         $this->messageManager = $messageManager;
     }
 
+    /**
+     * @param EventObserver $observer
+     */
     public function execute(EventObserver $observer)
     {
         $postParams = $this->request->getPost();
@@ -83,23 +81,43 @@ class PaymentConfigObserver implements ObserverInterface
             $this->processGeneralConfig($postParams['groups']);
             return;
         }
-        if (isset($sections['payment_us_payplug_payments_standard']) &&
-            isset($postParams['groups']['payplug_payments_standard']['fields'])
-        ) {
+        if ($this->canProcessSection($postParams, 'payplug_payments_standard')) {
             $this->processStandardConfig($postParams['groups']);
         }
-        if (isset($sections['payment_us_payplug_payments_installment_plan']) &&
-            isset($postParams['groups']['payplug_payments_installment_plan']['fields'])
-        ) {
+        if ($this->canProcessSection($postParams, 'payplug_payments_installment_plan')) {
             $this->processInstallmentPlanConfig($postParams['groups']);
         }
-        if (isset($sections['payment_us_payplug_payments_ondemand']) &&
-            isset($postParams['groups']['payplug_payments_ondemand']['fields'])
-        ) {
+        if ($this->canProcessSection($postParams, 'payplug_payments_ondemand')) {
             $this->processOndemandConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_oney')) {
+            $this->processOneyConfig($postParams['groups']);
         }
     }
 
+    /**
+     * @param array  $postParams
+     * @param string $sectionCode
+     *
+     * @return bool
+     */
+    private function canProcessSection($postParams, $sectionCode)
+    {
+        $sections = $postParams['config_state'];
+        foreach ($sections as $sectionKey => $value) {
+            if (strpos($sectionKey, $sectionCode) !== false) {
+                if (isset($postParams['groups'][$sectionCode]['fields'])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array $groups
+     */
     private function processGeneralConfig($groups)
     {
         $fields = $groups['general']['fields'];
@@ -159,6 +177,9 @@ class PaymentConfigObserver implements ObserverInterface
         $this->request->setPostValue('groups', $groups);
     }
 
+    /**
+     * @param array $groups
+     */
     private function processStandardConfig($groups)
     {
         $fields = $groups['payplug_payments_standard']['fields'];
@@ -196,6 +217,9 @@ class PaymentConfigObserver implements ObserverInterface
         $this->request->setPostValue('groups', $groups);
     }
 
+    /**
+     * @param array $groups
+     */
     private function processInstallmentPlanConfig($groups)
     {
         $fields = $groups['payplug_payments_installment_plan']['fields'];
@@ -238,6 +262,9 @@ class PaymentConfigObserver implements ObserverInterface
         $this->request->setPostValue('groups', $groups);
     }
 
+    /**
+     * @param array $groups
+     */
     private function processOndemandConfig($groups)
     {
         $fields = $groups['payplug_payments_ondemand']['fields'];
@@ -248,6 +275,63 @@ class PaymentConfigObserver implements ObserverInterface
         $this->request->setPostValue('groups', $groups);
     }
 
+    /**
+     * @param array $groups
+     */
+    private function processOneyConfig($groups)
+    {
+        $fields = $groups['payplug_payments_oney']['fields'];
+
+        $this->helper->initScopeData();
+        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_oney');
+
+        if (!empty($fields['active']['value'])) {
+            if (empty($fields['cgv']['value'])) {
+                $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
+                $this->messageManager->addErrorMessage(
+                    __('You must confirm you added oney specificities into your terms and conditions')
+                );
+                $this->request->setPostValue('groups', $groups);
+
+                return;
+            }
+
+            $environmentMode = $this->getConfig('environmentmode');
+
+            $apiKey = $this->getConfig('test_api_key');
+            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('live_api_key');
+            }
+
+            if (empty($apiKey)) {
+                $this->messageManager->addErrorMessage(
+                    __('We are not able to retrieve your account information. ' .
+                        'Please go to section Sales > Payplug Payments to log in again.')
+                );
+            } else {
+                $permissions = $this->getAccountPermissions($apiKey);
+
+                if (empty($permissions['can_use_oney'])) {
+                    $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
+                    if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                        $this->messageManager->addErrorMessage(
+                            __('Only Premium accounts can use oney in LIVE mode.')
+                        );
+                    }
+                }
+            }
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    /**
+     * @param array  $fields
+     * @param array  $groups
+     * @param string $fieldGroup
+     *
+     * @return array
+     */
     private function validatePayplugConnection($fields, $groups, $fieldGroup)
     {
         if (!empty($fields['active']['value']) && !$this->helper->isConnected()) {
@@ -470,6 +554,9 @@ class PaymentConfigObserver implements ObserverInterface
             'currencies' => $this->getConfig('currencies'),
             'min_amounts' => $this->getConfig('min_amounts'),
             'max_amounts' => $this->getConfig('max_amounts'),
+            'oney_countries' => $this->getConfig('oney_countries'),
+            'oney_min_amounts' => $this->getConfig('oney_min_amounts'),
+            'oney_max_amounts' => $this->getConfig('oney_max_amounts'),
         ];
         if (isset($jsonAnswer['configuration'])) {
             if (!empty($jsonAnswer['configuration']['currencies'])) {
@@ -479,18 +566,27 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             }
             if (!empty($jsonAnswer['configuration']['min_amounts'])) {
-                $configuration['min_amounts'] = '';
-                foreach ($jsonAnswer['configuration']['min_amounts'] as $key => $value) {
-                    $configuration['min_amounts'] .= $key.':'.$value.';';
-                }
-                $configuration['min_amounts'] = substr($configuration['min_amounts'], 0, -1);
+                $configuration['min_amounts'] = $this->processAmounts($jsonAnswer['configuration']['min_amounts']);
             }
             if (!empty($jsonAnswer['configuration']['max_amounts'])) {
-                $configuration['max_amounts'] = '';
-                foreach ($jsonAnswer['configuration']['max_amounts'] as $key => $value) {
-                    $configuration['max_amounts'] .= $key.':'.$value.';';
+                $configuration['max_amounts'] = $this->processAmounts($jsonAnswer['configuration']['max_amounts']);
+            }
+            if (!empty($jsonAnswer['configuration']['oney'])) {
+                if (isset($jsonAnswer['configuration']['oney']['allowed_countries']) &&
+                    is_array($jsonAnswer['configuration']['oney']['allowed_countries'])
+                ) {
+                    $oneyCountries = $jsonAnswer['configuration']['oney']['allowed_countries'];
+                    if (empty($oneyCountries) || !is_array($oneyCountries)) {
+                        $oneyCountries = ['FR', 'MQ', 'YT', 'RE', 'GF', 'GP', 'IT'];
+                    }
+                    $configuration['oney_countries'] = serialize($oneyCountries);
                 }
-                $configuration['max_amounts'] = substr($configuration['max_amounts'], 0, -1);
+                if (!empty($jsonAnswer['configuration']['oney']['min_amounts'])) {
+                    $configuration['oney_min_amounts'] = $this->processAmounts($jsonAnswer['configuration']['oney']['min_amounts']);
+                }
+                if (!empty($jsonAnswer['configuration']['oney']['max_amounts'])) {
+                    $configuration['oney_max_amounts'] = $this->processAmounts($jsonAnswer['configuration']['oney']['max_amounts']);
+                }
             }
         }
 
@@ -498,8 +594,29 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('currencies', $currencies);
         $this->saveConfig('min_amounts', $configuration['min_amounts']);
         $this->saveConfig('max_amounts', $configuration['max_amounts']);
+        $this->saveConfig('oney_countries', $configuration['oney_countries']);
+        $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
+        $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
         $this->saveConfig('company_id', $id);
 
         return $jsonAnswer['permissions'];
+    }
+
+    /**
+     * @param array $amounts
+     *
+     * @return string
+     */
+    private function processAmounts($amounts)
+    {
+        $configuration = '';
+        foreach ($amounts as $key => $value) {
+            if ($configuration !== '') {
+                $configuration .= ';';
+            }
+            $configuration .= $key.':'.$value;
+        }
+
+        return $configuration;
     }
 }

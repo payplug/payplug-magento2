@@ -11,6 +11,7 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
+use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 
@@ -78,11 +79,23 @@ class StandardAvailabilityObserver implements ObserverInterface
             return;
         }
 
+        $prefix = '';
+        if ($adapter->getCode() == Oney::METHOD_CODE) {
+            $prefix = 'oney_';
+        }
+
         $currency = $quote->getCurrency()->getQuoteCurrencyCode();
-        if (!$amountsByCurrency = $this->getAmountsByCurrency($currency, $quote->getStoreId())) {
+        if (!$amountsByCurrency = $this->payplugConfig->getAmountsByCurrency($currency, $quote->getStoreId(), $prefix)) {
             $checkResult->setData('is_available', false);
             return;
         }
+
+        // Oney can be displayed (disabled) in checkout
+        // Do not check amount to confirm validity
+        if ($adapter->getCode() == Oney::METHOD_CODE) {
+            return;
+        }
+
         $amount = (int) round($quote->getGrandTotal() * 100);
 
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
@@ -96,46 +109,5 @@ class StandardAvailabilityObserver implements ObserverInterface
                 return;
             }
         }
-    }
-
-    /**
-     * Get valid range of amount for a given currency
-     *
-     * @param string $isoCode
-     * @param int    $storeId
-     *
-     * @return bool|array
-     */
-    private function getAmountsByCurrency($isoCode, $storeId)
-    {
-        $minAmounts = [];
-        $maxAmounts = [];
-        $minAmountsConfig = $this->payplugConfig->getConfigValue('min_amounts', ScopeInterface::SCOPE_STORE, $storeId);
-        $maxAmountsConfig = $this->payplugConfig->getConfigValue('max_amounts', ScopeInterface::SCOPE_STORE, $storeId);
-        foreach (explode(';', $minAmountsConfig) as $amountCur) {
-            $cur = [];
-            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
-                $minAmounts[$cur[1]] = (int)$cur[2];
-            } else {
-                return false;
-            }
-        }
-        foreach (explode(';', $maxAmountsConfig) as $amountCur) {
-            $cur = [];
-            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
-                $maxAmounts[$cur[1]] = (int)$cur[2];
-            } else {
-                return false;
-            }
-        }
-
-        if (!isset($minAmounts[$isoCode]) || !isset($maxAmounts[$isoCode])) {
-            return false;
-        } else {
-            $currentMinAmount = $minAmounts[$isoCode];
-            $currentMaxAmount = $maxAmounts[$isoCode];
-        }
-
-        return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
     }
 }

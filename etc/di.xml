@@ -325,6 +325,117 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="PayplugPaymentOneyFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\Oney::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentOneyValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentOneyValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentOneyCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentOneyValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentOneyValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentOneyValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\Oney</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentOneyCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Oney</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentOneyCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Oney</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentOneyValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentOneyCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentOneyCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\Oney">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\Oney::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentOneyCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentStandardCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentStandardCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+                <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <!--<virtualType name="StandardCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">-->
+        <!--<arguments>-->
+            <!--<argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+    <!--<virtualType name="PayplugPaymentStandardCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">-->
+        <!--<arguments>-->
+            <!--<argument name="requestBuilder" xsi:type="object">PayplugPaymentStandardCaptureRequest</argument>-->
+            <!--<argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>-->
+            <!--<argument name="client" xsi:type="object">StandardCaptureClient</argument>-->
+            <!--<argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+    <!--<virtualType name="StandardTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">-->
+        <!--<arguments>-->
+            <!--<argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\StandardBuilder</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+    <!--<virtualType name="PayplugPaymentStandardCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">-->
+        <!--<arguments>-->
+            <!--<argument name="builders" xsi:type="array">-->
+                <!--<item name="transaction" xsi:type="string">StandardTransactionDataBuilder</item>-->
+            <!--</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+    <!--<virtualType name="PayplugPaymentStandardFetchTransactionInfoCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">-->
+        <!--<arguments>-->
+            <!--<argument name="requestBuilder" xsi:type="object">PayplugPaymentStandardFetchTransactionInformationRequest</argument>-->
+            <!--<argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>-->
+            <!--<argument name="client" xsi:type="object">Payplug\Payments\Gateway\Http\Client\Standard\FetchTransactionInformation</argument>-->
+            <!--<argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\FetchTransactionInformationHandler</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+    <!--<virtualType name="PayplugPaymentStandardFetchTransactionInformationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">-->
+        <!--<arguments>-->
+            <!--<argument name="builders" xsi:type="array">-->
+                <!--<item name="payment" xsi:type="string">Payplug\Payments\Gateway\Request\Standard\RetrieveDataBuilder</item>-->
+            <!--</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+    <!--<virtualType name="PayplugPaymentStandardRefundCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">-->
+        <!--<arguments>-->
+            <!--<argument name="requestBuilder" xsi:type="object">PayplugPaymentStandardRefundRequest</argument>-->
+            <!--<argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>-->
+            <!--<argument name="client" xsi:type="object">Payplug\Payments\Gateway\Http\Client\Standard\Refund</argument>-->
+            <!--<argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\RefundHandler</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+    <!--<virtualType name="PayplugPaymentStandardRefundRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">-->
+        <!--<arguments>-->
+            <!--<argument name="builders" xsi:type="array">-->
+                <!--<item name="payment" xsi:type="string">Payplug\Payments\Gateway\Request\Standard\RefundDataBuilder</item>-->
+            <!--</argument>-->
+        <!--</arguments>-->
+    <!--</virtualType>-->
+
     <virtualType name="Magento\Sales\Model\ResourceModel\Order\Grid" type="Magento\Sales\Model\ResourceModel\Grid">
         <arguments>
             <argument name="joins" xsi:type="array">
@@ -376,6 +487,12 @@
     <type name="Payplug\Payments\Gateway\Helper\SubjectReader">
         <arguments>
             <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Payplug\Payments\Block\Oney\Simulation">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session\Proxy</argument>
         </arguments>
     </type>
 </config>
