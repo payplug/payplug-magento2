@@ -10,6 +10,7 @@ use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
+use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -222,6 +223,11 @@ class Ipn extends AbstractPayment
                 $this->logger->error($e->__toString());
                 $responseCode = 500;
                 $responseDetail = '500 Error while updating order.';
+            } catch (OrderAlreadyProcessingException $e) {
+                // Order is already being processed (by payment return controller or admin update button)
+                // No need to log as it is not an error case
+                $responseCode = 200;
+                $responseDetail = '200 Order currently being processed.';
             } catch (\Exception $e) {
                 $this->logger->error($e->getMessage());
                 $responseCode = 500;
