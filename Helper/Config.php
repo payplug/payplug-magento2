@@ -128,7 +128,7 @@ class Config extends AbstractHelper
         }
 
         if (!empty($key)) {
-            Payplug::setSecretKey($key);
+            Payplug::init(['secretKey' => $key, 'apiVersion' => '2019-08-06']);
         }
     }
 

@@ -2,6 +2,8 @@
 
 namespace Payplug\Payments\Helper;
 
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Directory\Model\CountryFactory;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
@@ -54,6 +56,16 @@ class Oney extends AbstractHelper
     private $logger;
 
     /**
+     * @var CheckoutSession
+     */
+    private $checkoutSession;
+
+    /**
+     * @var CustomerSession
+     */
+    private $customerSession;
+
+    /**
      * @param Context               $context
      * @param Config                $payplugConfig
      * @param StoreManagerInterface $storeManager
@@ -61,6 +73,8 @@ class Oney extends AbstractHelper
      * @param CountryFactory        $countryFactory
      * @param Resolver              $localeResolver
      * @param Logger                $logger
+     * @param CheckoutSession       $checkoutSession
+     * @param CustomerSession       $customerSession
      */
     public function __construct(
         Context $context,
@@ -69,7 +83,9 @@ class Oney extends AbstractHelper
         PricingHelper $pricingHelper,
         CountryFactory $countryFactory,
         Resolver $localeResolver,
-        Logger $logger
+        Logger $logger,
+        CheckoutSession $checkoutSession,
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
 
@@ -79,6 +95,8 @@ class Oney extends AbstractHelper
         $this->countryFactory = $countryFactory;
         $this->localeResolver = $localeResolver;
         $this->logger = $logger;
+        $this->checkoutSession = $checkoutSession;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -159,7 +177,7 @@ class Oney extends AbstractHelper
     {
         $storeId = $this->storeManager->getStore()->getId();
         $oneyCountries = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'oney_countries', ScopeInterface::SCOPE_STORE, $storeId);
-        $oneyCountries = unserialize($oneyCountries);
+        $oneyCountries = json_decode($oneyCountries, true);
 
         if (!in_array($countryCode, $oneyCountries)) {
             $countryNames = [];
@@ -169,12 +187,46 @@ class Oney extends AbstractHelper
                 $countryNames[] = $country->getName($locale);
             }
             throw new \Exception(__(
-               'Shipping and billing addresses must be located in %1 to be able to pay with Oney.',
+                'Shipping and billing addresses must be located in %1 to be able to pay with Oney.',
                 implode(', ', $countryNames)
             ));
         }
 
         return true;
+    }
+
+    /**
+     * @return string
+     */
+    private function getDefaultCountry(): string
+    {
+        $quote = $this->checkoutSession->getQuote();
+        $billingAddress = $quote->getBillingAddress();
+        if (!empty($billingAddress->getCountryId())) {
+            return $billingAddress->getCountryId();
+        }
+
+        if (!$quote->isVirtual()) {
+            $shippingAddress = $quote->getShippingAddress();
+            if (!empty($shippingAddress->getCountryId())) {
+                return $shippingAddress->getCountryId();
+            }
+        }
+
+        if ($this->customerSession->isLoggedIn()) {
+            $defaultBilling = $this->customerSession->getCustomer()->getDefaultBillingAddress();
+            if ($defaultBilling !== false && !empty($defaultBilling->getCountryId())) {
+                return $defaultBilling->getCountryId();
+            }
+            if (!$quote->isVirtual()) {
+                $defaultShipping = $this->customerSession->getCustomer()->getDefaultShippingAddress();
+                if ($defaultShipping !== false && !empty($defaultShipping->getCountryId())) {
+                    return $defaultShipping->getCountryId();
+                }
+            }
+        }
+
+        return 'FR';
     }
 
     /**
@@ -194,11 +246,11 @@ class Oney extends AbstractHelper
         if (!isset($shippingMapping[$shippingMethod])) {
             $this->logger->warning("Shipping method $shippingMethod has not been configured for Oney");
             throw new \Exception(__(
-               'The shipping method you chose is not configured for Oney. Please contact us.'
+                'The shipping method you chose is not configured for Oney. Please contact us.'
             ));
         }
 
-        if ($shippingMethod[$shippingMethod]['type'] !== 'carrier') {
+        if ($shippingMapping[$shippingMethod]['type'] !== 'carrier') {
             throw new \Exception(__(
                 'You cannot pay with Oney if you choose a pickup delivery.'
             ));
@@ -208,12 +260,32 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * @param string|null $shippingMethod
+     *
+     * @return array|null
+     */
+    public function getShippingMethodMapping($shippingMethod = null)
+    {
+        if ($shippingMethod === null) {
+            return [
+                'type' => 'edelivery',
+                'period' => 3,
+            ];
+        }
+
+        $shippingMapping = $this->getShippingMapping();
+
+        return $shippingMapping[$shippingMethod] ?? null;
+    }
+
+    /**
      * @return array
      */
     public function getShippingMapping(): array
     {
         $storeId = $this->storeManager->getStore()->getId();
         $shippingMapping = $this->scopeConfig->getValue('payment/payplug_payments_oney/shipping_mapping', ScopeInterface::SCOPE_STORE, $storeId);
+        $shippingMapping = json_decode($shippingMapping, true);
 
         if (!is_array($shippingMapping)) {
             $this->logger->warning("No shipping method has been configured for Oney");
@@ -233,14 +305,82 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * @param float       $amount
-     * @param string      $countryCode
+     * @param float  $amount
+     * @param string $billingCountry
+     * @param string $shippingCountry
+     * @param string $shippingMethod
+     *
+     * @return Result
+     */
+    public function getOneySimulationCheckout($amount, $billingCountry, $shippingCountry, $shippingMethod): Result
+    {
+        try {
+            $this->validateCheckoutCountries($billingCountry, $shippingCountry);
+        } catch (\Exception $e) {
+            $simulationResult = new Result();
+            $simulationResult->setSuccess(false);
+            $simulationResult->setMessage($e->getMessage());
+
+            return $simulationResult;
+        }
+
+        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null, $shippingMethod);
+    }
+
+    /**
+     * @param string $billingCountry
+     * @param string $shippingCountry
+     *
+     * @throws \Exception
+     */
+    public function validateCheckoutCountries($billingCountry, $shippingCountry)
+    {
+        if (!empty($billingCountry) && !empty($shippingCountry) && $billingCountry !== $shippingCountry) {
+            throw new \Exception(__('Shipping and billing countries must be the same in order to pay with Oney.'));
+        }
+    }
+
+    /**
+     * @param string $oneyOption
+     *
+     * @return string
+     *
+     * @throws \Exception
+     */
+    public function validateOneyOption($oneyOption)
+    {
+        if (empty($oneyOption)) {
+            throw new \Exception(__('Please select a payment option for Oney.'));
+        }
+
+        $oneyOptionKey = array_search($oneyOption, self::ALLOWED_OPERATIONS);
+        if ($oneyOptionKey === false) {
+            throw new \Exception(__('Please select a valid payment option for Oney.'));
+        }
+
+        return $oneyOptionKey;
+    }
+
+    /**
+     * @param float|null  $amount
+     * @param string|null $countryCode
      * @param string|null $shippingMethod
      *
      * @return Result
      */
-    public function getOneySimulation($amount, $countryCode, $shippingMethod = null): Result
+    public function getOneySimulation($amount = null, $countryCode = null, $shippingMethod = null): Result
     {
+        if ($amount === null) {
+            $amount = $this->checkoutSession->getQuote()->getGrandTotal();
+        }
+        if ($countryCode === null) {
+            $countryCode = $this->getDefaultCountry();
+        }
+        if ($shippingMethod === null) {
+            if (!$this->checkoutSession->getQuote()->isVirtual()) {
+                $shippingMethod = $this->checkoutSession->getQuote()->getShippingAddress()->getShippingMethod();
+            }
+        }
         try {
             $this->validateAmount($amount);
             $this->validateCountry($countryCode);
@@ -285,6 +425,7 @@ class Oney extends AbstractHelper
 
         $result = new Result();
         $result->setSuccess(true);
+        $result->setAmount($amount);
 
         foreach (self::ALLOWED_OPERATIONS as $operation => $type) {
             if (!isset($simulations[$operation])) {

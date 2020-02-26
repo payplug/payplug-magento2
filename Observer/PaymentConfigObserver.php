@@ -57,8 +57,12 @@ class PaymentConfigObserver implements ObserverInterface
      * @param Config           $helper
      * @param ManagerInterface $messageManager
      */
-    public function __construct(Http $request, Login $login, Config $helper, ManagerInterface $messageManager)
-    {
+    public function __construct(
+        Http $request,
+        Login $login,
+        Config $helper,
+        ManagerInterface $messageManager
+    ) {
         $this->request = $request;
         $this->login = $login;
         $this->helper = $helper;
@@ -579,7 +583,7 @@ class PaymentConfigObserver implements ObserverInterface
                     if (empty($oneyCountries) || !is_array($oneyCountries)) {
                         $oneyCountries = ['FR', 'MQ', 'YT', 'RE', 'GF', 'GP', 'IT'];
                     }
-                    $configuration['oney_countries'] = serialize($oneyCountries);
+                    $configuration['oney_countries'] = json_encode($oneyCountries);
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['min_amounts'])) {
                     $configuration['oney_min_amounts'] = $this->processAmounts($jsonAnswer['configuration']['oney']['min_amounts']);

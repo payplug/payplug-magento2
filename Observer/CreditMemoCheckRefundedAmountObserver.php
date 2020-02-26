@@ -8,6 +8,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Sales\Model\Order\Creditmemo;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 
@@ -54,6 +55,18 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
         try {
             $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
             $payment = $payplugPayment->retrieve($order->getStoreId());
+
+            if ($order->getPayment()->getMethod() === Oney::METHOD_CODE) {
+                $oneyDelay = 48;
+                $allowedOneyRefundDate = (new \DateTime())->modify('- ' . $oneyDelay . ' hours');
+                if (new \DateTime($order->getCreatedAt()) >= $allowedOneyRefundDate) {
+                    $this->messageManager->addErrorMessage(
+                        __('You have to wait %1 hours to refund payment with Oney. Please wait or create an offline refund.', $oneyDelay)
+                    );
+
+                    return;
+                }
+            }
 
             $refundedAmount = $payment->amount_refunded / 100;
             if ($refundedAmount == 0) {

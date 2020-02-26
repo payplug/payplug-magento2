@@ -69,7 +69,7 @@ class Simulation extends \Magento\Framework\App\Action\Action
             $productPrice = $product->getFinalPrice($qty);
             $productPrice = $productPrice * $qty;
 
-            $block = $this->layout->createBlock('Payplug\Payments\Block\Oney\Simulation')
+            $block = $this->layout->createBlock(\Payplug\Payments\Block\Oney\Simulation::class)
                 ->setTemplate('Payplug_Payments::oney/simulation.phtml')
                 ->setAmount($productPrice)
             ;
@@ -104,7 +104,10 @@ class Simulation extends \Magento\Framework\App\Action\Action
             throw new \Exception('Product not found');
         }
 
-        if (!isset($params['product_options']) || !is_array($params['product_options']) || count($params['product_options']) === 0) {
+        if (!isset($params['product_options']) ||
+            !is_array($params['product_options']) ||
+            count($params['product_options']) === 0
+        ) {
             return $product;
         }
 

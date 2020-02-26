@@ -29,7 +29,7 @@ if (!$oneySimulation->getSuccess()) {
                     <ul>
                         <li>
                             <span><b><?php echo __('For an amount of'); ?> :</b></span>
-                            <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($block->getAmount(), true, false); ?></b></span>
+                            <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($oneySimulation->getAmount(), true, false); ?></b></span>
                         </li>
                         <li>
                             <span><?php echo __('First deposit'); ?> :</span>

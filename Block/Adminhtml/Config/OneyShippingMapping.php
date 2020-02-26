@@ -58,11 +58,13 @@ class OneyShippingMapping extends AbstractFieldArray
 
         $shippingMethod = $row->getShippingMethod();
         if ($shippingMethod !== null) {
-            $options['option_' . $this->getShippingMethodRenderer()->calcOptionHash($shippingMethod)] = 'selected="selected"';
+            $optionKey = 'option_' . $this->getShippingMethodRenderer()->calcOptionHash($shippingMethod);
+            $options[$optionKey] = 'selected="selected"';
         }
         $shippingType = $row->getShippingType();
         if ($shippingType !== null) {
-            $options['option_' . $this->getShippingTypeRenderer()->calcOptionHash($shippingType)] = 'selected="selected"';
+            $optionKey = 'option_' . $this->getShippingTypeRenderer()->calcOptionHash($shippingType);
+            $options[$optionKey] = 'selected="selected"';
         }
 
         $row->setData('option_extra_attrs', $options);

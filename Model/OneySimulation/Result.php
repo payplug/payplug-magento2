@@ -9,6 +9,7 @@ class Result extends DataObject
     const KEY_SUCCESS = 'success';
     const KEY_MESSAGE = 'message';
     const KEY_OPTIONS = 'options';
+    const KEY_AMOUNT = 'amount';
 
     /**
      * @return bool|null
@@ -68,5 +69,23 @@ class Result extends DataObject
         $options[] = $option;
 
         return $this->setData(self::KEY_OPTIONS, $options);
+    }
+
+    /**
+     * @return float|null
+     */
+    public function getAmount()
+    {
+        return $this->_getData(self::KEY_AMOUNT);
+    }
+
+    /**
+     * @param float|null $message
+     *
+     * @return $this
+     */
+    public function setAmount($amount): self
+    {
+        return $this->setData(self::KEY_AMOUNT, $amount);
     }
 }

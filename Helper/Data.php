@@ -286,6 +286,9 @@ class Data extends AbstractHelper
             Ondemand::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
+            Oney::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
         ];
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
@@ -386,6 +389,25 @@ class Data extends AbstractHelper
         }
 
         return $order;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isOrderValidated($order)
+    {
+        if ($order->getState() == Order::STATE_PROCESSING || $order->getState() == Order::STATE_COMPLETE) {
+            return true;
+        }
+
+        // If Oney payment is still being reviewed, order is validated but still in Payment Review state
+        if ($order->getPayment()->getMethod() == Oney::METHOD_CODE && $order->getState() == Order::STATE_PAYMENT_REVIEW) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

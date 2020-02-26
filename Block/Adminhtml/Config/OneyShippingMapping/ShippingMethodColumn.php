@@ -41,7 +41,11 @@ class ShippingMethodColumn extends Select
             $allowedMethods = $carrierModel->getAllowedMethods();
             foreach ($allowedMethods as $methodCode => $methodLabel) {
                 $carrierConfig[] = [
-                    'label' => sprintf('%s - %s', $this->_scopeConfig->getValue('carriers/' . $carrierCode . '/title'), $methodLabel),
+                    'label' => sprintf(
+                        '%s - %s',
+                        $this->_scopeConfig->getValue('carriers/' . $carrierCode . '/title'),
+                        $methodLabel
+                    ),
                     'value' => $carrierCode . '_' . $methodCode,
                 ];
             }
