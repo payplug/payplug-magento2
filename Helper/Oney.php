@@ -376,11 +376,6 @@ class Oney extends AbstractHelper
         if ($countryCode === null) {
             $countryCode = $this->getDefaultCountry();
         }
-        if ($shippingMethod === null) {
-            if (!$this->checkoutSession->getQuote()->isVirtual()) {
-                $shippingMethod = $this->checkoutSession->getQuote()->getShippingAddress()->getShippingMethod();
-            }
-        }
         try {
             $this->validateAmount($amount);
             $this->validateCountry($countryCode);
