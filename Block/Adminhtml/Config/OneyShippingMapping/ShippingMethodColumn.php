@@ -36,6 +36,10 @@ class ShippingMethodColumn extends Select
     {
         $carriers = $this->shippingConfig->getAllCarriers();
         $carrierConfig = [];
+        $carrierConfig[] = [
+            'label' => __('Select shipping method'),
+            'value' => '',
+        ];
         /** @var CarrierInterface $carrierModel */
         foreach ($carriers as $carrierCode => $carrierModel) {
             $allowedMethods = $carrierModel->getAllowedMethods();

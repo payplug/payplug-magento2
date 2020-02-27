@@ -31,12 +31,10 @@ class OneyShippingMapping extends AbstractFieldArray
         $this->addColumn('shipping_method', [
             'label' => __('Shipping Method'),
             'renderer' => $this->getShippingMethodRenderer(),
-            'class' => 'required-entry',
         ]);
         $this->addColumn('shipping_type', [
             'label' => __('Shipping Type'),
             'renderer' => $this->getShippingTypeRenderer(),
-            'class' => 'required-entry'
         ]);
         $this->addColumn('shipping_period', [
             'label' => __('Shipping Period'),
@@ -80,7 +78,7 @@ class OneyShippingMapping extends AbstractFieldArray
             $this->shippingMethodRenderer = $this->getLayout()->createBlock(
                 ShippingMethodColumn::class,
                 '',
-                ['data' => ['is_render_to_js_template' => true]]
+                ['data' => ['is_render_to_js_template' => true, 'class' => 'required-entry']]
             );
         }
         return $this->shippingMethodRenderer;
@@ -96,7 +94,7 @@ class OneyShippingMapping extends AbstractFieldArray
             $this->shippingTypeRenderer = $this->getLayout()->createBlock(
                 ShippingTypeColumn::class,
                 '',
-                ['data' => ['is_render_to_js_template' => true]]
+                ['data' => ['is_render_to_js_template' => true, 'class' => 'required-entry']]
             );
         }
         return $this->shippingTypeRenderer;

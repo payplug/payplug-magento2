@@ -12,6 +12,7 @@ class ShippingTypeColumn extends Select
     private function getShippingTypes()
     {
         return [
+            ['label' => __('Select shipping type'), 'value' => ''],
             ['label' => __('Store Pickup'), 'value' => 'storepickup'],
             ['label' => __('Network Pickup'), 'value' => 'networkpickup'],
             ['label' => __('Travel Pickup'), 'value' => 'travelpickup'],

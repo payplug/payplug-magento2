@@ -27,6 +27,22 @@ class OneyShippingMapping extends ArraySerialized
             if (!isset($row['shipping_method'])) {
                 continue;
             }
+            if (empty($row['shipping_method'])) {
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('Please select a shipping method')
+                );
+            }
+            if (empty($row['shipping_type'])) {
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('Please select a shipping type')
+                );
+            }
+            if (!isset($row['shipping_period']) || $row['shipping_period'] === null || $row['shipping_period'] === '') {
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __('Please select a shipping period')
+                );
+            }
+
             $shippingMethodCount++;
             $shippingMethods[$row['shipping_method']] = 1;
         }
