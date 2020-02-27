@@ -184,7 +184,7 @@
                 <field id="cgv" translate="label comment" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Oney terms and conditions</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[Please confirm that you have added Oney specificities to your terms and conditions. <a href="http://google.fr" target="_blank">More info</a>]]></comment>
+                    <comment><![CDATA[Please confirm that you have added Oney specificities to your terms and conditions. <a href="https://support.payplug.com/hc/en-gb/articles/360009549540" target="_blank">More info</a>]]></comment>
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
