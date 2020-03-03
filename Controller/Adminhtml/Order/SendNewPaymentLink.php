@@ -8,6 +8,7 @@ use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Psr\Log\LoggerInterface;
@@ -109,6 +110,10 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
                 $this->messageManager->addErrorMessage(
                     sprintf(__('An error occured while sending new payment link: %s.'), $e->getMessage())
                 );
+            } catch (OrderAlreadyProcessingException $e) {
+                // Order is already being processed (by payment return controller or IPN)
+                // No need to log as it is not an error case
+                $this->messageManager->addErrorMessage($e->getMessage());
             } catch (\Exception $e) {
                 $this->payplugLogger->error($e->getMessage());
                 $this->messageManager->addErrorMessage(

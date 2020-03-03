@@ -5,6 +5,7 @@ namespace Payplug\Payments\Controller\Payment;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 
@@ -62,10 +63,17 @@ class PaymentReturn extends AbstractPayment
             }
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
-            $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
+
+            return $this->_redirect($redirectUrlSuccess);
+        } catch (OrderAlreadyProcessingException $e) {
+            // Order is already being processed (by IPN or admin update button)
+            // Redirect to success page
+            // No need to log as it is not an error case
+            return $this->_redirect($redirectUrlSuccess);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
-            $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
+
+            return $this->_redirect($redirectUrlSuccess);
         }
     }
 }
