@@ -289,7 +289,9 @@ class PaymentConfigObserver implements ObserverInterface
         $this->helper->initScopeData();
         $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_oney');
 
+        $isOneyActive = false;
         if (!empty($fields['active']['value'])) {
+            $isOneyActive = true;
             if (empty($fields['cgv']['value'])) {
                 $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
                 $this->messageManager->addErrorMessage(
@@ -323,6 +325,61 @@ class PaymentConfigObserver implements ObserverInterface
                         );
                     }
                 }
+            }
+        }
+
+        if ($isOneyActive) {
+            $hasShippingMappingError = false;
+            $shippingMethods = [];
+            $hasCarrier = false;
+            $shippingMethodCount = 0;
+            foreach ($fields['shipping_mapping']['value'] as $rowKey => $row) {
+                if (!isset($row['shipping_method'])) {
+                    continue;
+                }
+                if (empty($row['shipping_method'])) {
+                    $hasShippingMappingError = true;
+                    $this->messageManager->addErrorMessage(
+                        __('Please select a shipping method')
+                    );
+                }
+                if (empty($row['shipping_type'])) {
+                    $hasShippingMappingError = true;
+                    $this->messageManager->addErrorMessage(
+                        __('Please select a shipping type')
+                    );
+                }
+                if ($row['shipping_type'] === 'carrier') {
+                    $hasCarrier = true;
+                }
+                if (!isset($row['shipping_period']) || $row['shipping_period'] === null || $row['shipping_period'] === '') {
+                    $hasShippingMappingError = true;
+                    $this->messageManager->addErrorMessage(
+                        __('Please select a shipping period')
+                    );
+                }
+
+                $shippingMethodCount++;
+                $shippingMethods[$row['shipping_method']] = 1;
+            }
+
+            if (count($shippingMethods) !== $shippingMethodCount) {
+                $hasShippingMappingError = true;
+                $this->messageManager->addErrorMessage(
+                    __('Duplicate shipping method configuration')
+                );
+            }
+
+            if (!$hasCarrier) {
+                $hasShippingMappingError = true;
+                $this->messageManager->addErrorMessage(
+                    __('Please configure at least one carrier shipping method for your customers to pay with Oney')
+                );
+            }
+
+            // Disable Oney paiement if the shipping mapping is not correct
+            if ($hasShippingMappingError) {
+                $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
             }
         }
 
