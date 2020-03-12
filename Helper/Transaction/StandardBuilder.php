@@ -56,6 +56,7 @@ class StandardBuilder extends AbstractBuilder
 
         if ($this->isOneClick($storeId) && $currentCard != null) {
             $paymentData['payment_method'] = $currentCard;
+            $paymentData['initiator'] = 'PAYER';
             unset($paymentData['hosted_payment']);
         }
 
@@ -74,7 +75,7 @@ class StandardBuilder extends AbstractBuilder
      */
     private function getCustomerCardToken($customerCardId, $customerId)
     {
-        if ($customerCardId === null) {
+        if (empty($customerCardId)) {
             return null;
         }
 
