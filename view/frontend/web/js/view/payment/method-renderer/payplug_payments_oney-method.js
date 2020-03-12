@@ -205,6 +205,12 @@ define([
                     list.append(schedule);
                     daysForPayment += 30;
                 }
+                var totalAmount = $('<li/>')
+                    .append($('<span/>').html($.mage.__('Total cost')))
+                    .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.total_amount)))
+                ;
+                list.append(totalAmount);
+
                 detail.append(list);
                 option.append(detail);
 
