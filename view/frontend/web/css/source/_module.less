@@ -506,6 +506,9 @@
 
     &-open {
       max-height: 10000vh;
+      @media (max-width: 767px) {
+        margin-bottom: 15px;
+      }
     }
 
     &_trigger {
@@ -734,7 +737,6 @@
 
         .oneyOption:nth-child(2) & {
           left: 50%;
-          border-right: none;
           border-left: none;
         }
 
@@ -755,7 +757,8 @@
         display: none;
         height: auto;
         padding: 30px 16px;
-        border-top: 1px solid #dce0e8;
+        border: 1px solid #dce0e8;
+        box-sizing: border-box;
 
         .oneyOption-selected & {
           display: block;
