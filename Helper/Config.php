@@ -285,16 +285,15 @@ class Config extends AbstractHelper
             'payment/payplug_payments_ondemand/default_country',
             'payment/payplug_payments_ondemand/sort_order',
             // Payplug payment Oney configuration
-            'payment/payplug_payments_ondemand/active',
-            'payment/payplug_payments_ondemand/cgv',
-            'payment/payplug_payments_ondemand/title',
-            'payment/payplug_payments_ondemand/processing_order_status',
-            'payment/payplug_payments_ondemand/canceled_order_status',
-            'payment/payplug_payments_ondemand/allowspecific',
-            'payment/payplug_payments_ondemand/specificcountry',
-            'payment/payplug_payments_ondemand/default_country',
-            'payment/payplug_payments_ondemand/sort_order',
-            'payment/payplug_payments_ondemand/shipping_mapping',
+            'payment/payplug_payments_oney/active',
+            'payment/payplug_payments_oney/cgv',
+            'payment/payplug_payments_oney/title',
+            'payment/payplug_payments_oney/processing_order_status',
+            'payment/payplug_payments_oney/canceled_order_status',
+            'payment/payplug_payments_oney/allowspecific',
+            'payment/payplug_payments_oney/specificcountry',
+            'payment/payplug_payments_oney/sort_order',
+            'payment/payplug_payments_oney/shipping_mapping',
         ];
 
         foreach ($keys as $key) {
