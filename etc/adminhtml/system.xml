@@ -197,11 +197,6 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Default Country</label>
-                    <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
-                    <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
-                </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
@@ -215,6 +210,7 @@
                 <field id="model"/>
                 <field id="allowspecific"/>
                 <field id="specificcountry"/>
+                <field id="default_country"/>
             </group>
         </section>
     </system>
