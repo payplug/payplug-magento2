@@ -62,13 +62,18 @@ class OneyBuilder extends AbstractBuilder
     private function validateTransaction($order, $payment, $quote)
     {
         try {
-            $this->oneyHelper->validateAmount($order->getGrandTotalAmount(), $order->getStoreId(), $order->getCurrencyCode());
-            $this->oneyHelper->validateCheckoutCountries(
+            $this->oneyHelper->oneyCheckoutValidation(
                 $order->getBillingAddress()->getCountryId(),
-                $order->getShippingAddress() !== null ? $order->getShippingAddress()->getCountryId() : null
+                $order->getShippingAddress() !== null ? $order->getShippingAddress()->getCountryId() : null,
+                $this->getOrderItemsCount($order->getItems())
             );
-            $this->oneyHelper->validateCountry($order->getBillingAddress()->getCountryId());
-            $this->oneyHelper->validateShippingMethod($this->getShippingMethod($quote));
+            $this->oneyHelper->oneyValidation(
+                $order->getGrandTotalAmount(),
+                $order->getBillingAddress()->getCountryId(),
+                $this->getShippingMethod($quote),
+                $order->getStoreId(),
+                $order->getCurrencyCode()
+            );
 
             $oneyOption = $payment->getAdditionalInformation('payplug_payments_oney_option');
             $this->oneyHelper->validateOneyOption($oneyOption);
@@ -77,6 +82,25 @@ class OneyBuilder extends AbstractBuilder
             $this->logger->error(sprintf("A customer tried to pay with Oney but an error occurred : %s", $e->getMessage()));
             throw new LocalizedException(__($e->getMessage()));
         }
+    }
+
+    /**
+     * @param array|Item[] $items
+     *
+     * @return int
+     */
+    private function getOrderItemsCount($items)
+    {
+        $count = 0;
+        foreach ($items as $item) {
+            if ($item->isDeleted() || $item->getHasChildren()) {
+                continue;
+            }
+
+            $count += (int) $item->getQtyOrdered();
+        }
+
+        return $count;
     }
 
     /**
