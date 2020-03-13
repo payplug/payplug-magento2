@@ -86,7 +86,8 @@ define([
             if (self.isLoading) {
                 return false;
             }
-            self.isLoading = true;
+            self.updateLoading(true);
+            this.isOneyPlaceOrderDisabled(true);
             try {
                 $.ajax({
                     url: urlBuilder.build('payplug_payments/oney/simulationCheckout'),
@@ -106,16 +107,24 @@ define([
                     } else {
                         self.processOneyFailure(response.data.message);
                     }
-                    self.isLoading = false;
+                    self.updateLoading(false);
                 }).fail(function (response) {
                     self.processOneyFailure($.mage.__('An error occurred while getting Oney details. Please try again.'));
-                    self.isLoading = false;
+                    self.updateLoading(false);
                 });
 
                 return true;
             } catch (e) {
-                self.isLoading = false;
+                self.updateLoading(false);
                 return false;
+            }
+        },
+        updateLoading: function(isLoading) {
+            this.isLoading = isLoading;
+            if (isLoading) {
+                fullScreenLoader.startLoader();
+            } else {
+                fullScreenLoader.stopLoader();
             }
         },
         processOneyFailure: function(message) {
