@@ -134,17 +134,15 @@ class PaymentConfigObserver implements ObserverInterface
         $this->checkWebsiteScopeData($groups, $fields);
 
         //determine which kind of config is this call
-        $config = [
-            'init' => false,
-            'live' => false,
-        ];
+        $isInit = false;
+        $isLive = false;
         if (isset($fields['email']['value'])) {
-            $config['init'] = true;
+            $isInit = true;
         }
         if (isset($fields['environmentmode']['value'])
             && $fields['environmentmode']['value'] == Config::ENVIRONMENT_LIVE
         ) {
-            $config['live'] = true;
+            $isLive = true;
         }
 
         $pwd = null;
@@ -152,15 +150,19 @@ class PaymentConfigObserver implements ObserverInterface
             $pwd = $fields['pwd']['value'];
         }
 
-        $this->processInit($config, $pwd, $fields);
-        $this->processLive($config, $pwd);
+        if ($isInit) {
+            $this->processInit($pwd, $fields);
+        }
+        if ($isLive && !$isInit) {
+            $this->processLive($pwd);
+        }
 
         if (!$this->payplugConfigConnected) {
             unset($groups['general']['fields']['pwd']);
             unset($groups['general']['fields']['email']);
             $this->saveConfig('connected', 0);
         }
-        if (!$this->payplugConfigVerified && $config['init']) {
+        if (!$this->payplugConfigVerified && $isInit) {
             $groups['general']['fields']['environmentmode']['value']
                 = Config::ENVIRONMENT_TEST;
             $this->saveConfig('verified', 0);
@@ -171,7 +173,7 @@ class PaymentConfigObserver implements ObserverInterface
             $apiKey = $this->testApiKey;
         }
         // Get live permissions only if account is verified and environment is switched to live
-        if ($this->payplugConfigVerified && $config['live']) {
+        if ($this->payplugConfigVerified && $isLive) {
             $apiKey = $this->liveApiKey;
         }
         if (!empty($apiKey)) {
@@ -470,44 +472,38 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
-     * @param array       $config
      * @param string|null $pwd
      * @param array       $fields
      */
-    private function processInit($config, $pwd, $fields)
+    private function processInit($pwd, $fields)
     {
-        if ($config['init']) {
-            $email = $fields['email']['value'];
-            if (!$this->payplugLogin($email, $pwd, true)) {
-                $this->payplugConfigConnected = false;
-                $this->payplugConfigVerified = false;
-            }
+        $email = $fields['email']['value'];
+        if (!$this->payplugLogin($email, $pwd, true)) {
+            $this->payplugConfigConnected = false;
+            $this->payplugConfigVerified = false;
         }
     }
 
     /**
-     * @param array       $config
      * @param string|null $pwd
      */
-    private function processLive($config, $pwd)
+    private function processLive($pwd)
     {
-        if ($config['live']) {
-            $error = false;
-            if (!$this->payplugConfigConnected) {
-                $error = true;
-            } elseif (!$this->payplugConfigVerified) {
-                if ($pwd != null) {
-                    $email = $this->getConfig('email');
-                    if (!$this->payplugLogin($email, $pwd)) {
-                        $error = true;
-                    }
-                } else {
+        $error = false;
+        if (!$this->payplugConfigConnected) {
+            $error = true;
+        } elseif (!$this->payplugConfigVerified) {
+            if ($pwd != null) {
+                $email = $this->getConfig('email');
+                if (!$this->payplugLogin($email, $pwd)) {
                     $error = true;
                 }
+            } else {
+                $error = true;
             }
-            if ($error) {
-                $this->payplugConfigVerified = false;
-            }
+        }
+        if ($error) {
+            $this->payplugConfigVerified = false;
         }
     }
 
