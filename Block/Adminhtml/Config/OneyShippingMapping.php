@@ -94,7 +94,7 @@ class OneyShippingMapping extends AbstractFieldArray
             $this->shippingTypeRenderer = $this->getLayout()->createBlock(
                 ShippingTypeColumn::class,
                 '',
-                ['data' => ['is_render_to_js_template' => true, 'class' => 'required-entry']]
+                ['data' => ['is_render_to_js_template' => true, 'class' => 'required-entry oney-shipping-mapping-type']]
             );
         }
         return $this->shippingTypeRenderer;
