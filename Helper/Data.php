@@ -20,6 +20,7 @@ use Magento\Framework\Exception\PaymentException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
+use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
@@ -349,6 +350,8 @@ class Data extends AbstractHelper
      * @param Order $order
      *
      * @return Order
+     *
+     * @throws OrderAlreadyProcessingException
      */
     public function updateOrder($order)
     {
@@ -357,7 +360,7 @@ class Data extends AbstractHelper
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
             if ($createdAt > new \DateTime("now - 1 min")) {
                 // Order is currently being processed
-                return $order;
+                throw new OrderAlreadyProcessingException(__('Order is currently being processed.'));
             }
             // Order has been set as processing for more than a minute
             // Delete and recreate a new flag
@@ -417,6 +420,7 @@ class Data extends AbstractHelper
      * @return Order
      *
      * @throws PaymentException
+     * @throws OrderAlreadyProcessingException
      */
     public function sendNewPaymentLink($order, $paymentLinkData)
     {
@@ -425,7 +429,7 @@ class Data extends AbstractHelper
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
             if ($createdAt > new \DateTime("now - 1 min")) {
                 // Order is currently being processed
-                return $order;
+                throw new OrderAlreadyProcessingException(__('Order is currently being processed.'));
             }
             // Order has been set as processing for more than a minute
             // Delete and recreate a new flag
