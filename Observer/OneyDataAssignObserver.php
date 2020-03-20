@@ -6,7 +6,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Quote\Api\Data\PaymentInterface;
 
-class PaymentDataAssignObserver extends AbstractDataAssignObserver
+class OneyDataAssignObserver extends AbstractDataAssignObserver
 {
     /**
      * @param Observer $observer
@@ -22,16 +22,15 @@ class PaymentDataAssignObserver extends AbstractDataAssignObserver
             return;
         }
 
-        $cardId = null;
-        if (isset($additionalData['payplug_payments_customer_card_id'])) {
-            $cardId = $additionalData['payplug_payments_customer_card_id'];
+        if (empty($additionalData['payplug_payments_oney_option'])) {
+            return;
         }
 
         $paymentInfo = $this->readPaymentModelArgument($observer);
 
         $paymentInfo->setAdditionalInformation(
-            'payplug_payments_customer_card_id',
-            $cardId
+            'payplug_payments_oney_option',
+            $additionalData['payplug_payments_oney_option']
         );
     }
 }

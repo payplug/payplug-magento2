@@ -1,6 +1,6 @@
 <?php
 
-namespace Payplug\Payments\Model\Payment\InstallmentPlan;
+namespace Payplug\Payments\Model\Payment\Oney;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -9,8 +9,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
-use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Gateway\Config\InstallmentPlan;
+use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Helper\Config;
 
 class ConfigProvider implements ConfigProviderInterface
@@ -18,7 +17,7 @@ class ConfigProvider implements ConfigProviderInterface
     /**
      * @var string
      */
-    private $methodCode = InstallmentPlan::METHOD_CODE;
+    private $methodCode = Oney::METHOD_CODE;
 
     /**
      * @var MethodInterface
@@ -74,28 +73,12 @@ class ConfigProvider implements ConfigProviderInterface
         return $this->method->isAvailable() ? [
             'payment' => [
                 $this->methodCode => [
-                    'logo' => $this->getCardLogo(),
+                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x.svg'),
+                    'logo_ko' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x-alt.svg'),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
                 ],
             ],
         ] : [];
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getCardLogo()
-    {
-        $localeCode = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);
-
-        $filename = 'installment_plan_' . $this->method->getConfigData('count');
-        if ($localeCode == 'it_IT') {
-            $filename .= '_it';
-        } elseif ($localeCode == 'fr_FR') {
-            $filename .= '_fr';
-        }
-
-        return $this->getViewFileUrl('Payplug_Payments::images/' . $filename . '.png');
     }
 
     /**

@@ -1,0 +1,69 @@
+<?php
+/** @var \Payplug\Payments\Block\Oney\Simulation $block */
+$hasError = false;
+$oneySimulation = $block->getOneySimulation();
+if (!$oneySimulation->getSuccess()) {
+    $hasError = true;
+}
+?>
+<div class="oneyCta">
+    <button type="button" class="oneyCta_button <?php if ($hasError) : ?>oneyCta_button-disabled<?php endif; ?>">
+        <span><?php echo __('Or pay in'); ?></span>
+        <span class="oneyCta_logo oneyLogo oneyLogo-x3x4"></span>
+        <span class="oneyCta_tooltip oneyLogo oneyLogo-tooltip"></span>
+    </button>
+    <span class="oneyPopin <?php if ($hasError) : ?>oneyPopin-error<?php endif; ?>">
+        <?php if ($hasError) : ?>
+            <p class="oneyPopin_error"><?php echo $oneySimulation->getMessage(); ?></p>
+        <?php else : ?>
+            <button class="oneyPopin_close"><?php echo __('Close'); ?></button>
+            <span class="oneyPopin_title">
+                <?php echo __('Pay %1by credit card%2', '<strong>', '</strong>'); ?>
+            </span>
+            <ul class="oneyPopin_navigation">
+                <li data-type="3x"><button type="button"><?php echo __('Payment in %1', '3x'); ?></button></li>
+                <li data-type="4x"><button type="button"><?php echo __('Payment in %1', '4x'); ?></button></li>
+            </ul>
+            <?php foreach ($oneySimulation->getOptions() as $option) : ?>
+                <span class="oneyPopin_option" data-type="<?php echo $option->getType(); ?>">
+                    <ul>
+                        <li>
+                            <span><b><?php echo __('For an amount of'); ?> :</b></span>
+                            <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($oneySimulation->getAmount(), true, false); ?></b></span>
+                        </li>
+                        <li>
+                            <span><?php echo __('First deposit'); ?> :</span>
+                            <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getFirstDeposit(), true, false); ?></b></span>
+                        </li>
+                        <li>
+                            <small>
+                                (<?php echo __('Credit cost'); ?> : <b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getCost(), true, false); ?></b>
+                                <?php echo __('APR'); ?> : <b><?php echo $option->getRate(); ?>%</b>)
+                            </small>
+                        </li>
+                        <?php foreach ($option->getSchedules() as $i => $schedule) : ?>
+                            <li>
+                                <span><?php echo __('Installment n°%1', $i + 1); ?> :</span>
+                                <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($schedule->getAmount(), true, false); ?></b></span>
+                            </li>
+                        <?php endforeach; ?>
+                        <li>
+                            <span><b><?php echo __('Total cost'); ?> :</b></span>
+                            <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getTotalAmount(), true, false); ?></b></span>
+                        </li>
+                    </ul>
+                </span>
+            <?php endforeach; ?>
+            <?php
+            $oneyAmounts = $block->getOneyAmounts();
+            $minAmount = 100;
+            $maxAmount = 3000;
+            if (is_array($oneyAmounts)) {
+                $minAmount = $oneyAmounts['min_amount'] / 100;
+                $maxAmount = $oneyAmounts['max_amount'] / 100;
+            }
+            ?>
+            <span class="oneyPopin_legal"><?php echo __('legal oney %1 %2', $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($minAmount, true, false), $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($maxAmount, true, false)); ?></span>
+        <?php endif; ?>
+    </span>
+</div>
