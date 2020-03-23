@@ -10,7 +10,6 @@ use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
 use Payplug\Payments\Gateway\Config\Oney;
-use Payplug\Payments\Helper\Config;
 
 class ConfigProvider implements ConfigProviderInterface
 {
@@ -40,29 +39,21 @@ class ConfigProvider implements ConfigProviderInterface
     private $request;
 
     /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
      * @param ScopeConfigInterface $scopeConfig
      * @param Repository           $assetRepo
      * @param RequestInterface     $request
      * @param PaymentHelper        $paymentHelper
-     * @param Config               $payplugConfig
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         Repository $assetRepo,
         RequestInterface $request,
-        PaymentHelper $paymentHelper,
-        Config $payplugConfig
+        PaymentHelper $paymentHelper
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->assetRepo = $assetRepo;
         $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
-        $this->payplugConfig = $payplugConfig;
     }
 
     /**
@@ -75,7 +66,6 @@ class ConfigProvider implements ConfigProviderInterface
                 $this->methodCode => [
                     'logo' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x.svg'),
                     'logo_ko' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x-alt.svg'),
-                    'is_embedded' => $this->payplugConfig->isEmbedded(),
                 ],
             ],
         ] : [];
