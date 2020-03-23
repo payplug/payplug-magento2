@@ -18,7 +18,7 @@ if (!$oneySimulation->getSuccess()) {
         <?php else : ?>
             <button class="oneyPopin_close"><?php echo __('Close'); ?></button>
             <span class="oneyPopin_title">
-                <?php echo __('Pay %1by credit card%2', '<strong>', '</strong>'); ?>
+                <?php echo __('Pay %1by card%2', '<strong>', '</strong>'); ?>
             </span>
             <ul class="oneyPopin_navigation">
                 <li data-type="3x"><button type="button"><?php echo __('Payment in %1', '3x'); ?></button></li>
@@ -32,18 +32,18 @@ if (!$oneySimulation->getSuccess()) {
                             <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($oneySimulation->getAmount(), true, false); ?></b></span>
                         </li>
                         <li>
-                            <span><?php echo __('First deposit'); ?> :</span>
+                            <span><?php echo __('Contribution'); ?> :</span>
                             <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getFirstDeposit(), true, false); ?></b></span>
                         </li>
                         <li>
                             <small>
-                                (<?php echo __('Credit cost'); ?> : <b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getCost(), true, false); ?></b>
-                                <?php echo __('APR'); ?> : <b><?php echo $option->getRate(); ?>%</b>)
+                                (<?php echo __('Financing cost'); ?> : <b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getCost(), true, false); ?></b>
+                                <?php echo __('TAEG'); ?> : <b><?php echo $option->getRate(); ?>%</b>)
                             </small>
                         </li>
                         <?php foreach ($option->getSchedules() as $i => $schedule) : ?>
                             <li>
-                                <span><?php echo __('Installment n°%1', $i + 1); ?> :</span>
+                                <span><?php echo __('Installment %1', $i + 1); ?> :</span>
                                 <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($schedule->getAmount(), true, false); ?></b></span>
                             </li>
                         <?php endforeach; ?>
@@ -62,8 +62,9 @@ if (!$oneySimulation->getSuccess()) {
                 $minAmount = $oneyAmounts['min_amount'] / 100;
                 $maxAmount = $oneyAmounts['max_amount'] / 100;
             }
+            $legalOney = "Financing offer with mandatory deposit reserved for private individual between %1 and %2. Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 www.orias.fr Correspondance : CS 60 006 - 59895 Lille Cedex - www.oney.fr";
             ?>
-            <span class="oneyPopin_legal"><?php echo __('legal oney %1 %2', $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($minAmount, true, false), $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($maxAmount, true, false)); ?></span>
+            <span class="oneyPopin_legal"><?php echo __($legalOney, $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($minAmount, true, false), $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($maxAmount, true, false)); ?></span>
         <?php endif; ?>
     </span>
 </div>

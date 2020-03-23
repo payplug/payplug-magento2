@@ -83,7 +83,7 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
                 $allowedOneyRefundDate = (new \DateTime())->modify('- ' . $oneyDelay . ' hours');
                 if ($this->getLastUpdateOnOrder($order) >= $allowedOneyRefundDate) {
                     $this->messageManager->addErrorMessage(
-                        __('You have to wait %1 hours to refund payment with Oney. Please wait or create an offline refund.', $oneyDelay)
+                        __('The refund can be made %1 hours after the payment or %1 hours after the last refund.', $oneyDelay)
                     );
 
                     return;

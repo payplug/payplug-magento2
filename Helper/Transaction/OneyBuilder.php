@@ -149,7 +149,7 @@ class OneyBuilder extends AbstractBuilder
         $shippingMethod = $this->getShippingMethod($quote);
         $shippingMapping = $this->oneyHelper->getShippingMethodMapping($shippingMethod);
         if ($shippingMapping === null) {
-            throw new LocalizedException(__('The shipping method you chose is not configured for Oney. Please contact us.'));
+            throw new LocalizedException(__('The shipping method you chose is not configured for Oney. Change your shipping method to pay with Oney.'));
         }
 
         $brand = sprintf(

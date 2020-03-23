@@ -194,7 +194,7 @@ define([
                 var detail = $('<div/>').addClass('oneyOption_prices');
                 var list = $('<ul/>').addClass('oneyOption_list');
                 var firstDeposit = $('<li/>')
-                    .append($('<span/>').html($.mage.__('Amount to pay when placing the order')))
+                    .append($('<span/>').html($.mage.__('Total order amount')))
                     .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.first_deposit)))
                 ;
                 list.append(firstDeposit);
