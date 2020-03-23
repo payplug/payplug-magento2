@@ -374,7 +374,7 @@ class Oney extends AbstractHelper
      */
     private function validateItemsCount($countItems)
     {
-        if ($countItems > self::MAX_ITEMS) {
+        if ($countItems >= self::MAX_ITEMS) {
             throw new \Exception(__('You must have less than %1 products in your cart in order to pay with Oney.', self::MAX_ITEMS));
         }
     }
