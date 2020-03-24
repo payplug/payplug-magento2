@@ -297,7 +297,7 @@ class PaymentConfigObserver implements ObserverInterface
             if (empty($fields['cgv']['value'])) {
                 $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
                 $this->messageManager->addErrorMessage(
-                    __('You must confirm you added oney specificities into your terms and conditions')
+                    __('Please confirm that Oney\'s legal notice have been added to your general terms and conditions.')
                 );
                 $this->request->setPostValue('groups', $groups);
 
@@ -323,7 +323,7 @@ class PaymentConfigObserver implements ObserverInterface
                     $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
                     if ($environmentMode == Config::ENVIRONMENT_LIVE) {
                         $this->messageManager->addErrorMessage(
-                            __('Only Premium accounts can use oney in LIVE mode.')
+                            __('Your account is not configured for Oney. Please contact us.')
                         );
                     }
                 }
@@ -375,7 +375,7 @@ class PaymentConfigObserver implements ObserverInterface
             if (!$hasCarrier) {
                 $hasShippingMappingError = true;
                 $this->messageManager->addErrorMessage(
-                    __('Please configure at least one carrier shipping method for your customers to pay with Oney')
+                    __('You need to configure at least one carrier shipping method to propose Oney.')
                 );
             }
 

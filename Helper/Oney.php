@@ -143,7 +143,7 @@ class Oney extends AbstractHelper
 
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
             throw new \Exception(__(
-                'The total amount of your order must be between %1 and %2 to be able to pay with Oney.',
+                'The total amount of your order must be between %1 and %2 to pay with Oney.',
                 $this->pricingHelper->currency($amountsByCurrency['min_amount'] / 100, true, false),
                 $this->pricingHelper->currency($amountsByCurrency['max_amount'] / 100, true, false)
             ));
@@ -191,7 +191,7 @@ class Oney extends AbstractHelper
                 $countryNames[] = $country->getName($locale);
             }
             throw new \Exception(__(
-                'Shipping and billing addresses must be located in %1 to be able to pay with Oney.',
+                'Shipping and billing addresses must be both located in %1 to pay with Oney.',
                 implode(', ', $countryNames)
             ));
         }
@@ -250,13 +250,13 @@ class Oney extends AbstractHelper
         if (!isset($shippingMapping[$shippingMethod])) {
             $this->logger->warning("Shipping method $shippingMethod has not been configured for Oney");
             throw new \Exception(__(
-                'The shipping method you chose is not configured for Oney. Please contact us.'
+                'The shipping method you chose is not configured for Oney. Change your shipping method to pay with Oney.'
             ));
         }
 
         if ($shippingMapping[$shippingMethod]['type'] !== 'carrier') {
             throw new \Exception(__(
-                'You cannot pay with Oney if you choose a pickup delivery.'
+                'Oney payment is not available with the pickup delivery.'
             ));
         }
 
@@ -363,7 +363,7 @@ class Oney extends AbstractHelper
     private function validateCheckoutCountries($billingCountry, $shippingCountry)
     {
         if (!empty($billingCountry) && !empty($shippingCountry) && $billingCountry !== $shippingCountry) {
-            throw new \Exception(__('Shipping and billing countries must be the same in order to pay with Oney.'));
+            throw new \Exception(__('Shipping and billing adresses must be both in the same country.'));
         }
     }
 
@@ -374,7 +374,7 @@ class Oney extends AbstractHelper
      */
     private function validateItemsCount($countItems)
     {
-        if ($countItems > self::MAX_ITEMS) {
+        if ($countItems >= self::MAX_ITEMS) {
             throw new \Exception(__('You must have less than %1 products in your cart in order to pay with Oney.', self::MAX_ITEMS));
         }
     }

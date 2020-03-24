@@ -30,13 +30,13 @@ class OneyInfo extends Info
         } elseif ($payment->authorization->authorized_at) {
             $status = __('Authorized');
         } elseif ($payment->payment_method['is_pending']) {
-            $status = __('Pending review');
+            $status = __('Pending Review');
         }
         $paymentDetails['Status'] = $status;
 
         $oneyOption = str_replace('oney_', '', $payment->payment_method['type']);
         if (isset(Oney::ALLOWED_OPERATIONS[$oneyOption])) {
-            $paymentDetails['Oney Option'] = __('Payment in %1', Oney::ALLOWED_OPERATIONS[$oneyOption]);
+            $paymentDetails['Oney option'] = __('Payment in %1', Oney::ALLOWED_OPERATIONS[$oneyOption]);
         }
 
         return $paymentDetails;

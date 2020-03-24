@@ -2,7 +2,6 @@
 define([
     'Magento_Checkout/js/view/payment/default',
     'Payplug_Payments/js/action/redirect-on-success',
-    'Payplug_Payments/js/action/lightbox-on-success',
     'Magento_Checkout/js/model/full-screen-loader',
     'jquery',
     'Magento_Checkout/js/model/quote',
@@ -10,7 +9,7 @@ define([
     'Magento_Catalog/js/price-utils',
     'ko',
     'mage/translate'
-], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, fullScreenLoader, $, quote, urlBuilder, priceUtils, ko) {
+], function (Component, redirectOnSuccessAction, fullScreenLoader, $, quote, urlBuilder, priceUtils, ko) {
     'use strict';
 
     return Component.extend({
@@ -69,10 +68,6 @@ define([
         },
         afterPlaceOrder: function () {
             fullScreenLoader.stopLoader();
-            if (window.checkoutConfig.payment.payplug_payments_oney.is_embedded) {
-                lightboxOnSuccessAction.execute();
-                return;
-            }
             redirectOnSuccessAction.execute();
         },
         getPaymentLogo: function() {
@@ -199,7 +194,7 @@ define([
                 var detail = $('<div/>').addClass('oneyOption_prices');
                 var list = $('<ul/>').addClass('oneyOption_list');
                 var firstDeposit = $('<li/>')
-                    .append($('<span/>').html($.mage.__('Amount to pay when placing the order')))
+                    .append($('<span/>').html($.mage.__('Total order amount')))
                     .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.first_deposit)))
                 ;
                 list.append(firstDeposit);
