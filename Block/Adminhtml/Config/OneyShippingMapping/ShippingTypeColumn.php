@@ -16,7 +16,7 @@ class ShippingTypeColumn extends Select
             ['label' => __('Store Pickup'), 'value' => 'storepickup'],
             ['label' => __('Network Pickup'), 'value' => 'networkpickup'],
             ['label' => __('Travel Pickup'), 'value' => 'travelpickup'],
-            ['label' => __('Carrier'), 'value' => 'carrier'],
+            ['label' => __('Home Delivery'), 'value' => 'carrier'],
         ];
     }
 
