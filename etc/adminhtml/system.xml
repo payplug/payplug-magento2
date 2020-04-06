@@ -42,10 +42,13 @@
                 <field id="company_id"/>
                 <field id="connected"/>
                 <field id="verified"/>
+                <field id="oney_countries"/>
+                <field id="oney_min_amounts"/>
+                <field id="oney_max_amounts"/>
             </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
-            <group id="payplug_payments_standard" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_standard" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Standard</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -84,9 +87,9 @@
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
-                <field id="model"></field>
+                <field id="model"/>
             </group>
-            <group id="payplug_payments_installment_plan" translate="label" type="text" sortOrder="31" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_installment_plan" translate="label" type="text" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Payments by installments</label>
                 <frontend_model>Payplug\Payments\Block\Adminhtml\Config\InstallmentPlan</frontend_model>
                 <field id="active" translate="label comment" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -133,9 +136,9 @@
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
-                <field id="model"></field>
+                <field id="model"/>
             </group>
-            <group id="payplug_payments_ondemand" translate="label" type="text" sortOrder="32" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_ondemand" translate="label" type="text" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - On demand</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -170,7 +173,44 @@
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
-                <field id="model"></field>
+                <field id="model"/>
+            </group>
+            <group id="payplug_payments_oney" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>PayPlug Payments - Oney</label>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="cgv" translate="label comment" type="select" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Oney terms and conditions</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment><![CDATA[Please confirm that you have added Oney specificities to your terms and conditions. <a href="https://support.payplug.com/hc/en-gb/articles/360009549540" target="_blank">More info</a>]]></comment>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Processing order status</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
+                </field>
+                <field id="canceled_order_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Canceled order status</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="shipping_mapping" translate="label comment" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Shipping mapping</label>
+                    <comment><![CDATA[To identify potential fraud Oney needs to know what carriers you use as well as the average delivery time.]]></comment>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\OneyShippingMapping</frontend_model>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OneyShippingMapping</backend_model>
+                </field>
+                <field id="model"/>
+                <field id="allowspecific"/>
+                <field id="specificcountry"/>
+                <field id="default_country"/>
             </group>
         </section>
     </system>

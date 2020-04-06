@@ -3,12 +3,12 @@
 namespace Payplug\Payments\Model\Payment\InstallmentPlan;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
-use Magento\Customer\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
+use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Helper\Config;
@@ -21,7 +21,7 @@ class ConfigProvider implements ConfigProviderInterface
     private $methodCode = InstallmentPlan::METHOD_CODE;
 
     /**
-     * @var Standard
+     * @var MethodInterface
      */
     private $method;
 

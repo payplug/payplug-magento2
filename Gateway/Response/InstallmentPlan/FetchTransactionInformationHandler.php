@@ -127,13 +127,21 @@ class FetchTransactionInformationHandler implements HandlerInterface
 
                         $amount = $schedule->amount / 100;
 
-                        $order->setTotalPaid($order->getTotalPaid() + $amount);
-                        $order->setBaseTotalPaid($order->getBaseTotalPaid() + $amount);
+                        $totalPaid = $order->getTotalPaid() + $amount;
+                        $baseTotalPaid = $order->getBaseTotalPaid() + $amount;
+
+                        $order->setTotalPaid($totalPaid);
+                        $order->setBaseTotalPaid($baseTotalPaid);
                         if ($order->getState() == Order::STATE_PAYMENT_REVIEW) {
                             $order->setState(Order::STATE_PROCESSING);
                         }
 
                         $payment->registerCaptureNotification($amount, true);
+                        $payment->setBaseShippingCaptured($order->getBaseShippingInclTax());
+                        $payment->setShippingCaptured($order->getShippingInclTax());
+                        $payment->setBaseAmountPaid($baseTotalPaid);
+                        $payment->setBaseAmountPaidOnline($baseTotalPaid);
+                        $payment->setAmountPaid($totalPaid);
                         $orderPayment->setIsInstallmentPlanPaymentProcessed(true);
                     }
 

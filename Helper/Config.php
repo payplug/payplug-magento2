@@ -128,7 +128,7 @@ class Config extends AbstractHelper
         }
 
         if (!empty($key)) {
-            Payplug::setSecretKey($key);
+            Payplug::init(['secretKey' => $key, 'apiVersion' => '2019-08-06']);
         }
     }
 
@@ -251,6 +251,9 @@ class Config extends AbstractHelper
             'payplug_payments/general/environmentmode',
             'payplug_payments/general/payment_page',
             'payplug_payments/general/invoice_on_payment',
+            'payplug_payments/general/oney_countries',
+            'payplug_payments/general/oney_min_amounts',
+            'payplug_payments/general/oney_max_amounts',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
@@ -281,11 +284,63 @@ class Config extends AbstractHelper
             'payment/payplug_payments_ondemand/specificcountry',
             'payment/payplug_payments_ondemand/default_country',
             'payment/payplug_payments_ondemand/sort_order',
+            // Payplug payment Oney configuration
+            'payment/payplug_payments_oney/active',
+            'payment/payplug_payments_oney/cgv',
+            'payment/payplug_payments_oney/title',
+            'payment/payplug_payments_oney/processing_order_status',
+            'payment/payplug_payments_oney/canceled_order_status',
+            'payment/payplug_payments_oney/allowspecific',
+            'payment/payplug_payments_oney/specificcountry',
+            'payment/payplug_payments_oney/sort_order',
+            'payment/payplug_payments_oney/shipping_mapping',
         ];
 
         foreach ($keys as $key) {
             $this->configWriter->delete($key, $this->scope, $this->scopeId);
         }
         $this->systemConfigType->clean();
+    }
+
+    /**
+     * Get valid range of amount for a given currency
+     *
+     * @param string $isoCode
+     * @param int    $storeId
+     * @param string $amountPrefix
+     *
+     * @return bool|array
+     */
+    public function getAmountsByCurrency($isoCode, $storeId, $amountPrefix = '')
+    {
+        $minAmounts = [];
+        $maxAmounts = [];
+        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId);
+        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId);
+        foreach (explode(';', $minAmountsConfig) as $amountCur) {
+            $cur = [];
+            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
+                $minAmounts[$cur[1]] = (int)$cur[2];
+            } else {
+                return false;
+            }
+        }
+        foreach (explode(';', $maxAmountsConfig) as $amountCur) {
+            $cur = [];
+            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
+                $maxAmounts[$cur[1]] = (int)$cur[2];
+            } else {
+                return false;
+            }
+        }
+
+        if (!isset($minAmounts[$isoCode]) || !isset($maxAmounts[$isoCode])) {
+            return false;
+        } else {
+            $currentMinAmount = $minAmounts[$isoCode];
+            $currentMaxAmount = $maxAmounts[$isoCode];
+        }
+
+        return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
     }
 }
