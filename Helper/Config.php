@@ -293,7 +293,6 @@ class Config extends AbstractHelper
             'payment/payplug_payments_oney/allowspecific',
             'payment/payplug_payments_oney/specificcountry',
             'payment/payplug_payments_oney/sort_order',
-            'payment/payplug_payments_oney/shipping_mapping',
         ];
 
         foreach ($keys as $key) {
