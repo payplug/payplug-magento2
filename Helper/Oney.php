@@ -234,39 +234,9 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * @param null|string $shippingMethod
-     *
-     * @return bool
-     *
-     * @throws \Exception
-     */
-    private function validateShippingMethod($shippingMethod = null): bool
-    {
-        if ($shippingMethod === null) {
-            return true;
-        }
-
-        $shippingMapping = $this->getShippingMapping();
-        if (!isset($shippingMapping[$shippingMethod])) {
-            $this->logger->warning("Shipping method $shippingMethod has not been configured for Oney");
-            throw new \Exception(__(
-                'The shipping method you chose is not configured for Oney. Change your shipping method to pay with Oney.'
-            ));
-        }
-
-        if ($shippingMapping[$shippingMethod]['type'] !== 'carrier') {
-            throw new \Exception(__(
-                'Oney payment is not available with the pickup delivery.'
-            ));
-        }
-
-        return true;
-    }
-
-    /**
      * @param string|null $shippingMethod
      *
-     * @return array|null
+     * @return array
      */
     public function getShippingMethodMapping($shippingMethod = null)
     {
@@ -277,46 +247,20 @@ class Oney extends AbstractHelper
             ];
         }
 
-        $shippingMapping = $this->getShippingMapping();
-
-        return $shippingMapping[$shippingMethod] ?? null;
-    }
-
-    /**
-     * @return array
-     */
-    public function getShippingMapping(): array
-    {
-        $storeId = $this->storeManager->getStore()->getId();
-        $shippingMapping = $this->scopeConfig->getValue('payment/payplug_payments_oney/shipping_mapping', ScopeInterface::SCOPE_STORE, $storeId);
-        $shippingMapping = json_decode($shippingMapping, true);
-
-        if (!is_array($shippingMapping)) {
-            $this->logger->warning("No shipping method has been configured for Oney");
-
-            return [];
-        }
-
-        $mappings = [];
-        foreach ($shippingMapping as $config) {
-            $mappings[$config['shipping_method']] = [
-                'type' => $config['shipping_type'],
-                'period' => $config['shipping_period'],
-            ];
-        }
-
-        return $mappings;
+        return [
+            'type' => 'storepickup',
+            'period' => 0,
+        ];
     }
 
     /**
      * @param float  $amount
      * @param string $billingCountry
      * @param string $shippingCountry
-     * @param string $shippingMethod
      *
      * @return Result
      */
-    public function getOneySimulationCheckout($amount, $billingCountry, $shippingCountry, $shippingMethod): Result
+    public function getOneySimulationCheckout($amount, $billingCountry, $shippingCountry): Result
     {
         try {
             $this->oneyCheckoutValidation($billingCountry, $shippingCountry, $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems()));
@@ -328,7 +272,7 @@ class Oney extends AbstractHelper
             return $simulationResult;
         }
 
-        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null, $shippingMethod);
+        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null);
     }
 
     /**
@@ -416,27 +360,24 @@ class Oney extends AbstractHelper
     /**
      * @param float       $amount
      * @param string      $countryCode
-     * @param string|null $shippingMethod
      * @param int|null    $storeId
      * @param string|null $currency
      *
      * @throws \Exception
      */
-    public function oneyValidation($amount, $countryCode, $shippingMethod, $storeId = null, $currency = null)
+    public function oneyValidation($amount, $countryCode, $storeId = null, $currency = null)
     {
         $this->validateAmount($amount, $storeId, $currency);
         $this->validateCountry($countryCode);
-        $this->validateShippingMethod($shippingMethod);
     }
 
     /**
      * @param float|null  $amount
      * @param string|null $countryCode
-     * @param string|null $shippingMethod
      *
      * @return Result
      */
-    public function getOneySimulation($amount = null, $countryCode = null, $shippingMethod = null): Result
+    public function getOneySimulation($amount = null, $countryCode = null): Result
     {
         if ($amount === null) {
             $amount = $this->checkoutSession->getQuote()->getGrandTotal();
@@ -445,7 +386,7 @@ class Oney extends AbstractHelper
             $countryCode = $this->getDefaultCountry();
         }
         try {
-            $this->oneyValidation($amount, $countryCode, $shippingMethod);
+            $this->oneyValidation($amount, $countryCode);
 
             return $this->getSimulation($amount, $countryCode);
         } catch (PayplugException $e) {

@@ -201,12 +201,6 @@
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
-                <field id="shipping_mapping" translate="label comment" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Shipping mapping</label>
-                    <comment><![CDATA[To identify potential fraud Oney needs to know what carriers you use as well as the average delivery time.]]></comment>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\OneyShippingMapping</frontend_model>
-                    <backend_model>Payplug\Payments\Model\Config\Backend\OneyShippingMapping</backend_model>
-                </field>
                 <field id="model"/>
                 <field id="allowspecific"/>
                 <field id="specificcountry"/>

@@ -55,17 +55,14 @@ class SimulationCheckout extends \Magento\Framework\App\Action\Action
             $params = $this->getRequest()->getParams();
             $isVirtual = (bool) ($params['isVirtual'] ?? false);
             $shippingCountry = $params['shippingCountry'] ?? null;
-            $shippingMethod = $params['shippingMethod'] ?? null;
             if ($isVirtual) {
                 $shippingCountry = null;
-                $shippingMethod = null;
             }
 
             $simulationResult = $this->oneyHelper->getOneySimulationCheckout(
                 $params['amount'],
                 $params['billingCountry'] ?? null,
-                $shippingCountry,
-                $shippingMethod
+                $shippingCountry
             );
 
             $result->setData([
