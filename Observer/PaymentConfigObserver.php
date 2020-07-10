@@ -330,61 +330,6 @@ class PaymentConfigObserver implements ObserverInterface
             }
         }
 
-        if ($isOneyActive) {
-            $hasShippingMappingError = false;
-            $shippingMethods = [];
-            $hasCarrier = false;
-            $shippingMethodCount = 0;
-            foreach ($fields['shipping_mapping']['value'] as $rowKey => $row) {
-                if (!isset($row['shipping_method'])) {
-                    continue;
-                }
-                if (empty($row['shipping_method'])) {
-                    $hasShippingMappingError = true;
-                    $this->messageManager->addErrorMessage(
-                        __('Please select a shipping method')
-                    );
-                }
-                if (empty($row['shipping_type'])) {
-                    $hasShippingMappingError = true;
-                    $this->messageManager->addErrorMessage(
-                        __('Please select a shipping type')
-                    );
-                }
-                if ($row['shipping_type'] === 'carrier') {
-                    $hasCarrier = true;
-                }
-                if (!isset($row['shipping_period']) || $row['shipping_period'] === null || $row['shipping_period'] === '') {
-                    $hasShippingMappingError = true;
-                    $this->messageManager->addErrorMessage(
-                        __('Please select a shipping period')
-                    );
-                }
-
-                $shippingMethodCount++;
-                $shippingMethods[$row['shipping_method']] = 1;
-            }
-
-            if (count($shippingMethods) !== $shippingMethodCount) {
-                $hasShippingMappingError = true;
-                $this->messageManager->addErrorMessage(
-                    __('Duplicate shipping method configuration')
-                );
-            }
-
-            if (!$hasCarrier) {
-                $hasShippingMappingError = true;
-                $this->messageManager->addErrorMessage(
-                    __('You need to configure at least one carrier shipping method to propose Oney.')
-                );
-            }
-
-            // Disable Oney paiement if the shipping mapping is not correct
-            if ($hasShippingMappingError) {
-                $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
-            }
-        }
-
         $this->request->setPostValue('groups', $groups);
     }
 

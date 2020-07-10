@@ -70,7 +70,6 @@ class OneyBuilder extends AbstractBuilder
             $this->oneyHelper->oneyValidation(
                 $order->getGrandTotalAmount(),
                 $order->getBillingAddress()->getCountryId(),
-                $this->getShippingMethod($quote),
                 $order->getStoreId(),
                 $order->getCurrencyCode()
             );
@@ -148,9 +147,6 @@ class OneyBuilder extends AbstractBuilder
     {
         $shippingMethod = $this->getShippingMethod($quote);
         $shippingMapping = $this->oneyHelper->getShippingMethodMapping($shippingMethod);
-        if ($shippingMapping === null) {
-            throw new LocalizedException(__('The shipping method you chose is not configured for Oney. Change your shipping method to pay with Oney.'));
-        }
 
         $brand = sprintf(
             '%s - %s - %s',
@@ -162,7 +158,11 @@ class OneyBuilder extends AbstractBuilder
         if ($shippingMethod !== null) {
             $deliveryLabel = $quote->getShippingAddress()->getShippingDescription();
         }
-        $deliveryDate = (new \DateTime())->modify(sprintf('+ %d days', $shippingMapping['period']))->format('Y-m-d');
+        $deliveryDate = new \DateTime();
+        if ($shippingMapping['period'] > 0) {
+            $deliveryDate->modify(sprintf('+ %d days', $shippingMapping['period']));
+        }
+        $deliveryDate = $deliveryDate->format('Y-m-d');
         $deliveryType = $shippingMapping['type'];
 
         $products = [];

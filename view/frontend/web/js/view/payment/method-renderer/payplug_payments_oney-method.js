@@ -91,10 +91,7 @@ define([
                         'amount': quote.totals()['base_grand_total'],
                         'billingCountry': quote.billingAddress() ? quote.billingAddress().countryId : null,
                         'shippingCountry': quote.shippingAddress() ? quote.shippingAddress().countryId : null,
-                        'isVirtual': quote.isVirtual() ? 1 : 0,
-                        'shippingMethod': quote.shippingMethod() ?
-                            quote.shippingMethod()['carrier_code'] + '_' + quote.shippingMethod()['method_code'] :
-                            null
+                        'isVirtual': quote.isVirtual() ? 1 : 0
                     }
                 }).done(function (response) {
                     if (response.success && response.data.success) {
