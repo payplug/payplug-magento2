@@ -410,6 +410,14 @@ class Data extends AbstractHelper
             return true;
         }
 
+        if ($order->getState() == Order::STATE_CANCELED) {
+            return false;
+        }
+
+        if (!$this->isPaymentFailure($order)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -596,16 +604,44 @@ class Data extends AbstractHelper
                 }
             }
         } elseif ($payment->getIsTransactionDenied()) {
-            $this->cancelOrderAndInvoice($order);
+            // fetchTransactionInfo has already checked payplug payment status, no need to do it again
+            $this->cancelOrderAndInvoice($order, false);
         }
     }
 
     /**
      * @param Order $order
+     *
+     * @return bool
      */
-    public function cancelOrderAndInvoice($order)
+    private function isPaymentFailure($order)
+    {
+        if ($order->getPayment()->getMethod() == InstallmentPlan::METHOD_CODE) {
+            $payment = $this->getOrderInstallmentPlan($order->getIncrementId());
+        } else {
+            $payment = $this->getOrderPayment($order->getIncrementId());
+        }
+        /** @var Payment|\Payplug\Payments\Model\Order\InstallmentPlan $payplugPayment */
+        $payplugPayment = $payment->retrieve($order->getStoreId());
+
+        if ($payplugPayment->failure) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param Order $order
+     * @param bool  $checkPaymentStatus
+     */
+    public function cancelOrderAndInvoice($order, $checkPaymentStatus = true)
     {
         if ($order->getState() != Order::STATE_PAYMENT_REVIEW) {
+            return;
+        }
+
+        if ($checkPaymentStatus && !$this->isPaymentFailure($order)) {
             return;
         }
 
