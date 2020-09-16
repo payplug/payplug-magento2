@@ -19,6 +19,11 @@ class Simulation extends Template
     private $oneyHelper;
 
     /**
+     * @var bool
+     */
+    private $wrapperOnly = true;
+
+    /**
      * @param Template\Context $context
      * @param Oney             $oneyHelper
      * @param array            $data
@@ -47,11 +52,11 @@ class Simulation extends Template
     }
 
     /**
-     * @param float $amount
+     * @param float|null $amount
      *
      * @return $this
      */
-    public function setAmount(float $amount): self
+    public function setAmount($amount): self
     {
         $this->amount = $amount;
 
@@ -71,7 +76,7 @@ class Simulation extends Template
      */
     public function getOneySimulation(): Result
     {
-        return $this->oneyHelper->getOneySimulation($this->getAmount());
+        return $this->oneyHelper->getOneySimulation($this->getAmount(), null, $this->wrapperOnly);
     }
 
     /**
@@ -80,5 +85,25 @@ class Simulation extends Template
     public function getOneyAmounts()
     {
         return $this->oneyHelper->getOneyAmounts();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isWrapperOnly(): bool
+    {
+        return $this->wrapperOnly;
+    }
+
+    /**
+     * @param bool $wrapperOnly
+     *
+     * @return $this
+     */
+    public function setWrapperOnly(bool $wrapperOnly): self
+    {
+        $this->wrapperOnly = $wrapperOnly;
+
+        return $this;
     }
 }

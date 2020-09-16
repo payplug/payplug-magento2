@@ -374,10 +374,11 @@ class Oney extends AbstractHelper
     /**
      * @param float|null  $amount
      * @param string|null $countryCode
+     * @param bool        $validationOnly
      *
      * @return Result
      */
-    public function getOneySimulation($amount = null, $countryCode = null): Result
+    public function getOneySimulation($amount = null, $countryCode = null, $validationOnly = false): Result
     {
         if ($amount === null) {
             $amount = $this->checkoutSession->getQuote()->getGrandTotal();
@@ -388,7 +389,14 @@ class Oney extends AbstractHelper
         try {
             $this->oneyValidation($amount, $countryCode);
 
-            return $this->getSimulation($amount, $countryCode);
+            if ($validationOnly) {
+                $simulationResult = new Result();
+                $simulationResult->setSuccess(true);
+
+                return $simulationResult;
+            } else {
+                return $this->getSimulation($amount, $countryCode);
+            }
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
 
