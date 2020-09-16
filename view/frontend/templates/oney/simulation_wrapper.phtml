@@ -2,7 +2,7 @@
 /** @var Magento\Catalog\Block\Product\View $block */
 $price = $block->getProduct()->getFinalPrice(1);
 ?>
-<div class="oney-product">
+<div class="oney-wrapper oney-product">
     <?php
         echo $block->getChildBlock('payplug-payments-product-oney-simulation')
             ->setAmount($price)
