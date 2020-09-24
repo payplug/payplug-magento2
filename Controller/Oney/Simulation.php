@@ -71,9 +71,13 @@ class Simulation extends \Magento\Framework\App\Action\Action
                 $productPrice = $productPrice * $qty;
             }
 
+            $template = 'Payplug_Payments::oney/simulation_content.phtml';
+            if (isset($params['wrapper'])) {
+                $template = 'Payplug_Payments::oney/simulation.phtml';
+            }
+
             $block = $this->layout->createBlock(\Payplug\Payments\Block\Oney\Simulation::class)
-                ->setTemplate('Payplug_Payments::oney/simulation.phtml')
-                ->setWrapperOnly($params['wrapper'] ?? false)
+                ->setTemplate($template)
                 ->setAmount($productPrice)
             ;
 
