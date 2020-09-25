@@ -79,25 +79,22 @@ require([
         });
     }
 
-    function updateOneySimulation(callback){
-        if (!hasChanged) {
-            if (typeof callback === 'function') {
-                callback();
-            }
-            return;
-        }
+    function updateOneySimulation(){
+        let popin = $('.oneyPopin');
+        popin.addClass('loading');
+        popin.loader({
+            icon: require.toUrl('images/loader-1.gif')
+        }).loader('show');
+
         $.ajax({
             url: urlBuilder.build('payplug_payments/oney/simulation'),
             type: "POST",
             data: getFormData()
         }).done(function (response) {
             if (response.success) {
-                $('.oney-wrapper').html(response.html);
+                popin.removeClass('loading').html(response.html);
                 initOptions();
                 hasChanged = false;
-                if (typeof callback === 'function') {
-                    callback();
-                }
             }
         });
     }
@@ -137,14 +134,15 @@ require([
         }, 400);
     }
     function showPopin(){
-        updateOneySimulation(function(){
-            let popin = $('.oneyPopin');
-            $('.oneyCta').addClass('oneyCta-open');
-            popin.addClass('oneyPopin-open');
+        let popin = $('.oneyPopin');
+        $('.oneyCta').addClass('oneyCta-open');
+        popin.addClass('oneyPopin-open');
 
-            setTimeout(function () {
-                popin.addClass('oneyPopin-show');
-            }, 0);
-        });
+        setTimeout(function () {
+            popin.addClass('oneyPopin-show');
+        }, 0);
+        if (hasChanged) {
+            updateOneySimulation();
+        }
     }
 });

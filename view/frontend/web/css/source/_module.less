@@ -219,6 +219,18 @@
         display: none;
       }
     }
+    .loading& {
+      top: -50%;
+      height: 100px;
+      &:after {
+        top: 50%;
+      }
+      @media (max-width: 767px) {
+        height: 0;
+        padding: 0;
+        border: none;
+      }
+    }
 
     @media (max-width: 767px) {
       display: block;
@@ -270,6 +282,14 @@
       }
       .oneyPopin-open& {
         border: 2px solid #b2b2b2;
+      }
+      .loading& {
+        top: 50%;
+        @media (max-width: 767px) {
+          height: 0;
+          padding: 0;
+          border: none;
+        }
       }
       @media (max-width: 767px) {
         top: 0;
