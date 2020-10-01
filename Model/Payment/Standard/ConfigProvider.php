@@ -155,8 +155,13 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function shouldRefreshCards()
     {
-        // Issue in Magento 2.1 with private content not refreshed properly by Magento
-        return strpos($this->payplugConfig->getMagentoVersion(), '2.1.') === 0;
+        // Issue in Magento 2.1 & Magento 2.4 with private content not refreshed properly by Magento
+        if (strpos($this->payplugConfig->getMagentoVersion(), '2.1.') === 0 ||
+            strpos($this->payplugConfig->getMagentoVersion(), '2.4.') === 0) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
