@@ -581,7 +581,9 @@ class Data extends AbstractHelper
         $method->setStore($order->getStoreId());
         $method->fetchTransactionInfo($payment, $transactionId);
 
-        if ($payment->getIsTransactionApproved() || ($isInstallmentPlan && !$payment->getTransactionPending())) {
+        if ($payment->getIsTransactionApproved() ||
+            ($isInstallmentPlan && !$payment->getTransactionPending() && !$payment->getIsTransactionDenied())
+        ) {
             if (count($order->getInvoiceCollection()) === 0) {
                 $invoice = $order->prepareInvoice();
                 $invoice->register();

@@ -42,6 +42,10 @@ require([
             'form_key': $('[name="form_key"]').val(),
         }
 
+        if ($('.oney-product').length === 0) {
+            return formData;
+        }
+
         let product = $('[name="product"]');
         if (product.length !== 0) {
             formData.product = product.val();
