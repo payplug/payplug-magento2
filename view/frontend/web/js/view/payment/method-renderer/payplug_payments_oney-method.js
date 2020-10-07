@@ -157,7 +157,13 @@ define([
             $('#oneyLogo').attr('src', logo);
         },
         updateOneyError: function(message) {
-            $('#oneyError').html(message);
+            let oneyError = $('#oneyError');
+            if (message === '') {
+                oneyError.removeClass('active');
+            } else {
+                oneyError.addClass('active');
+            }
+            oneyError.html(message);
         },
         updatePlaceOrderButtonLabel: function(type){
             var label;
