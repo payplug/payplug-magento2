@@ -15,6 +15,8 @@
 }
 #oneyError {
   color: #b2b2b2;
+}
+#oneyError.active {
   margin-bottom: 15px;
 }
 #oneyLogo {
@@ -859,6 +861,59 @@
       position: static;
       border: none;
       background: none;
+    }
+  }
+}
+// Rewrite margins definition
+// to bypass rule .onestepcheckout-index-index .page-main .aw-onestep-main .payment-method-content * {margin: 0;}
+.onestepcheckout-index-index .page-main .aw-onestep-main .payment-method-content {
+  .oney {
+    &Payment {
+      &-open {
+        @media (max-width: 767px) {
+          margin-bottom: 15px;
+        }
+      }
+      &_logo {
+        margin: 0 15px 0 0;
+      }
+      &_cta {
+        margin: 0 0 30px;
+      }
+    }
+    // Oney payment option
+    &Option {
+      margin: 0 8px 50px;
+      &_prices {
+        // Oney Detail
+        ul {
+          margin: 0;
+          li {
+            &:last-child{
+              margin: auto 0 0;
+            }
+          }
+        }
+      }
+      &_legend {
+        margin: auto 0 0;
+      }
+      @media (max-width: 767px) {
+        margin: 0;
+      }
+    }
+  }
+  .payplug-payments-cards {
+    li {
+      margin-bottom: 1rem;
+    }
+  }
+}
+.onestepcheckout-index-index .page-main .checkout-container {
+  .payplug-payments-cards {
+    padding-left: 0;
+    img {
+      display: inline;
     }
   }
 }

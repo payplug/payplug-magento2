@@ -11,7 +11,7 @@
                class="radio"
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
         <label data-bind="attr: {'for': getCode()}" class="label"><img style="margin-right: 10px;" data-bind="attr: {src: getCardLogo()}"><span data-bind="text: getTitle()"></span></label>
-        <!-- ko if: canDisplayCards() -->
+        <!-- ko if: canDisplayCardsInTitle() -->
             <ul class="payplug-payments-cards">
                 <!-- ko foreach: getCards() -->
                 <!-- ko template: $parent.getCardTemplate() --><!-- /ko -->
@@ -23,6 +23,16 @@
         <!--/ko-->
     </div>
     <div class="payment-method-content">
+        <!-- ko if: canDisplayCardsInContainer() -->
+        <ul class="payplug-payments-cards">
+            <!-- ko foreach: getCards() -->
+            <!-- ko template: $parent.getCardTemplate() --><!-- /ko -->
+            <!--/ko-->
+        </ul>
+        <div role="alert" class="message notice payplug-payments-error" style="display: none;">
+            <span><!-- ko i18n: 'Please specify a payment method.' --><!-- /ko --></span>
+        </div>
+        <!--/ko-->
         <!-- ko foreach: getRegion('messages') -->
         <!-- ko template: getTemplate() --><!-- /ko -->
         <!--/ko-->
