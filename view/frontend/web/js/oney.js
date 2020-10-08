@@ -4,10 +4,11 @@ require([
 ], function ($, urlBuilder) {
     'use strict';
 
-    if ($('.oneyPopin').length === 0) {
+    if ($('.oney-wrapper').length === 0) {
         return;
     }
 
+    let hasChanged = true;
     initOptions();
 
     let body = $('body');
@@ -29,43 +30,75 @@ require([
 
     if ($('.oney-product').length > 0) {
         body.on('input', '[name="qty"]', function(e){
-            updateProductSimulation();
+            updateOneyWrapper();
         });
         body.on('change', '.super-attribute-select', function(e){
-            updateProductSimulation();
+            updateOneyWrapper();
         });
     }
 
-    function updateProductSimulation(){
-        let product = $('[name="product"]');
-        if (product.length === 0) {
-            return;
-        }
-        let productOptions = [];
-        let configurableAttributes = $('.super-attribute-select');
-        if (configurableAttributes.length > 0) {
-            configurableAttributes.each(function(index, value){
-                let configurableAttribute = $(value);
-                productOptions.push({
-                    'attribute': configurableAttribute.data('attr-name'),
-                    'value': configurableAttribute.val()
-                });
-            });
-        }
-        let productData = {
-            'product': product.val(),
-            'qty': $('[name="qty"]').val(),
+    function getFormData(){
+        let formData = {
             'form_key': $('[name="form_key"]').val(),
-            'product_options': productOptions
-        };
+        }
+
+        if ($('.oney-product').length === 0) {
+            return formData;
+        }
+
+        let product = $('[name="product"]');
+        if (product.length !== 0) {
+            formData.product = product.val();
+            formData.qty = $('[name="qty"]').val();
+            let productOptions = [];
+            let configurableAttributes = $('.super-attribute-select');
+            if (configurableAttributes.length > 0) {
+                configurableAttributes.each(function (index, value) {
+                    let configurableAttribute = $(value);
+                    productOptions.push({
+                        'attribute': configurableAttribute.data('attr-name'),
+                        'value': configurableAttribute.val()
+                    });
+                });
+            }
+            formData.product_options = productOptions;
+        }
+
+        return formData;
+    }
+
+    function updateOneyWrapper(){
+        let formData = getFormData();
+        formData.wrapper = true;
+
         $.ajax({
             url: urlBuilder.build('payplug_payments/oney/simulation'),
             type: "POST",
-            data: productData
+            data: formData
         }).done(function (response) {
             if (response.success) {
-                $('.oney-product').html(response.html);
+                $('.oney-wrapper').html(response.html);
+                hasChanged = true;
+            }
+        });
+    }
+
+    function updateOneySimulation(){
+        let popin = $('.oneyPopin');
+        popin.addClass('loading');
+        popin.loader({
+            icon: require.toUrl('images/loader-1.gif')
+        }).loader('show');
+
+        $.ajax({
+            url: urlBuilder.build('payplug_payments/oney/simulation'),
+            type: "POST",
+            data: getFormData()
+        }).done(function (response) {
+            if (response.success) {
+                popin.removeClass('loading').html(response.html);
                 initOptions();
+                hasChanged = false;
             }
         });
     }
@@ -112,5 +145,8 @@ require([
         setTimeout(function () {
             popin.addClass('oneyPopin-show');
         }, 0);
+        if (hasChanged) {
+            updateOneySimulation();
+        }
     }
 });

@@ -47,11 +47,11 @@ class Simulation extends Template
     }
 
     /**
-     * @param float $amount
+     * @param float|null $amount
      *
      * @return $this
      */
-    public function setAmount(float $amount): self
+    public function setAmount($amount): self
     {
         $this->amount = $amount;
 
@@ -67,11 +67,13 @@ class Simulation extends Template
     }
 
     /**
+     * @param bool $validationOnly
+     *
      * @return Result
      */
-    public function getOneySimulation(): Result
+    public function getOneySimulation(bool $validationOnly = false): Result
     {
-        return $this->oneyHelper->getOneySimulation($this->getAmount());
+        return $this->oneyHelper->getOneySimulation($this->getAmount(), null, $validationOnly);
     }
 
     /**

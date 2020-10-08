@@ -4,7 +4,9 @@
     </head>
     <body>
         <referenceContainer name="checkout.cart.totals.container">
-            <block class="Payplug\Payments\Block\Oney\Simulation" name="payplug-payments-cart-oney-simulation" after="checkout.cart.totals" template="Payplug_Payments::oney/simulation.phtml"/>
+            <block class="Magento\Framework\View\Element\Template" name="payplug-payments-product-oney-wrapper" after="checkout.cart.totals" template="Payplug_Payments::oney/simulation_wrapper_checkout.phtml">
+                <block class="Payplug\Payments\Block\Oney\Simulation" name="payplug-payments-product-oney-simulation" template="Payplug_Payments::oney/simulation.phtml"/>
+            </block>
         </referenceContainer>
     </body>
 </page>

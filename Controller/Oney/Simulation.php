@@ -61,16 +61,23 @@ class Simulation extends \Magento\Framework\App\Action\Action
 
         try {
             $params = $this->getRequest()->getParams();
+            $productPrice = null;
             $product = $this->getProduct($params);
+            if ($product !== null) {
+                $qty = $params['qty'] ?? 1;
+                $qty = (int)$qty;
 
-            $qty = $params['qty'] ?? 1;
-            $qty = (int) $qty;
+                $productPrice = $product->getFinalPrice($qty);
+                $productPrice = $productPrice * $qty;
+            }
 
-            $productPrice = $product->getFinalPrice($qty);
-            $productPrice = $productPrice * $qty;
+            $template = 'Payplug_Payments::oney/simulation_content.phtml';
+            if (isset($params['wrapper'])) {
+                $template = 'Payplug_Payments::oney/simulation.phtml';
+            }
 
             $block = $this->layout->createBlock(\Payplug\Payments\Block\Oney\Simulation::class)
-                ->setTemplate('Payplug_Payments::oney/simulation.phtml')
+                ->setTemplate($template)
                 ->setAmount($productPrice)
             ;
 
@@ -88,14 +95,14 @@ class Simulation extends \Magento\Framework\App\Action\Action
     /**
      * @param array $params
      *
-     * @return \Magento\Catalog\Model\Product
+     * @return \Magento\Catalog\Model\Product|null
      *
      * @throws \Exception
      */
     private function getProduct($params)
     {
         if (!isset($params['product'])) {
-            throw new \Exception('Product is not defined');
+            return null;
         }
 
         $product = $this->productFactory->create();
