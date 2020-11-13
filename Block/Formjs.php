@@ -3,6 +3,7 @@
 namespace Payplug\Payments\Block;
 
 use Magento\Framework\View\Element\Template;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 
 class Formjs extends \Magento\Framework\View\Element\Template
@@ -43,6 +44,11 @@ class Formjs extends \Magento\Framework\View\Element\Template
      */
     public function isEmbedded()
     {
-        return $this->helper->isEmbedded();
+        return $this->helper->isEmbedded() || $this->helper->getConfigValue(
+            'one_click',
+            ScopeInterface::SCOPE_STORE,
+            null,
+            'payment/payplug_payments_standard/'
+        );
     }
 }

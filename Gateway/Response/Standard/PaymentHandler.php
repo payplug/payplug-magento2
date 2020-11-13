@@ -55,10 +55,13 @@ class PaymentHandler implements HandlerInterface
             /** @var Payment $payment */
             $payment = $paymentDO->getPayment();
 
-            if (!$payplugPayment->is_paid) {
+            $isPaid = 1;
+            if (!$payplugPayment->is_paid && $payplugPayment->failure === null) {
                 // save payment url for pending redirect/lightbox payment
                 $payment->setAdditionalInformation('payment_url', $payplugPayment->hosted_payment->payment_url);
+                $isPaid = 0;
             }
+            $payment->setAdditionalInformation('is_paid', $isPaid);
 
             $payment->setTransactionId($payplugPayment->id);
             $payment->setIsTransactionPending(true);

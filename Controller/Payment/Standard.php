@@ -26,6 +26,17 @@ class Standard extends AbstractPayment
             $order = $this->getLastOrder();
             $url = $order->getPayment()->getAdditionalInformation('payment_url');
             $order->getPayment()->unsAdditionalInformation('payment_url');
+            $isPaid = (bool)$order->getPayment()->getAdditionalInformation('is_paid', false);
+            $order->getPayment()->unsAdditionalInformation('is_paid');
+
+            if ($isPaid) {
+                $response->setData([
+                    'is_paid' => true,
+                    'error' => false,
+                ]);
+
+                return $response;
+            }
 
             if (empty($url)) {
                 throw new \Exception('Could not retrieve payment url');
