@@ -9,6 +9,7 @@ define(
         return {
             redirectUrl: 'payplug_payments/payment/standard',
             cancelUrl: 'payplug_payments/payment/cancel',
+            returnUrl: 'payplug_payments/payment/paymentReturn',
 
             initialize: function(context) {
                 var closeIframe = Payplug._closeIframe;
@@ -24,33 +25,31 @@ define(
             /**
              * Provide redirect to page
              */
-            execute: function () {
+            execute: function (isOneClick = false) {
                 this.initialize(this);
-                var paymentUrl = this.getPayplugPaymentUrl();
-                if (paymentUrl !== false) {
-                    Payplug.showPayment(paymentUrl);
-                } else {
-                    this.cancelPayplugPayment();
-                }
-            },
-            getPayplugPaymentUrl: function() {
-                var paymentUrl = false;
+                let _this = this;
+
                 jQuery.ajax({
                     url: url.build(this.redirectUrl) + '?should_redirect=0',
                     type: "GET",
                     dataType: 'json',
-                    async: false,
                     success: function(response) {
                         if (response.error === true) {
                             alert(response.message);
                             window.location.replace(response.url);
                         } else {
-                            paymentUrl = response.url;
+                            if (typeof response.is_paid !== 'undefined' && response.is_paid === true) {
+                                window.location.replace(url.build(_this.returnUrl));
+                            } else {
+                                if (typeof response.url !== 'undefined' && response.url !== false) {
+                                    Payplug.showPayment(response.url, isOneClick);
+                                } else {
+                                    _this.cancelPayplugPayment();
+                                }
+                            }
                         }
                     }
                 });
-
-                return paymentUrl;
             },
             cancelPayplugPayment: function() {
                 window.location.replace(url.build(this.cancelUrl));
