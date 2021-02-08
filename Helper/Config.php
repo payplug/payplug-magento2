@@ -8,7 +8,6 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
-use Magento\Framework\Module\ModuleListInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payplug;
 
@@ -21,6 +20,8 @@ class Config extends AbstractHelper
     const PAYMENT_PAGE_REDIRECT = 'redirect';
     const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
+    const MODULE_VERSION = '1.14.0';
+
     /**
      * @var WriterInterface
      */
@@ -30,11 +31,6 @@ class Config extends AbstractHelper
      * @var System
      */
     private $systemConfigType;
-
-    /**
-     * @var ModuleListInterface
-     */
-    private $moduleList;
 
     /**
      * @var ProductMetadataInterface
@@ -55,20 +51,17 @@ class Config extends AbstractHelper
      * @param Context                  $context
      * @param WriterInterface          $configWriter
      * @param System                   $systemConfigType
-     * @param ModuleListInterface      $moduleList
      * @param ProductMetadataInterface $productMetadata
      */
     public function __construct(
         Context $context,
         WriterInterface $configWriter,
         System $systemConfigType,
-        ModuleListInterface $moduleList,
         ProductMetadataInterface $productMetadata
     ) {
         parent::__construct($context);
         $this->configWriter = $configWriter;
         $this->systemConfigType = $systemConfigType;
-        $this->moduleList = $moduleList;
         $this->productMetadata = $productMetadata;
     }
 
@@ -176,7 +169,7 @@ class Config extends AbstractHelper
      */
     public function getModuleVersion()
     {
-        return $this->moduleList->getOne('Payplug_Payments')['setup_version'];
+        return self::MODULE_VERSION;
     }
 
     /**
