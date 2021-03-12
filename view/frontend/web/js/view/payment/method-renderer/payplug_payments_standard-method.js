@@ -47,6 +47,14 @@ define([
         getCards: function() {
             return this.cards;
         },
+        canDisplayCardsInTitle: function() {
+            return window.checkoutConfig.payment.payplug_payments_standard.display_cards_in_container === false &&
+                this.canDisplayCards();
+        },
+        canDisplayCardsInContainer: function() {
+            return window.checkoutConfig.payment.payplug_payments_standard.display_cards_in_container === true &&
+                this.canDisplayCards();
+        },
         canDisplayCards: function() {
             return window.checkoutConfig.payment.payplug_payments_standard.is_one_click && this.cards.length > 0;
         },

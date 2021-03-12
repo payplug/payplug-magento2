@@ -98,6 +98,7 @@ class ConfigProvider implements ConfigProviderInterface
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
                     'should_refresh_cards' => $this->shouldRefreshCards(),
+                    'display_cards_in_container' => $this->shouldDisplayCardsInContainer(),
                 ],
             ],
         ] : [];
@@ -180,5 +181,15 @@ class ConfigProvider implements ConfigProviderInterface
         } catch (LocalizedException $e) {
             return null;
         }
+    }
+
+    /**
+     * @return bool
+     */
+    private function shouldDisplayCardsInContainer()
+    {
+        // Fix display of cards with Onestepcheckout module
+        // Display cards in payment method container instead of alongside payment title
+        return $this->request->getModuleName() === 'onestepcheckout';
     }
 }
