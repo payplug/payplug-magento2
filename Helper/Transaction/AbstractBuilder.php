@@ -8,6 +8,7 @@ use Magento\Payment\Gateway\Data\AddressAdapterInterface;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Model\Order\Address;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
@@ -154,15 +155,29 @@ abstract class AbstractBuilder extends AbstractHelper
     }
 
     /**
-     * @param AddressAdapterInterface $address
-     * @param string                  $language
-     * @param array                   $allowedCountries
-     * @param string                  $defaultCountry
+     * @param object $address
+     * @param string $language
+     * @param array  $allowedCountries
+     * @param string $defaultCountry
      *
      * @return array
      */
-    private function buildAddressData(AddressAdapterInterface $address, $language, $allowedCountries, $defaultCountry)
+    private function buildAddressData($address, $language, $allowedCountries, $defaultCountry)
     {
+        $street1 = null;
+        $street2 = null;
+        if ($address instanceof AddressAdapterInterface) {
+            $street1 = $address->getStreetLine1();
+            $street2 = $address->getStreetLine2() ?: null;
+        } elseif ($address instanceof Address) {
+            $street1 = $address->getStreetLine(1);
+            $street2 = $address->getStreetLine(2) ?: null;
+        } else {
+            $this->logger->error('Unhandled address type when building payplug transaction', [
+                'class' => get_class($address),
+            ]);
+        }
+
         $country = $address->getCountryId();
         if (!in_array($country, $allowedCountries)) {
             $country = $defaultCountry;
@@ -192,8 +207,8 @@ abstract class AbstractBuilder extends AbstractHelper
             'last_name' => $address->getLastname(),
             'mobile_phone_number' => $mobile,
             'landline_phone_number' => $landline,
-            'address1' => $address->getStreetLine1(),
-            'address2' => $address->getStreetLine2() ?: null,
+            'address1' => $street1,
+            'address2' => $street2,
             'postcode' => $address->getPostcode(),
             'city' => $address->getCity(),
             'state' => $address->getRegionCode() ?: null,
