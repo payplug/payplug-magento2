@@ -56,7 +56,7 @@ class Standard extends AbstractPayment
             $this->logger->error($e->__toString());
             if ($shouldRedirect) {
                 $this->messageManager->addErrorMessage(
-                    __('An error occured while processing your payment. Please try again.')
+                    __('An error occurred while processing your payment. Please try again.')
                 );
                 return $this->resultRedirectFactory->create()->setPath(
                     'payplug_payments/payment/cancel',
@@ -85,7 +85,7 @@ class Standard extends AbstractPayment
 
             if ($shouldRedirect) {
                 $this->messageManager->addErrorMessage(
-                    __('An error occured while processing your payment. Please try again.')
+                    __('An error occurred while processing your payment. Please try again.')
                 );
                 return $this->resultRedirectFactory->create()->setPath(
                     'payplug_payments/payment/cancel',
