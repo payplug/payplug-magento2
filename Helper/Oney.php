@@ -121,6 +121,11 @@ class Oney extends AbstractHelper
             return false;
         }
 
+        $canUseOney = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'can_use_oney', ScopeInterface::SCOPE_STORE, $storeId);
+        if (!$canUseOney) {
+            return false;
+        }
+
         $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
         if ($this->getOneyAmounts($storeId, $currency) === false) {
             return false;

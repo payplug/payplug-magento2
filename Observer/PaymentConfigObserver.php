@@ -170,11 +170,11 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         if ($this->payplugConfigConnected) {
-            $apiKey = $this->testApiKey;
+            $apiKey = $this->testApiKey ?? $this->getConfig('test_api_key');
         }
         // Get live permissions only if account is verified and environment is switched to live
         if ($this->payplugConfigVerified && $isLive) {
-            $apiKey = $this->liveApiKey;
+            $apiKey = $this->liveApiKey ?? $this->getConfig('live_api_key');
         }
         if (!empty($apiKey)) {
             $this->getAccountPermissions($apiKey);
@@ -600,6 +600,7 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
         $this->saveConfig('company_id', $id);
+        $this->saveConfig('can_use_oney', (int)$jsonAnswer['permissions']['can_use_oney']);
 
         return $jsonAnswer['permissions'];
     }

@@ -45,6 +45,7 @@
                 <field id="oney_countries"/>
                 <field id="oney_min_amounts"/>
                 <field id="oney_max_amounts"/>
+                <field id="can_use_oney"/>
             </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
