@@ -91,7 +91,8 @@ define([
                         'amount': quote.totals()['base_grand_total'],
                         'billingCountry': quote.billingAddress() ? quote.billingAddress().countryId : null,
                         'shippingCountry': quote.shippingAddress() ? quote.shippingAddress().countryId : null,
-                        'isVirtual': quote.isVirtual() ? 1 : 0
+                        'isVirtual': quote.isVirtual() ? 1 : 0,
+                        'paymentMethod': self.getCode()
                     }
                 }).done(function (response) {
                     if (response.success && response.data.success) {
@@ -194,32 +195,34 @@ define([
                 option.append(title);
 
                 // Option detail
-                var detail = $('<div/>').addClass('oneyOption_prices');
-                var list = $('<ul/>').addClass('oneyOption_list');
-                var firstDeposit = $('<li/>')
-                    .append($('<span/>').html($.mage.__('Total order amount')))
-                    .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.first_deposit)))
-                ;
-                list.append(firstDeposit);
-                var daysForPayment = 30;
-                var scheduleLabel = $.mage.__('In %1 days');
-                for (var j = 0; j < optionData.schedules.length; j++) {
-                    var scheduleData = optionData.schedules[j];
-                    var schedule = $('<li/>')
-                        .append($('<span/>').html(scheduleLabel.replace('%1', daysForPayment)))
-                        .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(scheduleData.amount)))
+                if (typeof optionData.schedules !== 'undefined' && optionData.schedules.length > 0) {
+                    var detail = $('<div/>').addClass('oneyOption_prices');
+                    var list = $('<ul/>').addClass('oneyOption_list');
+                    var firstDeposit = $('<li/>')
+                        .append($('<span/>').html($.mage.__('Total order amount')))
+                        .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.first_deposit)))
                     ;
-                    list.append(schedule);
-                    daysForPayment += 30;
-                }
-                var totalAmount = $('<li/>')
-                    .append($('<span/>').html($.mage.__('Total cost')))
-                    .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.total_amount)))
-                ;
-                list.append(totalAmount);
+                    list.append(firstDeposit);
+                    var daysForPayment = 30;
+                    var scheduleLabel = $.mage.__('In %1 days');
+                    for (var j = 0; j < optionData.schedules.length; j++) {
+                        var scheduleData = optionData.schedules[j];
+                        var schedule = $('<li/>')
+                            .append($('<span/>').html(scheduleLabel.replace('%1', daysForPayment)))
+                            .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(scheduleData.amount)))
+                        ;
+                        list.append(schedule);
+                        daysForPayment += 30;
+                    }
+                    var totalAmount = $('<li/>')
+                        .append($('<span/>').html($.mage.__('Total cost')))
+                        .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.total_amount)))
+                    ;
+                    list.append(totalAmount);
 
-                detail.append(list);
-                option.append(detail);
+                    detail.append(list);
+                    option.append(detail);
+                }
 
                 // Option radio button
                 var radio = $('<div/>').addClass('oneyOption_radio').append(
