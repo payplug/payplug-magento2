@@ -578,9 +578,6 @@ class PaymentConfigObserver implements ObserverInterface
                     is_array($jsonAnswer['configuration']['oney']['allowed_countries'])
                 ) {
                     $oneyCountries = $jsonAnswer['configuration']['oney']['allowed_countries'];
-                    if (empty($oneyCountries) || !is_array($oneyCountries)) {
-                        $oneyCountries = ['FR', 'MQ', 'YT', 'RE', 'GF', 'GP', 'IT'];
-                    }
                     $configuration['oney_countries'] = json_encode($oneyCountries);
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['min_amounts'])) {
