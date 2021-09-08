@@ -63,6 +63,7 @@ class Simulation extends \Magento\Framework\App\Action\Action
             $params = $this->getRequest()->getParams();
             $productPrice = null;
             $product = $this->getProduct($params);
+            $qty = null;
             if ($product !== null) {
                 $qty = $params['qty'] ?? 1;
                 $qty = (int)$qty;
@@ -79,6 +80,7 @@ class Simulation extends \Magento\Framework\App\Action\Action
             $block = $this->layout->createBlock(\Payplug\Payments\Block\Oney\Simulation::class)
                 ->setTemplate($template)
                 ->setAmount($productPrice)
+                ->setQty($qty)
             ;
 
             $result->setData([
