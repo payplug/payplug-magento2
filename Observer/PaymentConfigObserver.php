@@ -294,16 +294,6 @@ class PaymentConfigObserver implements ObserverInterface
         $isOneyActive = false;
         if (!empty($fields['active']['value'])) {
             $isOneyActive = true;
-            if (empty($fields['cgv']['value'])) {
-                $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
-                $this->messageManager->addErrorMessage(
-                    __('Please confirm that Oney\'s legal notice have been added to your general terms and conditions.')
-                );
-                $this->request->setPostValue('groups', $groups);
-
-                return;
-            }
-
             $environmentMode = $this->getConfig('environmentmode');
 
             $apiKey = $this->getConfig('test_api_key');
