@@ -22,9 +22,11 @@ use Payplug\Payments\Model\OneySimulation\Schedule;
 
 class Oney extends AbstractHelper
 {
-    const ALLOWED_OPERATIONS = [
-        'x3_with_fees' => '3x',
-        'x4_with_fees' => '4x',
+    const ALLOWED_OPERATIONS_BY_PAYMENT = [
+        \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE => [
+            'x3_with_fees' => '3x',
+            'x4_with_fees' => '4x',
+        ],
     ];
 
     const MAX_ITEMS = 1000;
@@ -262,10 +264,11 @@ class Oney extends AbstractHelper
      * @param float  $amount
      * @param string $billingCountry
      * @param string $shippingCountry
+     * @param string $paymentMethod
      *
      * @return Result
      */
-    public function getOneySimulationCheckout($amount, $billingCountry, $shippingCountry): Result
+    public function getOneySimulationCheckout($amount, $billingCountry, $shippingCountry, $paymentMethod = null): Result
     {
         try {
             $this->oneyCheckoutValidation($billingCountry, $shippingCountry, $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems()));
@@ -277,7 +280,7 @@ class Oney extends AbstractHelper
             return $simulationResult;
         }
 
-        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null);
+        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null, false, $paymentMethod);
     }
 
     /**
@@ -329,19 +332,20 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * @param string $paymentMethod
      * @param string $oneyOption
      *
      * @return string
      *
      * @throws \Exception
      */
-    public function validateOneyOption($oneyOption)
+    public function validateOneyOption($paymentMethod, $oneyOption)
     {
         if (empty($oneyOption)) {
             throw new \Exception(__('Please select a payment option for Oney.'));
         }
 
-        $oneyOptionKey = array_search($oneyOption, self::ALLOWED_OPERATIONS);
+        $oneyOptionKey = array_search($oneyOption, self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? []);
         if ($oneyOptionKey === false) {
             throw new \Exception(__('Please select a valid payment option for Oney.'));
         }
@@ -380,10 +384,11 @@ class Oney extends AbstractHelper
      * @param float|null  $amount
      * @param string|null $countryCode
      * @param bool        $validationOnly
+     * @param string      $paymentMethod
      *
      * @return Result
      */
-    public function getOneySimulation($amount = null, $countryCode = null, $validationOnly = false): Result
+    public function getOneySimulation($amount = null, $countryCode = null, $validationOnly = false, $paymentMethod = null): Result
     {
         if ($amount === null) {
             $amount = $this->checkoutSession->getQuote()->getGrandTotal();
@@ -391,6 +396,7 @@ class Oney extends AbstractHelper
         if ($countryCode === null) {
             $countryCode = $this->getDefaultCountry();
         }
+        $paymentMethod = $paymentMethod ?? $this->getOneyMethod();
         try {
             $this->oneyValidation($amount, $countryCode);
 
@@ -400,16 +406,12 @@ class Oney extends AbstractHelper
 
                 return $simulationResult;
             } else {
-                return $this->getSimulation($amount, $countryCode);
+                return $this->getSimulation($amount, $countryCode, $paymentMethod);
             }
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
 
-            $simulationResult = new Result();
-            $simulationResult->setSuccess(false);
-            $simulationResult->setMessage(__('An error occured while getting Oney simulation. Please try again.'));
-
-            return $simulationResult;
+            return $this->getMockSimulationResult($paymentMethod);
         } catch (\Exception $e) {
             $simulationResult = new Result();
             $simulationResult->setSuccess(false);
@@ -420,21 +422,46 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * @param float  $amount
-     * @param string $countryCode
+     * @param $paymentMethod
      *
      * @return Result
      */
-    private function getSimulation($amount, $countryCode): Result
+    private function getMockSimulationResult($paymentMethod)
+    {
+        $simulationResult = new Result();
+        $simulationResult->setSuccess(true);
+        $simulationResult->setMessage(__('Your payment schedule simulation is temporarily unavailable. You will find this information at the payment stage.'));
+
+        $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
+
+        foreach ($operations as $type) {
+            $option = new Option();
+            $option->setType($type);
+            $simulationResult->addOption($option);
+        }
+
+        return $simulationResult;
+    }
+
+    /**
+     * @param float  $amount
+     * @param string $countryCode
+     * @param string $paymentMethod
+     *
+     * @return Result
+     */
+    private function getSimulation($amount, $countryCode, $paymentMethod): Result
     {
         $storeId = $this->storeManager->getStore()->getId();
         $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
         $this->payplugConfig->setPayplugApiKey($storeId, $isSandbox);
 
+        $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
+
         $data = [
             'amount' => (int) round($amount * 100),
             'country' => $countryCode,
-            'operations' => array_keys(self::ALLOWED_OPERATIONS),
+            'operations' => array_keys($operations),
         ];
         $simulations = OneySimulation::getSimulations($data);
 
@@ -442,7 +469,7 @@ class Oney extends AbstractHelper
         $result->setSuccess(true);
         $result->setAmount($amount);
 
-        foreach (self::ALLOWED_OPERATIONS as $operation => $type) {
+        foreach ($operations as $operation => $type) {
             if (!isset($simulations[$operation])) {
                 $this->logger->warning(sprintf(
                     "Operation %s is not available. Amount was %f, country was %s",
@@ -473,5 +500,13 @@ class Oney extends AbstractHelper
         }
 
         return $result;
+    }
+
+    /**
+     * @return string
+     */
+    public function getOneyMethod()
+    {
+        return \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE;
     }
 }
