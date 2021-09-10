@@ -254,6 +254,15 @@ define([
             }
 
             return parentData;
+        },
+        getPrepaidMentionClass: function() {
+            let mentionClass = 'prepaid-card-mention';
+
+            if (/^it/.test(navigator.language)) {
+                mentionClass += ' visible';
+            }
+
+            return mentionClass;
         }
     });
 });
