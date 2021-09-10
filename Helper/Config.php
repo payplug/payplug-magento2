@@ -279,7 +279,6 @@ class Config extends AbstractHelper
             'payment/payplug_payments_ondemand/sort_order',
             // Payplug payment Oney configuration
             'payment/payplug_payments_oney/active',
-            'payment/payplug_payments_oney/cgv',
             'payment/payplug_payments_oney/title',
             'payment/payplug_payments_oney/processing_order_status',
             'payment/payplug_payments_oney/canceled_order_status',
