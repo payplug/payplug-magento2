@@ -73,8 +73,9 @@
       align-items: center;
       text-transform: uppercase;
       color: #7ebd00;
-      border: 2px solid #81bc00 !important;
-      width: 100%;
+      border: none !important;
+      box-shadow: none !important;
+      width: auto;
       justify-content: center;
       -webkit-transition: color 0.4s;
       -moz-transition: color 0.4s;
@@ -84,14 +85,14 @@
 
       &:hover {
         color: #7ebd00;
-        border: 2px solid #81bc00 !important;
+        border: none;
         background: none !important;
       }
 
       &:focus, &:active {
         outline: 0;
         color: #7ebd00;
-        border: 2px solid #81bc00 !important;
+        border: none;
         background: none !important;
         box-shadow: none;
       }
@@ -103,11 +104,9 @@
 
       &-disabled {
         color: #b2b2b2;
-        border-color: #b2b2b2 !important;
 
         &:hover, &:focus, &:active {
           color: #b2b2b2;
-          border-color: #b2b2b2 !important;
         }
       }
 
@@ -179,7 +178,7 @@
   &Popin {
     display: none;
     position: absolute;
-    right: 100%;
+    right: calc(100% + 10px);
     top: 0;
     background: #fff;
     width: 350px;
