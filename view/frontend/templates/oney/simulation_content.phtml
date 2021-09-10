@@ -2,12 +2,13 @@
 /** @var \Payplug\Payments\Block\Oney\Simulation $block */
 $hasError = false;
 $oneySimulation = $block->getOneySimulation();
-if (!$oneySimulation->getSuccess()) {
+$message = $oneySimulation->getMessage();
+if (!$oneySimulation->getSuccess() || !empty($message)) {
     $hasError = true;
 }
 ?>
 <?php if ($hasError) : ?>
-    <p class="oneyPopin_error"><?php echo $oneySimulation->getMessage(); ?></p>
+    <p class="oneyPopin_error"><?php echo $message; ?></p>
 <?php else : ?>
     <button class="oneyPopin_close"><?php echo __('Close'); ?></button>
     <span class="oneyPopin_title">

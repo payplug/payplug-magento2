@@ -89,7 +89,7 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
             } catch (PayplugException $e) {
                 $this->payplugLogger->error($e->__toString());
                 $this->messageManager->addErrorMessage(
-                    sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage())
+                    sprintf(__('An error occurred while updating the payment: %s.'), $e->getMessage())
                 );
             } catch (OrderAlreadyProcessingException $e) {
                 // Order is already being processed (by payment return controller or IPN)
@@ -98,7 +98,7 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
             } catch (\Exception $e) {
                 $this->payplugLogger->error($e->getMessage());
                 $this->messageManager->addErrorMessage(
-                    sprintf(__('An error occured while updating the payment: %s.'), $e->getMessage())
+                    sprintf(__('An error occurred while updating the payment: %s.'), $e->getMessage())
                 );
             }
 

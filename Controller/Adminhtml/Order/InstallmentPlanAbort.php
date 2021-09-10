@@ -93,12 +93,12 @@ class InstallmentPlanAbort extends \Magento\Sales\Controller\Adminhtml\Order
             } catch (PayplugException $e) {
                 $this->payplugLogger->error($e->__toString());
                 $this->messageManager->addErrorMessage(
-                    sprintf(__('An error occured while aborting the installment plan: %s.'), $e->getMessage())
+                    sprintf(__('An error occurred while aborting the installment plan: %s.'), $e->getMessage())
                 );
             } catch (\Exception $e) {
                 $this->payplugLogger->error($e->getMessage());
                 $this->messageManager->addErrorMessage(
-                    sprintf(__('An error occured while aborting the installment plan: %s.'), $e->getMessage())
+                    sprintf(__('An error occurred while aborting the installment plan: %s.'), $e->getMessage())
                 );
             }
 

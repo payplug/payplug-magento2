@@ -170,11 +170,11 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         if ($this->payplugConfigConnected) {
-            $apiKey = $this->testApiKey;
+            $apiKey = $this->testApiKey ?? $this->getConfig('test_api_key');
         }
         // Get live permissions only if account is verified and environment is switched to live
         if ($this->payplugConfigVerified && $isLive) {
-            $apiKey = $this->liveApiKey;
+            $apiKey = $this->liveApiKey ?? $this->getConfig('live_api_key');
         }
         if (!empty($apiKey)) {
             $this->getAccountPermissions($apiKey);
@@ -294,16 +294,6 @@ class PaymentConfigObserver implements ObserverInterface
         $isOneyActive = false;
         if (!empty($fields['active']['value'])) {
             $isOneyActive = true;
-            if (empty($fields['cgv']['value'])) {
-                $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
-                $this->messageManager->addErrorMessage(
-                    __('Please confirm that Oney\'s legal notice have been added to your general terms and conditions.')
-                );
-                $this->request->setPostValue('groups', $groups);
-
-                return;
-            }
-
             $environmentMode = $this->getConfig('environmentmode');
 
             $apiKey = $this->getConfig('test_api_key');
@@ -578,9 +568,6 @@ class PaymentConfigObserver implements ObserverInterface
                     is_array($jsonAnswer['configuration']['oney']['allowed_countries'])
                 ) {
                     $oneyCountries = $jsonAnswer['configuration']['oney']['allowed_countries'];
-                    if (empty($oneyCountries) || !is_array($oneyCountries)) {
-                        $oneyCountries = ['FR', 'MQ', 'YT', 'RE', 'GF', 'GP', 'IT'];
-                    }
                     $configuration['oney_countries'] = json_encode($oneyCountries);
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['min_amounts'])) {
@@ -600,6 +587,7 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
         $this->saveConfig('company_id', $id);
+        $this->saveConfig('can_use_oney', (int)$jsonAnswer['permissions']['can_use_oney']);
 
         return $jsonAnswer['permissions'];
     }

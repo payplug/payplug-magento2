@@ -3,6 +3,7 @@
 namespace Payplug\Payments\Block;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Helper\Oney;
@@ -35,8 +36,8 @@ class OneyInfo extends Info
         $paymentDetails['Status'] = $status;
 
         $oneyOption = str_replace('oney_', '', $payment->payment_method['type']);
-        if (isset(Oney::ALLOWED_OPERATIONS[$oneyOption])) {
-            $paymentDetails['Oney option'] = __('Payment in %1', Oney::ALLOWED_OPERATIONS[$oneyOption]);
+        if (isset(Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$order->getPayment()->getMethod()][$oneyOption])) {
+            $paymentDetails['Oney option'] = __('Payment in %1', Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$order->getPayment()->getMethod()][$oneyOption]);
         }
 
         return $paymentDetails;
