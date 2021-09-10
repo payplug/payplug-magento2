@@ -270,8 +270,9 @@ class Oney extends AbstractHelper
      */
     public function getOneySimulationCheckout($amount, $billingCountry, $shippingCountry, $paymentMethod = null): Result
     {
+        $qty = $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems());
         try {
-            $this->oneyCheckoutValidation($billingCountry, $shippingCountry, $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems()));
+            $this->oneyCheckoutValidation($billingCountry, $shippingCountry, $qty);
         } catch (\Exception $e) {
             $simulationResult = new Result();
             $simulationResult->setSuccess(false);
@@ -280,7 +281,7 @@ class Oney extends AbstractHelper
             return $simulationResult;
         }
 
-        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null, false, $paymentMethod);
+        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null, $qty, false, $paymentMethod);
     }
 
     /**
@@ -383,12 +384,13 @@ class Oney extends AbstractHelper
     /**
      * @param float|null  $amount
      * @param string|null $countryCode
+     * @param int|null    $qty
      * @param bool        $validationOnly
      * @param string      $paymentMethod
      *
      * @return Result
      */
-    public function getOneySimulation($amount = null, $countryCode = null, $validationOnly = false, $paymentMethod = null): Result
+    public function getOneySimulation($amount = null, $countryCode = null, $qty = null, $validationOnly = false, $paymentMethod = null): Result
     {
         if ($amount === null) {
             $amount = $this->checkoutSession->getQuote()->getGrandTotal();
@@ -396,9 +398,13 @@ class Oney extends AbstractHelper
         if ($countryCode === null) {
             $countryCode = $this->getDefaultCountry();
         }
+        if ($qty === null) {
+            $qty = $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems());
+        }
         $paymentMethod = $paymentMethod ?? $this->getOneyMethod();
         try {
             $this->oneyValidation($amount, $countryCode);
+            $this->validateItemsCount($qty);
 
             if ($validationOnly) {
                 $simulationResult = new Result();
