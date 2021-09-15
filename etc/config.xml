@@ -108,6 +108,11 @@
                 <connected>0</connected>
                 <verified>0</verified>
                 <invoice_on_payment>0</invoice_on_payment>
+                <use_live_mode>1</use_live_mode>
+                <can_save_cards>1</can_save_cards>
+                <can_create_installment_plan>1</can_create_installment_plan>
+                <can_create_deferred_payment>1</can_create_deferred_payment>
+                <can_use_oney>1</can_use_oney>
             </general>
         </payplug_payments>
     </default>

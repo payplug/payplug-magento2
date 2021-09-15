@@ -6,11 +6,4 @@
     <type name="Magento\Sales\Block\Adminhtml\Order\Invoice\View">
         <plugin name="add_update_payplug_payment_button_sales_invoice_view" type="Payplug\Payments\Plugin\Adminhtml\Widget\SalesInvoiceViewContext" sortOrder="1"/>
     </type>
-    <type name="Magento\Framework\Notification\MessageList">
-        <arguments>
-            <argument name="messages" xsi:type="array">
-                <item name="payplug_payments_config_notification" xsi:type="string">Payplug\Payments\Model\System\Message\PayplugConfigMessage</item>
-            </argument>
-        </arguments>
-    </type>
 </config>

@@ -106,6 +106,19 @@ class StandardAvailabilityObserver implements ObserverInterface
             return;
         }
 
+        if ($adapter->getCode() == InstallmentPlan::METHOD_CODE) {
+            $canCreateInstallmentPlan = $this->payplugConfig->getConfigValue(
+                'can_create_installment_plan',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            if (!$canCreateInstallmentPlan) {
+                $checkResult->setData('is_available', false);
+
+                return;
+            }
+        }
+
         $amount = (int) round($quote->getGrandTotal() * 100);
 
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {

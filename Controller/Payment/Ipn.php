@@ -141,11 +141,7 @@ class Ipn extends AbstractPayment
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
             $environmentMode = $this->getConfigValue('environmentmode', $ipnStoreId);
             $embeddedMode = $this->getConfigValue('payment_page', $ipnStoreId);
-            $oneClick = $this->getConfigValue(
-                'one_click',
-                $ipnStoreId,
-                'payment/payplug_payments_standard/'
-            );
+            $oneClick = $this->payplugConfig->isOneClick($ipnStoreId);
 
             $data = [
                 'is_module_active' => 1,
