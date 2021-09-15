@@ -44,11 +44,6 @@ class Formjs extends \Magento\Framework\View\Element\Template
      */
     public function isEmbedded()
     {
-        return $this->helper->isEmbedded() || $this->helper->getConfigValue(
-            'one_click',
-            ScopeInterface::SCOPE_STORE,
-            null,
-            'payment/payplug_payments_standard/'
-        );
+        return $this->helper->isEmbedded() || $this->helper->isOneClick();
     }
 }
