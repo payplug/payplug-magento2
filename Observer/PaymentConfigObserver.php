@@ -587,7 +587,17 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
         $this->saveConfig('company_id', $id);
-        $this->saveConfig('can_use_oney', (int)$jsonAnswer['permissions']['can_use_oney']);
+
+        $permissions = [
+            'use_live_mode',
+            'can_save_cards',
+            'can_create_installment_plan',
+            'can_create_deferred_payment',
+            'can_use_oney',
+        ];
+        foreach ($permissions as $permission) {
+            $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);
+        }
 
         return $jsonAnswer['permissions'];
     }
