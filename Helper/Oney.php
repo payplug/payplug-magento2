@@ -150,7 +150,7 @@ class Oney extends AbstractHelper
 
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
             throw new \Exception(__(
-                'The total amount of your order must be between %1 and %2 to pay with Oney.',
+                'To pay with Oney, the total amount of your cart must be between %1 and %2.',
                 $this->pricingHelper->currency($amountsByCurrency['min_amount'] / 100, true, false),
                 $this->pricingHelper->currency($amountsByCurrency['max_amount'] / 100, true, false)
             ));
@@ -328,7 +328,7 @@ class Oney extends AbstractHelper
     private function validateItemsCount($countItems)
     {
         if ($countItems >= self::MAX_ITEMS) {
-            throw new \Exception(__('You must have less than %1 products in your cart in order to pay with Oney.', self::MAX_ITEMS));
+            throw new \Exception(__('To pay with Oney, your cart must contain less than %1 items.', self::MAX_ITEMS));
         }
     }
 
