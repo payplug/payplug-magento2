@@ -24,6 +24,7 @@ use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Model\Order\Payment;
 use Payplug\Payments\Model\Order\Processing;
@@ -531,7 +532,8 @@ class Data extends AbstractHelper
         return $code == Standard::METHOD_CODE ||
             $code == \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE ||
             $code == Ondemand::METHOD_CODE ||
-            $code == Oney::METHOD_CODE;
+            $code == Oney::METHOD_CODE ||
+            $code == OneyWithoutFees::METHOD_CODE;
     }
 
     /**

@@ -6,6 +6,7 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
 
@@ -94,7 +95,9 @@ class PaymentConfigObserver implements ObserverInterface
         if ($this->canProcessSection($postParams, 'payplug_payments_ondemand')) {
             $this->processOndemandConfig($postParams['groups']);
         }
-        if ($this->canProcessSection($postParams, 'payplug_payments_oney')) {
+        if ($this->canProcessSection($postParams, 'payplug_payments_oney') ||
+            $this->canProcessSection($postParams, 'payplug_payments_oney_without_fees')
+        ) {
             $this->processOneyConfig($postParams['groups']);
         }
     }
@@ -286,37 +289,55 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processOneyConfig($groups)
     {
-        $fields = $groups['payplug_payments_oney']['fields'];
+        $oneyGroups = [
+            'payplug_payments_oney' => [],
+            'payplug_payments_oney_without_fees' => [],
+        ];
 
-        $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_oney');
+        $bothActive = true;
+        foreach (array_keys($oneyGroups) as $oney) {
+            $fields = $groups[$oney]['fields'];
 
-        $isOneyActive = false;
-        if (!empty($fields['active']['value'])) {
-            $isOneyActive = true;
-            $environmentMode = $this->getConfig('environmentmode');
+            $this->helper->initScopeData();
+            $groups = $this->validatePayplugConnection($fields, $groups, $oney);
 
-            $apiKey = $this->getConfig('test_api_key');
-            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                $apiKey = $this->getConfig('live_api_key');
-            }
+            $oneyGroups[$oney]['current'] = $this->getConfig('active', sprintf('payment/%s/', $oney));
 
-            if (empty($apiKey)) {
-                $this->messageManager->addErrorMessage(
-                    __('We are not able to retrieve your account information. ' .
-                        'Please go to section Sales > Payplug Payments to log in again.')
-                );
-            } else {
-                $permissions = $this->getAccountPermissions($apiKey);
+            $isActive = false;
+            if (!empty($fields['active']['value'])) {
+                $environmentMode = $this->getConfig('environmentmode');
 
-                if (empty($permissions['can_use_oney'])) {
-                    $groups['payplug_payments_oney']['fields']['active']['value'] = 0;
-                    if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('test_api_key');
+                if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                    $apiKey = $this->getConfig('live_api_key');
+                }
+
+                if (empty($apiKey)) {
+                    $this->messageManager->addErrorMessage(
+                        __('We are not able to retrieve your account information. ' .
+                            'Please go to section Sales > Payplug Payments to log in again.')
+                    );
+                } else {
+                    $permissions = $this->getAccountPermissions($apiKey);
+
+                    if (empty($permissions['can_use_oney'])) {
+                        $groups[$oney]['fields']['active']['value'] = 0;
                         $this->messageManager->addErrorMessage(
-                            __('Your account is not configured for Oney. Please contact us.')
+                            __('You don\'t have access to this feature yet. To activate the Oney guaranteed split payment, go to your PayPlug portal: %1.', 'https://portal-qa.payplug.com/#/configuration/oney')
                         );
+                    } else {
+                        $isActive = true;
                     }
                 }
+            }
+            $bothActive = $bothActive && $isActive;
+        }
+        if ($bothActive) {
+            $this->messageManager->addErrorMessage(
+                __('Please note: it is impossible to offer Oney and Oney with no fees simultaneously in your store. You can only activate one of the two.')
+            );
+            foreach ($oneyGroups as $oney => $data) {
+                $groups[$oney]['fields']['active']['value'] = $data['current'];
             }
         }
 
@@ -444,12 +465,13 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * @param string $field
+     * @param string $path
      *
      * @return mixed
      */
-    private function getConfig($field)
+    private function getConfig($field, $path = Config::CONFIG_PATH)
     {
-        return $this->helper->getConfigValue($field);
+        return $this->helper->getConfigValue($field, ScopeInterface::SCOPE_STORE, null, $path);
     }
 
     /**
