@@ -6,13 +6,18 @@ $message = $oneySimulation->getMessage();
 if (!$oneySimulation->getSuccess() || !empty($message)) {
     $hasError = true;
 }
+$isOneyWithoutFees = $oneySimulation->getMethod() === \Payplug\Payments\Gateway\Config\OneyWithoutFees::METHOD_CODE;
 ?>
 <?php if ($hasError) : ?>
     <p class="oneyPopin_error"><?php echo $message; ?></p>
 <?php else : ?>
     <button class="oneyPopin_close"><?php echo __('Close'); ?></button>
     <span class="oneyPopin_title">
-        <?php echo __('Pay %1by card%2', '<strong>', '</strong>'); ?>
+        <?php if ($isOneyWithoutFees) : ?>
+            <?php echo __('Pay %1without fees%2 %3by card%4', '<span class="underline">', '</span>', '<strong>', '</strong>'); ?>
+        <?php else : ?>
+            <?php echo __('Pay %1by card%2', '<strong>', '</strong>'); ?>
+        <?php endif; ?>
     </span>
     <ul class="oneyPopin_navigation">
         <li data-type="3x"><button type="button"><?php echo __('Payment in %1', '3x'); ?></button></li>
@@ -29,22 +34,33 @@ if (!$oneySimulation->getSuccess() || !empty($message)) {
                     <span><?php echo __('Contribution'); ?> :</span>
                     <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getFirstDeposit(), true, false); ?></b></span>
                 </li>
-                <li>
-                    <small>
-                        (<?php echo __('Financing cost'); ?> : <b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getCost(), true, false); ?></b>
-                        <?php echo __('TAEG'); ?> : <b><?php echo $option->getRate(); ?>%</b>)
-                    </small>
-                </li>
+                <?php if (!$isOneyWithoutFees) : ?>
+                    <li>
+                        <small>
+                            (<?php echo __('Financing cost'); ?> : <b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getCost(), true, false); ?></b>
+                            <?php echo __('TAEG'); ?> : <b><?php echo $option->getRate(); ?>%</b>)
+                        </small>
+                    </li>
+                <?php endif; ?>
                 <?php foreach ($option->getSchedules() as $i => $schedule) : ?>
                     <li>
                         <span><?php echo __('Installment %1', $i + 1); ?> :</span>
                         <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($schedule->getAmount(), true, false); ?></b></span>
                     </li>
                 <?php endforeach; ?>
-                <li>
-                    <span><b><?php echo __('Total cost'); ?> :</b></span>
-                    <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getTotalAmount(), true, false); ?></b></span>
-                </li>
+                <?php if (!$isOneyWithoutFees) : ?>
+                    <li>
+                        <span><b><?php echo __('Total cost'); ?> :</b></span>
+                        <span><b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($option->getTotalAmount(), true, false); ?></b></span>
+                    </li>
+                <?php else : ?>
+                    <li>
+                        <small>
+                            (<?php echo __('Financing cost'); ?> : <b><?php echo $this->helper('Magento\Framework\Pricing\Helper\Data')->currency(0, true, false); ?></b>
+                            <?php echo __('TAEG'); ?> : <b>0%</b>)
+                        </small>
+                    </li>
+                <?php endif; ?>
             </ul>
         </span>
     <?php endforeach; ?>
@@ -56,7 +72,10 @@ if (!$oneySimulation->getSuccess() || !empty($message)) {
         $minAmount = $oneyAmounts['min_amount'] / 100;
         $maxAmount = $oneyAmounts['max_amount'] / 100;
     }
-    $legalOney = "Financing offer with mandatory deposit reserved for private individual between %1 and %2. Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 www.orias.fr Correspondance : CS 60 006 - 59895 Lille Cedex - www.oney.fr";
+    $legalOney = 'Financing offer with mandatory deposit reserved for private individual between %1 and %2. Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 <a href="www.orias.fr">www.orias.fr</a> Correspondance : CS 60 006 - 59895 Lille Cedex - <a href="www.oney.fr">www.oney.fr</a>';
+    if ($isOneyWithoutFees) {
+        $legalOney = 'Offre de financement sans assurance avec apport obligatoire, réservée aux particuliers et valable pour tout achat de %1 à %2. Sous réserve d\'acceptation par Oney Bank. Vous disposez d\'un délai de 14 jours pour renoncer à votre crédit. Oney Bank - SA au capital de 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 <a href="www.orias.fr">www.orias.fr</a> Correspondance : CS 60 006 - 59895 Lille Cedex - <a href="www.oney.fr">www.oney.fr</a>';
+    }
     ?>
     <span class="oneyPopin_legal"><?php echo __($legalOney, $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($minAmount, true, false), $this->helper('Magento\Framework\Pricing\Helper\Data')->currency($maxAmount, true, false)); ?></span>
 <?php endif; ?>

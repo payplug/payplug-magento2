@@ -136,7 +136,12 @@ class Oney extends AbstractHelper
             return false;
         }
 
-        $isActive = $this->scopeConfig->getValue('payment/payplug_payments_oney/active', ScopeInterface::SCOPE_STORE, $storeId);
+        $oneyPaymentMethod = $this->getOneyMethod();
+        if ($oneyPaymentMethod === '') {
+            return false;
+        }
+
+        $isActive = $this->scopeConfig->getValue('payment/' . $oneyPaymentMethod . '/active', ScopeInterface::SCOPE_STORE, $storeId);
         if (!$isActive) {
             return false;
         }
@@ -427,6 +432,7 @@ class Oney extends AbstractHelper
             if ($validationOnly) {
                 $simulationResult = new Result();
                 $simulationResult->setSuccess(true);
+                $simulationResult->setMethod($paymentMethod);
 
                 return $simulationResult;
             } else {
@@ -440,6 +446,7 @@ class Oney extends AbstractHelper
             $simulationResult = new Result();
             $simulationResult->setSuccess(false);
             $simulationResult->setMessage($e->getMessage());
+            $simulationResult->setMethod($paymentMethod);
 
             return $simulationResult;
         }
@@ -455,6 +462,7 @@ class Oney extends AbstractHelper
         $simulationResult = new Result();
         $simulationResult->setSuccess(true);
         $simulationResult->setMessage(__('Your payment schedule simulation is temporarily unavailable. You will find this information at the payment stage.'));
+        $simulationResult->setMethod($paymentMethod);
 
         $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
 
@@ -492,6 +500,7 @@ class Oney extends AbstractHelper
         $result = new Result();
         $result->setSuccess(true);
         $result->setAmount($amount);
+        $result->setMethod($paymentMethod);
 
         foreach ($operations as $operation => $type) {
             if (!isset($simulations[$operation])) {
