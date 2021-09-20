@@ -20,7 +20,7 @@ class Config extends AbstractHelper
     const PAYMENT_PAGE_REDIRECT = 'redirect';
     const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
-    const MODULE_VERSION = '1.16.1';
+    const MODULE_VERSION = '1.17.0';
 
     /**
      * @var WriterInterface
@@ -165,6 +165,17 @@ class Config extends AbstractHelper
     }
 
     /**
+     * @param int|null $storeId
+     *
+     * @return bool
+     */
+    public function isOneClick($storeId = null)
+    {
+        return $this->getConfigValue('can_save_cards', ScopeInterface::SCOPE_STORE, $storeId) &&
+            $this->getConfigValue('one_click', ScopeInterface::SCOPE_STORE, $storeId, 'payment/payplug_payments_standard/');
+    }
+
+    /**
      * @return string
      */
     public function getModuleVersion()
@@ -247,6 +258,11 @@ class Config extends AbstractHelper
             'payplug_payments/general/oney_countries',
             'payplug_payments/general/oney_min_amounts',
             'payplug_payments/general/oney_max_amounts',
+            'payplug_payments/general/use_live_mode',
+            'payplug_payments/general/can_save_cards',
+            'payplug_payments/general/can_create_installment_plan',
+            'payplug_payments/general/can_create_deferred_payment',
+            'payplug_payments/general/can_use_oney',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
@@ -279,7 +295,6 @@ class Config extends AbstractHelper
             'payment/payplug_payments_ondemand/sort_order',
             // Payplug payment Oney configuration
             'payment/payplug_payments_oney/active',
-            'payment/payplug_payments_oney/cgv',
             'payment/payplug_payments_oney/title',
             'payment/payplug_payments_oney/processing_order_status',
             'payment/payplug_payments_oney/canceled_order_status',

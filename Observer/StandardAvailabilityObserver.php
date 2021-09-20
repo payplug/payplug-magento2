@@ -94,7 +94,29 @@ class StandardAvailabilityObserver implements ObserverInterface
         // Oney can be displayed (disabled) in checkout
         // Do not check amount to confirm validity
         if ($adapter->getCode() == Oney::METHOD_CODE) {
+            $canUseOney = $this->payplugConfig->getConfigValue(
+                'can_use_oney',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            if (!$canUseOney) {
+                $checkResult->setData('is_available', false);
+            }
+
             return;
+        }
+
+        if ($adapter->getCode() == InstallmentPlan::METHOD_CODE) {
+            $canCreateInstallmentPlan = $this->payplugConfig->getConfigValue(
+                'can_create_installment_plan',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            if (!$canCreateInstallmentPlan) {
+                $checkResult->setData('is_available', false);
+
+                return;
+            }
         }
 
         $amount = (int) round($quote->getGrandTotal() * 100);

@@ -119,15 +119,12 @@ class StandardBuilder extends AbstractBuilder
     /**
      * Check if PayPlug One-click payment is enabled
      *
+     * @param int $storeId
+     *
      * @return bool
      */
     private function isOneClick($storeId)
     {
-        return $this->payplugConfig->getConfigValue(
-            'one_click',
-            ScopeInterface::SCOPE_STORE,
-            $storeId,
-            'payment/payplug_payments_standard/'
-        );
+        return $this->payplugConfig->isOneClick($storeId);
     }
 }

@@ -14,6 +14,11 @@ class Simulation extends Template
     private $amount;
 
     /**
+     * @var int
+     */
+    private $qty;
+
+    /**
      * @var Oney
      */
     private $oneyHelper;
@@ -67,13 +72,33 @@ class Simulation extends Template
     }
 
     /**
+     * @param int|null $qty
+     *
+     * @return $this
+     */
+    public function setQty($qty): self
+    {
+        $this->qty = $qty;
+
+        return $this;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getQty()
+    {
+        return $this->qty;
+    }
+
+    /**
      * @param bool $validationOnly
      *
      * @return Result
      */
     public function getOneySimulation(bool $validationOnly = false): Result
     {
-        return $this->oneyHelper->getOneySimulation($this->getAmount(), null, $validationOnly);
+        return $this->oneyHelper->getOneySimulation($this->getAmount(), null, $this->getQty(), $validationOnly);
     }
 
     /**

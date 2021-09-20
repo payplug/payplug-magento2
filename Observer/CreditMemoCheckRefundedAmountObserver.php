@@ -79,11 +79,9 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
             $payment = $payplugPayment->retrieve($order->getStoreId());
 
             if ($order->getPayment()->getMethod() === Oney::METHOD_CODE) {
-                $oneyDelay = 48;
-                $allowedOneyRefundDate = (new \DateTime())->modify('- ' . $oneyDelay . ' hours');
-                if ($this->getLastUpdateOnOrder($order) >= $allowedOneyRefundDate) {
+                if (time() < $payment->refundable_after) {
                     $this->messageManager->addErrorMessage(
-                        __('The refund can be made %1 hours after the payment or %1 hours after the last refund.', $oneyDelay)
+                        __('The refund will be possible 48 hours after the last payment or refund transaction.')
                     );
 
                     return;
@@ -116,30 +114,5 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
-    }
-
-    /**
-     * @param Order $order
-     *
-     * @return \DateTime
-     */
-    private function getLastUpdateOnOrder(Order $order)
-    {
-        $lastUpdate = new \DateTime($order->getCreatedAt());
-        /** @var Order\Creditmemo $creditmemo */
-        foreach ($order->getCreditmemosCollection() as $creditmemo) {
-            if (!$creditmemo->getInvoiceId()) {
-                continue;
-            }
-            if (!$creditmemo->getTransactionId()) {
-                continue;
-            }
-            $creditmemoDate = new \DateTime($creditmemo->getCreatedAt());
-            if ($creditmemoDate > $lastUpdate) {
-                $lastUpdate = $creditmemoDate;
-            }
-        }
-
-        return $lastUpdate;
     }
 }

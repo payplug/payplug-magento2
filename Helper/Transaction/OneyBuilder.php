@@ -75,7 +75,7 @@ class OneyBuilder extends AbstractBuilder
             );
 
             $oneyOption = $payment->getAdditionalInformation('payplug_payments_oney_option');
-            $this->oneyHelper->validateOneyOption($oneyOption);
+            $this->oneyHelper->validateOneyOption($payment->getMethodInstance()->getCode(), $oneyOption);
             $this->validateBillingMobilePhone($order);
         } catch (\Exception $e) {
             $this->logger->error(sprintf("A customer tried to pay with Oney but an error occurred : %s", $e->getMessage()));
@@ -264,7 +264,7 @@ class OneyBuilder extends AbstractBuilder
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
         $paymentData['auto_capture'] = true;
-        $oneyOption = $this->oneyHelper->validateOneyOption($payment->getAdditionalInformation('payplug_payments_oney_option'));
+        $oneyOption = $this->oneyHelper->validateOneyOption($payment->getMethodInstance()->getCode(), $payment->getAdditionalInformation('payplug_payments_oney_option'));
         $paymentData['payment_method'] = 'oney_' . $oneyOption;
 
         $paymentData = array_merge($paymentData, $this->buildCartContext($order, $quote));
