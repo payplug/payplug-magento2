@@ -154,6 +154,7 @@
 "Pay %1by card%2","Payer %1par carte bancaire%2"
 "Pay %1without fees%2 %3by card%4","Payer %1sans frais%2 %3par carte bancaire%4"
 "Payment in %1","Paiement en %1"
+"Payment in %1 without fees","Paiement en %1 sans frais"
 "For an amount of","Pour un montant de"
 "Contribution","Premier apport"
 "Installment %1","Mensualité n°%1"

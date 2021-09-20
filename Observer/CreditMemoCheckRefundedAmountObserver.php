@@ -11,6 +11,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Gateway\Config\Oney;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 
@@ -78,7 +79,7 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
             $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
             $payment = $payplugPayment->retrieve($order->getStoreId());
 
-            if ($order->getPayment()->getMethod() === Oney::METHOD_CODE) {
+            if ($order->getPayment()->getMethod() === Oney::METHOD_CODE || $order->getPayment()->getMethod() === OneyWithoutFees::METHOD_CODE) {
                 if (time() < $payment->refundable_after) {
                     $this->messageManager->addErrorMessage(
                         __('The refund will be possible 48 hours after the last payment or refund transaction.')
