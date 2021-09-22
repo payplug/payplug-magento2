@@ -12,6 +12,7 @@ use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 
@@ -80,7 +81,7 @@ class StandardAvailabilityObserver implements ObserverInterface
         }
 
         $prefix = '';
-        if ($adapter->getCode() == Oney::METHOD_CODE) {
+        if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $prefix = 'oney_';
         }
 
@@ -93,7 +94,7 @@ class StandardAvailabilityObserver implements ObserverInterface
 
         // Oney can be displayed (disabled) in checkout
         // Do not check amount to confirm validity
-        if ($adapter->getCode() == Oney::METHOD_CODE) {
+        if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $canUseOney = $this->payplugConfig->getConfigValue(
                 'can_use_oney',
                 ScopeInterface::SCOPE_STORE,
@@ -101,6 +102,18 @@ class StandardAvailabilityObserver implements ObserverInterface
             );
             if (!$canUseOney) {
                 $checkResult->setData('is_available', false);
+            }
+            if ($adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
+                $isOneyWithFeesActive = $this->payplugConfig->getConfigValue(
+                    'active',
+                    ScopeInterface::SCOPE_STORE,
+                    $storeId,
+                    'payment/payplug_payments_oney/'
+                );
+                // If oney with fees is already enabled, make oney without fees unavailable
+                if ($isOneyWithFeesActive) {
+                    $checkResult->setData('is_available', false);
+                }
             }
 
             return;
