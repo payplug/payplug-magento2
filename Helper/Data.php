@@ -24,6 +24,7 @@ use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Model\Order\Payment;
 use Payplug\Payments\Model\Order\Processing;
@@ -290,6 +291,9 @@ class Data extends AbstractHelper
             Oney::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
+            OneyWithoutFees::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
         ];
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
@@ -406,7 +410,7 @@ class Data extends AbstractHelper
         }
 
         // If Oney payment is still being reviewed, order is validated but still in Payment Review state
-        if ($order->getPayment()->getMethod() == Oney::METHOD_CODE && $order->getState() == Order::STATE_PAYMENT_REVIEW) {
+        if (($order->getPayment()->getMethod() == Oney::METHOD_CODE || $order->getPayment()->getMethod() == OneyWithoutFees::METHOD_CODE) && $order->getState() == Order::STATE_PAYMENT_REVIEW) {
             return true;
         }
 
@@ -531,7 +535,8 @@ class Data extends AbstractHelper
         return $code == Standard::METHOD_CODE ||
             $code == \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE ||
             $code == Ondemand::METHOD_CODE ||
-            $code == Oney::METHOD_CODE;
+            $code == Oney::METHOD_CODE ||
+            $code == OneyWithoutFees::METHOD_CODE;
     }
 
     /**
