@@ -36,11 +36,6 @@ define([
                     self.updateOney();
                 }
             });
-            quote.shippingAddress.subscribe(function () {
-                if (self.getCode() === self.isChecked()) {
-                    self.updateOney();
-                }
-            });
             quote.billingAddress.subscribe(function () {
                 if (quote.billingAddress() !== null) {
                     if (self.getCode() === self.isChecked()) {
@@ -184,8 +179,7 @@ define([
             for (var i = 0; i < oneySimulationResult.options.length; i++) {
                 var optionData = oneySimulationResult.options[i];
                 var type = optionData.type;
-                var fullType = optionData.type;
-                var option = $('<label/>', { 'data-type': fullType }).addClass('oneyOption oneyOption-' + fullType);
+                var option = $('<label/>', { 'data-type': type }).addClass('oneyOption oneyOption-' + type);
 
                 // Title
                 var title = $('<div/>').addClass('oneyOption_title');
@@ -227,7 +221,7 @@ define([
                 var radio = $('<div/>').addClass('oneyOption_radio').append(
                     $('<div/>').addClass('radio').append(
                         $('<span/>').append(
-                            $('<input/>').attr('type', 'radio').attr('name', 'oney_type').val(fullType)
+                            $('<input/>').attr('type', 'radio').attr('name', 'oney_type').val(type)
                         )
                     )
                 );
