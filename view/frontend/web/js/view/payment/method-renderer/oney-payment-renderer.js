@@ -165,8 +165,7 @@ define([
             if (type === null) {
                 label = $.mage.__('Place Order');
             } else {
-                label = $.mage.__(this.getPaymentTypeLabel());
-                label = label.replace('%1', type);
+                label = this.getPaymentTypeLabel().replace('%1', type);
             }
 
             this.getOneyContainer().find('.oney-submit-button').find('span').html(label);
@@ -174,7 +173,7 @@ define([
         buildOneyDetail: function(oneySimulationResult){
             var tmpDiv = $('<div/>');
             var optionsWrapper = $('<div/>').addClass('oneyOption_wrapper');
-            var label = $.mage.__(this.getPaymentTypeLabel());
+            var label = this.getPaymentTypeLabel();
 
             for (var i = 0; i < oneySimulationResult.options.length; i++) {
                 var optionData = oneySimulationResult.options[i];
