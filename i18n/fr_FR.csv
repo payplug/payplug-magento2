@@ -163,7 +163,7 @@
 "Total cost","Total"
 "Financing offer with mandatory deposit reserved for private individual between %1 and %2. Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 www.orias.fr Correspondance : CS 60 006 - 59895 Lille Cedex - <a href=""http://www.oney.fr"" target=""_blank"">www.oney.fr</a>","Offre de financement avec apport obligatoire, réservée aux particuliers et valable pour tout achat de %1 à %2. Sous réserve d'acceptation par Oney Bank. Vous disposez d'un délai de 14 jours pour renoncer à votre crédit. Oney Bank - SA au capital de 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 www.orias.fr Correspondance : CS 60 006 - 59895 Lille Cedex - <a href=""http://www.oney.fr"" target=""_blank"">www.oney.fr</a>"
 "Close","Fermer"
-"To pay with Oney, the total amount of your cart must be between %1 and %2","Le montant total de votre panier doit être compris entre %1 et %2 pour payer avec Oney."
+"To pay with Oney, the total amount of your cart must be between %1 and %2.","Le montant total de votre panier doit être compris entre %1 et %2 pour payer avec Oney."
 "Shipping and billing addresses must be both located in %1 to pay with Oney.","Pour un paiement avec Oney, les adresses de livraison et de facturation doivent être en %1"
 "Total order amount","Montant à payer à la commande"
 "In %1 days","A %1 jours"
