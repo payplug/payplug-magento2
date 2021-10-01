@@ -1,7 +1,9 @@
 /* @api */
 define([
     'Payplug_Payments/js/view/payment/method-renderer/oney-payment-renderer',
-], function (Component) {
+    'jquery',
+    'mage/translate'
+], function (Component, $) {
     'use strict';
 
     return Component.extend({
@@ -9,7 +11,7 @@ define([
             return window.checkoutConfig.payment.payplug_payments_oney_without_fees;
         },
         getPaymentTypeLabel: function() {
-            return 'Payment in %1 without fees';
+            return $.mage.__('Payment in %1 without fees');
         }
     });
 });
