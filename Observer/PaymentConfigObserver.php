@@ -263,9 +263,16 @@ class PaymentConfigObserver implements ObserverInterface
             }
         }
 
-        if (isset($fields['threshold']['value']) && $fields['threshold']['value'] < 4) {
-            $this->messageManager->addErrorMessage(__('Amount must be greater than 4€.'));
-            $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 4;
+        if (isset($fields['threshold']['value'])) {
+            $errorMessage = __('The amount must be between €4 and €20,000.');
+            if ($fields['threshold']['value'] < 4) {
+                $this->messageManager->addErrorMessage($errorMessage);
+                $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 4;
+            }
+            if ($fields['threshold']['value'] > 20000) {
+                $this->messageManager->addErrorMessage($errorMessage);
+                $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 20000;
+            }
         }
 
         $this->request->setPostValue('groups', $groups);

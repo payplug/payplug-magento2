@@ -96,7 +96,7 @@
 "3 times","3 fois"
 "4 times","4 fois"
 "Only Premium accounts can use installment plan in LIVE mode.","Seuls les comptes Premium peuvent utiliser le paiement en plusieurs fois en mode LIVE"
-"Amount must be greater than 4€.","Le montant doit être supérieur à 4€."
+"The amount must be between €4 and €20,000.","Le montant doit être compris entre 4€ et 20000€."
 "Installment plan id","N° de l'échéancier"
 "Date","Date"
 "Status","Statut"
