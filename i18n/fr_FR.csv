@@ -165,6 +165,7 @@
 "Close","Fermer"
 "To pay with Oney, the total amount of your cart must be between %1 and %2.","Le montant total de votre panier doit être compris entre %1 et %2 pour payer avec Oney."
 "Shipping and billing addresses must be both located in %1 to pay with Oney.","Pour un paiement avec Oney, les adresses de livraison et de facturation doivent être en %1"
+"Unavailable for the specified country","Indisponible pour le pays spécifié"
 "Total order amount","Montant à payer à la commande"
 "In %1 days","A %1 jours"
 "An error occurred while getting Oney details. Please try again.","Une erreur s'est produite. Réessayez."
