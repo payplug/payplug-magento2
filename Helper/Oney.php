@@ -202,18 +202,22 @@ class Oney extends AbstractHelper
 
     /**
      * @param string $countryCode
+     * @param bool   $throwException
      *
      * @return bool
      *
      * @throws \Exception
      */
-    private function validateCountry($countryCode): bool
+    private function validateCountry($countryCode, $throwException = true): bool
     {
         $storeId = $this->storeManager->getStore()->getId();
         $oneyCountries = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'oney_countries', ScopeInterface::SCOPE_STORE, $storeId);
         $oneyCountries = json_decode($oneyCountries, true);
 
         if (!in_array($countryCode, $oneyCountries)) {
+            if (!$throwException) {
+                return false;
+            }
             $countryNames = [];
             $locale = $this->localeResolver->getLocale();
             foreach ($oneyCountries as $oneyCountryCode) {
@@ -340,6 +344,9 @@ class Oney extends AbstractHelper
     {
         if (!empty($billingCountry) && !empty($shippingCountry) && $billingCountry !== $shippingCountry) {
             throw new \Exception(__('Shipping and billing adresses must be both in the same country.'));
+        }
+        if (!$this->validateCountry($billingCountry, false)) {
+            throw new \Exception(__('Unavailable for the specified country'));
         }
     }
 

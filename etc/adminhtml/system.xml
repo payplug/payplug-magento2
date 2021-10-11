@@ -108,8 +108,8 @@
                 </field>
                 <field id="threshold" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable this option from</label>
-                    <frontend_class>validate-number validate-number-range number-range-4-</frontend_class>
-                    <comment>Amount must be greater than 4€.</comment>
+                    <frontend_class>validate-number validate-number-range number-range-4-20000</frontend_class>
+                    <comment>The amount must be between €4 and €20,000.</comment>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
