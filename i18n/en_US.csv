@@ -165,6 +165,7 @@
 "Close","Close"
 "To pay with Oney, the total amount of your cart must be between %1 and %2.","To pay with Oney, the total amount of your cart must be between %1 and %2."
 "Shipping and billing addresses must be both located in %1 to pay with Oney.","Shipping and billing addresses must be both located in %1 to pay with Oney."
+"Unavailable for the specified country","Unavailable for the specified country"
 "Total order amount","Total order amount"
 "In %1 days","In %1 days"
 "An error occurred while getting Oney details. Please try again.","An error occurred. Please try again."
