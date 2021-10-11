@@ -96,7 +96,7 @@
 "3 times","3 volte"
 "4 times","4 volte"
 "Only Premium accounts can use installment plan in LIVE mode.","Solamente i conti premium possono utilizzare il pagamento frazionato in modalità live"
-"Amount must be greater than 4€.","Il totale deve essere superiore a 4€."
+"The amount must be between €4 and €20,000.","L'importo deve essere compreso tra 4€ e 20.000€."
 "Installment plan id","Numero identificativo del scadenziario"
 "Date","Data"
 "Status","Status"
