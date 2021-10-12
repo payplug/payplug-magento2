@@ -15,6 +15,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;
 use Payplug\Exception\PayplugException;
 use Payplug\OneySimulation;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\OneySimulation\Option;
 use Payplug\Payments\Model\OneySimulation\Result;
@@ -26,6 +27,10 @@ class Oney extends AbstractHelper
         \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE => [
             'x3_with_fees' => '3x',
             'x4_with_fees' => '4x',
+        ],
+        \Payplug\Payments\Gateway\Config\OneyWithoutFees::METHOD_CODE => [
+            'x3_without_fees' => '3x',
+            'x4_without_fees' => '4x',
         ],
     ];
 
@@ -72,6 +77,16 @@ class Oney extends AbstractHelper
     private $customerSession;
 
     /**
+     * @var \Magento\Payment\Helper\Data
+     */
+    private $paymentHelper;
+
+    /**
+     * @var string
+     */
+    private $oneyMethod;
+
+    /**
      * @param Context               $context
      * @param Config                $payplugConfig
      * @param StoreManagerInterface $storeManager
@@ -81,6 +96,7 @@ class Oney extends AbstractHelper
      * @param Logger                $logger
      * @param CheckoutSession       $checkoutSession
      * @param CustomerSession       $customerSession
+     * @param \Magento\Payment\Helper\Data $paymentHelper
      */
     public function __construct(
         Context $context,
@@ -91,7 +107,8 @@ class Oney extends AbstractHelper
         Resolver $localeResolver,
         Logger $logger,
         CheckoutSession $checkoutSession,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        \Magento\Payment\Helper\Data $paymentHelper
     ) {
         parent::__construct($context);
 
@@ -103,6 +120,7 @@ class Oney extends AbstractHelper
         $this->logger = $logger;
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
+        $this->paymentHelper = $paymentHelper;
     }
 
     /**
@@ -118,7 +136,12 @@ class Oney extends AbstractHelper
             return false;
         }
 
-        $isActive = $this->scopeConfig->getValue('payment/payplug_payments_oney/active', ScopeInterface::SCOPE_STORE, $storeId);
+        $oneyPaymentMethod = $this->getOneyMethod();
+        if ($oneyPaymentMethod === '') {
+            return false;
+        }
+
+        $isActive = $this->scopeConfig->getValue('payment/' . $oneyPaymentMethod . '/active', ScopeInterface::SCOPE_STORE, $storeId);
         if (!$isActive) {
             return false;
         }
@@ -179,18 +202,22 @@ class Oney extends AbstractHelper
 
     /**
      * @param string $countryCode
+     * @param bool   $throwException
      *
      * @return bool
      *
      * @throws \Exception
      */
-    private function validateCountry($countryCode): bool
+    private function validateCountry($countryCode, $throwException = true): bool
     {
         $storeId = $this->storeManager->getStore()->getId();
         $oneyCountries = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'oney_countries', ScopeInterface::SCOPE_STORE, $storeId);
         $oneyCountries = json_decode($oneyCountries, true);
 
         if (!in_array($countryCode, $oneyCountries)) {
+            if (!$throwException) {
+                return false;
+            }
             $countryNames = [];
             $locale = $this->localeResolver->getLocale();
             foreach ($oneyCountries as $oneyCountryCode) {
@@ -318,6 +345,9 @@ class Oney extends AbstractHelper
         if (!empty($billingCountry) && !empty($shippingCountry) && $billingCountry !== $shippingCountry) {
             throw new \Exception(__('Shipping and billing adresses must be both in the same country.'));
         }
+        if (!$this->validateCountry($billingCountry, false)) {
+            throw new \Exception(__('Unavailable for the specified country'));
+        }
     }
 
     /**
@@ -409,6 +439,7 @@ class Oney extends AbstractHelper
             if ($validationOnly) {
                 $simulationResult = new Result();
                 $simulationResult->setSuccess(true);
+                $simulationResult->setMethod($paymentMethod);
 
                 return $simulationResult;
             } else {
@@ -422,6 +453,7 @@ class Oney extends AbstractHelper
             $simulationResult = new Result();
             $simulationResult->setSuccess(false);
             $simulationResult->setMessage($e->getMessage());
+            $simulationResult->setMethod($paymentMethod);
 
             return $simulationResult;
         }
@@ -437,6 +469,7 @@ class Oney extends AbstractHelper
         $simulationResult = new Result();
         $simulationResult->setSuccess(true);
         $simulationResult->setMessage(__('Your payment schedule simulation is temporarily unavailable. You will find this information at the payment stage.'));
+        $simulationResult->setMethod($paymentMethod);
 
         $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
 
@@ -474,6 +507,7 @@ class Oney extends AbstractHelper
         $result = new Result();
         $result->setSuccess(true);
         $result->setAmount($amount);
+        $result->setMethod($paymentMethod);
 
         foreach ($operations as $operation => $type) {
             if (!isset($simulations[$operation])) {
@@ -511,8 +545,22 @@ class Oney extends AbstractHelper
     /**
      * @return string
      */
-    public function getOneyMethod()
+    private function getOneyMethod()
     {
-        return \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE;
+        if ($this->oneyMethod === null) {
+            $oneyMethods = [
+                \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE,
+                OneyWithoutFees::METHOD_CODE,
+            ];
+            $this->oneyMethod = '';
+            foreach ($oneyMethods as $oneyMethod) {
+                if ($this->paymentHelper->getMethodInstance($oneyMethod)->isAvailable()) {
+                    $this->oneyMethod = $oneyMethod;
+                    break;
+                }
+            }
+        }
+
+        return $this->oneyMethod;
     }
 }

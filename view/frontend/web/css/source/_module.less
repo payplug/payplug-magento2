@@ -13,14 +13,17 @@
     width: 50%;
   }
 }
-#oneyError {
+.oney-checkout-error {
   color: #b2b2b2;
 }
-#oneyError.active {
+.oney-checkout-error.active {
   margin-bottom: 15px;
 }
-#oneyLogo {
+.oney-logo-checkout {
   max-width: 150px;
+  [data-oney-container="payplug_payments_oney_without_fees"] & {
+    max-width: 170px;
+  }
 }
 .oney {
   // Oney logo
@@ -31,12 +34,22 @@
 
     &-3x {
       background-image: url('Payplug_Payments::images/oney/3x.svg');
+      [data-oney-container="payplug_payments_oney_without_fees"] & {
+        background-image: url('Payplug_Payments::images/oney_without_fees/3x.svg');
+      }
     }
     &-4x {
       background-image: url('Payplug_Payments::images/oney/4x.svg');
+      [data-oney-container="payplug_payments_oney_without_fees"] & {
+        background-image: url('Payplug_Payments::images/oney_without_fees/4x.svg');
+      }
     }
     &-x3x4 {
       background-image: url('Payplug_Payments::images/oney/3x4x.svg');
+      .oney-without-fees & {
+        background-image: url('Payplug_Payments::images/oney_without_fees/3x4x.svg');
+        margin-right: 5px;
+      }
     }
     &-tooltip {
       background-image: url('Payplug_Payments::images/oney/tooltip.svg');
@@ -127,9 +140,17 @@
       height: 25px;
       background-size: 110%;
       margin: 0 0 0 .25em;
+      .oney-without-fees & {
+        background-size: 100%;
+        width: 170px;
+      }
 
       .oneyCta_button-disabled & {
         background-image: url('Payplug_Payments::images/oney/3x4x-alt.svg');
+        .oney-without-fees & {
+          background-image: url('Payplug_Payments::images/oney_without_fees/3x4x-alt.svg');
+          margin-right: 5px;
+        }
       }
     }
 
@@ -322,6 +343,9 @@
       text-transform: uppercase;
       margin: 0 0 18px;
 
+      .underline {
+        text-decoration: underline;
+      }
       strong {
         display: block;
       }
@@ -448,9 +472,13 @@
     &_legal {
       display: block;
       font-size: 10px;
-      line-height: 18px;
+      line-height: 13px;
       color: #8a8a8a;
       margin: 8px 0 0;
+
+      a {
+        color: #7ebd00;
+      }
 
       @media (max-width: 767px) {
         padding: 0 0 15px;
@@ -620,6 +648,9 @@
 
       .oneyPayment-disabled & {
         background-image: url('Payplug_Payments::images/oney/3x4x-alt.svg');
+        .oney-without-fees & {
+          background-image: url('Payplug_Payments::images/oney_without_fees/3x4x-alt.svg');
+        }
       }
     }
 
@@ -731,6 +762,9 @@
       @media (max-width: 767px) {
         width: 100px;
         height: 30px;
+        [data-oney-container="payplug_payments_oney_without_fees"] & {
+          width: 150px;
+        }
       }
     }
 

@@ -108,8 +108,8 @@
                 </field>
                 <field id="threshold" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable this option from</label>
-                    <frontend_class>validate-number validate-number-range number-range-4-</frontend_class>
-                    <comment>Amount must be greater than 4€.</comment>
+                    <frontend_class>validate-number validate-number-range number-range-4-20000</frontend_class>
+                    <comment>The amount must be between €4 and €20,000.</comment>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
@@ -178,6 +178,32 @@
             </group>
             <group id="payplug_payments_oney" translate="label" type="text" sortOrder="5" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Oney</label>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Processing order status</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
+                </field>
+                <field id="canceled_order_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Canceled order status</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="model"/>
+                <field id="allowspecific"/>
+                <field id="specificcountry"/>
+                <field id="default_country"/>
+            </group>
+            <group id="payplug_payments_oney_without_fees" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>PayPlug Payments - Oney Without Fees</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

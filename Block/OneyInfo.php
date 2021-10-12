@@ -5,6 +5,7 @@ namespace Payplug\Payments\Block;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Helper\Oney;
 use Payplug\Payments\Logger\Logger;
@@ -36,8 +37,13 @@ class OneyInfo extends Info
         $paymentDetails['Status'] = $status;
 
         $oneyOption = str_replace('oney_', '', $payment->payment_method['type']);
-        if (isset(Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$order->getPayment()->getMethod()][$oneyOption])) {
-            $paymentDetails['Oney option'] = __('Payment in %1', Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$order->getPayment()->getMethod()][$oneyOption]);
+        $paymentMethod = $order->getPayment()->getMethod();
+        if (isset(Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod][$oneyOption])) {
+            $key = 'Payment in %1';
+            if ($paymentMethod === OneyWithoutFees::METHOD_CODE) {
+                $key = 'Payment in %1 without fees';
+            }
+            $paymentDetails['Oney option'] = __($key, Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod][$oneyOption]);
         }
 
         return $paymentDetails;

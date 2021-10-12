@@ -8,10 +8,10 @@ define([
 
     return Component.extend({
         getConfiguration: function() {
-            return window.checkoutConfig.payment.payplug_payments_oney;
+            return window.checkoutConfig.payment.payplug_payments_oney_without_fees;
         },
         getPaymentTypeLabel: function() {
-            return $.mage.__('Payment in %1');
+            return $.mage.__('Payment in %1 without fees');
         }
     });
 });
