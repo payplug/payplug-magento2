@@ -526,4 +526,7 @@
             <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session\Proxy</argument>
         </arguments>
     </type>
+    <type name="Magento\Sales\Model\Order">
+        <plugin name="payplug_payment_sales_model_order_plugin" type="Payplug\Payments\Plugin\Order\ModelPlugin" sortOrder="1"/>
+    </type>
 </config>
