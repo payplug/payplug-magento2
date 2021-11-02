@@ -82,10 +82,7 @@ class InstallmentPlanAbort extends \Magento\Sales\Controller\Adminhtml\Order
             }
 
             try {
-                $orderInstallmentPlan = $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
-                $orderInstallmentPlan->abort($order->getStoreId());
-                $installmentPlan = $orderInstallmentPlan->retrieve($order->getStoreId());
-                $this->payplugHelper->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
+                $this->payplugHelper->cancelInstallmentPlan($order);
                 // Force order save in order to check the order state
                 $this->orderRepository->save($order);
                 $this->payplugHelper->refreshSalesGrid($order->getId());

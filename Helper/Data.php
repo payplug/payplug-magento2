@@ -15,11 +15,14 @@ use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\Api\SortOrderBuilderFactory;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
+use Payplug\Exception\HttpException;
+use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
@@ -403,6 +406,113 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
+    public function canForceOrderCancel(Order $order): bool
+    {
+        $method = $order->getPayment()->getMethod();
+        if (!$this->isCodePayplugPayment($method) || $this->isCodePayplugPaymentOney($method)) {
+            return false;
+        }
+
+        if (!$order->isPaymentReview()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @throws LocalizedException
+     * @throws OrderAlreadyProcessingException
+     */
+    public function forceOrderCancel(Order $order)
+    {
+        if (!$order->canCancel()) {
+            return;
+        }
+        if (!$this->canForceOrderCancel($order)) {
+            return;
+        }
+
+        if ($this->canAbortInstallmentPlan($order)) {
+            // If payment is installment plan, preset transaction as pending
+            // To avoid automatic creation of paid invoice when processing order's payment
+            $order->getPayment()->setTransactionPending(true);
+        }
+        $order = $this->updateOrder($order);
+        if (!$order->isPaymentReview()) {
+            if (!$order->getState() === Order::STATE_CANCELED) {
+                // Order is no longer in review and hasn't been canceled
+                // It means that the payment was validated
+                throw new LocalizedException(__('The order has been updated without being canceled because its payment has been validated.'));
+            }
+
+            // Order isnt in review anymore, no need to process further
+            return;
+        }
+
+        if ($this->cancelOrderPayment($order)) {
+            // Now that the payment is cancelled on payplug side
+            // Trigger update order so that regular process can cancel order
+            $this->updateOrder($order);
+        }
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     *
+     * @throws LocalizedException
+     */
+    public function cancelOrderPayment(Order $order): bool
+    {
+        try {
+            if ($this->canAbortInstallmentPlan($order)) {
+                $this->cancelInstallmentPlan($order);
+
+                return true;
+            }
+
+            $this->cancelStandardPayment($order);
+
+            return true;
+        } catch (HttpException $e) {
+            $payplugError = $e->getErrorObject()['message'] ?? '';
+            if ($payplugError === 'The payment was already aborted.') {
+                // Payment is already aborted, keep processing to cancel order
+                return true;
+            }
+            throw new LocalizedException(__('An error occurred. Please try again.'));
+        }
+    }
+
+    /**
+     * @param Order $order
+     */
+    public function cancelInstallmentPlan(Order $order)
+    {
+        $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
+        $orderInstallmentPlan->abort($order->getStoreId());
+        $installmentPlan = $orderInstallmentPlan->retrieve($order->getStoreId());
+        $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
+    }
+
+    /**
+     * @param Order $order
+     */
+    public function cancelStandardPayment(Order $order)
+    {
+        $orderPayment = $this->getOrderPayment($order->getIncrementId());
+        $orderPayment->abort($order->getStoreId());
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return bool
+     */
     public function isOrderValidated($order)
     {
         if ($order->getState() == Order::STATE_PROCESSING || $order->getState() == Order::STATE_COMPLETE) {
@@ -536,6 +646,17 @@ class Data extends AbstractHelper
             $code == \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE ||
             $code == Ondemand::METHOD_CODE ||
             $code == Oney::METHOD_CODE ||
+            $code == OneyWithoutFees::METHOD_CODE;
+    }
+
+    /**
+     * @param string $code
+     *
+     * @return bool
+     */
+    public function isCodePayplugPaymentOney($code)
+    {
+        return $code == Oney::METHOD_CODE ||
             $code == OneyWithoutFees::METHOD_CODE;
     }
 
