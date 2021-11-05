@@ -442,7 +442,7 @@ class Data extends AbstractHelper
         }
         $order = $this->updateOrder($order);
         if (!$order->isPaymentReview()) {
-            if (!$order->getState() === Order::STATE_CANCELED) {
+            if ($order->getState() !== Order::STATE_CANCELED) {
                 // Order is no longer in review and hasn't been canceled
                 // It means that the payment was validated
                 throw new LocalizedException(__('The order has been updated without being canceled because its payment has been validated.'));
