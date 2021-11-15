@@ -470,7 +470,7 @@ class Data extends AbstractHelper
     {
         try {
             if ($this->canAbortInstallmentPlan($order)) {
-                $this->cancelInstallmentPlan($order);
+                $this->cancelInstallmentPlan($order, true);
 
                 return true;
             }
@@ -490,12 +490,32 @@ class Data extends AbstractHelper
 
     /**
      * @param Order $order
+     * @param bool  $cancelPayment
      */
-    public function cancelInstallmentPlan(Order $order)
+    public function cancelInstallmentPlan(Order $order, bool $cancelPayment = false)
     {
+        $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
-        $orderInstallmentPlan->abort($order->getStoreId());
-        $installmentPlan = $orderInstallmentPlan->retrieve($order->getStoreId());
+        if ($cancelPayment) {
+            $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+            foreach ($installmentPlan->schedule as $schedule) {
+                if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
+                    $paymentId = $schedule->payment_ids[0];
+                    if (empty($paymentId)) {
+                        continue;
+                    }
+
+                    try {
+                        $orderPayment = $this->getOrderPaymentByPaymentId($paymentId);
+                        $orderPayment->abort($storeId);
+                    } catch (NoSuchEntityException $e) {
+                        // Payment was not found - no need to abort it
+                    }
+                }
+            }
+        }
+        $orderInstallmentPlan->abort($storeId);
+        $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
