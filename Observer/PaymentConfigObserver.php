@@ -578,6 +578,7 @@ class PaymentConfigObserver implements ObserverInterface
             'oney_countries' => $this->getConfig('oney_countries'),
             'oney_min_amounts' => $this->getConfig('oney_min_amounts'),
             'oney_max_amounts' => $this->getConfig('oney_max_amounts'),
+            'merchand_country' => $this->getConfig('merchand_country'),
         ];
         if (isset($jsonAnswer['configuration'])) {
             if (!empty($jsonAnswer['configuration']['currencies'])) {
@@ -606,6 +607,9 @@ class PaymentConfigObserver implements ObserverInterface
                     $configuration['oney_max_amounts'] = $this->processAmounts($jsonAnswer['configuration']['oney']['max_amounts']);
                 }
             }
+            if (!empty($jsonAnswer['country'])) {
+                $configuration['merchand_country'] = $jsonAnswer['country'];
+            }
         }
 
         $currencies = implode(';', $configuration['currencies']);
@@ -616,6 +620,7 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
         $this->saveConfig('company_id', $id);
+        $this->saveConfig('merchand_country', $configuration['merchand_country']);
 
         $permissions = [
             'use_live_mode',

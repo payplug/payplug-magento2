@@ -263,6 +263,7 @@ class Config extends AbstractHelper
             'payplug_payments/general/can_create_installment_plan',
             'payplug_payments/general/can_create_deferred_payment',
             'payplug_payments/general/can_use_oney',
+            'payplug_payments/general/merchand_country',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
@@ -301,6 +302,14 @@ class Config extends AbstractHelper
             'payment/payplug_payments_oney/allowspecific',
             'payment/payplug_payments_oney/specificcountry',
             'payment/payplug_payments_oney/sort_order',
+            // Payplug payment Oney without feexs configuration
+            'payment/payplug_payments_oney_without_fees/active',
+            'payment/payplug_payments_oney_without_fees/title',
+            'payment/payplug_payments_oney_without_fees/processing_order_status',
+            'payment/payplug_payments_oney_without_fees/canceled_order_status',
+            'payment/payplug_payments_oney_without_fees/allowspecific',
+            'payment/payplug_payments_oney_without_fees/specificcountry',
+            'payment/payplug_payments_oney_without_fees/sort_order',
         ];
 
         foreach ($keys as $key) {
