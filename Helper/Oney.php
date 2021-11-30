@@ -5,8 +5,11 @@ namespace Payplug\Payments\Helper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Directory\Model\CountryFactory;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Locale\Resolver;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order\Item;
@@ -17,6 +20,7 @@ use Payplug\Exception\PayplugException;
 use Payplug\OneySimulation;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Api\Login;
 use Payplug\Payments\Model\OneySimulation\Option;
 use Payplug\Payments\Model\OneySimulation\Result;
 use Payplug\Payments\Model\OneySimulation\Schedule;
@@ -82,21 +86,39 @@ class Oney extends AbstractHelper
     private $paymentHelper;
 
     /**
+     * @var Login
+     */
+    private $login;
+
+    /**
+     * @var WriterInterface
+     */
+    private $writer;
+
+    /**
+     * @var AdapterInterface
+     */
+    private $resourceConnection;
+
+    /**
      * @var string
      */
     private $oneyMethod;
 
     /**
-     * @param Context               $context
-     * @param Config                $payplugConfig
-     * @param StoreManagerInterface $storeManager
-     * @param PricingHelper         $pricingHelper
-     * @param CountryFactory        $countryFactory
-     * @param Resolver              $localeResolver
-     * @param Logger                $logger
-     * @param CheckoutSession       $checkoutSession
-     * @param CustomerSession       $customerSession
+     * @param Context                      $context
+     * @param Config                       $payplugConfig
+     * @param StoreManagerInterface        $storeManager
+     * @param PricingHelper                $pricingHelper
+     * @param CountryFactory               $countryFactory
+     * @param Resolver                     $localeResolver
+     * @param Logger                       $logger
+     * @param CheckoutSession              $checkoutSession
+     * @param CustomerSession              $customerSession
      * @param \Magento\Payment\Helper\Data $paymentHelper
+     * @param Login                        $login
+     * @param WriterInterface              $writer
+     * @param ResourceConnection           $resourceConnection
      */
     public function __construct(
         Context $context,
@@ -108,7 +130,10 @@ class Oney extends AbstractHelper
         Logger $logger,
         CheckoutSession $checkoutSession,
         CustomerSession $customerSession,
-        \Magento\Payment\Helper\Data $paymentHelper
+        \Magento\Payment\Helper\Data $paymentHelper,
+        Login $login,
+        WriterInterface $writer,
+        ResourceConnection $resourceConnection
     ) {
         parent::__construct($context);
 
@@ -121,6 +146,9 @@ class Oney extends AbstractHelper
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
         $this->paymentHelper = $paymentHelper;
+        $this->login = $login;
+        $this->writer = $writer;
+        $this->resourceConnection = $resourceConnection->getConnection();
     }
 
     /**
@@ -156,7 +184,74 @@ class Oney extends AbstractHelper
             return false;
         }
 
+        $apiKey = $liveApiKey;
+        $environmentMode = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'environmentmode', ScopeInterface::SCOPE_STORE, $storeId);
+        if ($environmentMode == Config::ENVIRONMENT_TEST) {
+            $apiKey = $testApiKey;
+        }
+
+        $storeLocale = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE, $storeId);
+        $localeCountry = explode('_', $storeLocale)[1] ?? null;
+        if ($localeCountry !== $this->getMerchandCountry($storeId, $apiKey)) {
+            return false;
+        }
+
         return true;
+    }
+
+    /**
+     * @param int         $storeId
+     * @param string|null $apiKey
+     *
+     * @return mixed|string
+     */
+    private function getMerchandCountry(int $storeId, ?string $apiKey)
+    {
+        $savedMerchandCountry = $this->getMerchandCountryFromConfig($storeId);
+        if (!empty($savedMerchandCountry)) {
+            return $savedMerchandCountry;
+        }
+
+        try {
+            $result = $this->login->getAccount($apiKey);
+            if (!$result['status']) {
+                return '';
+            }
+            $country = $result['answer']['country'] ?? '';
+            $this->writer->save(Config::CONFIG_PATH . 'merchand_country', $country, ScopeInterface::SCOPE_STORE, $storeId);
+
+            return $country;
+        } catch (\Exception $e) {
+            $this->logger->error('Could not retrieve Payplug merchand country', [
+                'exception' => $e,
+            ]);
+
+            return '';
+        }
+    }
+
+    /**
+     * @param int $storeId
+     *
+     * @return mixed|string
+     */
+    private function getMerchandCountryFromConfig(int $storeId)
+    {
+        $savedMerchandCountry = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'merchand_country', ScopeInterface::SCOPE_STORE, $storeId);
+        if (!empty($savedMerchandCountry)) {
+            return $savedMerchandCountry;
+        }
+
+        $select = $this->resourceConnection->select()
+            ->from(
+                ['main_table' => $this->resourceConnection->getTableName('core_config_data')],
+                'value'
+            )
+            ->where('main_table.scope like ?', ScopeInterface::SCOPE_STORE . '%')
+            ->where('main_table.scope_id = ?', $storeId)
+            ->where('main_table.path = ?', Config::CONFIG_PATH . 'merchand_country');
+
+        return $this->resourceConnection->fetchOne($select);
     }
 
     /**
