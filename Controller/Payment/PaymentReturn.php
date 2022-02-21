@@ -54,6 +54,7 @@ class PaymentReturn extends AbstractPayment
                 return $this->_redirect($redirectUrlSuccess);
             }
 
+            $this->payplugHelper->checkPaymentFailureAndAbortPayment($order);
             $order = $this->payplugHelper->updateOrder($order);
 
             if ($this->payplugHelper->isOrderValidated($order)) {

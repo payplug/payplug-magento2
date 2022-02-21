@@ -72,6 +72,14 @@ class OrderPaymentRepository
     }
 
     /**
+     * @return OrderPayment
+     */
+    public function create()
+    {
+        return $this->paymentFactory->create();
+    }
+
+    /**
      * @param OrderPayment $orderPayment
      *
      * @return OrderPayment

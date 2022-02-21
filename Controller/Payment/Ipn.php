@@ -212,6 +212,7 @@ class Ipn extends AbstractPayment
         $responseDetail = null;
         if ($this->payplugHelper->canUpdatePayment($order)) {
             try {
+                $this->payplugHelper->checkPaymentFailureAndAbortPayment($order);
                 $this->payplugHelper->updateOrder($order);
                 $responseCode = 200;
                 $responseDetail = '200 Order updated.';
