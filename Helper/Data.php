@@ -403,6 +403,89 @@ class Data extends AbstractHelper
 
     /**
      * @param Order $order
+     */
+    public function checkPaymentFailureAndAbortPayment(Order $order)
+    {
+        try {
+            if ($order->getPayment() === false) {
+                return;
+            }
+
+            $code = $order->getPayment()->getMethod();
+            if ($code !== Standard::METHOD_CODE &&
+                $code !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE
+            ) {
+                return;
+            }
+            if ($order->getState() !== Order::STATE_PAYMENT_REVIEW) {
+                return;
+            }
+
+            $storeId = $order->getStoreId();
+            $orderPayment = $this->getPaymentForOrder($order);
+            if ($orderPayment === null) {
+                return;
+            }
+            $payplugPayment = $orderPayment->retrieve($storeId);
+            if ($payplugPayment->failure &&
+                $payplugPayment->failure->code &&
+                strtolower($payplugPayment->failure->code) !== 'timeout'
+            ) {
+                $orderPayment->abort($storeId);
+            }
+        } catch (HttpException $e) {
+            $this->_logger->error('Could not abort payment', [
+                'exception' => $e,
+                'order' => $order->getId(),
+                'message' => $e->getErrorObject()['message'] ?? 'Payplug request error',
+            ]);
+        } catch (\Exception $e) {
+            $this->_logger->error('Could not abort payment', [
+                'exception' => $e,
+                'order' => $order->getId(),
+            ]);
+        }
+    }
+
+    /**
+     * @param Order $order
+     *
+     * @return Payment|null
+     */
+    public function getPaymentForOrder(Order $order)
+    {
+        $storeId = $order->getStoreId();
+        if ($order->getPayment()->getMethod() === \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE) {
+            $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
+            $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+            foreach ($installmentPlan->schedule as $schedule) {
+                if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
+                    $paymentId = $schedule->payment_ids[0];
+                    if (empty($paymentId)) {
+                        continue;
+                    }
+
+                    try {
+                        return $this->getOrderPaymentByPaymentId($paymentId);
+                    } catch (NoSuchEntityException $e) {
+                        $orderPayment = $this->orderPaymentRepository->create();
+                        $orderPayment->setPaymentId($paymentId);
+                        $orderPayment->setOrderId($order->getId());
+                        $orderPayment->setIsSandbox($orderInstallmentPlan->isSandbox());
+
+                        return $orderPayment;
+                    }
+                }
+            }
+        } else {
+            return $this->getOrderPayment($order->getIncrementId());
+        }
+
+        return null;
+    }
+
+    /**
+     * @param Order $order
      *
      * @return bool
      */
