@@ -37,6 +37,8 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
     }
 
     /**
+     * Render custom fields
+     *
      * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
      *
      * @return string
@@ -77,10 +79,10 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
 
         $extraElements = '';
 
-        $extraElements .= '<input id="payplug_payments_is_connected" type="hidden" name="payplug_payments_is_connected" 
+        $extraElements .= '<input id="payplug_payments_is_connected" type="hidden" name="payplug_payments_is_connected"
         value="'.(int)$connected.'" />';
 
-        $extraElements .= '<input id="payplug_payments_is_verified" type="hidden" name="payplug_payments_is_verified" 
+        $extraElements .= '<input id="payplug_payments_is_verified" type="hidden" name="payplug_payments_is_verified"
         value="'.(int)$isVerified.'" />';
 
         if ($this->helper->getConfigScope() == ScopeInterface::SCOPE_WEBSITES) {

@@ -53,6 +53,8 @@ class OrderPaymentRepository
     }
 
     /**
+     * Get entity
+     *
      * @param mixed       $id
      * @param string|null $field
      *
@@ -72,6 +74,8 @@ class OrderPaymentRepository
     }
 
     /**
+     * Create entity
+     *
      * @return OrderPayment
      */
     public function create()
@@ -80,6 +84,8 @@ class OrderPaymentRepository
     }
 
     /**
+     * Save entity
+     *
      * @param OrderPayment $orderPayment
      *
      * @return OrderPayment
@@ -92,6 +98,8 @@ class OrderPaymentRepository
     }
 
     /**
+     * Get entity list
+     *
      * @param SearchCriteriaInterface $criteria
      *
      * @return SearchResultsInterface

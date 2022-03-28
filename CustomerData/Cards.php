@@ -30,6 +30,8 @@ class Cards implements SectionSourceInterface
     }
 
     /**
+     * Get cards section data
+     *
      * @return array
      */
     public function getSectionData()

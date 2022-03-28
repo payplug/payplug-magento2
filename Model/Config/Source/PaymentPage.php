@@ -7,6 +7,8 @@ use Payplug\Payments\Helper\Config;
 class PaymentPage implements \Magento\Framework\Option\ArrayInterface
 {
     /**
+     * Get available payment behavior
+     *
      * @return array
      */
     public function toOptionArray()

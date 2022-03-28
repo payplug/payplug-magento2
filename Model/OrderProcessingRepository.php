@@ -30,6 +30,8 @@ class OrderProcessingRepository
     }
 
     /**
+     * Get entity
+     *
      * @param mixed       $id
      * @param string|null $field
      *
@@ -49,6 +51,8 @@ class OrderProcessingRepository
     }
 
     /**
+     * Save entity
+     *
      * @param OrderProcessing $orderProcessing
      *
      * @return OrderProcessing
@@ -61,6 +65,8 @@ class OrderProcessingRepository
     }
 
     /**
+     * Delete entity
+     *
      * @param OrderProcessing $orderProcessing
      *
      * @return bool

@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Framework\Controller\ResultFactory;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Payplug\Exception\PayplugException;
@@ -36,45 +37,57 @@ class PaymentReturn extends AbstractPayment
         $this->orderRepository = $orderRepository;
     }
 
+    /**
+     * Handle return from PayPlug payment page
+     *
+     * @return mixed
+     */
     public function execute()
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
         $redirectUrlSuccess = 'checkout/onepage/success';
         try {
             $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
 
             if (!$lastIncrementId) {
                 $this->logger->error('Could not retrieve last order id');
-                return $this->_redirect($redirectUrlSuccess);
+
+                return $resultRedirect->setPath($redirectUrlSuccess);
             }
             $order = $this->salesOrderFactory->create();
             $order->loadByIncrementId($lastIncrementId);
 
             if (!$order->getId()) {
                 $this->logger->error(sprintf('Could not retrieve order with id %s', $lastIncrementId));
-                return $this->_redirect($redirectUrlSuccess);
+
+                return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
             $this->payplugHelper->checkPaymentFailureAndAbortPayment($order);
             $order = $this->payplugHelper->updateOrder($order);
 
             if ($this->payplugHelper->isOrderValidated($order)) {
-                return $this->_redirect($redirectUrlSuccess);
+                return $resultRedirect->setPath($redirectUrlSuccess);
             } else {
-                $this->_forward('cancel', null, null, ['is_canceled_by_provider' => true]);
+                return $this->resultFactory
+                    ->create(ResultFactory::TYPE_FORWARD)
+                    ->setParams(['is_canceled_by_provider' => true])
+                    ->forward('cancel');
             }
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
 
-            return $this->_redirect($redirectUrlSuccess);
+            return $resultRedirect->setPath($redirectUrlSuccess);
         } catch (OrderAlreadyProcessingException $e) {
             // Order is already being processed (by IPN or admin update button)
             // Redirect to success page
             // No need to log as it is not an error case
-            return $this->_redirect($redirectUrlSuccess);
+            return $resultRedirect->setPath($redirectUrlSuccess);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
 
-            return $this->_redirect($redirectUrlSuccess);
+            return $resultRedirect->setPath($redirectUrlSuccess);
         }
     }
 }

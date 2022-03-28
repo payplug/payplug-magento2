@@ -30,6 +30,7 @@ class StandardAvailabilityObserver implements ObserverInterface
 
     /**
      * @param Config $payplugConfig
+     * @param Data   $payplugHelper
      */
     public function __construct(Config $payplugConfig, Data $payplugHelper)
     {
@@ -38,6 +39,8 @@ class StandardAvailabilityObserver implements ObserverInterface
     }
 
     /**
+     * Check if PayPlug payment can be used on quote
+     *
      * @param Observer $observer
      *
      * @return void
@@ -138,7 +141,7 @@ class StandardAvailabilityObserver implements ObserverInterface
             $checkResult->setData('is_available', false);
             return;
         }
-        
+
         if ($adapter->getCode() == InstallmentPlan::METHOD_CODE) {
             if ($quote->getGrandTotal() < $adapter->getConfigData('threshold')) {
                 $checkResult->setData('is_available', false);

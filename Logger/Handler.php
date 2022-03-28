@@ -13,7 +13,7 @@ class Handler extends \Magento\Framework\Logger\Handler\Base
     protected $loggerType = Logger::INFO;
 
     /**
-     * File name
+     * Log File
      * @var string
      */
     protected $fileName = '/var/log/payplug_payments.log';

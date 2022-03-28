@@ -72,15 +72,19 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
     }
 
     /**
+     * Update PayPlug payment data
+     *
      * @return \Magento\Framework\App\ResponseInterface
      */
     public function execute()
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
         if ($order = $this->_initOrder()) {
             if (!$this->payplugHelper->canUpdatePayment($order)) {
                 $this->messageManager->addErrorMessage(__('The payment cannot be updated for this order.'));
 
-                return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
+                return $resultRedirect->setPath('sales/order/view', ['order_id' => $order->getId()]);
             }
 
             try {
@@ -102,9 +106,9 @@ class UpdatePayment extends \Magento\Sales\Controller\Adminhtml\Order
                 );
             }
 
-            return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
+            return $resultRedirect->setPath('sales/order/view', ['order_id' => $order->getId()]);
         }
 
-        return $this->_redirect('sales/order');
+        return $resultRedirect->setPath('sales/order');
     }
 }

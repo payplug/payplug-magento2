@@ -8,6 +8,13 @@ use Payplug\Payments\Model\Order\InstallmentPlan;
 
 class FetchTransactionInformation implements ClientInterface
 {
+    /**
+     * Place Retrieve request
+     *
+     * @param TransferInterface $transferObject
+     *
+     * @return array
+     */
     public function placeRequest(TransferInterface $transferObject)
     {
         $data = $transferObject->getBody();

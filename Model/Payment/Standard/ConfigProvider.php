@@ -85,6 +85,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Get Standard payment config
+     *
      * @return array
      */
     public function getConfig()
@@ -105,6 +107,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Get card logo
+     *
      * @return string|null
      */
     public function getCardLogo()
@@ -120,6 +124,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Get brand logos
+     *
      * @return array
      */
     public function getBrandLogos()
@@ -134,6 +140,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Get selected card id
+     *
      * @return int|string
      */
     public function getSelectedCardId()
@@ -152,13 +160,16 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Check magento version
+     *
      * @return bool
      */
     public function shouldRefreshCards()
     {
         // Issue in Magento 2.1 & Magento 2.4 with private content not refreshed properly by Magento
         if (strpos($this->payplugConfig->getMagentoVersion(), '2.1.') === 0 ||
-            strpos($this->payplugConfig->getMagentoVersion(), '2.4.') === 0) {
+            strpos($this->payplugConfig->getMagentoVersion(), '2.4.') === 0
+        ) {
             return true;
         }
 
@@ -184,6 +195,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Handle customer cards display depending on checkout module
+     *
      * @return bool
      */
     private function shouldDisplayCardsInContainer()

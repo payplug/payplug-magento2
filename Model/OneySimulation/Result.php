@@ -6,13 +6,15 @@ use Magento\Framework\DataObject;
 
 class Result extends DataObject
 {
-    const KEY_SUCCESS = 'success';
-    const KEY_MESSAGE = 'message';
-    const KEY_OPTIONS = 'options';
-    const KEY_AMOUNT = 'amount';
-    const KEY_METHOD = 'method';
+    public const KEY_SUCCESS = 'success';
+    public const KEY_MESSAGE = 'message';
+    public const KEY_OPTIONS = 'options';
+    public const KEY_AMOUNT = 'amount';
+    public const KEY_METHOD = 'method';
 
     /**
+     * Get success
+     *
      * @return bool|null
      */
     public function getSuccess()
@@ -21,6 +23,8 @@ class Result extends DataObject
     }
 
     /**
+     * Set success
+     *
      * @param bool|null $success
      *
      * @return $this
@@ -31,6 +35,8 @@ class Result extends DataObject
     }
 
     /**
+     * Get message
+     *
      * @return null|string
      */
     public function getMessage()
@@ -39,6 +45,8 @@ class Result extends DataObject
     }
 
     /**
+     * Set message
+     *
      * @param string|null $message
      *
      * @return $this
@@ -49,6 +57,8 @@ class Result extends DataObject
     }
 
     /**
+     * Get options
+     *
      * @return null|array|Option[]
      */
     public function getOptions()
@@ -57,6 +67,8 @@ class Result extends DataObject
     }
 
     /**
+     * Add option
+     *
      * @param Option $option
      *
      * @return $this
@@ -73,6 +85,8 @@ class Result extends DataObject
     }
 
     /**
+     * Get amount
+     *
      * @return float|null
      */
     public function getAmount()
@@ -81,7 +95,9 @@ class Result extends DataObject
     }
 
     /**
-     * @param float|null $message
+     * Set amount
+     *
+     * @param float|null $amount
      *
      * @return $this
      */
@@ -91,6 +107,8 @@ class Result extends DataObject
     }
 
     /**
+     * Get method
+     *
      * @return string|null
      */
     public function getMethod()
@@ -99,6 +117,8 @@ class Result extends DataObject
     }
 
     /**
+     * Set method
+     *
      * @param string|null $method
      *
      * @return $this

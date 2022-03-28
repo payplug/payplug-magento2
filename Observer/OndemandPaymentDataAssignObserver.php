@@ -9,6 +9,8 @@ use Magento\Quote\Api\Data\PaymentInterface;
 class OndemandPaymentDataAssignObserver extends AbstractDataAssignObserver
 {
     /**
+     * Add OnDemand data to payment additional information
+     *
      * @param Observer $observer
      *
      * @return void

@@ -2,12 +2,44 @@
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\PaymentException;
+use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Ondemand;
+use Payplug\Payments\Helper\OndemandOptions;
+use Payplug\Payments\Helper\Phone;
+use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Order\Payment;
 
 class OndemandBuilder extends AbstractBuilder
 {
+    /**
+     * @var OndemandOptions
+     */
+    private $onDemandHelper;
+
+    /**
+     * @param Context         $context
+     * @param Config          $payplugConfig
+     * @param Country         $countryHelper
+     * @param Phone           $phoneHelper
+     * @param Logger          $logger
+     * @param OndemandOptions $onDemandHelper
+     */
+    public function __construct(
+        Context $context,
+        Config $payplugConfig,
+        Country $countryHelper,
+        Phone $phoneHelper,
+        Logger $logger,
+        OndemandOptions $onDemandHelper
+    ) {
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger);
+
+        $this->onDemandHelper = $onDemandHelper;
+    }
+
     /**
      * @inheritdoc
      */
@@ -22,7 +54,7 @@ class OndemandBuilder extends AbstractBuilder
         $language = trim($payment->getAdditionalInformation('language'));
         $description = trim($payment->getAdditionalInformation('description'));
 
-        $availableSentBy = Payment::getAvailableOndemandSentBy();
+        $availableSentBy = $this->onDemandHelper->getAvailableOndemandSentBy();
         if (!isset($availableSentBy[$sentBy])) {
             throw new PaymentException(__('Invalid sent by option: %1', $sentBy));
         }
@@ -31,7 +63,7 @@ class OndemandBuilder extends AbstractBuilder
             throw new PaymentException(__('Please fill in mobile / email to which the payment link must be sent to'));
         }
 
-        $availableLanguages = Payment::getAvailableOndemandLanguage();
+        $availableLanguages = $this->onDemandHelper->getAvailableOndemandLanguage();
         if (!isset($availableLanguages[$language])) {
             throw new PaymentException(__('Allowed languages are: %1', implode(', ', $availableLanguages)));
         }
@@ -40,7 +72,11 @@ class OndemandBuilder extends AbstractBuilder
             $address = $order->getBillingAddress();
             $phoneResult = $this->phoneHelper->getPhoneInfo($sentByValue, $address->getCountryId());
             if (!is_array($phoneResult) || !$phoneResult['mobile']) {
-                throw new PaymentException(__('Invalid mobile number %1 for country %2', $sentByValue, $address->getCountryId()));
+                throw new PaymentException(__(
+                    'Invalid mobile number %1 for country %2',
+                    $sentByValue,
+                    $address->getCountryId()
+                ));
             }
             $sentByValue = $phoneResult['phone'];
         } elseif ($sentBy === Payment::SENT_BY_EMAIL) {

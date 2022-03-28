@@ -71,6 +71,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle PayPlug configuration save
+     *
      * @param EventObserver $observer
      */
     public function execute(EventObserver $observer)
@@ -103,6 +105,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Check if posted data contains section info
+     *
      * @param array  $postParams
      * @param string $sectionCode
      *
@@ -123,6 +127,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle General configuration
+     *
      * @param array $groups
      */
     private function processGeneralConfig($groups)
@@ -187,6 +193,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Standard configuration
+     *
      * @param array $groups
      */
     private function processStandardConfig($groups)
@@ -227,6 +235,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle InstallmentPlan configuration
+     *
      * @param array $groups
      */
     private function processInstallmentPlanConfig($groups)
@@ -279,6 +289,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Ondemand configuration
+     *
      * @param array $groups
      */
     private function processOndemandConfig($groups)
@@ -292,6 +304,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Oney configuration
+     *
      * @param array $groups
      */
     private function processOneyConfig($groups)
@@ -329,8 +343,10 @@ class PaymentConfigObserver implements ObserverInterface
 
                     if (empty($permissions['can_use_oney'])) {
                         $groups[$oney]['fields']['active']['value'] = 0;
+                        $errorMessage = 'You don\'t have access to this feature yet. ' .
+                            'To activate the Oney guaranteed split payment, go to your PayPlug portal: %1.';
                         $this->messageManager->addErrorMessage(
-                            __('You don\'t have access to this feature yet. To activate the Oney guaranteed split payment, go to your PayPlug portal: %1.', 'https://portal-qa.payplug.com/#/configuration/oney')
+                            __($errorMessage, 'https://portal-qa.payplug.com/#/configuration/oney')
                         );
                     } else {
                         $isActive = true;
@@ -341,7 +357,8 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if ($bothActive) {
             $this->messageManager->addErrorMessage(
-                __('Please note: it is impossible to offer Oney and Oney with no fees simultaneously in your store. You can only activate one of the two.')
+                __('Please note: it is impossible to offer Oney and Oney with no fees simultaneously in your store. ' .
+                    'You can only activate one of the two.')
             );
             foreach ($oneyGroups as $oney => $data) {
                 $groups[$oney]['fields']['active']['value'] = $data['current'];
@@ -352,6 +369,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Check if PayPlug account is connected before enabling PayPlug payment method
+     *
      * @param array  $fields
      * @param array  $groups
      * @param string $fieldGroup
@@ -373,6 +392,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle PayPlug configuration save on website level
+     *
      * @param array &$groups
      * @param array &$fields
      */
@@ -414,6 +435,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Check if all required fields are set
+     *
      * @param array $fieldsRequiredForInit
      * @param array $fields
      *
@@ -435,6 +458,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle account init
+     *
      * @param string|null $pwd
      * @param array       $fields
      */
@@ -448,6 +473,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle live mode
+     *
      * @param string|null $pwd
      */
     private function processLive($pwd)
@@ -471,6 +498,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Get PayPlug configuration
+     *
      * @param string $field
      * @param string $path
      *
@@ -482,6 +511,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Save PayPlug configuration
+     *
      * @param string $field
      * @param string $value
      */
@@ -492,6 +523,7 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Connect to payplug account
+     *
      * Handle flags for account connection, verification
      *
      * @param string $email
@@ -544,6 +576,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Get PayPlug account permissions
+     *
      * @param string $apiKey
      *
      * @return array
@@ -601,10 +635,14 @@ class PaymentConfigObserver implements ObserverInterface
                     $configuration['oney_countries'] = json_encode($oneyCountries);
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['min_amounts'])) {
-                    $configuration['oney_min_amounts'] = $this->processAmounts($jsonAnswer['configuration']['oney']['min_amounts']);
+                    $configuration['oney_min_amounts'] = $this->processAmounts(
+                        $jsonAnswer['configuration']['oney']['min_amounts']
+                    );
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['max_amounts'])) {
-                    $configuration['oney_max_amounts'] = $this->processAmounts($jsonAnswer['configuration']['oney']['max_amounts']);
+                    $configuration['oney_max_amounts'] = $this->processAmounts(
+                        $jsonAnswer['configuration']['oney']['max_amounts']
+                    );
                 }
             }
             if (!empty($jsonAnswer['country'])) {
@@ -637,6 +675,8 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Process min/max amounts
+     *
      * @param array $amounts
      *
      * @return string

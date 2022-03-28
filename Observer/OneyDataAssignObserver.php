@@ -9,6 +9,8 @@ use Magento\Quote\Api\Data\PaymentInterface;
 class OneyDataAssignObserver extends AbstractDataAssignObserver
 {
     /**
+     * Add Oney data to payment additional information
+     *
      * @param Observer $observer
      *
      * @return void

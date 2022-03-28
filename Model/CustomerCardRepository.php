@@ -53,6 +53,8 @@ class CustomerCardRepository
     }
 
     /**
+     * Get entity
+     *
      * @param mixed       $id
      * @param string|null $field
      *
@@ -72,6 +74,8 @@ class CustomerCardRepository
     }
 
     /**
+     * Save entity
+     *
      * @param CustomerCard $customerCard
      *
      * @return CustomerCard
@@ -84,6 +88,8 @@ class CustomerCardRepository
     }
 
     /**
+     * Delete entity
+     *
      * @param CustomerCard $customerCard
      *
      * @return bool
@@ -96,6 +102,8 @@ class CustomerCardRepository
     }
 
     /**
+     * Get entity list
+     *
      * @param SearchCriteriaInterface $criteria
      *
      * @return SearchResultsInterface

@@ -15,7 +15,7 @@ use Payplug\Payments\Model\OrderPaymentRepository;
 
 class Ondemand extends AbstractHelper
 {
-    const DESCRIPTION_MAX_LENGTH = 80;
+    public const DESCRIPTION_MAX_LENGTH = 80;
 
     /**
      * @var \Payplug\Payments\Model\Order\PaymentFactory
@@ -66,7 +66,7 @@ class Ondemand extends AbstractHelper
         OndemandClient $ondemandClient
     ) {
         parent::__construct($context);
-        
+
         $this->payplugPaymentFactory = $payplugPaymentFactory;
         $this->orderPaymentRepository = $orderPaymentRepository;
         $this->ondemandBuilder = $ondemandBuilder;
@@ -76,6 +76,8 @@ class Ondemand extends AbstractHelper
     }
 
     /**
+     * Send OnDemand payment link
+     *
      * @param Order                                 $order
      * @param \Payplug\Payments\Model\Order\Payment $lastOrderPayment
      * @param array                                 $paymentLinkData
@@ -90,7 +92,9 @@ class Ondemand extends AbstractHelper
 
         $payplugPayment = $lastOrderPayment->retrieve($order->getStoreId());
         if ($payplugPayment->is_paid) {
-            throw new PaymentException(__('Last payment %1 has already been paid. Please wait for the automatic notification or update the payment manually.', $lastOrderPayment->getPaymentId()));
+            $exceptionMessage = 'Last payment %1 has already been paid. ' .
+                'Please wait for the automatic notification or update the payment manually.';
+            throw new PaymentException(__($exceptionMessage, $lastOrderPayment->getPaymentId()));
         }
 
         $orderAdapter = $this->orderAdapterFactory->create(
@@ -136,6 +140,8 @@ class Ondemand extends AbstractHelper
     }
 
     /**
+     * Save OnDemand data on order payment
+     *
      * @param \Magento\Sales\Model\Order\Payment $payment
      * @param array                              $transactionData
      */

@@ -53,8 +53,13 @@ class FetchTransactionInformationHandler implements HandlerInterface
     private $payplugHelper;
 
     /**
-     * TransactionIdHandler constructor.
-     * @param SubjectReader $subjectReader
+     * @param SubjectReader          $subjectReader
+     * @param Logger                 $payplugLogger
+     * @param PaymentFactory         $payplugPaymentFactory
+     * @param OrderSender            $orderSender
+     * @param Config                 $payplugConfig
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param Data                   $payplugHelper
      */
     public function __construct(
         SubjectReader $subjectReader,
@@ -158,6 +163,8 @@ class FetchTransactionInformationHandler implements HandlerInterface
     }
 
     /**
+     * Send order email
+     *
      * @param Order $order
      */
     private function sendOrderEmail($order)
@@ -172,6 +179,8 @@ class FetchTransactionInformationHandler implements HandlerInterface
     }
 
     /**
+     * Flag invoice as paid
+     *
      * @param Order   $order
      * @param Payment $payment
      */

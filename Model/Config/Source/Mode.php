@@ -7,6 +7,8 @@ use Payplug\Payments\Helper\Config;
 class Mode implements \Magento\Framework\Option\ArrayInterface
 {
     /**
+     * Get available payment modes
+     *
      * @return array
      */
     public function toOptionArray()

@@ -9,7 +9,7 @@
         <input type="radio"
                name="payment[method]"
                class="radio"
-               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()"/>
+               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()">
         <label data-bind="attr: {'for': getCode()}" class="label"><img style="margin-right: 10px;" data-bind="attr: {src: getCardLogo()}"><span data-bind="text: getTitle()"></span></label>
         <!-- ko if: canDisplayCardsInTitle() -->
             <ul class="payplug-payments-cards">

@@ -29,6 +29,8 @@ class InstallmentPlanBuilder extends AbstractBuilder
     }
 
     /**
+     * Generate InstallmentPlan payments schedule
+     *
      * @param OrderAdapterInterface $order
      * @param InfoInterface         $payment
      *

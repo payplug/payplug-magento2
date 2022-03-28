@@ -49,7 +49,9 @@ class OrderCancelObserver implements ObserverInterface
 
         $lastOrderPayment = $this->helper->getOrderLastPayment($order->getIncrementId());
         if ($lastOrderPayment === null) {
-            $this->logger->error(sprintf('No payplug payment was found for order %s using payment request', $order->getIncrementId()));
+            $this->logger->error(
+                sprintf('No payplug payment was found for order %s using payment request', $order->getIncrementId())
+            );
             return;
         }
 

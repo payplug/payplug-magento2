@@ -5,6 +5,8 @@ namespace Payplug\Payments\Model\Config\Source;
 class InstallmentPlanCount implements \Magento\Framework\Option\ArrayInterface
 {
     /**
+     * Get available InstallmentPlan split options
+     *
      * @return array
      */
     public function toOptionArray()

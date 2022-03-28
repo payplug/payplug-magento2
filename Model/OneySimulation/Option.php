@@ -6,14 +6,16 @@ use Magento\Framework\DataObject;
 
 class Option extends DataObject
 {
-    const KEY_TYPE = 'type';
-    const KEY_COST = 'cost';
-    const KEY_RATE = 'rate';
-    const KEY_FIRST_DEPOSIT = 'first_deposit';
-    const KEY_TOTAL_AMOUNT = 'total_amount';
-    const KEY_SCHEDULES = 'schedules';
+    public const KEY_TYPE = 'type';
+    public const KEY_COST = 'cost';
+    public const KEY_RATE = 'rate';
+    public const KEY_FIRST_DEPOSIT = 'first_deposit';
+    public const KEY_TOTAL_AMOUNT = 'total_amount';
+    public const KEY_SCHEDULES = 'schedules';
 
     /**
+     * Get type
+     *
      * @return string|null
      */
     public function getType()
@@ -22,6 +24,8 @@ class Option extends DataObject
     }
 
     /**
+     * Set type
+     *
      * @param string|null $type
      *
      * @return $this
@@ -32,6 +36,8 @@ class Option extends DataObject
     }
 
     /**
+     * Get cost
+     *
      * @return float|null
      */
     public function getCost()
@@ -40,6 +46,8 @@ class Option extends DataObject
     }
 
     /**
+     * Set cost
+     *
      * @param float|null $cost
      *
      * @return $this
@@ -50,6 +58,8 @@ class Option extends DataObject
     }
 
     /**
+     * Get rate
+     *
      * @return float|null
      */
     public function getRate()
@@ -58,6 +68,8 @@ class Option extends DataObject
     }
 
     /**
+     * Set rate
+     *
      * @param float|null $rate
      *
      * @return $this
@@ -68,6 +80,8 @@ class Option extends DataObject
     }
 
     /**
+     * Get first deposit
+     *
      * @return float|null
      */
     public function getFirstDeposit()
@@ -76,6 +90,8 @@ class Option extends DataObject
     }
 
     /**
+     * Set first deposit
+     *
      * @param float|null $firstDeposit
      *
      * @return $this
@@ -86,6 +102,8 @@ class Option extends DataObject
     }
 
     /**
+     * Get total amount
+     *
      * @return float|null
      */
     public function getTotalAmount()
@@ -94,7 +112,9 @@ class Option extends DataObject
     }
 
     /**
-     * @param float|null $cost
+     * Set total amount
+     *
+     * @param float|null $totalAmount
      *
      * @return $this
      */
@@ -104,6 +124,8 @@ class Option extends DataObject
     }
 
     /**
+     * Get schedules
+     *
      * @return null|array|Schedule[]
      */
     public function getSchedules()
@@ -112,6 +134,8 @@ class Option extends DataObject
     }
 
     /**
+     * Add schedule
+     *
      * @param Schedule $schedule
      *
      * @return $this

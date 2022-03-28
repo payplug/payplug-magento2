@@ -6,10 +6,12 @@ use Magento\Framework\DataObject;
 
 class Schedule extends DataObject
 {
-    const KEY_AMOUNT = 'amount';
-    const KEY_DATE = 'date';
+    public const KEY_AMOUNT = 'amount';
+    public const KEY_DATE = 'date';
 
     /**
+     * Get amount
+     *
      * @return float|null
      */
     public function getAmount()
@@ -18,6 +20,8 @@ class Schedule extends DataObject
     }
 
     /**
+     * Set amount
+     *
      * @param float|null $amount
      *
      * @return $this
@@ -28,6 +32,8 @@ class Schedule extends DataObject
     }
 
     /**
+     * Get date
+     *
      * @return \DateTime|null
      */
     public function getDate()
@@ -36,6 +42,8 @@ class Schedule extends DataObject
     }
 
     /**
+     * Set date
+     *
      * @param \DateTime|null $date
      *
      * @return $this

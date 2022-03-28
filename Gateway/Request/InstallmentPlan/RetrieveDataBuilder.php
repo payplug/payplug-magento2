@@ -22,6 +22,7 @@ class RetrieveDataBuilder implements BuilderInterface
      * Constructor
      *
      * @param SubjectReader $subjectReader
+     * @param Data          $payplugHelper
      */
     public function __construct(SubjectReader $subjectReader, Data $payplugHelper)
     {

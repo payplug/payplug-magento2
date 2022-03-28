@@ -53,6 +53,8 @@ class OneyBuilder extends AbstractBuilder
     }
 
     /**
+     * Validate Oney payment before creating PayPlug transaction
+     *
      * @param OrderAdapterInterface $order
      * @param InfoInterface         $payment
      * @param Quote                 $quote
@@ -78,12 +80,17 @@ class OneyBuilder extends AbstractBuilder
             $this->oneyHelper->validateOneyOption($payment->getMethodInstance()->getCode(), $oneyOption);
             $this->validateBillingMobilePhone($order);
         } catch (\Exception $e) {
-            $this->logger->error(sprintf("A customer tried to pay with Oney but an error occurred : %s", $e->getMessage()));
+            $this->logger->error(sprintf(
+                "A customer tried to pay with Oney but an error occurred : %s",
+                $e->getMessage()
+            ));
             throw new LocalizedException(__($e->getMessage()));
         }
     }
 
     /**
+     * Get order items count
+     *
      * @param array|Item[] $items
      *
      * @return int
@@ -103,6 +110,8 @@ class OneyBuilder extends AbstractBuilder
     }
 
     /**
+     * Validate billing phone for Oney payment
+     *
      * @param OrderAdapterInterface $order
      *
      * @throws \Exception
@@ -126,6 +135,8 @@ class OneyBuilder extends AbstractBuilder
     }
 
     /**
+     * Get shipping method
+     *
      * @param Quote $quote
      *
      * @return string|null
@@ -136,6 +147,8 @@ class OneyBuilder extends AbstractBuilder
     }
 
     /**
+     * Build cart data
+     *
      * @param OrderAdapterInterface $order
      * @param Quote                 $quote
      *
@@ -220,12 +233,14 @@ class OneyBuilder extends AbstractBuilder
         if ($order->getShippingAddress() !== null) {
             $companyName = $order->getShippingAddress()->getCompany();
             if (empty($companyName)) {
-                $companyName = $order->getShippingAddress()->getFirstname() . ' ' . $order->getShippingAddress()->getLastname();
+                $companyName = $order->getShippingAddress()->getFirstname() . ' ' .
+                    $order->getShippingAddress()->getLastname();
             }
         } else {
             $companyName = $order->getBillingAddress()->getCompany();
             if (empty($companyName)) {
-                $companyName = $order->getBillingAddress()->getFirstname() . ' ' . $order->getBillingAddress()->getLastname();
+                $companyName = $order->getBillingAddress()->getFirstname() . ' ' .
+                    $order->getBillingAddress()->getLastname();
             }
         }
         if (empty($companyName)) {
@@ -264,7 +279,10 @@ class OneyBuilder extends AbstractBuilder
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
         $paymentData['auto_capture'] = true;
-        $oneyOption = $this->oneyHelper->validateOneyOption($payment->getMethodInstance()->getCode(), $payment->getAdditionalInformation('payplug_payments_oney_option'));
+        $oneyOption = $this->oneyHelper->validateOneyOption(
+            $payment->getMethodInstance()->getCode(),
+            $payment->getAdditionalInformation('payplug_payments_oney_option')
+        );
         $paymentData['payment_method'] = 'oney_' . $oneyOption;
 
         $paymentData = array_merge($paymentData, $this->buildCartContext($order, $quote));

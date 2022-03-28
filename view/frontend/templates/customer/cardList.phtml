@@ -1,6 +1,6 @@
 <?php /** @var \Payplug\Payments\Block\Customer\CardList $block */?>
 <?php $payplugCards = $block->getPayplugCards(); ?>
-<?php if (!empty($payplugCards)) : ?>
+<?php if (!empty($payplugCards)): ?>
     <table class="data-table saved-cards" id="my-saved-cards-table">
         <col width="1" />
         <col width="1" />
@@ -9,32 +9,35 @@
         <col width="1" />
         <thead>
         <tr>
-            <th class="customer_card_id"><?= __('Card #') ?></th>
-            <th class="brand"><?= __('Brand') ?></th>
-            <th class="last4"><?= __('Card mask') ?></th>
-            <th class="exp_date"><?= __('Expiration Date') ?></th>
-            <th class="delete"><span class="nobr"><?= __('Delete') ?></span></th>
+            <th class="customer_card_id"><?= $block->escapeHtml(__('Card #')) ?></th>
+            <th class="brand"><?= $block->escapeHtml(__('Brand')) ?></th>
+            <th class="last4"><?= $block->escapeHtml(__('Card mask')) ?></th>
+            <th class="exp_date"><?= $block->escapeHtml(__('Expiration Date')) ?></th>
+            <th class="delete"><span class="nobr"><?= $block->escapeHtml(__('Delete')) ?></span></th>
         </tr>
         </thead>
         <tbody>
         <?php $_odd = ''; ?>
-        <?php foreach ($payplugCards as $payplugCard) : ?>
+        <?php foreach ($payplugCards as $payplugCard): ?>
+            <?php $customerCardId = $payplugCard->getCustomerCardId(); ?>
             <tr>
-                <td class="customer_card_id"><?= $payplugCard->getCustomerCardId() ?></td>
-                <td class="brand"><?= $payplugCard->getBrand() ?></td>
-                <td class="last4"><?= $payplugCard->getLastFour() ?></td>
+                <td class="customer_card_id"><?= $block->escapeHtml($customerCardId) ?></td>
+                <td class="brand"><?= $block->escapeHtml($payplugCard->getBrand()) ?></td>
+                <td class="last4"><?= $block->escapeHtml($payplugCard->getLastFour()) ?></td>
                 <td class="exp_date">
-                    <span class="nobr"><?= $block->getFormattedExpDate($payplugCard->getExpDate()) ?></span>
+                    <span class="nobr">
+                        <?= $block->escapeHtml($block->getFormattedExpDate($payplugCard->getExpDate())) ?>
+                    </span>
                 </td>
                 <td class="delete">
-                    <a href="<?= $block->getDeleteCardUrl($payplugCard->getCustomerCardId()) ?>">
-                        <?= __('Delete this card') ?>
+                    <a href="<?= $block->escapeHtmlAttr($block->getDeleteCardUrl($customerCardId)) ?>">
+                        <?= $block->escapeHtml(__('Delete this card')) ?>
                     </a>
                 </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
     </table>
-<?php else : ?>
-    <p><?= __('You have no saved cards.'); ?></p>
+<?php else: ?>
+    <p><?= $block->escapeHtml(__('You have no saved cards.')); ?></p>
 <?php endif ?>

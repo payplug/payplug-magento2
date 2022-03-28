@@ -7,20 +7,20 @@ use Payplug\Payments\Helper\Config;
 class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     \Magento\Framework\DataObject\IdentityInterface
 {
-    const CACHE_TAG = 'payplug_payments_order_installment_plan';
+    public const CACHE_TAG = 'payplug_payments_order_installment_plan';
 
-    const ORDER_ID = 'order_id';
+    public const ORDER_ID = 'order_id';
 
-    const INSTALLMENT_PLAN_ID = 'installment_plan_id';
+    public const INSTALLMENT_PLAN_ID = 'installment_plan_id';
 
-    const IS_SANDBOX = 'is_sandbox';
+    public const IS_SANDBOX = 'is_sandbox';
 
-    const STATUS = 'status';
+    public const STATUS = 'status';
 
-    const STATUS_NEW = 0;
-    const STATUS_ONGOING = 10;
-    const STATUS_ABORTED = 20;
-    const STATUS_COMPLETE = 30;
+    public const STATUS_NEW = 0;
+    public const STATUS_ONGOING = 10;
+    public const STATUS_ABORTED = 20;
+    public const STATUS_COMPLETE = 30;
 
     /**
      * @var Config
@@ -47,12 +47,17 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
         $this->payplugConfig = $payplugConfig;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function _construct()
     {
         $this->_init(\Payplug\Payments\Model\ResourceModel\Order\InstallmentPlan::class);
     }
 
     /**
+     * Get entity identities
+     *
      * @return array
      */
     public function getIdentities()
@@ -61,6 +66,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Get order id
+     *
      * @return int
      */
     public function getOrderId()
@@ -69,6 +76,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Set order id
+     *
      * @param int $orderId
      *
      * @return $this
@@ -79,6 +88,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Get installment plan id
+     *
      * @return string
      */
     public function getInstallmentPlanId()
@@ -87,6 +98,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Set installement plan id
+     *
      * @param string $installmentPlanId
      *
      * @return $this
@@ -97,6 +110,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Get is sandbox
+     *
      * @return bool
      */
     public function isSandbox()
@@ -105,6 +120,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Set is sandbox
+     *
      * @param bool $isSandbox
      *
      * @return $this
@@ -115,6 +132,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Get status
+     *
      * @return int
      */
     public function getStatus()
@@ -123,6 +142,8 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Set status
+     *
      * @param int $status
      *
      * @return $this

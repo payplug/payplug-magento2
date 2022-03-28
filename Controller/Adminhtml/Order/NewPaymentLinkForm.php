@@ -72,15 +72,19 @@ class NewPaymentLinkForm extends \Magento\Sales\Controller\Adminhtml\Order
     }
 
     /**
+     * OnDemand new payment link view
+     *
      * @return \Magento\Framework\App\ResponseInterface
      */
     public function execute()
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
         if ($order = $this->_initOrder()) {
             if (!$this->payplugHelper->canSendNewPaymentLink($order)) {
                 $this->messageManager->addErrorMessage(__('A new payment link cannot be sent for this order.'));
 
-                return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
+                return $resultRedirect->setPath('sales/order/view', ['order_id' => $order->getId()]);
             }
 
             $resultPage = $this->resultPageFactory->create();
@@ -94,6 +98,6 @@ class NewPaymentLinkForm extends \Magento\Sales\Controller\Adminhtml\Order
             return $resultPage;
         }
 
-        return $this->_redirect('sales/order');
+        return $resultRedirect->setPath('sales/order');
     }
 }

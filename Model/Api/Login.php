@@ -20,6 +20,10 @@ class Login
      */
     private $logger;
 
+    /**
+     * @param Authentication $authentication
+     * @param Logger         $logger
+     */
     public function __construct(Authentication $authentication, Logger $logger)
     {
         $this->authentication = $authentication;
