@@ -3,6 +3,7 @@
 namespace Payplug\Payments\Block\Oney;
 
 use Magento\Framework\View\Element\Template;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Oney;
 use Payplug\Payments\Model\OneySimulation\Result;
 
@@ -119,5 +120,47 @@ class Simulation extends Template
     public function getOneyAmounts()
     {
         return $this->oneyHelper->getOneyAmounts();
+    }
+
+    /**
+     * Check if current store is in italian
+     *
+     * @return bool
+     */
+    public function isItalianStore()
+    {
+        $localeCode = $this->_scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);
+
+        return $localeCode === 'it_IT';
+    }
+
+    /**
+     * Check if merchand has an italian PayPlug account
+     *
+     * @return bool
+     */
+    public function isMerchandItalian()
+    {
+        return $this->oneyHelper->isMerchandItalian();
+    }
+
+    /**
+     * Get more info url
+     *
+     * @return string
+     */
+    public function getMoreInfoUrl()
+    {
+        return $this->oneyHelper->getMoreInfoUrl();
+    }
+
+    /**
+     * Get more info url
+     *
+     * @return string
+     */
+    public function getMoreInfoUrlWithoutFees()
+    {
+        return $this->oneyHelper->getMoreInfoUrlWithoutFees();
     }
 }

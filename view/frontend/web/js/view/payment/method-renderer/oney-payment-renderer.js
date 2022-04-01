@@ -20,6 +20,11 @@ define([
         redirectAfterPlaceOrder: false,
         isLoading: false,
         isOneyPlaceOrderDisabled: ko.observable(false),
+        scheduleLabels: [
+            {days: 30, label: $.mage.__('In 30 days')},
+            {days: 60, label: $.mage.__('In 60 days')},
+            {days: 90, label: $.mage.__('In 90 days')},
+        ],
 
         initialize: function () {
             var self = this;
@@ -196,11 +201,10 @@ define([
                     ;
                     list.append(firstDeposit);
                     var daysForPayment = 30;
-                    var scheduleLabel = $.mage.__('In %1 days');
                     for (var j = 0; j < optionData.schedules.length; j++) {
                         var scheduleData = optionData.schedules[j];
                         var schedule = $('<li></li>')
-                            .append($('<span></span>').html(scheduleLabel.replace('%1', daysForPayment)))
+                            .append($('<span></span>').html(this.getScheduleLabel(daysForPayment)))
                             .append($('<span></span>').addClass('oneyOption_price').html(this.getFormattedPrice(scheduleData.amount)))
                         ;
                         list.append(schedule);
@@ -230,7 +234,30 @@ define([
             }
 
             tmpDiv.append(optionsWrapper);
+
+            if (this.getConfiguration().more_info_url) {
+                tmpDiv.append(
+                    $('<a></a>')
+                        .attr('class', 'more-info')
+                        .attr('href', this.getConfiguration().more_info_url)
+                        .attr('target', '_blank')
+                        .html($.mage.__('More info'))
+                );
+            }
+
             this.getOneyContainer().find('.oneyPayment').html(tmpDiv.html());
+        },
+        getScheduleLabel: function (days) {
+            let label = null;
+            this.scheduleLabels.forEach(function(item) {
+                if (item.days === days) {
+                    label = item.label;
+
+                    return false;
+                }
+            });
+
+            return label;
         },
         getFormattedPrice: function(price) {
             return priceUtils.formatPrice(price, quote.getPriceFormat());
@@ -258,6 +285,9 @@ define([
         },
         getOneyContainer: function() {
             return $('[data-oney-container="' + this.getCode() + '"]');
+        },
+        isOneyItalian: function() {
+            return this.getConfiguration().is_italian;
         },
         // Functions to be defined by each oney payment renderer
         getConfiguration: function() {
