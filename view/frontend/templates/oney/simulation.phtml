@@ -8,11 +8,11 @@ if (!$oneySimulation->getSuccess()) {
 $isOneyWithoutFees = $oneySimulation->getMethod() === \Payplug\Payments\Gateway\Config\OneyWithoutFees::METHOD_CODE;
 ?>
 <div class="oneyCta<?= $isOneyWithoutFees ? ' oney-without-fees' : ''; ?>">
-    <button type="button" class="oneyCta_button <?php if ($hasError) : ?>oneyCta_button-disabled<?php endif; ?>">
-        <span><?php echo __('Or pay in'); ?></span>
+    <button type="button" class="oneyCta_button <?php if ($hasError): ?>oneyCta_button-disabled<?php endif; ?>">
+        <span><?= $block->escapeHtml(__('Or pay in')); ?></span>
         <span class="oneyCta_logo oneyLogo oneyLogo-x3x4"></span>
         <span class="oneyCta_tooltip oneyLogo oneyLogo-tooltip"></span>
     </button>
-    <span class="oneyPopin <?php if ($hasError) : ?>oneyPopin-error<?php endif; ?>">
+    <span class="oneyPopin <?php if ($hasError): ?>oneyPopin-error<?php endif; ?>">
     </span>
 </div>

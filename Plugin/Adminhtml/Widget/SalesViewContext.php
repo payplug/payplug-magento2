@@ -22,9 +22,11 @@ class SalesViewContext
     }
 
     /**
+     * Add PayPlug links to admin order view
+     *
      * @param Order     $order
      * @param Container $subject
-     * 
+     *
      * @return null
      */
     protected function addPayplugLinks(Order $order, Container $subject)

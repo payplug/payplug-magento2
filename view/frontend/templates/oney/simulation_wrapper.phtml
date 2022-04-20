@@ -3,8 +3,7 @@
 $price = $block->getProduct()->getFinalPrice(1);
 ?>
 <div class="oney-wrapper oney-product">
-    <?php
-        echo $block->getChildBlock('payplug-payments-product-oney-simulation')
+    <?= $block->getChildBlock('payplug-payments-product-oney-simulation')
             ->setAmount($price)
             ->toHtml();
     ?>

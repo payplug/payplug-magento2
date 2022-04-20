@@ -6,26 +6,26 @@ use Payplug\Payments\Helper\Config;
 
 class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
-    const CACHE_TAG = 'payplug_payments_order_payment';
+    public const CACHE_TAG = 'payplug_payments_order_payment';
 
-    const ORDER_ID = 'order_id';
+    public const ORDER_ID = 'order_id';
 
-    const PAYMENT_ID = 'payment_id';
+    public const PAYMENT_ID = 'payment_id';
 
-    const IS_SANDBOX = 'is_sandbox';
+    public const IS_SANDBOX = 'is_sandbox';
 
-    const IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED = 'is_installment_plan_payment_processed';
+    public const IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED = 'is_installment_plan_payment_processed';
 
-    const SENT_BY = 'sent_by';
+    public const SENT_BY = 'sent_by';
 
-    const SENT_BY_VALUE = 'sent_by_value';
+    public const SENT_BY_VALUE = 'sent_by_value';
 
-    const LANGUAGE = 'language';
+    public const LANGUAGE = 'language';
 
-    const DESCRIPTION = 'description';
+    public const DESCRIPTION = 'description';
 
-    const SENT_BY_SMS = 'SMS';
-    const SENT_BY_EMAIL = 'EMAIL';
+    public const SENT_BY_SMS = 'SMS';
+    public const SENT_BY_EMAIL = 'EMAIL';
 
     /**
      * @var Config
@@ -52,12 +52,17 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
         $this->payplugConfig = $payplugConfig;
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function _construct()
     {
         $this->_init(\Payplug\Payments\Model\ResourceModel\Order\Payment::class);
     }
 
     /**
+     * Get entity identities
+     *
      * @return array
      */
     public function getIdentities()
@@ -66,6 +71,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get order id
+     *
      * @return int
      */
     public function getOrderId()
@@ -74,6 +81,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set order id
+     *
      * @param int $orderId
      *
      * @return $this
@@ -84,6 +93,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get payment id
+     *
      * @return string
      */
     public function getPaymentId()
@@ -92,6 +103,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set payment id
+     *
      * @param string $paymentId
      *
      * @return $this
@@ -102,6 +115,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get is sandbox
+     *
      * @return bool
      */
     public function isSandbox()
@@ -110,6 +125,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set is sandbox
+     *
      * @param bool $isSandbox
      *
      * @return $this
@@ -120,6 +137,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get installment plan processed flag
+     *
      * @return bool
      */
     public function isInstallmentPlanPaymentProcessed()
@@ -128,6 +147,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set installment plan processed flag
+     *
      * @param bool $isProcessed
      *
      * @return $this
@@ -138,6 +159,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get sent by
+     *
      * @return string|null
      */
     public function getSentBy()
@@ -146,6 +169,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set sent by
+     *
      * @param string|null $sentBy
      *
      * @return $this
@@ -156,6 +181,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get sent by value
+     *
      * @return string|null
      */
     public function getSentByValue()
@@ -164,6 +191,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set sent by value
+     *
      * @param string|null $sentByValue
      *
      * @return $this
@@ -174,6 +203,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get language
+     *
      * @return string|null
      */
     public function getLanguage()
@@ -182,6 +213,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set language
+     *
      * @param string|null $language
      *
      * @return $this
@@ -192,6 +225,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Get description
+     *
      * @return string|null
      */
     public function getDescription()
@@ -200,6 +235,8 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
     }
 
     /**
+     * Set description
+     *
      * @param string|null $description
      *
      * @return $this
@@ -256,28 +293,5 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
         $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
 
         return \Payplug\Payment::abort($this->getPaymentId());
-    }
-
-    /**
-     * @return array
-     */
-    public static function getAvailableOndemandSentBy()
-    {
-        return [
-            self::SENT_BY_SMS => __('SMS'),
-            self::SENT_BY_EMAIL => __('Email'),
-        ];
-    }
-
-    /**
-     * @return array
-     */
-    public static function getAvailableOndemandLanguage()
-    {
-        return [
-            'fr' => __('French'),
-            'en' => __('English'),
-            'it' => __('Italian'),
-        ];
     }
 }

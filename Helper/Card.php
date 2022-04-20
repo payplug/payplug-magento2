@@ -78,7 +78,9 @@ class Card extends AbstractHelper
     }
 
     /**
-     * @param $customerId
+     * Get customer last created card
+     *
+     * @param int $customerId
      *
      * @return int
      */
@@ -112,6 +114,8 @@ class Card extends AbstractHelper
     }
 
     /**
+     * Get customer cards
+     *
      * @param int  $customerId
      * @param bool $includeExpiredCards
      *
@@ -154,6 +158,8 @@ class Card extends AbstractHelper
     }
 
     /**
+     * Build field filter for repository search
+     *
      * @param string $field
      * @param mixed  $value
      * @param string $type
@@ -196,6 +202,8 @@ class Card extends AbstractHelper
     }
 
     /**
+     * Delete customer card
+     *
      * @param int $customerId
      * @param int $customerCardId
      */
@@ -206,6 +214,8 @@ class Card extends AbstractHelper
     }
 
     /**
+     * Get customer card
+     *
      * @param int $customerId
      * @param int $customerCardId
      *

@@ -74,13 +74,17 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
     }
 
     /**
+     * OnDemand new payment link send
+     *
      * @return \Magento\Framework\App\ResponseInterface
      */
     public function execute()
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
         $formData = $this->getRequest()->getParam('form');
         if ($formData === null) {
-            return $this->_redirect('sales/order');
+            return $resultRedirect->setPath('sales/order');
         }
         $params = $this->getRequest()->getParams();
         $params['order_id'] = $formData['order_id'];
@@ -90,7 +94,7 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
             if (!$this->payplugHelper->canSendNewPaymentLink($order)) {
                 $this->messageManager->addErrorMessage(__('A new payment link cannot be sent for this order.'));
 
-                return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
+                return $resultRedirect->setPath('sales/order/view', ['order_id' => $order->getId()]);
             }
 
             try {
@@ -102,7 +106,7 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
 
                 $this->_getSession()->setPaymentLinkFormData($formData);
 
-                return $this->_redirect('payplug_payments_admin/order/newPaymentLinkForm', [
+                return $resultRedirect->setPath('payplug_payments_admin/order/newPaymentLinkForm', [
                     'order_id' => $order->getId()
                 ]);
             } catch (PayplugException $e) {
@@ -121,9 +125,9 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
                 );
             }
 
-            return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
+            return $resultRedirect->setPath('sales/order/view', ['order_id' => $order->getId()]);
         }
 
-        return $this->_redirect('sales/order');
+        return $resultRedirect->setPath('sales/order');
     }
 }

@@ -13,6 +13,8 @@ use Payplug\Payments\Logger\Logger;
 class OneyInfo extends Info
 {
     /**
+     * Get PayPlug Oney payment details
+     *
      * @param \Payplug\Resource\Payment $payment
      * @param Order                     $order
      *

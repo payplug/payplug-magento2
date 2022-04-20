@@ -85,6 +85,8 @@ class SimulationCheckout extends \Magento\Framework\App\Action\Action
     }
 
     /**
+     * Transform simulation object into array
+     *
      * @param DataObject $object
      *
      * @return array

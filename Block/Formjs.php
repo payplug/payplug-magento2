@@ -25,21 +25,21 @@ class Formjs extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Get PayPlug js url
+     *
      * @return string
      */
     public function getJsUrl()
     {
-        $url = 'https://api.payplug.com';
-        if (isset($_SERVER['PAYPLUG_API_URL'])) {
-            $url = $_SERVER['PAYPLUG_API_URL'];
-        }
-
+        $url = $this->getRequest()->getServer('PAYPLUG_API_URL', 'https://api.payplug.com');
         $url .= '/js/1/form.latest.js';
 
         return $url;
     }
 
     /**
+     * Get embedded option
+     *
      * @return bool
      */
     public function isEmbedded()

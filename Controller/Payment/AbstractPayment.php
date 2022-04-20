@@ -48,6 +48,11 @@ abstract class AbstractPayment extends \Magento\Framework\App\Action\Action
         $this->payplugHelper = $payplugHelper;
     }
 
+    /**
+     * Get quote
+     *
+     * @return mixed
+     */
     protected function getQuote()
     {
         return $this->getCheckout()->getQuote();

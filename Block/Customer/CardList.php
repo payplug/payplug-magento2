@@ -20,8 +20,8 @@ class CardList extends \Magento\Framework\View\Element\Template
 
     /**
      * @param Template\Context $context
-     * @param Card             $helper
      * @param Session          $customerSession
+     * @param Card             $helper
      * @param array            $data
      */
     public function __construct(Template\Context $context, Session $customerSession, Card $helper, array $data = [])
@@ -32,6 +32,8 @@ class CardList extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Get customer saved PayPlug cards
+     *
      * @return \Payplug\Payments\Model\Customer\Card[]
      */
     public function getPayplugCards()
@@ -40,6 +42,8 @@ class CardList extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Format card expiration date
+     *
      * @param string $date
      *
      * @return string
@@ -50,6 +54,8 @@ class CardList extends \Magento\Framework\View\Element\Template
     }
 
     /**
+     * Build delete card url
+     *
      * @param int $customerCardId
      *
      * @return string

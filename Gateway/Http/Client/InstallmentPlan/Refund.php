@@ -32,6 +32,15 @@ class Refund implements ClientInterface
         $this->payplugLogger = $payplugLogger;
     }
 
+    /**
+     * Place Refund request
+     *
+     * @param TransferInterface $transferObject
+     *
+     * @return array
+     *
+     * @throws \Exception
+     */
     public function placeRequest(TransferInterface $transferObject)
     {
         $data = $transferObject->getBody();

@@ -2,26 +2,54 @@
 
 namespace Payplug\Payments\Block\Form;
 
-use Payplug\Payments\Model\Order\Payment;
+use Magento\Framework\View\Element\Template;
+use Payplug\Payments\Helper\OndemandOptions;
 
 class Ondemand extends \Magento\Payment\Block\Form
 {
+    /**
+     * @var string
+     */
     protected $_template = 'Payplug_Payments::form/ondemand.phtml';
 
     /**
+     * @var OndemandOptions
+     */
+    private $onDemandHelper;
+
+    /**
+     * @param Template\Context $context
+     * @param OndemandOptions  $onDemandHelper
+     * @param array            $data
+     */
+    public function __construct(
+        Template\Context $context,
+        OndemandOptions $onDemandHelper,
+        array $data = []
+    ) {
+        parent::__construct($context, $data);
+
+        $this->onDemandHelper = $onDemandHelper;
+    }
+
+    /**
+     * Get available SentBy options
+     *
      * @return array
      */
     public function getSentByOptions()
     {
-        return Payment::getAvailableOndemandSentBy();
+        return $this->onDemandHelper->getAvailableOndemandSentBy();
     }
 
     /**
+     * Get available language options
+     *
      * @return array
      */
     public function getLanguages()
     {
-        return Payment::getAvailableOndemandLanguage();
+        return $this->onDemandHelper->getAvailableOndemandLanguage();
     }
 
     /**

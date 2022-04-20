@@ -4,34 +4,39 @@ namespace Payplug\Payments\Model\Customer;
 
 class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
-    const CACHE_TAG = 'payplug_payments_card';
+    public const CACHE_TAG = 'payplug_payments_card';
 
-    const CUSTOMER_ID = 'customer_id';
+    public const CUSTOMER_ID = 'customer_id';
 
-    const CUSTOMER_CARD_ID = 'customer_card_id';
+    public const CUSTOMER_CARD_ID = 'customer_card_id';
 
-    const COMPANY_ID = 'company_id';
+    public const COMPANY_ID = 'company_id';
 
-    const IS_SANDBOX = 'is_sandbox';
+    public const IS_SANDBOX = 'is_sandbox';
 
-    const CARD_TOKEN = 'card_token';
+    public const CARD_TOKEN = 'card_token';
 
-    const LAST_FOUR = 'last4';
+    public const LAST_FOUR = 'last4';
 
-    const EXP_DATE = 'exp_date';
+    public const EXP_DATE = 'exp_date';
 
-    const BRAND = 'brand';
+    public const BRAND = 'brand';
 
-    const COUNTRY = 'country';
+    public const COUNTRY = 'country';
 
-    const METADATA = 'metadata';
+    public const METADATA = 'metadata';
 
+    /**
+     * @inheritDoc
+     */
     protected function _construct()
     {
         $this->_init(\Payplug\Payments\Model\ResourceModel\Customer\Card::class);
     }
 
     /**
+     * Get entity identities
+     *
      * @return array
      */
     public function getIdentities()
@@ -40,6 +45,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get customer id
+     *
      * @return int
      */
     public function getCustomerId()
@@ -48,6 +55,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set customer id
+     *
      * @param int $customerId
      *
      * @return $this
@@ -58,6 +67,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get customer card id
+     *
      * @return int
      */
     public function getCustomerCardId()
@@ -66,6 +77,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set customer card id
+     *
      * @param int $customerCardId
      *
      * @return $this
@@ -76,6 +89,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get company id
+     *
      * @return int
      */
     public function getCompanyId()
@@ -84,6 +99,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set company id
+     *
      * @param int $companyId
      *
      * @return $this
@@ -94,6 +111,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get is sandbox
+     *
      * @return bool
      */
     public function isSandbox()
@@ -102,6 +121,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set is sandbox
+     *
      * @param bool $isSandbox
      *
      * @return $this
@@ -112,6 +133,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get card token
+     *
      * @return string
      */
     public function getCardToken()
@@ -120,6 +143,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set card token
+     *
      * @param string $cardToken
      *
      * @return $this
@@ -130,6 +155,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get last four chars
+     *
      * @return string
      */
     public function getLastFour()
@@ -138,6 +165,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set last four chars
+     *
      * @param string $lastFour
      *
      * @return $this
@@ -148,6 +177,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get expiration date
+     *
      * @return string
      */
     public function getExpDate()
@@ -156,6 +187,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set expiration date
+     *
      * @param string $expDate
      *
      * @return $this
@@ -166,6 +199,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get brand
+     *
      * @return string
      */
     public function getBrand()
@@ -174,6 +209,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set brand
+     *
      * @param string $brand
      *
      * @return $this
@@ -184,6 +221,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get country
+     *
      * @return string
      */
     public function getCountry()
@@ -192,6 +231,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set country
+     *
      * @param string $country
      *
      * @return $this
@@ -202,6 +243,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Get metadata
+     *
      * @return string
      */
     public function getMetadata()
@@ -210,6 +253,8 @@ class Card extends \Magento\Framework\Model\AbstractModel implements \Magento\Fr
     }
 
     /**
+     * Set metadata
+     *
      * @param string $metadata
      *
      * @return $this

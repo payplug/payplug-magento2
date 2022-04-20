@@ -52,6 +52,8 @@ class Simulation extends Template
     }
 
     /**
+     * Set amount
+     *
      * @param float|null $amount
      *
      * @return $this
@@ -64,6 +66,8 @@ class Simulation extends Template
     }
 
     /**
+     * Get amount
+     *
      * @return float|null
      */
     public function getAmount()
@@ -72,6 +76,8 @@ class Simulation extends Template
     }
 
     /**
+     * Set quantity
+     *
      * @param int|null $qty
      *
      * @return $this
@@ -84,6 +90,8 @@ class Simulation extends Template
     }
 
     /**
+     * Get quantity
+     *
      * @return int|null
      */
     public function getQty()
@@ -92,6 +100,8 @@ class Simulation extends Template
     }
 
     /**
+     * Get Oney simulation
+     *
      * @param bool $validationOnly
      *
      * @return Result
@@ -102,6 +112,8 @@ class Simulation extends Template
     }
 
     /**
+     * Get Oney min/max amounts
+     *
      * @return array|bool
      */
     public function getOneyAmounts()

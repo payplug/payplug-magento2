@@ -22,6 +22,8 @@ class SubjectReader extends \Magento\Payment\Gateway\Helper\SubjectReader
     }
 
     /**
+     * Get quote
+     *
      * @return \Magento\Quote\Model\Quote
      */
     public function getQuote()

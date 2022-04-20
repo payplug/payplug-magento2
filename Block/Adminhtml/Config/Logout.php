@@ -49,6 +49,8 @@ class Logout extends \Magento\Config\Block\System\Config\Form\Field
     }
 
     /**
+     * Get button url according to current scope
+     *
      * @return string
      */
     private function getButtonUrl()

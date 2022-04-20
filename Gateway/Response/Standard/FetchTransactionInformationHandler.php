@@ -58,8 +58,14 @@ class FetchTransactionInformationHandler implements HandlerInterface
     private $orderPaymentRepository;
 
     /**
-     * TransactionIdHandler constructor.
-     * @param SubjectReader $subjectReader
+     * @param SubjectReader          $subjectReader
+     * @param Logger                 $payplugLogger
+     * @param CardFactory            $cardFactory
+     * @param CustomerCardRepository $customerCardRepository
+     * @param OrderSender            $orderSender
+     * @param Card                   $cardHelper
+     * @param Config                 $payplugConfig
+     * @param OrderPaymentRepository $orderPaymentRepository
      */
     public function __construct(
         SubjectReader $subjectReader,

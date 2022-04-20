@@ -146,6 +146,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get order payment
+     *
      * @param int $orderId
      *
      * @return \Payplug\Payments\Model\Order\Payment
@@ -156,6 +158,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get order payment
+     *
      * @param string $paymentId
      *
      * @return \Payplug\Payments\Model\Order\Payment
@@ -166,6 +170,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get order installment plan
+     *
      * @param int $orderId
      *
      * @return \Payplug\Payments\Model\Order\InstallmentPlan
@@ -176,6 +182,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get order last payment
+     *
      * @param int $orderId
      *
      * @return \Payplug\Payments\Model\Order\Payment|null
@@ -188,6 +196,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get order payments
+     *
      * @param int $orderId
      *
      * @return array|Payment[]
@@ -219,6 +229,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Generate field filter for repository search
+     *
      * @param string $field
      * @param mixed  $value
      * @param string $type
@@ -245,6 +257,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get payment error message
+     *
      * @param IVerifiableAPIResource $resource
      *
      * @return string
@@ -330,6 +344,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Update order status
+     *
      * @param Order $order
      * @param bool  $save
      */
@@ -354,6 +370,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Update order
+     *
      * @param Order $order
      *
      * @return Order
@@ -402,6 +420,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Abort PayPlug payment if payment has failed
+     *
      * @param Order $order
      */
     public function checkPaymentFailureAndAbortPayment(Order $order)
@@ -448,6 +468,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Get order payment
+     *
      * @param Order $order
      *
      * @return Payment|null
@@ -485,6 +507,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if order can be cancelled
+     *
      * @param Order $order
      *
      * @return bool
@@ -504,6 +528,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Force order cancellation (abort payment)
+     *
      * @param Order $order
      *
      * @throws LocalizedException
@@ -528,7 +554,8 @@ class Data extends AbstractHelper
             if ($order->getState() !== Order::STATE_CANCELED) {
                 // Order is no longer in review and hasn't been canceled
                 // It means that the payment was validated
-                throw new LocalizedException(__('The order has been updated without being canceled because its payment has been validated.'));
+                throw new LocalizedException(__('The order has been updated without being canceled ' .
+                    'because its payment has been validated.'));
             }
 
             // Order isnt in review anymore, no need to process further
@@ -543,6 +570,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Cancel order payment
+     *
      * @param Order $order
      *
      * @return bool
@@ -572,6 +601,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Cancel installment plan payment
+     *
      * @param Order $order
      * @param bool  $cancelPayment
      */
@@ -603,6 +634,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Cancel Standard payment
+     *
      * @param Order $order
      */
     public function cancelStandardPayment(Order $order)
@@ -612,6 +645,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if order&payment have been validated
+     *
      * @param Order $order
      *
      * @return bool
@@ -623,7 +658,10 @@ class Data extends AbstractHelper
         }
 
         // If Oney payment is still being reviewed, order is validated but still in Payment Review state
-        if (($order->getPayment()->getMethod() == Oney::METHOD_CODE || $order->getPayment()->getMethod() == OneyWithoutFees::METHOD_CODE) && $order->getState() == Order::STATE_PAYMENT_REVIEW) {
+        if (($order->getPayment()->getMethod() == Oney::METHOD_CODE ||
+            $order->getPayment()->getMethod() == OneyWithoutFees::METHOD_CODE) &&
+            $order->getState() == Order::STATE_PAYMENT_REVIEW
+        ) {
             return true;
         }
 
@@ -639,6 +677,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Send OnDemand payment link
+     *
      * @param Order $order
      * @param array $paymentLinkData
      *
@@ -690,6 +730,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Create OrderProcessing entity
+     *
      * @param Order $order
      *
      * @return Processing
@@ -726,6 +768,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * InstallmentPlan statuses
+     *
      * @return array
      */
     public function getInstallmentPlanStatusesLabel()
@@ -739,6 +783,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if payment is a PayPlug payment
+     *
      * @param string $code
      *
      * @return bool
@@ -753,6 +799,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if payment is a Oney PayPlug payment
+     *
      * @param string $code
      *
      * @return bool
@@ -764,6 +812,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Update InstallmentPlan status
+     *
      * @param \Payplug\Payments\Model\Order\InstallmentPlan $orderInstallmentPlan
      * @param \Payplug\Resource\InstallmentPlan             $installmentPlan
      */
@@ -784,6 +834,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Refresh admin order grid
+     *
      * @param int $orderId
      */
     public function refreshSalesGrid($orderId)
@@ -792,6 +844,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Update order & payment
+     *
      * @param Order $order
      */
     private function updateOrderPayment($order)
@@ -823,7 +877,8 @@ class Data extends AbstractHelper
                     $order->setState(Order::STATE_PROCESSING);
                     $invoice->pay();
                     $payment->setBaseAmountPaidOnline($order->getBaseGrandTotal());
-                    $message = __('Registered update about approved payment.') . ' ' . __('Transaction ID: "%1"', $transactionId);
+                    $message = __('Registered update about approved payment.') . ' '
+                        . __('Transaction ID: "%1"', $transactionId);
                     $order->addStatusToHistory(
                         $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING),
                         $message
@@ -841,6 +896,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if order's payment has failed
+     *
      * @param Order $order
      *
      * @return bool
@@ -863,6 +920,8 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Cancel order & invoice
+     *
      * @param Order $order
      * @param bool  $checkPaymentStatus
      */

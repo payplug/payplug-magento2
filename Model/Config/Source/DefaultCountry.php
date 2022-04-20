@@ -29,6 +29,8 @@ class DefaultCountry implements ArrayInterface
     }
 
     /**
+     * Get allowed country list
+     *
      * @return array
      */
     public function toOptionArray()

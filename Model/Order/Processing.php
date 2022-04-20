@@ -5,18 +5,23 @@ namespace Payplug\Payments\Model\Order;
 class Processing extends \Magento\Framework\Model\AbstractModel implements
     \Magento\Framework\DataObject\IdentityInterface
 {
-    const CACHE_TAG = 'payplug_payments_order_processing';
+    public const CACHE_TAG = 'payplug_payments_order_processing';
 
-    const ORDER_ID = 'order_id';
+    public const ORDER_ID = 'order_id';
 
-    const CREATED_AT = 'created_at';
+    public const CREATED_AT = 'created_at';
 
+    /**
+     * @inheritDoc
+     */
     protected function _construct()
     {
         $this->_init(\Payplug\Payments\Model\ResourceModel\Order\Processing::class);
     }
 
     /**
+     * Get entity identities
+     *
      * @return array
      */
     public function getIdentities()
@@ -25,6 +30,8 @@ class Processing extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Get order id
+     *
      * @return int
      */
     public function getOrderId()
@@ -33,6 +40,8 @@ class Processing extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Set order id
+     *
      * @param int $orderId
      *
      * @return $this
@@ -43,6 +52,8 @@ class Processing extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Get created at
+     *
      * @return string
      */
     public function getCreatedAt()
@@ -51,6 +62,8 @@ class Processing extends \Magento\Framework\Model\AbstractModel implements
     }
 
     /**
+     * Set created at
+     *
      * @param string $createdAt
      *
      * @return $this

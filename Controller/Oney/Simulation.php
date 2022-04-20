@@ -95,6 +95,8 @@ class Simulation extends \Magento\Framework\App\Action\Action
     }
 
     /**
+     * Get product for oney simulation
+     *
      * @param array $params
      *
      * @return \Magento\Catalog\Model\Product|null

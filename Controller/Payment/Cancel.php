@@ -34,8 +34,15 @@ class Cancel extends AbstractPayment
         $this->orderRepository = $orderRepository;
     }
 
+    /**
+     * Cancel PayPlug payment
+     *
+     * @return mixed
+     */
     public function execute()
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
         $redirectUrlCart = 'checkout/cart';
         try {
             $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
@@ -43,7 +50,7 @@ class Cancel extends AbstractPayment
             if (!$lastIncrementId) {
                 $this->logger->error('Could not retrieve last order id');
 
-                return $this->_redirect($redirectUrlCart);
+                return $resultRedirect->setPath($redirectUrlCart);
             }
             $order = $this->salesOrderFactory->create();
             /** @var $order Order */
@@ -52,7 +59,7 @@ class Cancel extends AbstractPayment
             if (!$order->getId()) {
                 $this->logger->error(sprintf('Could not retrieve order with id %s', $lastIncrementId));
 
-                return $this->_redirect($redirectUrlCart);
+                return $resultRedirect->setPath($redirectUrlCart);
             }
 
             $this->payplugHelper->cancelOrderAndInvoice($order);
@@ -64,15 +71,17 @@ class Cancel extends AbstractPayment
 
             $this->rebuildCart($order);
 
-            return $this->_redirect($redirectUrlCart);
+            return $resultRedirect->setPath($redirectUrlCart);
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
 
-            return $this->_redirect($redirectUrlCart);
+            return $resultRedirect->setPath($redirectUrlCart);
         }
     }
 
     /**
+     * Rebuild customer cart after order cancellation
+     *
      * @param Order $order
      */
     private function rebuildCart($order)

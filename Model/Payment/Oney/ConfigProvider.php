@@ -57,6 +57,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Get Oney payment config
+     *
      * @return array
      */
     public function getConfig()

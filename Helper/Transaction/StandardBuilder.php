@@ -94,6 +94,7 @@ class StandardBuilder extends AbstractBuilder
     /**
      * Check if card can be saved on payment page
      *
+     * @param int         $storeId
      * @param string|null $currentCard
      * @param int|null    $customerId
      *

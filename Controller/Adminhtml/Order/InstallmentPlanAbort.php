@@ -70,15 +70,19 @@ class InstallmentPlanAbort extends \Magento\Sales\Controller\Adminhtml\Order
     }
 
     /**
+     * Abort installment plan
+     *
      * @return \Magento\Framework\App\ResponseInterface
      */
     public function execute()
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
         if ($order = $this->_initOrder()) {
             if (!$this->payplugHelper->canAbortInstallmentPlan($order)) {
                 $this->messageManager->addErrorMessage(__('The installment plan cannot be aborted for this order.'));
 
-                return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
+                return $resultRedirect->setPath('sales/order/view', ['order_id' => $order->getId()]);
             }
 
             try {
@@ -99,9 +103,9 @@ class InstallmentPlanAbort extends \Magento\Sales\Controller\Adminhtml\Order
                 );
             }
 
-            return $this->_redirect('sales/order/view', ['order_id' => $order->getId()]);
+            return $resultRedirect->setPath('sales/order/view', ['order_id' => $order->getId()]);
         }
 
-        return $this->_redirect('sales/order');
+        return $resultRedirect->setPath('sales/order');
     }
 }

@@ -60,6 +60,8 @@ abstract class AbstractBuilder extends AbstractHelper
     }
 
     /**
+     * Build PayPlug payment transaction
+     *
      * @param OrderAdapterInterface $order
      * @param InfoInterface         $payment
      * @param Quote                 $quote
@@ -81,6 +83,8 @@ abstract class AbstractBuilder extends AbstractHelper
     }
 
     /**
+     * Build amount data
+     *
      * @param OrderAdapterInterface $order
      *
      * @return array
@@ -95,6 +99,8 @@ abstract class AbstractBuilder extends AbstractHelper
     }
 
     /**
+     * Build customer data
+     *
      * @param OrderAdapterInterface $order
      * @param InfoInterface         $payment
      * @param Quote                 $quote
@@ -155,6 +161,8 @@ abstract class AbstractBuilder extends AbstractHelper
     }
 
     /**
+     * Build customer address data
+     *
      * @param object $address
      * @param string $language
      * @param array  $allowedCountries
@@ -218,6 +226,8 @@ abstract class AbstractBuilder extends AbstractHelper
     }
 
     /**
+     * Build order data
+     *
      * @param OrderAdapterInterface $order
      * @param Quote                 $quote
      *
@@ -248,6 +258,8 @@ abstract class AbstractBuilder extends AbstractHelper
     }
 
     /**
+     * Build payment data
+     *
      * @param OrderAdapterInterface $order
      * @param InfoInterface         $payment
      * @param Quote                 $quote

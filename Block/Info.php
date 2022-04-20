@@ -75,6 +75,8 @@ class Info extends \Magento\Payment\Block\Info
     }
 
     /**
+     * Get PayPlug payment details
+     *
      * @param \Payplug\Resource\Payment $payment
      * @param Order                     $order
      *

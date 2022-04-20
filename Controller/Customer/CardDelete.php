@@ -48,6 +48,11 @@ class CardDelete extends \Magento\Framework\App\Action\Action
         return parent::dispatch($request);
     }
 
+    /**
+     * Delete customer card
+     *
+     * @return mixed
+     */
     public function execute()
     {
         try {
@@ -58,7 +63,8 @@ class CardDelete extends \Magento\Framework\App\Action\Action
         } catch (NoSuchEntityException $e) {
             $this->messageManager->addErrorMessage($e->getMessage());
         }
+        $resultRedirect = $this->resultRedirectFactory->create();
 
-        return $this->_redirect('payplug_payments/customer/cardList');
+        return $resultRedirect->setPath('payplug_payments/customer/cardList');
     }
 }
