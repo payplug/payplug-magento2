@@ -6,8 +6,9 @@ if (!$oneySimulation->getSuccess()) {
     $hasError = true;
 }
 $isOneyWithoutFees = $oneySimulation->getMethod() === \Payplug\Payments\Gateway\Config\OneyWithoutFees::METHOD_CODE;
+$isItalianStore = $block->isItalianStore();
 ?>
-<div class="oneyCta<?= $isOneyWithoutFees ? ' oney-without-fees' : ''; ?>">
+<div class="oneyCta<?= $isOneyWithoutFees ? ' oney-without-fees' : ''; ?><?= $isItalianStore ? ' oney-it' : ''; ?>">
     <button type="button" class="oneyCta_button <?php if ($hasError): ?>oneyCta_button-disabled<?php endif; ?>">
         <span><?= $block->escapeHtml(__('Or pay in')); ?></span>
         <span class="oneyCta_logo oneyLogo oneyLogo-x3x4"></span>

@@ -60,7 +60,7 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                 <?php endif; ?>
                 <?php foreach ($option->getSchedules() as $i => $schedule): ?>
                     <li>
-                        <span><?= $block->escapeHtml(__('Installment %1', $i + 1)); ?> :</span>
+                        <span><?= $block->escapeHtml(__(sprintf('Installment %d', $i + 1))); ?> :</span>
                         <span>
                             <b>
                                 <?= /* @noEscape */ $pricingHelper->currency($schedule->getAmount(), true, false); ?>
@@ -117,5 +117,18 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
     ?>
     <span class="oneyPopin_legal">
         <?= /* @noEscape */ __($legalOney, $minAmount, $maxAmount); ?>
+        <?php if ($block->isMerchandItalian()): ?>
+            <span class="legal-it">
+                <?php if (!$isOneyWithoutFees): ?>
+                <a href="<?= $block->escapeHtmlAttr($block->getMoreInfoUrl()); ?>" target="_blank" download>
+                    <?= $block->escapeHtml(__('More info')); ?>
+                </a>
+                <?php else: ?>
+                <a href="<?= $block->escapeHtmlAttr($block->getMoreInfoUrlWithoutFees()); ?>" target="_blank" download>
+                    <?= $block->escapeHtml(__('More info')); ?>
+                </a>
+                <?php endif; ?>
+            </span>
+        <?php endif; ?>
     </span>
 <?php endif; ?>

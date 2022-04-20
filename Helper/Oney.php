@@ -202,19 +202,9 @@ class Oney extends AbstractHelper
             return false;
         }
 
-        $apiKey = $liveApiKey;
-        $environmentMode = $this->scopeConfig->getValue(
-            Config::CONFIG_PATH . 'environmentmode',
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-        if ($environmentMode == Config::ENVIRONMENT_TEST) {
-            $apiKey = $testApiKey;
-        }
-
         $storeLocale = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE, $storeId);
         $localeCountry = explode('_', $storeLocale)[1] ?? null;
-        if ($localeCountry !== $this->getMerchandCountry($storeId, $apiKey)) {
+        if ($localeCountry !== $this->getMerchandCountry()) {
             return false;
         }
 
@@ -222,21 +212,70 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * Get PayPlug merchand country
+     * Check if merchand has an italian PayPlug account
      *
-     * @param int         $storeId
-     * @param string|null $apiKey
+     * @return bool
+     */
+    public function isMerchandItalian()
+    {
+        return $this->getMerchandCountry() === 'IT';
+    }
+
+    /**
+     * Get more info url
+     *
+     * @return string
+     */
+    public function getMoreInfoUrl()
+    {
+        return 'https://www.payplug.com/hubfs/ONEY/payplug-italy.pdf';
+    }
+
+    /**
+     * Get more info url
+     *
+     * @return string
+     */
+    public function getMoreInfoUrlWithoutFees()
+    {
+        return 'https://www.payplug.com/hubfs/ONEY/payplug-italy-no-fees.pdf';
+    }
+
+    /**
+     * Get PayPlug merchand country
      *
      * @return mixed|string
      */
-    private function getMerchandCountry(int $storeId, ?string $apiKey)
+    private function getMerchandCountry()
     {
+        $storeId = $this->storeManager->getStore()->getId();
         $savedMerchandCountry = $this->getMerchandCountryFromConfig($storeId);
         if (!empty($savedMerchandCountry)) {
             return $savedMerchandCountry;
         }
 
         try {
+            $testApiKey = $this->scopeConfig->getValue(
+                Config::CONFIG_PATH . 'test_api_key',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            $liveApiKey = $this->scopeConfig->getValue(
+                Config::CONFIG_PATH . 'live_api_key',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+
+            $apiKey = $liveApiKey;
+            $environmentMode = $this->scopeConfig->getValue(
+                Config::CONFIG_PATH . 'environmentmode',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            if ($environmentMode == Config::ENVIRONMENT_TEST) {
+                $apiKey = $testApiKey;
+            }
+
             $result = $this->login->getAccount($apiKey);
             if (!$result['status']) {
                 return '';
