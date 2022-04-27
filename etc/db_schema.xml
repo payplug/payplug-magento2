@@ -3,7 +3,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="payplug_payments_card" resource="default" engine="innodb" comment="PayPlug Card Table">
         <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
-        <column xsi:type="int" name="customer_id" unsigned="true" nullable="false" identity="false" comment="Customer ID"/>
+        <column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Customer ID"/>
         <column xsi:type="int" name="customer_card_id" unsigned="true" nullable="false" identity="false" comment="Customer Card ID"/>
         <column xsi:type="int" name="company_id" unsigned="true" nullable="false" identity="false" comment="Company ID"/>
         <column xsi:type="boolean" name="is_sandbox" nullable="false" identity="false" default="0" comment="Is Sandbox"/>
@@ -46,7 +46,7 @@
     </table>
     <table name="payplug_payments_order_processing" resource="default" engine="innodb" comment="PayPlug Order Processing Table">
         <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
-        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
+        <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
         <column xsi:type="datetime" name="created_at" nullable="false" comment="Created at"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="entity_id"/>
