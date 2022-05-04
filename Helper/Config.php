@@ -20,7 +20,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
-    public const MODULE_VERSION = '1.20.1';
+    public const MODULE_VERSION = '1.21.O';
 
     /**
      * @var WriterInterface
