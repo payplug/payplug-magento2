@@ -22,6 +22,8 @@ class Logout extends \Magento\Backend\App\Action
     }
 
     /**
+     * Logout PayPlug account
+     *
      * @return \Magento\Framework\App\ResponseInterface
      */
     public function execute()
@@ -42,6 +44,8 @@ class Logout extends \Magento\Backend\App\Action
             $params['store'] = $store;
         }
 
-        return $this->_redirect('adminhtml/system_config/edit', $params);
+        $resultRedirect = $this->resultRedirectFactory->create();
+
+        return $resultRedirect->setPath('adminhtml/system_config/edit', $params);
     }
 }

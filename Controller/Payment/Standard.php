@@ -10,6 +10,11 @@ use Payplug\Exception\PayplugException;
 
 class Standard extends AbstractPayment
 {
+    /**
+     * Retrieve PayPlug Standard payment url
+     *
+     * @return Json
+     */
     public function execute()
     {
         $shouldRedirect = $this->getRequest()->getParam('should_redirect', true);
@@ -100,6 +105,8 @@ class Standard extends AbstractPayment
     }
 
     /**
+     * Get last order
+     *
      * @return Order
      *
      * @throws \Exception

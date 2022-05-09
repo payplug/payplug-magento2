@@ -1,0 +1,66 @@
+{
+    "payplug_payments_card": {
+        "column": {
+            "entity_id": true,
+            "customer_id": true,
+            "customer_card_id": true,
+            "company_id": true,
+            "is_sandbox": true,
+            "card_token": true,
+            "last4": true,
+            "exp_date": true,
+            "brand": true,
+            "country": true,
+            "metadata": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "PAYPLUG_PAYMENTS_CARD_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID": true
+        }
+    },
+    "payplug_payments_order_installment_plan": {
+        "column": {
+            "entity_id": true,
+            "order_id": true,
+            "installment_plan_id": true,
+            "is_sandbox": true,
+            "status": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "payplug_payments_order_payment": {
+        "column": {
+            "entity_id": true,
+            "order_id": true,
+            "payment_id": true,
+            "is_sandbox": true,
+            "is_installment_plan_payment_processed": true,
+            "sent_by": true,
+            "sent_by_value": true,
+            "language": true,
+            "description": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "payplug_payments_order_processing": {
+        "column": {
+            "entity_id": true,
+            "order_id": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "PAYPLUG_PAYMENTS_ORDER_PROCESSING_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        }
+    },
+    "sales_order_grid": {
+        "column": {
+            "payplug_payments_installment_plan_status": true,
+            "payplug_payments_total_due": true
+        }
+    }
+}

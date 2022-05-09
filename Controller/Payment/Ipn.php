@@ -50,6 +50,7 @@ class Ipn extends AbstractPayment
 
     /**
      * Action called when IPN is received
+     *
      * Can update order status when payment or refund notification is received
      */
     public function execute()
@@ -117,6 +118,8 @@ class Ipn extends AbstractPayment
     }
 
     /**
+     * Get configuration value
+     *
      * @param string      $field
      * @param int         $storeId
      * @param string|null $path
@@ -129,6 +132,8 @@ class Ipn extends AbstractPayment
     }
 
     /**
+     * Process debug ipn call
+     *
      * @param Raw $response
      *
      * @return Raw|Json
@@ -167,6 +172,8 @@ class Ipn extends AbstractPayment
     }
 
     /**
+     * Process ipn payment call
+     *
      * @param Raw     $response
      * @param Payment $resource
      */
@@ -203,6 +210,8 @@ class Ipn extends AbstractPayment
     }
 
     /**
+     * Handle payment update
+     *
      * @param Raw     $response
      * @param Order   $order
      */
@@ -241,6 +250,8 @@ class Ipn extends AbstractPayment
     }
 
     /**
+     * Process installment plan ipn call
+     *
      * @param Raw             $response
      * @param InstallmentPlan $resource
      */
@@ -276,6 +287,8 @@ class Ipn extends AbstractPayment
     }
 
     /**
+     * Process refund ipn call
+     *
      * @param Raw    $response
      * @param Refund $resource
      */

@@ -11,6 +11,8 @@ use Magento\Framework\App\Helper\AbstractHelper;
 class Phone extends AbstractHelper
 {
     /**
+     * Get formatted phone
+     *
      * @param string $phone
      * @param string $country
      *

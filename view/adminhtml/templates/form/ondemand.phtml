@@ -15,8 +15,10 @@ $language = $block->getAdditionalData('language');
         <div class="admin__field-control">
             <select id="<?= /* @noEscape */ $code ?>_sent_by" name="payment[sent_by]"
                     class="required-entry admin__control-select">
-                <?php foreach ($block->getSentByOptions() as $typeCode => $typeName) : ?>
-                    <option value="<?= $block->escapeHtml($typeCode) ?>" <?php if ($typeCode == $sentBy) : ?>selected="selected"<?php endif ?>>
+                <?php foreach ($block->getSentByOptions() as $typeCode => $typeName): ?>
+                    <option value="<?= $block->escapeHtml($typeCode) ?>"
+                            <?php if ($typeCode == $sentBy): ?>selected="selected"<?php endif ?>
+                    >
                         <?= $block->escapeHtml($typeName) ?>
                     </option>
                 <?php endforeach ?>
@@ -42,8 +44,10 @@ $language = $block->getAdditionalData('language');
                     name="payment[language]"
                     class="required-entry admin__control-select"
             >
-                <?php foreach ($block->getLanguages() as $languageCode => $languageName) : ?>
-                    <option value="<?= $block->escapeHtml($languageCode) ?>" <?php if ($languageCode == $language) : ?>selected="selected"<?php endif ?>>
+                <?php foreach ($block->getLanguages() as $languageCode => $languageName): ?>
+                    <option value="<?= $block->escapeHtml($languageCode) ?>"
+                            <?php if ($languageCode == $language): ?>selected="selected"<?php endif ?>
+                    >
                         <?= $block->escapeHtml($languageName) ?>
                     </option>
                 <?php endforeach ?>
@@ -66,8 +70,11 @@ $language = $block->getAdditionalData('language');
     <div class="field-number admin__field">
         <div class="admin__field-control">
             <?php $buttonTitle = __('Save'); ?>
-            <button title="<?= $block->escapeHtml($buttonTitle); ?>" type="button" class="action-default scalable action-secondary">
-                <span><?= $buttonTitle; ?></span>
+            <button title="<?= $block->escapeHtml($buttonTitle); ?>"
+                    type="button"
+                    class="action-default scalable action-secondary"
+            >
+                <span><?= $block->escapeHtml($buttonTitle); ?></span>
             </button>
         </div>
     </div>

@@ -32,6 +32,8 @@ class OrderInstallmentPlanRepository
     }
 
     /**
+     * Get entity
+     *
      * @param mixed       $id
      * @param string|null $field
      *
@@ -51,6 +53,8 @@ class OrderInstallmentPlanRepository
     }
 
     /**
+     * Save entity
+     *
      * @param OrderInstallmentPlan $orderInstallmentPlan
      *
      * @return OrderInstallmentPlan

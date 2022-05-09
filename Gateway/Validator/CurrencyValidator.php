@@ -38,6 +38,8 @@ class CurrencyValidator extends AbstractValidator
     }
 
     /**
+     * Validate currency for PayPlug payment
+     *
      * @param array $validationSubject
      *
      * @return \Magento\Payment\Gateway\Validator\ResultInterface

@@ -20,6 +20,11 @@ define([
         redirectAfterPlaceOrder: false,
         isLoading: false,
         isOneyPlaceOrderDisabled: ko.observable(false),
+        scheduleLabels: [
+            {days: 30, label: $.mage.__('In 30 days')},
+            {days: 60, label: $.mage.__('In 60 days')},
+            {days: 90, label: $.mage.__('In 90 days')},
+        ],
 
         initialize: function () {
             var self = this;
@@ -171,44 +176,43 @@ define([
             this.getOneyContainer().find('.oney-submit-button').find('span').html(label);
         },
         buildOneyDetail: function(oneySimulationResult){
-            var tmpDiv = $('<div/>');
-            var optionsWrapper = $('<div/>').addClass('oneyOption_wrapper');
+            var tmpDiv = $('<div></div>');
+            var optionsWrapper = $('<div></div>').addClass('oneyOption_wrapper');
             var label = this.getPaymentTypeLabel();
 
             for (var i = 0; i < oneySimulationResult.options.length; i++) {
                 var optionData = oneySimulationResult.options[i];
                 var type = optionData.type;
-                var option = $('<label/>', { 'data-type': type }).addClass('oneyOption oneyOption-' + type);
+                var option = $('<label></label>', { 'data-type': type }).addClass('oneyOption oneyOption-' + type);
 
                 // Title
-                var title = $('<div/>').addClass('oneyOption_title');
-                title.append($('<span/>').addClass('oneyOption_logo oneyLogo oneyLogo-' + type));
+                var title = $('<div></div>').addClass('oneyOption_title');
+                title.append($('<span></span>').addClass('oneyOption_logo oneyLogo oneyLogo-' + type));
                 title.append(label.replace('%1', type));
                 option.append(title);
 
                 // Option detail
                 if (typeof optionData.schedules !== 'undefined' && optionData.schedules.length > 0) {
-                    var detail = $('<div/>').addClass('oneyOption_prices');
-                    var list = $('<ul/>').addClass('oneyOption_list');
-                    var firstDeposit = $('<li/>')
-                        .append($('<span/>').html($.mage.__('Total order amount')))
-                        .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.first_deposit)))
+                    var detail = $('<div></div>').addClass('oneyOption_prices');
+                    var list = $('<ul></ul>').addClass('oneyOption_list');
+                    var firstDeposit = $('<li></li>')
+                        .append($('<span></span>').html($.mage.__('Total order amount')))
+                        .append($('<span></span>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.first_deposit)))
                     ;
                     list.append(firstDeposit);
                     var daysForPayment = 30;
-                    var scheduleLabel = $.mage.__('In %1 days');
                     for (var j = 0; j < optionData.schedules.length; j++) {
                         var scheduleData = optionData.schedules[j];
-                        var schedule = $('<li/>')
-                            .append($('<span/>').html(scheduleLabel.replace('%1', daysForPayment)))
-                            .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(scheduleData.amount)))
+                        var schedule = $('<li></li>')
+                            .append($('<span></span>').html(this.getScheduleLabel(daysForPayment)))
+                            .append($('<span></span>').addClass('oneyOption_price').html(this.getFormattedPrice(scheduleData.amount)))
                         ;
                         list.append(schedule);
                         daysForPayment += 30;
                     }
-                    var totalAmount = $('<li/>')
-                        .append($('<span/>').html($.mage.__('Total cost')))
-                        .append($('<span/>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.total_amount)))
+                    var totalAmount = $('<li></li>')
+                        .append($('<span></span>').html($.mage.__('Total cost')))
+                        .append($('<span></span>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.total_amount)))
                     ;
                     list.append(totalAmount);
 
@@ -217,10 +221,10 @@ define([
                 }
 
                 // Option radio button
-                var radio = $('<div/>').addClass('oneyOption_radio').append(
-                    $('<div/>').addClass('radio').append(
-                        $('<span/>').append(
-                            $('<input/>').attr('type', 'radio').attr('name', 'oney_type').val(type)
+                var radio = $('<div></div>').addClass('oneyOption_radio').append(
+                    $('<div></div>').addClass('radio').append(
+                        $('<span></span>').append(
+                            $('<input>').attr('type', 'radio').attr('name', 'oney_type').val(type)
                         )
                     )
                 );
@@ -230,7 +234,30 @@ define([
             }
 
             tmpDiv.append(optionsWrapper);
+
+            if (this.getConfiguration().more_info_url) {
+                tmpDiv.append(
+                    $('<a></a>')
+                        .attr('class', 'more-info')
+                        .attr('href', this.getConfiguration().more_info_url)
+                        .attr('target', '_blank')
+                        .html($.mage.__('More info'))
+                );
+            }
+
             this.getOneyContainer().find('.oneyPayment').html(tmpDiv.html());
+        },
+        getScheduleLabel: function (days) {
+            let label = null;
+            this.scheduleLabels.forEach(function(item) {
+                if (item.days === days) {
+                    label = item.label;
+
+                    return false;
+                }
+            });
+
+            return label;
         },
         getFormattedPrice: function(price) {
             return priceUtils.formatPrice(price, quote.getPriceFormat());
@@ -258,6 +285,9 @@ define([
         },
         getOneyContainer: function() {
             return $('[data-oney-container="' + this.getCode() + '"]');
+        },
+        isOneyItalian: function() {
+            return this.getConfiguration().is_italian;
         },
         // Functions to be defined by each oney payment renderer
         getConfiguration: function() {

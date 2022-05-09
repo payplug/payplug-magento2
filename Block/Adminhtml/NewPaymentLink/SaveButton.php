@@ -5,6 +5,8 @@ namespace Payplug\Payments\Block\Adminhtml\NewPaymentLink;
 class SaveButton extends AbstractButton
 {
     /**
+     * OnDemand send button options
+     *
      * @return array
      */
     public function getButtonData()

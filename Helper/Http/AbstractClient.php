@@ -22,11 +22,13 @@ abstract class AbstractClient extends AbstractHelper
     public function __construct(Context $context, Config $payplugConfig)
     {
         parent::__construct($context);
-        
+
         $this->payplugConfig = $payplugConfig;
     }
 
     /**
+     * Place PayPlug request
+     *
      * @param array $data
      *
      * @return array
@@ -50,6 +52,8 @@ abstract class AbstractClient extends AbstractHelper
     }
 
     /**
+     * Remove unnecessary data
+     *
      * @param array $data
      *
      * @return array
@@ -57,11 +61,13 @@ abstract class AbstractClient extends AbstractHelper
     protected function prepareData($data)
     {
         unset($data['store_id']);
-        
+
         return $data;
     }
 
     /**
+     * Create payplug object
+     *
      * @param array $payplugData
      *
      * @return APIResource
@@ -69,6 +75,8 @@ abstract class AbstractClient extends AbstractHelper
     abstract protected function createPayplugObject($payplugData);
 
     /**
+     * Prepare return data
+     *
      * @param APIResource $payplugObject
      * @param array       $data
      *

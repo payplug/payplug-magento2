@@ -21,6 +21,8 @@ class ModelPlugin
     }
 
     /**
+     * Override native canCancel return value
+     *
      * @param Order $subject
      * @param bool  $result
      *
@@ -32,6 +34,8 @@ class ModelPlugin
     }
 
     /**
+     * Cancel PayPlug payment before trying to cancel order
+     *
      * @param Order $subject
      *
      * @return null

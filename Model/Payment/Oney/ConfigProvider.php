@@ -39,24 +39,34 @@ class ConfigProvider implements ConfigProviderInterface
     private $request;
 
     /**
-     * @param ScopeConfigInterface $scopeConfig
-     * @param Repository           $assetRepo
-     * @param RequestInterface     $request
-     * @param PaymentHelper        $paymentHelper
+     * @var \Payplug\Payments\Helper\Oney
+     */
+    private $oneyHelper;
+
+    /**
+     * @param ScopeConfigInterface          $scopeConfig
+     * @param Repository                    $assetRepo
+     * @param RequestInterface              $request
+     * @param PaymentHelper                 $paymentHelper
+     * @param \Payplug\Payments\Helper\Oney $oneyHelper
      */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         Repository $assetRepo,
         RequestInterface $request,
-        PaymentHelper $paymentHelper
+        PaymentHelper $paymentHelper,
+        \Payplug\Payments\Helper\Oney $oneyHelper
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->assetRepo = $assetRepo;
         $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
+        $this->oneyHelper = $oneyHelper;
     }
 
     /**
+     * Get Oney payment config
+     *
      * @return array
      */
     public function getConfig()
@@ -66,6 +76,9 @@ class ConfigProvider implements ConfigProviderInterface
                 $this->methodCode => [
                     'logo' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x.svg'),
                     'logo_ko' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x-alt.svg'),
+                    'is_italian' => false,
+                    'more_info_url' => $this->oneyHelper->isMerchandItalian() ?
+                        $this->oneyHelper->getMoreInfoUrl() : null,
                 ],
             ],
         ] : [];

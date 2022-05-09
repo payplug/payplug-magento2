@@ -13,6 +13,8 @@ use Payplug\Payments\Logger\Logger;
 class OneyInfo extends Info
 {
     /**
+     * Get PayPlug Oney payment details
+     *
      * @param \Payplug\Resource\Payment $payment
      * @param Order                     $order
      *
@@ -41,7 +43,7 @@ class OneyInfo extends Info
         if (isset(Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod][$oneyOption])) {
             $key = 'Payment in %1';
             if ($paymentMethod === OneyWithoutFees::METHOD_CODE) {
-                $key = 'Payment in %1 without fees';
+                $key = 'Payment Oney in %1 without fees';
             }
             $paymentDetails['Oney option'] = __($key, Oney::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod][$oneyOption]);
         }

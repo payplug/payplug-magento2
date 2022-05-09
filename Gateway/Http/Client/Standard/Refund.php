@@ -24,6 +24,8 @@ class Refund implements ClientInterface
     }
 
     /**
+     * Place refund request
+     *
      * @param TransferInterface $transferObject
      *
      * @return array

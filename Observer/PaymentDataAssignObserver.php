@@ -9,6 +9,8 @@ use Magento\Quote\Api\Data\PaymentInterface;
 class PaymentDataAssignObserver extends AbstractDataAssignObserver
 {
     /**
+     * Add Card data to payment additional information
+     *
      * @param Observer $observer
      *
      * @return void

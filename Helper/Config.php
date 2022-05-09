@@ -13,14 +13,14 @@ use Payplug\Payplug;
 
 class Config extends AbstractHelper
 {
-    const CONFIG_PATH = 'payplug_payments/general/';
+    public const CONFIG_PATH = 'payplug_payments/general/';
 
-    const ENVIRONMENT_TEST = 'test';
-    const ENVIRONMENT_LIVE = 'live';
-    const PAYMENT_PAGE_REDIRECT = 'redirect';
-    const PAYMENT_PAGE_EMBEDDED = 'embedded';
+    public const ENVIRONMENT_TEST = 'test';
+    public const ENVIRONMENT_LIVE = 'live';
+    public const PAYMENT_PAGE_REDIRECT = 'redirect';
+    public const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
-    const MODULE_VERSION = '1.20.1';
+    public const MODULE_VERSION = '1.21.O';
 
     /**
      * @var WriterInterface
@@ -91,6 +91,8 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get config scope
+     *
      * @return string|null
      */
     public function getConfigScope()
@@ -99,6 +101,8 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get config scope id
+     *
      * @return int|null
      */
     public function getConfigScopeId()
@@ -157,6 +161,8 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get is embedded config
+     *
      * @return bool
      */
     public function isEmbedded()
@@ -165,6 +171,8 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get one click flag
+     *
      * @param int|null $storeId
      *
      * @return bool
@@ -172,10 +180,17 @@ class Config extends AbstractHelper
     public function isOneClick($storeId = null)
     {
         return $this->getConfigValue('can_save_cards', ScopeInterface::SCOPE_STORE, $storeId) &&
-            $this->getConfigValue('one_click', ScopeInterface::SCOPE_STORE, $storeId, 'payment/payplug_payments_standard/');
+            $this->getConfigValue(
+                'one_click',
+                ScopeInterface::SCOPE_STORE,
+                $storeId,
+                'payment/payplug_payments_standard/'
+            );
     }
 
     /**
+     * Get PayPlug module version
+     *
      * @return string
      */
     public function getModuleVersion()
@@ -184,6 +199,8 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Magento version
+     *
      * @return string
      */
     public function getMagentoVersion()
@@ -192,6 +209,8 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get config value
+     *
      * @param string      $field
      * @param string      $scope
      * @param string|null $scopeId
@@ -218,6 +237,8 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Set config value
+     *
      * @param string      $field
      * @param string      $value
      * @param string      $scope

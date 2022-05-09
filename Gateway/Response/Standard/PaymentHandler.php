@@ -25,8 +25,9 @@ class PaymentHandler implements HandlerInterface
     private $orderPaymentRepository;
 
     /**
-     * TransactionIdHandler constructor.
-     * @param SubjectReader $subjectReader
+     * @param SubjectReader                                $subjectReader
+     * @param \Payplug\Payments\Model\Order\PaymentFactory $payplugPaymentFactory
+     * @param OrderPaymentRepository                       $orderPaymentRepository
      */
     public function __construct(
         SubjectReader $subjectReader,

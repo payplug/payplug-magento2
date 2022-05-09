@@ -67,6 +67,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Get InstallmentPlan payment config
+     *
      * @return array
      */
     public function getConfig()
@@ -82,6 +84,8 @@ class ConfigProvider implements ConfigProviderInterface
     }
 
     /**
+     * Get card logo
+     *
      * @return string|null
      */
     public function getCardLogo()

@@ -5,6 +5,8 @@ namespace Payplug\Payments\Block\Adminhtml\Config;
 class InstallmentPlan extends \Magento\Config\Block\System\Config\Form\Fieldset
 {
     /**
+     * Render details on InstallmentPlan split options
+     *
      * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
      *
      * @return string

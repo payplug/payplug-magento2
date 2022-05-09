@@ -9,6 +9,8 @@ use Payplug\Payments\Gateway\Config\Ondemand;
 class OndemandPaymentOrderCreateProcessDataObserver implements ObserverInterface
 {
     /**
+     * Add OnDemand data to payment additional information
+     *
      * @param Observer $observer
      *
      * @return void

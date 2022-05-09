@@ -47,6 +47,11 @@ class CardList extends \Magento\Framework\App\Action\Action
         return parent::dispatch($request);
     }
 
+    /**
+     * Display customer cards
+     *
+     * @return mixed
+     */
     public function execute()
     {
         $title = __('My Saved Cards');

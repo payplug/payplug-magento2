@@ -5,6 +5,8 @@ namespace Payplug\Payments\Logger;
 class Logger extends \Monolog\Logger
 {
     /**
+     * Add record to log
+     *
      * @param int   $level
      * @param mixed $message
      * @param array $context

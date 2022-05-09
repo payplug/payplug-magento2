@@ -8,6 +8,8 @@ use Magento\Framework\Registry;
 class BackButton extends AbstractButton
 {
     /**
+     * OnDemand back button options
+     *
      * @return array
      */
     public function getButtonData()
@@ -21,6 +23,8 @@ class BackButton extends AbstractButton
     }
 
     /**
+     * Build order view url
+     *
      * @return string
      */
     public function getBackUrl()

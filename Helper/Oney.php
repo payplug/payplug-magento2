@@ -27,7 +27,7 @@ use Payplug\Payments\Model\OneySimulation\Schedule;
 
 class Oney extends AbstractHelper
 {
-    const ALLOWED_OPERATIONS_BY_PAYMENT = [
+    public const ALLOWED_OPERATIONS_BY_PAYMENT = [
         \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE => [
             'x3_with_fees' => '3x',
             'x4_with_fees' => '4x',
@@ -38,7 +38,7 @@ class Oney extends AbstractHelper
         ],
     ];
 
-    const MAX_ITEMS = 1000;
+    public const MAX_ITEMS = 1000;
 
     /**
      * @var Config
@@ -152,13 +152,23 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Check Oney availability
+     *
      * @return bool
      */
     public function canDisplayOney(): bool
     {
         $storeId = $this->storeManager->getStore()->getId();
-        $testApiKey = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        $liveApiKey = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        $testApiKey = $this->scopeConfig->getValue(
+            Config::CONFIG_PATH . 'test_api_key',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+        $liveApiKey = $this->scopeConfig->getValue(
+            Config::CONFIG_PATH . 'live_api_key',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
 
         if (empty($testApiKey) && empty($liveApiKey)) {
             return false;
@@ -169,12 +179,20 @@ class Oney extends AbstractHelper
             return false;
         }
 
-        $isActive = $this->scopeConfig->getValue('payment/' . $oneyPaymentMethod . '/active', ScopeInterface::SCOPE_STORE, $storeId);
+        $isActive = $this->scopeConfig->getValue(
+            'payment/' . $oneyPaymentMethod . '/active',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
         if (!$isActive) {
             return false;
         }
 
-        $canUseOney = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'can_use_oney', ScopeInterface::SCOPE_STORE, $storeId);
+        $canUseOney = $this->scopeConfig->getValue(
+            Config::CONFIG_PATH . 'can_use_oney',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
         if (!$canUseOney) {
             return false;
         }
@@ -184,15 +202,9 @@ class Oney extends AbstractHelper
             return false;
         }
 
-        $apiKey = $liveApiKey;
-        $environmentMode = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'environmentmode', ScopeInterface::SCOPE_STORE, $storeId);
-        if ($environmentMode == Config::ENVIRONMENT_TEST) {
-            $apiKey = $testApiKey;
-        }
-
         $storeLocale = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE, $storeId);
         $localeCountry = explode('_', $storeLocale)[1] ?? null;
-        if ($localeCountry !== $this->getMerchandCountry($storeId, $apiKey)) {
+        if ($localeCountry !== $this->getMerchandCountry()) {
             return false;
         }
 
@@ -200,25 +212,81 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * @param int         $storeId
-     * @param string|null $apiKey
+     * Check if merchand has an italian PayPlug account
+     *
+     * @return bool
+     */
+    public function isMerchandItalian()
+    {
+        return $this->getMerchandCountry() === 'IT';
+    }
+
+    /**
+     * Get more info url
+     *
+     * @return string
+     */
+    public function getMoreInfoUrl()
+    {
+        return 'https://www.payplug.com/hubfs/ONEY/payplug-italy.pdf';
+    }
+
+    /**
+     * Get more info url
+     *
+     * @return string
+     */
+    public function getMoreInfoUrlWithoutFees()
+    {
+        return 'https://www.payplug.com/hubfs/ONEY/payplug-italy-no-fees.pdf';
+    }
+
+    /**
+     * Get PayPlug merchand country
      *
      * @return mixed|string
      */
-    private function getMerchandCountry(int $storeId, ?string $apiKey)
+    private function getMerchandCountry()
     {
+        $storeId = $this->storeManager->getStore()->getId();
         $savedMerchandCountry = $this->getMerchandCountryFromConfig($storeId);
         if (!empty($savedMerchandCountry)) {
             return $savedMerchandCountry;
         }
 
         try {
+            $testApiKey = $this->scopeConfig->getValue(
+                Config::CONFIG_PATH . 'test_api_key',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            $liveApiKey = $this->scopeConfig->getValue(
+                Config::CONFIG_PATH . 'live_api_key',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+
+            $apiKey = $liveApiKey;
+            $environmentMode = $this->scopeConfig->getValue(
+                Config::CONFIG_PATH . 'environmentmode',
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            if ($environmentMode == Config::ENVIRONMENT_TEST) {
+                $apiKey = $testApiKey;
+            }
+
             $result = $this->login->getAccount($apiKey);
             if (!$result['status']) {
                 return '';
             }
             $country = $result['answer']['country'] ?? '';
-            $this->writer->save(Config::CONFIG_PATH . 'merchand_country', $country, ScopeInterface::SCOPE_STORE, $storeId);
+            $this->writer->save(
+                Config::CONFIG_PATH . 'merchand_country',
+                $country,
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
 
             return $country;
         } catch (\Exception $e) {
@@ -231,13 +299,19 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get merchand country from configuration
+     *
      * @param int $storeId
      *
      * @return mixed|string
      */
     private function getMerchandCountryFromConfig(int $storeId)
     {
-        $savedMerchandCountry = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'merchand_country', ScopeInterface::SCOPE_STORE, $storeId);
+        $savedMerchandCountry = $this->scopeConfig->getValue(
+            Config::CONFIG_PATH . 'merchand_country',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
         if (!empty($savedMerchandCountry)) {
             return $savedMerchandCountry;
         }
@@ -255,7 +329,11 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * @param float $amount
+     * Validate Oney availability on amount
+     *
+     * @param float       $amount
+     * @param int|null    $storeId
+     * @param string|null $currency
      *
      * @return bool
      *
@@ -278,6 +356,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get Oney available amounts
+     *
      * @param null|mixed  $storeId
      * @param null|string $currency
      *
@@ -296,6 +376,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Validate Oney on country
+     *
      * @param string $countryCode
      * @param bool   $throwException
      *
@@ -306,7 +388,11 @@ class Oney extends AbstractHelper
     private function validateCountry($countryCode, $throwException = true): bool
     {
         $storeId = $this->storeManager->getStore()->getId();
-        $oneyCountries = $this->scopeConfig->getValue(Config::CONFIG_PATH . 'oney_countries', ScopeInterface::SCOPE_STORE, $storeId);
+        $oneyCountries = $this->scopeConfig->getValue(
+            Config::CONFIG_PATH . 'oney_countries',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
         $oneyCountries = json_decode($oneyCountries, true);
 
         if (!in_array($countryCode, $oneyCountries)) {
@@ -329,6 +415,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get country for Oney
+     *
      * @return string
      */
     private function getDefaultCountry(): string
@@ -363,6 +451,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get shipping method mapping for Oney
+     *
      * @param string|null $shippingMethod
      *
      * @return array
@@ -383,6 +473,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get Oney simulation for checkout
+     *
      * @param float  $amount
      * @param string $billingCountry
      * @param string $shippingCountry
@@ -403,10 +495,18 @@ class Oney extends AbstractHelper
             return $simulationResult;
         }
 
-        return $this->getOneySimulation($amount, $billingCountry ?? $shippingCountry ?? null, $qty, false, $paymentMethod);
+        return $this->getOneySimulation(
+            $amount,
+            $billingCountry ?? $shippingCountry ?? null,
+            $qty,
+            false,
+            $paymentMethod
+        );
     }
 
     /**
+     * Count cart items
+     *
      * @param array|Quote\Item[] $items
      *
      * @return int
@@ -430,6 +530,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Validate Oney on checkout countries
+     *
      * @param string $billingCountry
      * @param string $shippingCountry
      *
@@ -446,6 +548,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Validate items count
+     *
      * @param int $countItems
      *
      * @throws \Exception
@@ -458,6 +562,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Validate Oney selected option
+     *
      * @param string $paymentMethod
      * @param string $oneyOption
      *
@@ -480,6 +586,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Handle Oney checkout validation
+     *
      * @param string $billingCountry
      * @param string $shippingCountry
      * @param int    $countItems
@@ -493,6 +601,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Handle Oney validation
+     *
      * @param float       $amount
      * @param string      $countryCode
      * @param int|null    $storeId
@@ -507,6 +617,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get Oney simulation
+     *
      * @param float|null  $amount
      * @param string|null $countryCode
      * @param int|null    $qty
@@ -515,8 +627,13 @@ class Oney extends AbstractHelper
      *
      * @return Result
      */
-    public function getOneySimulation($amount = null, $countryCode = null, $qty = null, $validationOnly = false, $paymentMethod = null): Result
-    {
+    public function getOneySimulation(
+        $amount = null,
+        $countryCode = null,
+        $qty = null,
+        $validationOnly = false,
+        $paymentMethod = null
+    ): Result {
         if ($amount === null) {
             $amount = $this->checkoutSession->getQuote()->getGrandTotal();
         }
@@ -555,7 +672,9 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * @param $paymentMethod
+     * Get Oney mock simulation
+     *
+     * @param string $paymentMethod
      *
      * @return Result
      */
@@ -563,7 +682,8 @@ class Oney extends AbstractHelper
     {
         $simulationResult = new Result();
         $simulationResult->setSuccess(true);
-        $simulationResult->setMessage(__('Your payment schedule simulation is temporarily unavailable. You will find this information at the payment stage.'));
+        $simulationResult->setMessage(__('Your payment schedule simulation is temporarily unavailable. ' .
+            'You will find this information at the payment stage.'));
         $simulationResult->setMethod($paymentMethod);
 
         $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
@@ -578,6 +698,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get Oney simulation
+     *
      * @param float  $amount
      * @param string $countryCode
      * @param string $paymentMethod
@@ -638,6 +760,8 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get available Oney method
+     *
      * @return string
      */
     private function getOneyMethod()

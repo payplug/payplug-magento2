@@ -63,6 +63,11 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
         $this->orderRepository = $orderRepository;
     }
 
+    /**
+     * Check if refund can be created and its maximum amount
+     *
+     * @param EventObserver $observer
+     */
     public function execute(EventObserver $observer)
     {
         // Online refunds are only available when creating a credit memo from an invoice
@@ -79,7 +84,9 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
             $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
             $payment = $payplugPayment->retrieve($order->getStoreId());
 
-            if ($order->getPayment()->getMethod() === Oney::METHOD_CODE || $order->getPayment()->getMethod() === OneyWithoutFees::METHOD_CODE) {
+            if ($order->getPayment()->getMethod() === Oney::METHOD_CODE ||
+                $order->getPayment()->getMethod() === OneyWithoutFees::METHOD_CODE
+            ) {
                 if (time() < $payment->refundable_after) {
                     $this->messageManager->addErrorMessage(
                         __('The refund will be possible 48 hours after the last payment or refund transaction.')
