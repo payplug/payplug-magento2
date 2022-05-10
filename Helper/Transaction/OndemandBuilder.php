@@ -114,7 +114,9 @@ class OndemandBuilder extends AbstractBuilder
         $transaction['billing']['language'] = $transaction['extra']['language'];
         $transaction['shipping']['language'] = $transaction['extra']['language'];
 
-        $this->logger->info($transaction);
+        $this->logger->info('New transaction', [
+            'details' => $transaction,
+        ]);
 
         return $transaction;
     }
