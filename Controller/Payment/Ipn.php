@@ -202,8 +202,9 @@ class Ipn extends AbstractPayment
             $this->logger->info('Canceling order');
         }
 
-        $this->logger->info('Gathering payment details...');
-        $this->logger->info($payment);
+        $this->logger->info('Gathering payment details...', [
+            'details' => var_export($payment, true),
+        ]);
         $this->logger->info('Order state current: ' . $order->getState());
 
         $this->processOrder($response, $order);
@@ -279,8 +280,9 @@ class Ipn extends AbstractPayment
             $this->logger->info('Canceling order');
         }
 
-        $this->logger->info('Gathering installment plan details...');
-        $this->logger->info($installmentPlan);
+        $this->logger->info('Gathering installment plan details...', [
+            'details' => var_export($installmentPlan, true),
+        ]);
         $this->logger->info('Order state current: ' . $order->getState());
 
         $this->processOrder($response, $order);

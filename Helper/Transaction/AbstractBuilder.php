@@ -77,7 +77,9 @@ abstract class AbstractBuilder extends AbstractHelper
             $this->buildPaymentData($order, $payment, $quote)
         );
 
-        $this->logger->info($transaction);
+        $this->logger->info('New transaction', [
+            'details' => $transaction,
+        ]);
 
         return $transaction;
     }
@@ -203,7 +205,7 @@ abstract class AbstractBuilder extends AbstractHelper
             }
         }
 
-        $prefix = strtolower($address->getPrefix());
+        $prefix = strtolower($address->getPrefix() ?? '');
         $allowedPrefixes = ['mr', 'mrs', 'miss'];
         if (!in_array($prefix, $allowedPrefixes)) {
             $prefix = null;

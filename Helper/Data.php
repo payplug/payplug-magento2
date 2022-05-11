@@ -449,7 +449,7 @@ class Data extends AbstractHelper
             $payplugPayment = $orderPayment->retrieve($storeId);
             if ($payplugPayment->failure &&
                 $payplugPayment->failure->code &&
-                strtolower($payplugPayment->failure->code) !== 'timeout'
+                strtolower($payplugPayment->failure->code ?? '') !== 'timeout'
             ) {
                 $orderPayment->abort($storeId);
             }
