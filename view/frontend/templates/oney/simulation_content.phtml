@@ -34,7 +34,7 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
         <span class="oneyPopin_option" data-type="<?= /* @noEscape */ $option->getType(); ?>">
             <ul>
                 <li>
-                    <span><b><?= $block->escapeHtml(__('For an amount of')); ?> :</b></span>
+                    <span><b><?= $block->escapeHtml(__('For an amount of:')); ?></b></span>
                     <span>
                         <b>
                             <?= /* @noEscape */ $pricingHelper->currency($oneySimulation->getAmount(), true, false); ?>
@@ -42,7 +42,7 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                     </span>
                 </li>
                 <li>
-                    <span><?= $block->escapeHtml(__('Contribution')); ?> :</span>
+                    <span><?= $block->escapeHtml(__('Contribution:')); ?></span>
                     <span>
                         <b>
                             <?= /* @noEscape */ $pricingHelper->currency($option->getFirstDeposit(), true, false); ?>
@@ -52,15 +52,15 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                 <?php if (!$isOneyWithoutFees): ?>
                     <li>
                         <small>
-                            (<?= $block->escapeHtml(__('Financing cost')); ?> :
+                            (<?= $block->escapeHtml(__('Financing cost:')); ?>
                             <b><?= /* @noEscape */ $pricingHelper->currency($option->getCost(), true, false); ?></b>
-                            <?= $block->escapeHtml(__('TAEG')); ?> : <b><?= /* @noEscape */ $option->getRate(); ?>%</b>)
+                            <?= $block->escapeHtml(__('TAEG:')); ?> <b><?= /* @noEscape */ $option->getRate(); ?>%</b>)
                         </small>
                     </li>
                 <?php endif; ?>
                 <?php foreach ($option->getSchedules() as $i => $schedule): ?>
                     <li>
-                        <span><?= $block->escapeHtml(__(sprintf('Installment %d', $i + 1))); ?> :</span>
+                        <span><?= $block->escapeHtml(__(sprintf('Installment %d:', $i + 1))); ?></span>
                         <span>
                             <b>
                                 <?= /* @noEscape */ $pricingHelper->currency($schedule->getAmount(), true, false); ?>
@@ -70,7 +70,7 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                 <?php endforeach; ?>
                 <?php if (!$isOneyWithoutFees): ?>
                     <li>
-                        <span><b><?= $block->escapeHtml(__('Total cost')); ?> :</b></span>
+                        <span><b><?= $block->escapeHtml(__('Total cost:')); ?></b></span>
                         <span>
                             <b>
                                 <?= /* @noEscape */ $pricingHelper->currency($option->getTotalAmount(), true, false); ?>
@@ -80,9 +80,9 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                 <?php else: ?>
                     <li>
                         <small>
-                            (<?= $block->escapeHtml(__('Financing cost')); ?> :
+                            (<?= $block->escapeHtml(__('Financing cost:')); ?>
                             <b><?= /* @noEscape */ $pricingHelper->currency(0, true, false); ?></b>
-                            <?= $block->escapeHtml(__('TAEG')); ?> : <b>0%</b>)
+                            <?= $block->escapeHtml(__('TAEG:')); ?> <b>0%</b>)
                         </small>
                     </li>
                 <?php endif; ?>
