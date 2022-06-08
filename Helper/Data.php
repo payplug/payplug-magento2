@@ -24,6 +24,7 @@ use Magento\Sales\Model\ResourceModel\GridInterface;
 use Payplug\Exception\HttpException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
@@ -311,6 +312,9 @@ class Data extends AbstractHelper
             OneyWithoutFees::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
+            Bancontact::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
         ];
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
@@ -433,7 +437,8 @@ class Data extends AbstractHelper
 
             $code = $order->getPayment()->getMethod();
             if ($code !== Standard::METHOD_CODE &&
-                $code !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE
+                $code !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE &&
+                $code !== Bancontact::METHOD_CODE
             ) {
                 return;
             }
@@ -795,7 +800,8 @@ class Data extends AbstractHelper
             $code == \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE ||
             $code == Ondemand::METHOD_CODE ||
             $code == Oney::METHOD_CODE ||
-            $code == OneyWithoutFees::METHOD_CODE;
+            $code == OneyWithoutFees::METHOD_CODE ||
+            $code == Bancontact::METHOD_CODE;
     }
 
     /**
