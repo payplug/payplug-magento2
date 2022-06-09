@@ -13,6 +13,10 @@
         <label data-bind="attr: {'for': getCode()}" class="label"><img style="margin-right: 10px;" data-bind="attr: {src: getCardLogo()}"><span data-bind="text: getTitle()"></span></label>
     </div>
     <div class="payment-method-content">
+        <!-- ko if: bancontactDisabledMessage() -->
+        <p class="bancontact-checkout-error" data-bind="text: bancontactDisabledMessage()"></p>
+        <!-- /ko -->
+
         <!-- ko foreach: getRegion('messages') -->
         <!-- ko template: getTemplate() --><!-- /ko -->
         <!--/ko-->
@@ -33,7 +37,7 @@
                         data-bind="
                         click: placeOrder,
                         attr: {title: $t('Place Order')},
-                        css: {disabled: !isPlaceOrderActionAllowed()},
+                        css: {disabled: isBancontactPlaceOrderDisabled()},
                         enable: (getCode() == isChecked())
                         "
                         disabled>

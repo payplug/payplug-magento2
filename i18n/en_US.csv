@@ -197,3 +197,5 @@
 "The transaction was aborted and your card has not been charged","The transaction was aborted and your card has not been charged"
 "You do not have access to this feature yet. To activate Bancontact, please fill in the following form: %1 (%2)","You do not have access to this feature yet. To activate Bancontact, please fill in the following form: %1"
 "The Bancontact payment feature is not available for the TEST mode.","The Bancontact payment feature is not available for the TEST mode."
+"The payment is not available for the TEST mode.","The payment is not available for the TEST mode."
+"An error occurred while getting Bancontact details. Please try again.","An error occurred. Please try again."

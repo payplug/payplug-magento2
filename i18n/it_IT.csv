@@ -197,3 +197,5 @@
 "The transaction was aborted and your card has not been charged","La transazione non è stata conclusa e non è stato effettuato alcun addebito sulla tua carta."
 "You do not have access to this feature yet. To activate Bancontact, please fill in the following form: %1 (%2)","Non puoi ancora accedere a questa funzionalità. Per attivare Bancontact, contatta %2."
 "The Bancontact payment feature is not available for the TEST mode.","Il pagamento tramite Bancontact non è disponibile in modalità TEST."
+"The payment is not available for the TEST mode.","Il pagamento non è disponibile in modalità TEST."
+"An error occurred while getting Bancontact details. Please try again.","Si è verificato un errore. Per favore, riprova."
