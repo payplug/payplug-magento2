@@ -6,7 +6,7 @@
         <column xsi:type="int" name="customer_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Customer ID"/>
         <column xsi:type="int" name="customer_card_id" unsigned="true" nullable="false" identity="false" comment="Customer Card ID"/>
         <column xsi:type="int" name="company_id" unsigned="true" nullable="false" identity="false" comment="Company ID"/>
-        <column xsi:type="boolean" name="is_sandbox" nullable="false" identity="false" default="0" comment="Is Sandbox"/>
+        <column xsi:type="boolean" name="is_sandbox" nullable="false" default="0" comment="Is Sandbox"/>
         <column xsi:type="varchar" name="card_token" nullable="false" length="32" default="card_xxxxxxxxxxxxxxxxxxxxx" comment="Card Token"/>
         <column xsi:type="varchar" name="last4" nullable="false" length="4" default="0000" comment="Last 4 Digits"/>
         <column xsi:type="datetime" name="exp_date" nullable="false" comment="Expiration Date"/>
@@ -24,8 +24,8 @@
         <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
         <column xsi:type="varchar" name="order_id" nullable="false" length="32" comment="Order Increment ID"/>
         <column xsi:type="varchar" name="installment_plan_id" nullable="false" length="32" default="inst_xxxxxxxxxxxxxxxxxxxxx" comment="Installment Plan ID"/>
-        <column xsi:type="boolean" name="is_sandbox" nullable="false" identity="false" default="0" comment="Is Sandbox"/>
-        <column xsi:type="int" name="status" nullable="false" length="11" identity="false" default="0" comment="Installment Plan Status"/>
+        <column xsi:type="boolean" name="is_sandbox" nullable="false" default="0" comment="Is Sandbox"/>
+        <column xsi:type="int" name="status" nullable="false" identity="false" default="0" comment="Installment Plan Status"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="entity_id"/>
         </constraint>
@@ -34,8 +34,8 @@
         <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
         <column xsi:type="varchar" name="order_id" nullable="false" length="32" comment="Order Increment ID"/>
         <column xsi:type="varchar" name="payment_id" nullable="false" length="32" default="pay_xxxxxxxxxxxxxxxxxxxxx" comment="Payment ID"/>
-        <column xsi:type="boolean" name="is_sandbox" nullable="false" identity="false" default="0" comment="Is Sandbox"/>
-        <column xsi:type="boolean" name="is_installment_plan_payment_processed" nullable="true" identity="false" comment="Payplug Payments Installment Plan Payment Processed Flag"/>
+        <column xsi:type="boolean" name="is_sandbox" nullable="false" default="0" comment="Is Sandbox"/>
+        <column xsi:type="boolean" name="is_installment_plan_payment_processed" nullable="true" comment="Payplug Payments Installment Plan Payment Processed Flag"/>
         <column xsi:type="varchar" name="sent_by" nullable="true" length="255" comment="Payplug Payments On demand - sent by"/>
         <column xsi:type="varchar" name="sent_by_value" nullable="true" length="255" comment="Payplug Payments On demand - sent by value"/>
         <column xsi:type="varchar" name="language" nullable="true" length="255" comment="Payplug Payments On demand - language"/>
@@ -56,7 +56,7 @@
                     referenceColumn="entity_id" onDelete="CASCADE"/>
     </table>
     <table name="sales_order_grid">
-        <column xsi:type="int" name="payplug_payments_installment_plan_status" nullable="true" length="11" identity="false" comment="Payplug Payments Installment Plan Status"/>
+        <column xsi:type="int" name="payplug_payments_installment_plan_status" nullable="true" identity="false" comment="Payplug Payments Installment Plan Status"/>
         <column xsi:type="decimal" name="payplug_payments_total_due" scale="4" precision="12" nullable="true" comment="Total due"/>
     </table>
 </schema>
