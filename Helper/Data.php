@@ -437,8 +437,7 @@ class Data extends AbstractHelper
 
             $code = $order->getPayment()->getMethod();
             if ($code !== Standard::METHOD_CODE &&
-                $code !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE &&
-                $code !== Bancontact::METHOD_CODE
+                $code !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE
             ) {
                 return;
             }
@@ -815,6 +814,22 @@ class Data extends AbstractHelper
     {
         return $code == Oney::METHOD_CODE ||
             $code == OneyWithoutFees::METHOD_CODE;
+    }
+
+    /**
+     * Check if order is linked to a Bancontact payment
+     *
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isPaymentBancontact($order)
+    {
+        if ($order->getPayment() === false) {
+            return false;
+        }
+
+        return $order->getPayment()->getMethod() == Bancontact::METHOD_CODE;
     }
 
     /**

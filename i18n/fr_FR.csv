@@ -194,3 +194,4 @@
 "The order has been updated without being canceled because its payment has been validated.","La commande a été mise à jour sans être annulée car son paiement a été validé."
 "More info","Plus d'information"
 "PayPlug Payments - Bancontact","PayPlug Payments - Bancontact"
+"The transaction was aborted and your card has not been charged","La transaction n’a pas été effectuée et votre carte n’a pas été débitée"
