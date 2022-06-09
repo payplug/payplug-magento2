@@ -102,6 +102,9 @@ class PaymentConfigObserver implements ObserverInterface
         ) {
             $this->processOneyConfig($postParams['groups']);
         }
+        if ($this->canProcessSection($postParams, 'payplug_payments_bancontact')) {
+            $this->processBancontactConfig($postParams['groups']);
+        }
     }
 
     /**
@@ -362,6 +365,48 @@ class PaymentConfigObserver implements ObserverInterface
             );
             foreach ($oneyGroups as $oney => $data) {
                 $groups[$oney]['fields']['active']['value'] = $data['current'];
+            }
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    /**
+     * Handle Bancontact configuration
+     *
+     * @param array $groups
+     */
+    private function processBancontactConfig($groups)
+    {
+        $fields = $groups['payplug_payments_bancontact']['fields'];
+
+        $this->helper->initScopeData();
+        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_bancontact');
+
+        if (!empty($fields['active']['value'])) {
+            $environmentMode = $this->getConfig('environmentmode');
+
+            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('live_api_key');
+                if (empty($apiKey)) {
+                    $this->messageManager->addErrorMessage(
+                        __('We are not able to retrieve your account information. ' .
+                            'Please go to section Sales > Payplug Payments to log in again.')
+                    );
+                } else {
+                    $permissions = $this->getAccountPermissions($apiKey);
+
+                    if (empty($permissions['can_use_bancontact'])) {
+                        $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
+                        $message = 'You do not have access to this feature yet. ' .
+                            'To activate Bancontact, please fill in the following form: %1 (%2)';
+                        $this->messageManager->addErrorMessage(__(
+                            $message,
+                            'https://support.payplug.com/hc/fr/requests/new?ticket_form_id=4583813991452',
+                            'support@payplug.com'
+                        ));
+                    }
+                }
             }
         }
 
@@ -660,12 +705,16 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('company_id', $id);
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
 
+        // Harmonize bancontact flag as a regular permission
+        $jsonAnswer['permissions']['can_use_bancontact'] = $jsonAnswer['payment_methods']['bancontact']['enabled'] ?? false;
+
         $permissions = [
             'use_live_mode',
             'can_save_cards',
             'can_create_installment_plan',
             'can_create_deferred_payment',
             'can_use_oney',
+            'can_use_bancontact',
         ];
         foreach ($permissions as $permission) {
             $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);
