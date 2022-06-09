@@ -407,6 +407,11 @@ class PaymentConfigObserver implements ObserverInterface
                         ));
                     }
                 }
+            } else {
+                $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
+                $this->messageManager->addErrorMessage(
+                    __('The Bancontact payment feature is not available for the TEST mode.')
+                );
             }
         }
 

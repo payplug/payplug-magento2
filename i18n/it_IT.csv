@@ -196,3 +196,4 @@
 "PayPlug Payments - Bancontact","PayPlug Payments - Bancontact"
 "The transaction was aborted and your card has not been charged","La transazione non è stata conclusa e non è stato effettuato alcun addebito sulla tua carta."
 "You do not have access to this feature yet. To activate Bancontact, please fill in the following form: %1 (%2)","Non puoi ancora accedere a questa funzionalità. Per attivare Bancontact, contatta %2."
+"The Bancontact payment feature is not available for the TEST mode.","Il pagamento tramite Bancontact non è disponibile in modalità TEST."
