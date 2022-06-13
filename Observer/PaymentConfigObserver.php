@@ -711,7 +711,8 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
 
         // Harmonize bancontact flag as a regular permission
-        $jsonAnswer['permissions']['can_use_bancontact'] = $jsonAnswer['payment_methods']['bancontact']['enabled'] ?? false;
+        $jsonAnswer['permissions']['can_use_bancontact'] =
+            $jsonAnswer['payment_methods']['bancontact']['enabled'] ?? false;
 
         $permissions = [
             'use_live_mode',
