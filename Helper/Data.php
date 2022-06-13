@@ -520,7 +520,10 @@ class Data extends AbstractHelper
     public function canForceOrderCancel(Order $order): bool
     {
         $method = $order->getPayment()->getMethod();
-        if (!$this->isCodePayplugPayment($method) || $this->isCodePayplugPaymentOney($method)) {
+        if (!$this->isCodePayplugPayment($method) ||
+            $this->isCodePayplugPaymentOney($method) ||
+            $method === Bancontact::METHOD_CODE
+        ) {
             return false;
         }
 
