@@ -152,7 +152,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
             $cardDate = $payment->card->exp_year . '-' . $payment->card->exp_month;
             $expDate = date('Y-m-t 23:59:59', strtotime($cardDate));
             $brand = $payment->card->brand;
-            if (!in_array(strtolower($payment->card->brand ?? ''), ['visa', 'mastercard', 'maestro', 'carte_bancaire'])) {
+            if (!in_array(strtolower($brand ?? ''), ['visa', 'mastercard', 'maestro', 'carte_bancaire'])) {
                 $brand = 'other';
             }
 
