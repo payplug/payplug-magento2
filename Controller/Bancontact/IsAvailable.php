@@ -48,7 +48,7 @@ class IsAvailable extends \Magento\Framework\App\Action\Action
             if ($this->configHelper->getIsSandbox()) {
                 $result->setData([
                     'success' => false,
-                    'data' => ['message' => __('The payment is not available for the TEST mode.')]
+                    'data' => ['message' => __('The Bancontact payment feature is not available for the TEST mode.')]
                 ]);
             }
         } catch (\Exception $e) {
