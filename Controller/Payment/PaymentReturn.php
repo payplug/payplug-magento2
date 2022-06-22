@@ -70,9 +70,17 @@ class PaymentReturn extends AbstractPayment
             if ($this->payplugHelper->isOrderValidated($order)) {
                 return $resultRedirect->setPath($redirectUrlSuccess);
             } else {
+                $failureMessage = null;
+                if ($this->payplugHelper->isPaymentBancontact($order)) {
+                    $failureMessage = 'The transaction was aborted and your card has not been charged';
+                }
+
                 return $this->resultFactory
                     ->create(ResultFactory::TYPE_FORWARD)
-                    ->setParams(['is_canceled_by_provider' => true])
+                    ->setParams([
+                        'is_canceled_by_provider' => true,
+                        'failure_message' => $failureMessage,
+                    ])
                     ->forward('cancel');
             }
         } catch (PayplugException $e) {

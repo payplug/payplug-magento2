@@ -20,7 +20,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
 
-    public const MODULE_VERSION = '1.21.2';
+    public const MODULE_VERSION = '1.22.0';
 
     /**
      * @var WriterInterface
@@ -331,6 +331,15 @@ class Config extends AbstractHelper
             'payment/payplug_payments_oney_without_fees/allowspecific',
             'payment/payplug_payments_oney_without_fees/specificcountry',
             'payment/payplug_payments_oney_without_fees/sort_order',
+            // Payplug payment Bancontact configuration
+            'payment/payplug_payments_bancontact/active',
+            'payment/payplug_payments_bancontact/title',
+            'payment/payplug_payments_bancontact/processing_order_status',
+            'payment/payplug_payments_bancontact/canceled_order_status',
+            'payment/payplug_payments_bancontact/allowspecific',
+            'payment/payplug_payments_bancontact/specificcountry',
+            'payment/payplug_payments_bancontact/default_country',
+            'payment/payplug_payments_bancontact/sort_order',
         ];
 
         foreach ($keys as $key) {

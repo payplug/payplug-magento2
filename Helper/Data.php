@@ -24,6 +24,7 @@ use Magento\Sales\Model\ResourceModel\GridInterface;
 use Payplug\Exception\HttpException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
@@ -311,6 +312,9 @@ class Data extends AbstractHelper
             OneyWithoutFees::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
+            Bancontact::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
         ];
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
@@ -516,7 +520,10 @@ class Data extends AbstractHelper
     public function canForceOrderCancel(Order $order): bool
     {
         $method = $order->getPayment()->getMethod();
-        if (!$this->isCodePayplugPayment($method) || $this->isCodePayplugPaymentOney($method)) {
+        if (!$this->isCodePayplugPayment($method) ||
+            $this->isCodePayplugPaymentOney($method) ||
+            $method === Bancontact::METHOD_CODE
+        ) {
             return false;
         }
 
@@ -795,7 +802,8 @@ class Data extends AbstractHelper
             $code == \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE ||
             $code == Ondemand::METHOD_CODE ||
             $code == Oney::METHOD_CODE ||
-            $code == OneyWithoutFees::METHOD_CODE;
+            $code == OneyWithoutFees::METHOD_CODE ||
+            $code == Bancontact::METHOD_CODE;
     }
 
     /**
@@ -809,6 +817,22 @@ class Data extends AbstractHelper
     {
         return $code == Oney::METHOD_CODE ||
             $code == OneyWithoutFees::METHOD_CODE;
+    }
+
+    /**
+     * Check if order is linked to a Bancontact payment
+     *
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isPaymentBancontact($order)
+    {
+        if ($order->getPayment() === false) {
+            return false;
+        }
+
+        return $order->getPayment()->getMethod() == Bancontact::METHOD_CODE;
     }
 
     /**
