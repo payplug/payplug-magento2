@@ -340,6 +340,15 @@ class Config extends AbstractHelper
             'payment/payplug_payments_bancontact/specificcountry',
             'payment/payplug_payments_bancontact/default_country',
             'payment/payplug_payments_bancontact/sort_order',
+            // Payplug payment Apple Pay configuration
+            'payment/payplug_payments_apple_pay/active',
+            'payment/payplug_payments_apple_pay/title',
+            'payment/payplug_payments_apple_pay/processing_order_status',
+            'payment/payplug_payments_apple_pay/canceled_order_status',
+            'payment/payplug_payments_apple_pay/allowspecific',
+            'payment/payplug_payments_apple_pay/specificcountry',
+            'payment/payplug_payments_apple_pay/default_country',
+            'payment/payplug_payments_apple_pay/sort_order',
         ];
 
         foreach ($keys as $key) {

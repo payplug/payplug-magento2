@@ -24,6 +24,7 @@ use Magento\Sales\Model\ResourceModel\GridInterface;
 use Payplug\Exception\HttpException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
@@ -315,6 +316,9 @@ class Data extends AbstractHelper
             Bancontact::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
+            ApplePay::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
         ];
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
@@ -522,7 +526,8 @@ class Data extends AbstractHelper
         $method = $order->getPayment()->getMethod();
         if (!$this->isCodePayplugPayment($method) ||
             $this->isCodePayplugPaymentOney($method) ||
-            $method === Bancontact::METHOD_CODE
+            $method === Bancontact::METHOD_CODE ||
+            $method === ApplePay::METHOD_CODE
         ) {
             return false;
         }
@@ -803,7 +808,8 @@ class Data extends AbstractHelper
             $code == Ondemand::METHOD_CODE ||
             $code == Oney::METHOD_CODE ||
             $code == OneyWithoutFees::METHOD_CODE ||
-            $code == Bancontact::METHOD_CODE;
+            $code == Bancontact::METHOD_CODE ||
+            $code == ApplePay::METHOD_CODE;
     }
 
     /**
