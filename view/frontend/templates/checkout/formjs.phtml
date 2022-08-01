@@ -1,3 +1,3 @@
-<?php if ($block->isEmbedded()): ?>
-    <script src="<?= $block->escapeHtmlAttr($block->getJsUrl()); ?>"></script>
-<?php endif; ?>
+<?php foreach ($block->getJsUrls() as $url): ?>
+    <script src="<?= $block->escapeHtmlAttr($url); ?>"></script>
+<?php endforeach; ?>

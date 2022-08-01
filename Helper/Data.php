@@ -842,6 +842,22 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if order is linked to an Apple Pay payment
+     *
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isPaymentApplePay($order)
+    {
+        if ($order->getPayment() === false) {
+            return false;
+        }
+
+        return $order->getPayment()->getMethod() == ApplePay::METHOD_CODE;
+    }
+
+    /**
      * Update InstallmentPlan status
      *
      * @param \Payplug\Payments\Model\Order\InstallmentPlan $orderInstallmentPlan

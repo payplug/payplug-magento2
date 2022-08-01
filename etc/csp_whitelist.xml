@@ -5,12 +5,18 @@
         <policy id="script-src">
             <values>
                 <value id="api_payplug" type="host">api.payplug.com</value>
+                <value id="apple_pay" type="host">applepay.cdn-apple.com</value>
             </values>
         </policy>
         <policy id="frame-src">
             <values>
                 <value id="api_payplug" type="host">api.payplug.com</value>
                 <value id="secure_payplug" type="host">secure.payplug.com</value>
+            </values>
+        </policy>
+        <policy id="font-src">
+            <values>
+                <value id="apple_pay" type="host">applepay.cdn-apple.com</value>
             </values>
         </policy>
     </policies>

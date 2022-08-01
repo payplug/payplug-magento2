@@ -294,4 +294,21 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
 
         return \Payplug\Payment::abort($this->getPaymentId());
     }
+
+    /**
+     * Update a payment
+     *
+     * @param array    $data
+     * @param int|null $store
+     *
+     * @return \Payplug\Resource\Payment
+     */
+    public function update(array $data, $store = null)
+    {
+        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+
+        $payment = \Payplug\Resource\Payment::fromAttributes(['id' => $this->getPaymentId()]);
+
+        return $payment->update($data);
+    }
 }
