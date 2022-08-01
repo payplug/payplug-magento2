@@ -200,3 +200,6 @@
 "The payment is not available for the TEST mode.","Il pagamento non è disponibile in modalità TEST."
 "An error occurred while getting Bancontact details. Please try again.","Si è verificato un errore. Per favore, riprova."
 "PayPlug Payments - Apple Pay","Pagamenti PayPlug - Apple Pay"
+"Apple Pay payment is not available for the TEST mode. Please activate the LIVE mode.","Apple Pay non è disponibile in modalità TEST. Attiva la modalità LIVE."
+"You don't have access to this feature yet. To activate Apple Pay, please contact %1 and activate the LIVE mode.","Non puoi ancora accedere a questa funzionalità. Per attivare Apple Pay, contatta %1 e attiva la modalità LIVE."
+"You don't have access to this feature yet. To activate Apple Pay, please contact %1","Non puoi ancora accedere a questa funzionalità. Per attivare Apple Pay, contatta %1"
