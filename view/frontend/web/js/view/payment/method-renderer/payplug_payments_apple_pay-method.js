@@ -20,14 +20,85 @@ define([
         returnUrl: 'payplug_payments/payment/paymentReturn',
         getTransactionDataUrl: 'payplug_payments/applePay/getTransactionData',
         updateTransactionDataUrl: 'payplug_payments/applePay/updateTransaction',
+        isAvailableUrl: 'payplug_payments/applePay/isAvailable',
         session: null,
+        isLoading: false,
+        applePayDisabledMessage: ko.observable(''),
 
         initialize: function () {
             this._super();
 
+            let self = this;
             this.isVisible(window.ApplePaySession && ApplePaySession.canMakePayments());
+            quote.paymentMethod.subscribe(function (value) {
+                self.isLoading = false;
+                if (value && value.method === self.getCode()) {
+                    self.updateApplePayAvailability();
+                }
+            });
+            quote.shippingAddress.subscribe(function () {
+                if (self.getCode() === self.isChecked()) {
+                    self.updateApplePayAvailability();
+                }
+            });
+            quote.billingAddress.subscribe(function () {
+                if (quote.billingAddress() !== null) {
+                    if (self.getCode() === self.isChecked()) {
+                        self.updateApplePayAvailability();
+                    }
+                }
+            });
+            quote.totals.subscribe(function () {
+                if (self.getCode() === self.isChecked()) {
+                    self.updateApplePayAvailability();
+                }
+            });
+            quote.shippingMethod.subscribe(function () {
+                if (self.getCode() === self.isChecked()) {
+                    self.updateApplePayAvailability();
+                }
+            });
 
             return this;
+        },
+        updateApplePayAvailability: function() {
+            var self = this;
+            if (self.isLoading) {
+                return false;
+            }
+            self.updateLoading(true);
+            this.unbindButtonClick();
+            this.applePayDisabledMessage('');
+            try {
+                $.ajax({
+                    url: url.build(this.isAvailableUrl),
+                    type: "POST",
+                    data: {}
+                }).done(function (response) {
+                    if (response.success) {
+                        self.bindButtonClick();
+                    } else {
+                        self.applePayDisabledMessage(response.data.message);
+                    }
+                    self.updateLoading(false);
+                }).fail(function (response) {
+                    self.applePayDisabledMessage($.mage.__('An error occurred while getting Apple Pay details. Please try again.'));
+                    self.updateLoading(false);
+                });
+
+                return true;
+            } catch (e) {
+                self.updateLoading(false);
+                return false;
+            }
+        },
+        updateLoading: function(isLoading) {
+            this.isLoading = isLoading;
+            if (isLoading) {
+                fullScreenLoader.startLoader();
+            } else {
+                fullScreenLoader.stopLoader();
+            }
         },
         bindButtonClick: function() {
             setTimeout(function() {

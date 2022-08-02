@@ -13,6 +13,10 @@
         <label data-bind="attr: {'for': getCode()}" class="label"><img data-bind="attr: {src: getCardLogo()}"><span data-bind="text: getTitle()"></span></label>
     </div>
     <div class="payment-method-content">
+        <!-- ko if: applePayDisabledMessage() -->
+        <p class="apple-pay-checkout-error" data-bind="text: applePayDisabledMessage()"></p>
+        <!-- /ko -->
+
         <!-- ko foreach: getRegion('messages') -->
         <!-- ko template: getTemplate() --><!-- /ko -->
         <!--/ko-->
