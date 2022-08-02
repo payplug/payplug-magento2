@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Gateway\Response\Standard;
 
+use Payplug\Exception\UndefinedAttributeException;
 use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Response\HandlerInterface;
 use Magento\Sales\Model\Order\Payment;
@@ -67,11 +68,15 @@ class PaymentHandler implements HandlerInterface
             }
             $payment->setAdditionalInformation('is_paid', $isPaid);
 
-            if ($payplugPayment->payment_method && $payplugPayment->payment_method['merchant_session']) {
-                $payment->setAdditionalInformation(
-                    'merchand_session',
-                    $payplugPayment->payment_method['merchant_session']
-                );
+            try {
+                if ($payplugPayment->payment_method && isset($payplugPayment->payment_method['merchant_session'])) {
+                    $payment->setAdditionalInformation(
+                        'merchand_session',
+                        $payplugPayment->payment_method['merchant_session']
+                    );
+                }
+            } catch (UndefinedAttributeException $e) {
+                // "payment_method" attribute is not defined on all payment methods
             }
 
             $payment->setTransactionId($payplugPayment->id);
