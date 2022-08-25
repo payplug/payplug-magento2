@@ -189,7 +189,11 @@ define([
                         self.session.completePayment({
                             "status": applePaySessionStatus
                         });
-                        window.location.replace(url.build(self.returnUrl));
+                        if (response.error === true) {
+                            self.cancelPayplugPayment();
+                        } else {
+                            window.location.replace(url.build(self.returnUrl));
+                        }
                     }).fail(function (response) {
                         self.cancelPayplugPayment();
                     });
