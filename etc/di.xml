@@ -548,6 +548,87 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="PayplugPaymentApplePayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\ApplePay::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentApplePayValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentApplePayValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentApplePayCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentApplePayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentApplePayValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentApplePayValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\ApplePay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentApplePayCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\ApplePay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentApplePayCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\ApplePay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentApplePayValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentApplePayCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentApplePayCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\ApplePay">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\ApplePay::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentApplePayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentApplePayCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentApplePayCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+                <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="ApplePayCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">
+        <arguments>
+            <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentApplePayCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayplugPaymentApplePayCaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">ApplePayCaptureClient</argument>
+            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="ApplePayTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">
+        <arguments>
+            <argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\ApplePayBuilder</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentApplePayCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">ApplePayTransactionDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="Magento\Sales\Model\ResourceModel\Order\Grid" type="Magento\Sales\Model\ResourceModel\Grid">
         <arguments>
             <argument name="joins" xsi:type="array">
