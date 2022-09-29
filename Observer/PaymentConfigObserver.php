@@ -105,6 +105,9 @@ class PaymentConfigObserver implements ObserverInterface
         if ($this->canProcessSection($postParams, 'payplug_payments_bancontact')) {
             $this->processBancontactConfig($postParams['groups']);
         }
+        if ($this->canProcessSection($postParams, 'payplug_payments_apple_pay')) {
+            $this->processApplePayConfig($postParams['groups']);
+        }
     }
 
     /**
@@ -419,6 +422,55 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Bancontact configuration
+     *
+     * @param array $groups
+     */
+    private function processApplePayConfig($groups)
+    {
+        $fields = $groups['payplug_payments_apple_pay']['fields'];
+
+        $this->helper->initScopeData();
+        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_apple_pay');
+
+        if (!empty($fields['active']['value'])) {
+            $environmentMode = $this->getConfig('environmentmode');
+
+            $apiKey = $this->getConfig('test_api_key');
+            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('live_api_key');
+            }
+            if (empty($apiKey)) {
+                $this->messageManager->addErrorMessage(
+                    __('We are not able to retrieve your account information. ' .
+                        'Please go to section Sales > Payplug Payments to log in again.')
+                );
+            } else {
+                $permissions = $this->getAccountPermissions($apiKey);
+                if (empty($permissions['can_use_apple_pay'])) {
+                    $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
+                    $message = 'You don\'t have access to this feature yet. ' .
+                        'To activate Apple Pay, please contact %1 and activate the LIVE mode.';
+                    if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                        $message = 'You don\'t have access to this feature yet. ' .
+                            'To activate Apple Pay, please contact %1';
+                    }
+                    $this->messageManager->addErrorMessage(__(
+                        $message,
+                        'support@payplug.com'
+                    ));
+                } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
+                    $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
+                    $message = 'Apple Pay payment is not available for the TEST mode. Please activate the LIVE mode.';
+                    $this->messageManager->addErrorMessage(__($message));
+                }
+            }
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    /**
      * Check if PayPlug account is connected before enabling PayPlug payment method
      *
      * @param array  $fields
@@ -710,9 +762,11 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('company_id', $id);
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
 
-        // Harmonize bancontact flag as a regular permission
+        // Harmonize bancontact/applepay flags as a regular permission
         $jsonAnswer['permissions']['can_use_bancontact'] =
             $jsonAnswer['payment_methods']['bancontact']['enabled'] ?? false;
+        $jsonAnswer['permissions']['can_use_apple_pay'] =
+            $jsonAnswer['payment_methods']['apple_pay']['enabled'] ?? false;
 
         $permissions = [
             'use_live_mode',
@@ -721,6 +775,7 @@ class PaymentConfigObserver implements ObserverInterface
             'can_create_deferred_payment',
             'can_use_oney',
             'can_use_bancontact',
+            'can_use_apple_pay',
         ];
         foreach ($permissions as $permission) {
             $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);

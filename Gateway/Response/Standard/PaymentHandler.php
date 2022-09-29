@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Gateway\Response\Standard;
 
+use Payplug\Exception\UndefinedAttributeException;
 use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Response\HandlerInterface;
 use Magento\Sales\Model\Order\Payment;
@@ -59,10 +60,24 @@ class PaymentHandler implements HandlerInterface
             $isPaid = 1;
             if (!$payplugPayment->is_paid && $payplugPayment->failure === null) {
                 // save payment url for pending redirect/lightbox payment
-                $payment->setAdditionalInformation('payment_url', $payplugPayment->hosted_payment->payment_url);
+                $payment->setAdditionalInformation(
+                    'payment_url',
+                    $payplugPayment->hosted_payment ? $payplugPayment->hosted_payment->payment_url : ''
+                );
                 $isPaid = 0;
             }
             $payment->setAdditionalInformation('is_paid', $isPaid);
+
+            try {
+                if ($payplugPayment->payment_method && isset($payplugPayment->payment_method['merchant_session'])) {
+                    $payment->setAdditionalInformation(
+                        'merchand_session',
+                        $payplugPayment->payment_method['merchant_session']
+                    );
+                }
+            } catch (UndefinedAttributeException $e) {
+                // "payment_method" attribute is not defined on all payment methods
+            }
 
             $payment->setTransactionId($payplugPayment->id);
             $payment->setIsTransactionPending(true);
