@@ -5,26 +5,26 @@ name: CI
 # Controls when the workflow will run
 on: "pull_request"
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  runPHPCSInspection:
-    name: Run PHPCS inspection
-    # The type of runner that the job will run on
+  phpcs:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Run checkout
-        uses: actions/checkout@v3
-
-      # Runs a single command using the runners shell
-      - name: PHPCS Code Review
-        # You may pin to the exact commit or the version.
-        uses: rtCamp/action-phpcs-code-review@v2.1.0
-        env:
-          GH_BOT_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
-          SKIP_FOLDERS: "tests,.github,i18n"
+      - uses: actions/checkout@v3
         with:
-          args: "WordPress,WordPress-Core,WordPress-Docs"
+          fetch-depth: 0 # important!
+          
+      - name: Add coding style file
+        run: wget -c https://github.com/magento/magento-coding-standard/blob/develop/Magento2/ruleset.xml
+
+      # we may use whatever way to install phpcs, just specify the path on the next step
+      # however, curl seems to be the fastest
+      - name: Install PHP_CodeSniffer
+        run: |
+          curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
+          php phpcs.phar --version
+
+      - uses: thenabeel/action-phpcs@v8
+        with:
+          files: "**.php" 
+          phpcs_path: php phpcs.phar
+          standard: ruleset.xml
