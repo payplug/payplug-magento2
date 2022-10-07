@@ -1,17 +1,14 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI
-
-# Controls when the workflow will run
-on: "pull_request"
+name: CI Static Tests
+on: [push]
 
 jobs:
-  phpcs:
+  static:
+    name: Static Code Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: extdn/github-actions-m2/magento-coding-standard@master
+      - uses: actions/checkout@v3
+      - uses: extdn/github-actions-m2/magento-coding-standard/8.1@master
         with:
-          phpcs_severity: 10
+          phpcs_severity: 8
           phpcs_report: full
           phpcs_extensions: php
