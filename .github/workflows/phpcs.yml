@@ -15,7 +15,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - name: Run checkout
+        uses: actions/checkout@v3
 
       # Runs a single command using the runners shell
       - name: PHPCS Code Review
@@ -23,5 +24,5 @@ jobs:
         uses: rtCamp/action-phpcs-code-review@v2.1.0
         env:
           GH_BOT_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
-          SKIP_FOLDERS: "tests,.github, i18n"
+          SKIP_FOLDERS: "tests,.github,i18n"
           PHPCS_STANDARD_FILE_NAME: "https://github.com/magento/magento-coding-standard/blob/develop/Magento2/ruleset.xml"
