@@ -15,6 +15,9 @@ jobs:
           
       - name: Add coding style file
         run: wget -c https://github.com/magento/magento-coding-standard/blob/develop/Magento2/ruleset.xml
+        
+      - name: Check coding style file
+        run: cat ruleset.xml
 
       # we may use whatever way to install phpcs, just specify the path on the next step
       # however, curl seems to be the fastest
