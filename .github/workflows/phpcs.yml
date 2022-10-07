@@ -14,7 +14,7 @@ jobs:
           fetch-depth: 0 # important!
           
       - name: Add coding style file
-        run: wget -c https://github.com/magento/magento-coding-standard/blob/develop/Magento2/ruleset.xml
+        run: wget -c https://raw.githubusercontent.com/magento/magento-coding-standard/develop/Magento2/ruleset.xml
         
       - name: Check coding style file
         run: echo "hello" && cat ruleset.xml
