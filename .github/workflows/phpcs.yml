@@ -11,4 +11,3 @@ jobs:
         with:
           phpcs_severity: 8
           phpcs_report: full
-          phpcs_extensions: php
