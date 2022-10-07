@@ -4,8 +4,6 @@ name: CI
 
 # Controls when the workflow will run
 on: "pull_request"
-env:
-  PHPCS_SEVERITY: 10
 
 jobs:
   phpcs:
@@ -13,3 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: extdn/github-actions-m2/magento-coding-standard@master
+        with:
+          phpcs_severity: 10
+          phpcs_report: full
+          phpcs_extensions: php
