@@ -23,7 +23,7 @@ jobs:
       # Runs a single command using the runners shell
       - name: PHPCS Code Review
         # You may pin to the exact commit or the version.
-        uses: rtCamp/action-phpcs-code-review@v2.1.0
+        uses: rtCamp/action-phpcs-code-review@v2.0.4
         env:
           GH_BOT_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
           SKIP_FOLDERS: "tests,.github,i18n"
