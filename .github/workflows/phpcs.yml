@@ -9,25 +9,5 @@ jobs:
   phpcs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # important!
-          
-      - name: Add coding style file
-        run: wget -c https://raw.githubusercontent.com/magento/magento-coding-standard/develop/Magento2/ruleset.xml
-        
-      - name: Check coding style file
-        run: echo "hello" && cat ruleset.xml
-
-      # we may use whatever way to install phpcs, just specify the path on the next step
-      # however, curl seems to be the fastest
-      - name: Install PHP_CodeSniffer
-        run: |
-          curl -OL https://squizlabs.github.io/PHP_CodeSniffer/phpcs.phar
-          php phpcs.phar --version
-
-      - uses: thenabeel/action-phpcs@v8
-        with:
-          files: "**.php" 
-          phpcs_path: php phpcs.phar
-          standard: ruleset.xml
+      - uses: actions/checkout@v2
+      - uses: extdn/github-actions-m2/magento-coding-standard@master
