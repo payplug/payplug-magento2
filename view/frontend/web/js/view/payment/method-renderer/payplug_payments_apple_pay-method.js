@@ -113,6 +113,15 @@ define([
         placeOrder: function (data, event) {
             if (this.isPlaceOrderActionAllowed() === true) {
                 this.unbindButtonClick();
+                let grandTotal = quote.totals()['grand_total'] + quote.totals()['tax_amount'];
+                if (quote.totals()['total_segments']) {
+                    let totalSegment = quote.totals()['total_segments'].filter(function (segment) {
+                        return segment.code.indexOf('grand_total') !== -1;
+                    });
+                    if (totalSegment.length === 1) {
+                        grandTotal = totalSegment[0].value;
+                    }
+                }
                 let request = {
                     "countryCode": quote.billingAddress() ? quote.billingAddress().countryId : '',
                     "currencyCode": quote.totals()['quote_currency_code'],
@@ -125,7 +134,7 @@ define([
                     "total": {
                         "label": window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name,
                         "type": "final",
-                        "amount": quote.totals()['grand_total']
+                        "amount": grandTotal
                     },
                     'applicationData': btoa(JSON.stringify({
                         'apple_pay_domain': window.checkoutConfig.payment.payplug_payments_apple_pay.domain
