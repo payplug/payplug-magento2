@@ -108,6 +108,9 @@ class PaymentConfigObserver implements ObserverInterface
         if ($this->canProcessSection($postParams, 'payplug_payments_apple_pay')) {
             $this->processApplePayConfig($postParams['groups']);
         }
+        if ($this->canProcessSection($postParams, 'payplug_payments_amex')) {
+            $this->processAmexConfig($postParams['groups']);
+        }
     }
 
     /**
@@ -471,6 +474,50 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Amex configuration
+     *
+     * @param array $groups
+     */
+    private function processAmexConfig($groups)
+    {
+        $fields = $groups['payplug_payments_amex']['fields'];
+
+        $this->helper->initScopeData();
+        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_amex');
+
+        if (!empty($fields['active']['value'])) {
+            $environmentMode = $this->getConfig('environmentmode');
+
+            $apiKey = $this->getConfig('test_api_key');
+            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('live_api_key');
+            }
+            if (empty($apiKey)) {
+                $this->messageManager->addErrorMessage(
+                    __('We are not able to retrieve your account information. ' .
+                        'Please go to section Sales > Payplug Payments to log in again.')
+                );
+            } else {
+                $permissions = $this->getAccountPermissions($apiKey);
+                if (empty($permissions['can_use_amex'])) {
+                    $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
+                    $this->messageManager->addErrorMessage(__(
+                        'You don\'t have access to this feature yet. ' .
+                        'To activate American Express, please fill in the following form: ' .
+                        'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420'
+                    ));
+                } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
+                    $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
+                    $message = 'Amex payments are not available for the TEST mode. Please activate the LIVE mode.';
+                    $this->messageManager->addErrorMessage(__($message));
+                }
+            }
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    /**
      * Check if PayPlug account is connected before enabling PayPlug payment method
      *
      * @param array  $fields
@@ -762,11 +809,13 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('company_id', $id);
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
 
-        // Harmonize bancontact/applepay flags as a regular permission
+        // Harmonize bancontact/applepay/amex flags as a regular permission
         $jsonAnswer['permissions']['can_use_bancontact'] =
             $jsonAnswer['payment_methods']['bancontact']['enabled'] ?? false;
         $jsonAnswer['permissions']['can_use_apple_pay'] =
             $jsonAnswer['payment_methods']['apple_pay']['enabled'] ?? false;
+        $jsonAnswer['permissions']['can_use_amex'] =
+            $jsonAnswer['payment_methods']['american_express']['enabled'] ?? false;
 
         $permissions = [
             'use_live_mode',
@@ -776,6 +825,7 @@ class PaymentConfigObserver implements ObserverInterface
             'can_use_oney',
             'can_use_bancontact',
             'can_use_apple_pay',
+            'can_use_amex',
         ];
         foreach ($permissions as $permission) {
             $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);

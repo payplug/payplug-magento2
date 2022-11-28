@@ -206,3 +206,5 @@
 "An error occurred while getting Apple Pay details. Please try again.","An error occurred. Please try again."
 "The Apple Pay payment is not available for the TEST mode.","The Apple Pay payment is not available for the TEST mode."
 "PayPlug Payments - American Express","PayPlug Payments - American Express"
+"Amex payments are not available for the TEST mode. Please activate the LIVE mode.","Amex payments are not available for the TEST mode. Please activate the LIVE mode."
+"You don't have access to this feature yet. To activate American Express, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420","You don't have access to this feature yet. To activate American Express, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420"
