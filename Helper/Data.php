@@ -864,6 +864,22 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if order is linked to a Amex payment
+     *
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isPaymentAmex($order)
+    {
+        if ($order->getPayment() === false) {
+            return false;
+        }
+
+        return $order->getPayment()->getMethod() == Amex::METHOD_CODE;
+    }
+
+    /**
      * Update InstallmentPlan status
      *
      * @param \Payplug\Payments\Model\Order\InstallmentPlan $orderInstallmentPlan
