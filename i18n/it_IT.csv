@@ -205,3 +205,7 @@
 "You don't have access to this feature yet. To activate Apple Pay, please contact %1","Non puoi ancora accedere a questa funzionalità. Per attivare Apple Pay, contatta %1"
 "An error occurred while getting Apple Pay details. Please try again.","Si è verificato un errore. Per favore, riprova."
 "The Apple Pay payment is not available for the TEST mode.","Il pagamento Apple Pay non è disponibile in modalità TEST."
+"PayPlug Payments - American Express","Pagamenti PayPlug - American Express"
+"Amex payments are not available for the TEST mode. Please activate the LIVE mode.","Amex non è disponibile in modalità TEST. Attiva la modalità LIVE."
+"You don't have access to this feature yet. To activate American Express, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420","Non puoi ancora accedere a questa funzionalità. Per attivare American Express, compila questo modulo: https://support.payplug.com/hc/it/requests/new?ticket_form_id=6331992459420"
+"An error occurred while getting Amex details. Please try again.","Si è verificato un errore. Per favore, riprova."
