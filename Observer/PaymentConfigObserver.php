@@ -488,29 +488,29 @@ class PaymentConfigObserver implements ObserverInterface
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
 
-            $apiKey = $this->getConfig('test_api_key');
             if ($environmentMode == Config::ENVIRONMENT_LIVE) {
                 $apiKey = $this->getConfig('live_api_key');
-            }
-            if (empty($apiKey)) {
-                $this->messageManager->addErrorMessage(
-                    __('We are not able to retrieve your account information. ' .
-                        'Please go to section Sales > Payplug Payments to log in again.')
-                );
-            } else {
-                $permissions = $this->getAccountPermissions($apiKey);
-                if (empty($permissions['can_use_amex'])) {
-                    $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
-                    $this->messageManager->addErrorMessage(__(
-                        'You don\'t have access to this feature yet. ' .
-                        'To activate American Express, please fill in the following form: ' .
-                        'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420'
-                    ));
-                } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
-                    $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
-                    $message = 'Amex payments are not available for the TEST mode. Please activate the LIVE mode.';
-                    $this->messageManager->addErrorMessage(__($message));
+                if (empty($apiKey)) {
+                    $this->messageManager->addErrorMessage(
+                        __('We are not able to retrieve your account information. ' .
+                            'Please go to section Sales > Payplug Payments to log in again.')
+                    );
+                } else {
+                    $permissions = $this->getAccountPermissions($apiKey);
+
+                    if (empty($permissions['can_use_amex'])) {
+                        $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
+                        $this->messageManager->addErrorMessage(__(
+                            'You don\'t have access to this feature yet. ' .
+                            'To activate American Express, please fill in the following form: ' .
+                            'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420'
+                        ));
+                    }
                 }
+            } else {
+                $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
+                $message = 'Amex payments are not available for the TEST mode. Please activate the LIVE mode.';
+                $this->messageManager->addErrorMessage(__($message));
             }
         }
 
