@@ -24,6 +24,7 @@ use Magento\Sales\Model\ResourceModel\GridInterface;
 use Payplug\Exception\HttpException;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Gateway\Config\Amex;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
@@ -319,6 +320,9 @@ class Data extends AbstractHelper
             ApplePay::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
+            Amex::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
         ];
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
@@ -527,7 +531,8 @@ class Data extends AbstractHelper
         if (!$this->isCodePayplugPayment($method) ||
             $this->isCodePayplugPaymentOney($method) ||
             $method === Bancontact::METHOD_CODE ||
-            $method === ApplePay::METHOD_CODE
+            $method === ApplePay::METHOD_CODE ||
+            $method === Amex::METHOD_CODE
         ) {
             return false;
         }
@@ -809,7 +814,8 @@ class Data extends AbstractHelper
             $code == Oney::METHOD_CODE ||
             $code == OneyWithoutFees::METHOD_CODE ||
             $code == Bancontact::METHOD_CODE ||
-            $code == ApplePay::METHOD_CODE;
+            $code == ApplePay::METHOD_CODE ||
+            $code == Amex::METHOD_CODE;
     }
 
     /**
@@ -855,6 +861,22 @@ class Data extends AbstractHelper
         }
 
         return $order->getPayment()->getMethod() == ApplePay::METHOD_CODE;
+    }
+
+    /**
+     * Check if order is linked to a Amex payment
+     *
+     * @param Order $order
+     *
+     * @return bool
+     */
+    public function isPaymentAmex($order)
+    {
+        if ($order->getPayment() === false) {
+            return false;
+        }
+
+        return $order->getPayment()->getMethod() == Amex::METHOD_CODE;
     }
 
     /**

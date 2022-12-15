@@ -71,7 +71,7 @@ class PaymentReturn extends AbstractPayment
                 return $resultRedirect->setPath($redirectUrlSuccess);
             } else {
                 $failureMessage = null;
-                if ($this->payplugHelper->isPaymentBancontact($order)) {
+                if ($this->payplugHelper->isPaymentBancontact($order) || $this->payplugHelper->isPaymentAmex($order)) {
                     $failureMessage = 'The transaction was aborted and your card has not been charged';
                 }
 
