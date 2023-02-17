@@ -68,7 +68,7 @@ You will then need to install another library which we use to normalize the cust
 composer require giggsey/libphonenumber-for-php:^8.10
 ```
 
-### Update PayPlug Payments Module
+### Update Payplug Payments Module
 
 Run the following commands in Magento root directory:
 
