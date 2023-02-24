@@ -64,7 +64,7 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function getConfig()
     {
-        $merchandDomain = parse_url($this->scopeConfig->getValue('web/secure/base_url'), PHP_URL_HOST);
+        $merchandDomain = parse_url($this->scopeConfig->getValue('web/secure/base_url', ScopeInterface::SCOPE_STORE), PHP_URL_HOST);
         $merchandName = $this->scopeConfig->getValue('general/store_information/name', ScopeInterface::SCOPE_STORE);
 
         return $this->method->isAvailable() ? [
