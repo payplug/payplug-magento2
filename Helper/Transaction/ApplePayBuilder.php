@@ -2,6 +2,8 @@
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use Magento\Store\Model\ScopeInterface;
+
 class ApplePayBuilder extends AbstractBuilder
 {
     /**
@@ -9,7 +11,7 @@ class ApplePayBuilder extends AbstractBuilder
      */
     public function buildPaymentData($order, $payment, $quote)
     {
-        $merchandDomain = parse_url($this->scopeConfig->getValue('web/secure/base_url'), PHP_URL_HOST);
+        $merchandDomain = parse_url($this->scopeConfig->getValue('web/secure/base_url', ScopeInterface::SCOPE_STORE), PHP_URL_HOST);
 
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
         $paymentData['payment_method'] = 'apple_pay';
