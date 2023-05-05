@@ -418,7 +418,7 @@ class PaymentConfigObserver implements ObserverInterface
             } else {
                 $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
                 $this->messageManager->addErrorMessage(
-                    __('The Bancontact payment feature is not available for the TEST mode.')
+                    __('Bancontact is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.')
                 );
             }
         }
@@ -466,7 +466,7 @@ class PaymentConfigObserver implements ObserverInterface
                     ));
                 } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
                     $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
-                    $message = 'Apple Pay payment is not available for the TEST mode. Please activate the LIVE mode.';
+                    $message = 'Apple Pay is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.';
                     $this->messageManager->addErrorMessage(__($message));
                 }
             }
@@ -511,7 +511,7 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             } else {
                 $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
-                $message = 'Amex payments are not available for the TEST mode. Please activate the LIVE mode.';
+                $message = 'Amex is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.';
                 $this->messageManager->addErrorMessage(__($message));
             }
         }
