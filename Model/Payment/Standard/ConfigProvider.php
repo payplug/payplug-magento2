@@ -96,6 +96,7 @@ class ConfigProvider implements ConfigProviderInterface
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
+                    'is_integrated' => $this->payplugConfig->isIntegrated(),
                     'is_one_click' => $this->payplugConfig->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),

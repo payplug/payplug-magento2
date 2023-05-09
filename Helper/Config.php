@@ -19,6 +19,7 @@ class Config extends AbstractHelper
     public const ENVIRONMENT_LIVE = 'live';
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
+    public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
     public const MODULE_VERSION = '1.24.1';
 
@@ -167,7 +168,18 @@ class Config extends AbstractHelper
      */
     public function isEmbedded()
     {
-        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED;
+        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED ||
+            $this->getConfigValue('payment_page_backup') == self::PAYMENT_PAGE_EMBEDDED;
+    }
+
+    /**
+     * Get is integrated config
+     *
+     * @return bool
+     */
+    public function isIntegrated()
+    {
+        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_INTEGRATED;
     }
 
     /**
@@ -285,6 +297,8 @@ class Config extends AbstractHelper
             'payplug_payments/general/can_create_deferred_payment',
             'payplug_payments/general/can_use_oney',
             'payplug_payments/general/merchand_country',
+            'payplug_payments/general/payment_page_backup',
+            'payplug_payments/general/can_use_integrated_payments',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',

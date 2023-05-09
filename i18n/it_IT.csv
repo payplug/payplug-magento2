@@ -29,6 +29,7 @@
 "Only Premium accounts can use one click in LIVE mode.","Questa opzione é valida solo per i clienti Premium."
 "PayPlug redirected payment","Rediretto"
 "PayPlug embedded payment","Integrato"
+"PayPlug pop-up payment","Pop-up"
 "Payplug Payment ID","Payplug Payment ID"
 "Status","Status"
 "Amount","Importo"
@@ -210,3 +211,4 @@
 "Bancontact is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","Bancontact non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
 "Apple Pay is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","Apple Pay non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
 "Amex is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","Amex non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
+"You do not have access to this feature yet. To activate it, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636","Non puoi ancora accedere a questa funzionalità. Per attivarla, compila questo modulo: https://support.payplug.com/hc/it/requests/new?ticket_form_id=8138934372636"

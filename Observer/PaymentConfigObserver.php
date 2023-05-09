@@ -197,7 +197,17 @@ class PaymentConfigObserver implements ObserverInterface
             $apiKey = $this->liveApiKey ?? $this->getConfig('live_api_key');
         }
         if (!empty($apiKey)) {
-            $this->getAccountPermissions($apiKey);
+            $permissions = $this->getAccountPermissions($apiKey);
+            if ($fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED &&
+                !$permissions['can_use_integrated_payments']
+            ) {
+                $groups['general']['fields']['payment_page']['value'] = $this->getConfig('payment_page');
+                $this->messageManager->addErrorMessage(__(
+                    'You do not have access to this feature yet. ' .
+                    'To activate it, please fill in the following form: ' .
+                    'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
+                ));
+            }
         }
 
         $this->request->setPostValue('groups', $groups);
@@ -830,6 +840,7 @@ class PaymentConfigObserver implements ObserverInterface
             'can_use_bancontact',
             'can_use_apple_pay',
             'can_use_amex',
+            'can_use_integrated_payments',
         ];
         foreach ($permissions as $permission) {
             $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);

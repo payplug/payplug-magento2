@@ -37,6 +37,11 @@ class Formjs extends \Magento\Framework\View\Element\Template
         if ($this->isEmbedded()) {
             $urls[] = $this->getPayplugJsUrl();
         }
+        if ($this->helper->isIntegrated() &&
+            $this->_scopeConfig->getValue('payment/payplug_payments_standard/active', ScopeInterface::SCOPE_STORE)
+        ) {
+            $urls[] = 'https://cdn.payplug.com/js/integrated-payment/v0/index.js';
+        }
         if ($this->_scopeConfig->getValue('payment/payplug_payments_apple_pay/active', ScopeInterface::SCOPE_STORE)) {
             $urls[] = 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
         }
