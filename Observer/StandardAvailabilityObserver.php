@@ -10,11 +10,14 @@ use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Api\Login;
 
 class StandardAvailabilityObserver implements ObserverInterface
 {
@@ -29,13 +32,27 @@ class StandardAvailabilityObserver implements ObserverInterface
     private $payplugHelper;
 
     /**
+     * @var Login
+     */
+    private $login;
+
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
      * @param Config $payplugConfig
      * @param Data   $payplugHelper
+     * @param Login  $login
+     * @param Logger $logger
      */
-    public function __construct(Config $payplugConfig, Data $payplugHelper)
+    public function __construct(Config $payplugConfig, Data $payplugHelper, Login $login, Logger $logger)
     {
         $this->payplugConfig = $payplugConfig;
         $this->payplugHelper = $payplugHelper;
+        $this->login = $login;
+        $this->logger = $logger;
     }
 
     /**
@@ -81,6 +98,16 @@ class StandardAvailabilityObserver implements ObserverInterface
         if (empty($testApiKey) && empty($liveApiKey)) {
             $checkResult->setData('is_available', false);
             return;
+        }
+
+        $apiKey = $liveApiKey;
+        $environmentMode = $this->payplugConfig->getConfigValue(
+            'environmentmode',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+        if ($environmentMode == Config::ENVIRONMENT_TEST) {
+            $apiKey = $testApiKey;
         }
 
         $prefix = '';
@@ -129,6 +156,33 @@ class StandardAvailabilityObserver implements ObserverInterface
                 $storeId
             );
             if (!$canCreateInstallmentPlan) {
+                $checkResult->setData('is_available', false);
+
+                return;
+            }
+        }
+
+        if ($adapter->getCode() === ApplePay::METHOD_CODE) {
+            $onboardDomains = [];
+            try {
+                $result = $this->login->getAccount($apiKey);
+                $onboardDomains = $result['answer']['payment_methods']['apple_pay']['allowed_domain_names'] ?? [];
+            } catch (\Exception $e) {
+                $this->logger->error('Could not retrieve Payplug account data', [
+                    'exception' => $e,
+                ]);
+            }
+
+            $merchandDomain = parse_url($this->payplugConfig->getConfigValue(
+                'base_url',
+                ScopeInterface::SCOPE_STORE,
+                $storeId,
+                'web/secure/'
+            ), PHP_URL_HOST);
+            if (!in_array($merchandDomain, $onboardDomains)) {
+                $this->logger->error('Payplug ApplePay is not available for this domain. It will be hidden from available payment methods in checkout.', [
+                    'merchant_domain' => $merchandDomain,
+                ]);
                 $checkResult->setData('is_available', false);
 
                 return;
