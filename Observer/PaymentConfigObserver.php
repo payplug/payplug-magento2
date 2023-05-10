@@ -198,15 +198,20 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if (!empty($apiKey)) {
             $permissions = $this->getAccountPermissions($apiKey);
-            if ($fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED &&
-                !$permissions['can_use_integrated_payments']
-            ) {
-                $groups['general']['fields']['payment_page']['value'] = $this->getConfig('payment_page');
-                $this->messageManager->addErrorMessage(__(
-                    'You do not have access to this feature yet. ' .
-                    'To activate it, please fill in the following form: ' .
-                    'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
-                ));
+            if ($fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED) {
+                if (!$permissions['can_use_integrated_payments']) {
+                    $groups['general']['fields']['payment_page']['value'] = $this->getConfig('payment_page');
+                    $this->messageManager->addErrorMessage(__(
+                        'You do not have access to this feature yet. ' .
+                        'To activate it, please fill in the following form: ' .
+                        'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
+                    ));
+                }
+            } else {
+                $paymentPageBackup = $this->getConfig('payment_page_backup');
+                if (!empty($paymentPageBackup) && $paymentPageBackup !== Config::PAYMENT_PAGE_MANUAL) {
+                    $this->saveConfig('payment_page_backup', Config::PAYMENT_PAGE_MANUAL);
+                }
             }
         }
 

@@ -6,14 +6,14 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Payment\Model\Method\Adapter;
-use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManager;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -42,17 +42,29 @@ class StandardAvailabilityObserver implements ObserverInterface
     private $logger;
 
     /**
-     * @param Config $payplugConfig
-     * @param Data   $payplugHelper
-     * @param Login  $login
-     * @param Logger $logger
+     * @var StoreManager
      */
-    public function __construct(Config $payplugConfig, Data $payplugHelper, Login $login, Logger $logger)
-    {
+    private $storeManager;
+
+    /**
+     * @param Config       $payplugConfig
+     * @param Data         $payplugHelper
+     * @param Login        $login
+     * @param Logger       $logger
+     * @param StoreManager $storeManager
+     */
+    public function __construct(
+        Config $payplugConfig,
+        Data $payplugHelper,
+        Login $login,
+        Logger $logger,
+        StoreManager $storeManager
+    ) {
         $this->payplugConfig = $payplugConfig;
         $this->payplugHelper = $payplugHelper;
         $this->login = $login;
         $this->logger = $logger;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -201,6 +213,10 @@ class StandardAvailabilityObserver implements ObserverInterface
                 $checkResult->setData('is_available', false);
                 return;
             }
+        }
+
+        if ($adapter->getCode() == Standard::METHOD_CODE) {
+            $this->payplugConfig->handleIntegratedPayment($this->storeManager->getWebsite()->getId());
         }
     }
 }
