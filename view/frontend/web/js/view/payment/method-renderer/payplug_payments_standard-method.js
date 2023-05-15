@@ -6,8 +6,10 @@ define([
     'jquery',
     'Magento_Customer/js/customer-data',
     'Magento_Checkout/js/model/quote',
-    'Magento_Checkout/js/model/full-screen-loader'
-], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, jQuery, customerData, quote, fullScreenLoader) {
+    'Magento_Checkout/js/model/full-screen-loader',
+    'payplugIntegrated',
+    'mage/translate'
+], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, jQuery, customerData, quote, fullScreenLoader, payplug) {
     'use strict';
 
     return Component.extend({
@@ -19,6 +21,25 @@ define([
         redirectAfterPlaceOrder: false,
         cards: [],
         sessionCardId: 'payplug-payments-card-id',
+        integratedApi: null,
+        integratedForm: null,
+        inputStyle:{
+            default: {
+                color: '#2B343D',
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: '14px',
+                textAlign: 'left',
+                '::placeholder': {
+                    color: '#969a9f',
+                },
+                ':focus': {
+                    color: '#2B343D',
+                }
+            },
+            invalid: {
+                color: '#E91932'
+            }
+        },
 
         initialize: function () {
             this._super();
@@ -139,6 +160,37 @@ define([
             }
 
             return parentData;
+        },
+        isIntegrated: function () {
+            return window.checkoutConfig.payment.payplug_payments_standard.is_integrated &&
+                typeof window.checkoutConfig.payment.payplug_payments_standard.is_sandbox !== 'undefined';
+        },
+        initIntegratedForm: function() {
+            if (!this.isIntegrated()) {
+                return;
+            }
+            if (this.integratedApi !== null) {
+                return;
+            }
+
+            this.integratedApi = new payplug.IntegratedPayment(window.checkoutConfig.payment.payplug_payments_standard.is_sandbox);
+            this.integratedApi.setDisplayMode3ds(payplug.DisplayMode3ds.LIGHTBOX);
+            let cardHolder = this.integratedApi.cardHolder(
+                document.querySelector('.cardholder-input-container'),
+                {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card Holder placeholder')}
+            );
+            let cardNumber = this.integratedApi.cardNumber(
+                document.querySelector('.pan-input-container'),
+                {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card Number placeholder')}
+            );
+            let cvv = this.integratedApi.cvv(
+                document.querySelector('.cvv-input-container'),
+                {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card CVV placeholder')}
+            );
+            let exp = this.integratedApi.expiration(
+                document.querySelector('.exp-input-container'),
+                {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card Expiration placeholder')}
+            );
         }
     });
 });

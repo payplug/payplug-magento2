@@ -139,11 +139,7 @@ class Config extends AbstractHelper
      */
     public function setPayplugApiKey($storeId, $isSandbox)
     {
-        if ($isSandbox) {
-            $key = $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        } else {
-            $key = $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        }
+        $key = $this->getApiKey($isSandbox, $storeId);
 
         if (!empty($key)) {
             Payplug::init(['secretKey' => $key, 'apiVersion' => '2019-08-06']);
@@ -165,6 +161,23 @@ class Config extends AbstractHelper
         $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
 
         return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
+    }
+
+    /**
+     * Retrieve api key
+     *
+     * @param $storeId
+     * @param $isSandbox
+     *
+     * @return string|null
+     */
+    public function getApiKey($isSandbox, $storeId = null)
+    {
+        if ($isSandbox) {
+            return $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        }
+
+        return $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
     }
 
     /**
