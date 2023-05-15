@@ -37,6 +37,10 @@
             <div class="integrated-container" data-bind="css: {'after-cards': canDisplayCards()}, afterRender: initIntegratedForm()">
                 <div class="form-integrated">
                     <div class="cardholder-input-container input-container"></div>
+                    <div class="error-container">
+                        <div class="invalid-field"><!-- ko i18n: 'Invalid Name and/or Last Name.' --><!-- /ko --></div>
+                        <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                    </div>
                     <div class="schemes-container">
                         <div class="card-title"><!-- ko i18n: 'Your card' --><!-- /ko --></div>
                         <div class="schemes">
@@ -46,9 +50,25 @@
                         </div>
                     </div>
                     <div class="pan-input-container input-container"></div>
+                    <div class="error-container">
+                        <div class="invalid-field"><!-- ko i18n: 'Invalid card number.' --><!-- /ko --></div>
+                        <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                    </div>
                     <div class="exp-cvv-container">
-                        <div class="exp-input-container input-container"></div>
-                        <div class="cvv-input-container input-container"></div>
+                        <div>
+                            <div class="exp-input-container input-container"></div>
+                            <div class="error-container">
+                                <div class="invalid-field"><!-- ko i18n: 'Invalid expiration date.' --><!-- /ko --></div>
+                                <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="cvv-input-container input-container"></div>
+                            <div class="error-container">
+                                <div class="invalid-field"><!-- ko i18n: 'Invalid CVV.' --><!-- /ko --></div>
+                                <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="transaction-secured">
                         <img data-bind="attr: { src: require.toUrl('Payplug_Payments/images/icons/lock.svg') }" alt="">

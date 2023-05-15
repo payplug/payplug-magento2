@@ -161,6 +161,29 @@ define([
 
             return parentData;
         },
+        placeOrder: function(data, event) {
+           if (this.isIntegrated()) {
+               let allFieldsAlreadyValid = true;
+               jQuery.each(this.integratedForm, function (key, data) {
+                   allFieldsAlreadyValid = allFieldsAlreadyValid && this.integratedForm[key].valid;
+               }.bind(this));
+               if (allFieldsAlreadyValid) {
+                   this._super(data, event);
+
+                   return;
+               }
+
+               this.integratedApi.validateForm();
+               let original = this._super.bind(this);
+               this.integratedApi.onValidateForm(({isFormValid}) => {
+                   if (isFormValid) {
+                       original(data, event);
+                   }
+               });
+               return;
+           }
+           this._super(data, event);
+        },
         isIntegrated: function () {
             return window.checkoutConfig.payment.payplug_payments_standard.is_integrated &&
                 typeof window.checkoutConfig.payment.payplug_payments_standard.is_sandbox !== 'undefined';
@@ -175,22 +198,40 @@ define([
 
             this.integratedApi = new payplug.IntegratedPayment(window.checkoutConfig.payment.payplug_payments_standard.is_sandbox);
             this.integratedApi.setDisplayMode3ds(payplug.DisplayMode3ds.LIGHTBOX);
-            let cardHolder = this.integratedApi.cardHolder(
+            this.integratedForm = {};
+            this.integratedForm.cardholder = {element: this.integratedApi.cardHolder(
                 document.querySelector('.cardholder-input-container'),
                 {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card Holder placeholder')}
-            );
-            let cardNumber = this.integratedApi.cardNumber(
+            ), valid: false};
+            this.integratedForm.pan = {element: this.integratedApi.cardNumber(
                 document.querySelector('.pan-input-container'),
                 {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card Number placeholder')}
-            );
-            let cvv = this.integratedApi.cvv(
+            ), valid: false};
+            this.integratedForm.cvv = {element: this.integratedApi.cvv(
                 document.querySelector('.cvv-input-container'),
                 {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card CVV placeholder')}
-            );
-            let exp = this.integratedApi.expiration(
+            ), valid: false};
+            this.integratedForm.exp = {element: this.integratedApi.expiration(
                 document.querySelector('.exp-input-container'),
                 {default: this.inputStyle.default, placeholder: jQuery.mage.__('Payplug Card Expiration placeholder')}
-            );
-        }
+            ), valid: false};
+
+            let self = this;
+            jQuery.each(this.integratedForm, function (key, data) {
+                data.element.onChange(function(result) {
+                    self.integratedForm[key].valid = result.valid;
+                    let inputContainer = jQuery('.' + key + '-input-container');
+                    if (result.valid) {
+                        inputContainer.removeClass('error-invalid').removeClass('error-empty');
+                    } else if (result.error) {
+                        if (result.error.name === 'FIELD_EMPTY') {
+                            inputContainer.removeClass('error-invalid').addClass('error-empty');
+                        } else {
+                            inputContainer.addClass('error-invalid').removeClass('error-empty');
+                        }
+                    }
+                });
+            });
+        },
     });
 });

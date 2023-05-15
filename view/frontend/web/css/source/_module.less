@@ -1092,6 +1092,19 @@
             background: #95999e 50% no-repeat;
             background-size: 100% auto;
         }
+        + .error-container {
+            .invalid-field, .empty-field {
+                color: #E91932;
+                display: none;
+            }
+        }
+        &.error-invalid, &.error-empty {
+            border: 1px solid #E91932;
+        }
+        &.error-invalid + .error-container .invalid-field,
+        &.error-empty + .error-container .empty-field {
+            display: block;
+        }
     }
     .cardholder-input-container:before {
         mask-image: url('Payplug_Payments::images/icons/account.svg');
@@ -1114,8 +1127,11 @@
         gap: @form-integrated-exp-cvv-gap;
         justify-content: space-between;
         margin-top: 10px;
-        .input-container {
-            width: calc((@form-integrated-width - 16px - 50px - 24px - (16px + 1px) * 2) / 2 - @form-integrated-exp-cvv-gap);
+        > div {
+            width: calc(@form-integrated-width / 2 - @form-integrated-exp-cvv-gap);
+            .input-container {
+                width: calc(@form-integrated-width / 2 - @form-integrated-exp-cvv-gap  - 16px - 50px);
+            }
         }
     }
     .transaction-secured, .policy {

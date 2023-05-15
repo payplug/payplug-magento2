@@ -220,3 +220,8 @@
 "Privacy Policy","Politique de confidentialité"
 "payplug-integrated-privacy-policy-link","https://www.payplug.com/fr/politique-de-confidentialite"
 "Your card","Votre carte"
+"Mandatory field.","Champ obligatoire."
+"Invalid Name and/or Last Name.","Nom et/ou Prénom invalide(s)."
+"Invalid card number.","Numéro de carte invalide."
+"Invalid expiration date.","Date d’expiration invalide."
+"Invalid CVV.","CVV invalide."
