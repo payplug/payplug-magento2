@@ -8,8 +8,9 @@ define([
     'Magento_Checkout/js/model/quote',
     'Magento_Checkout/js/model/full-screen-loader',
     'payplugIntegrated',
+    'mage/url',
     'mage/translate'
-], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, jQuery, customerData, quote, fullScreenLoader, payplug) {
+], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, jQuery, customerData, quote, fullScreenLoader, payplug, url) {
     'use strict';
 
     return Component.extend({
@@ -60,7 +61,40 @@ define([
                 lightboxOnSuccessAction.execute();
                 return;
             }
-            redirectOnSuccessAction.execute();
+            if (!this.isIntegrated()) {
+                redirectOnSuccessAction.execute();
+                return;
+            }
+
+            let self = this;
+            jQuery.ajax({
+                url: url.build('payplug_payments/payment/standard') + '?should_redirect=0&integrated=1',
+                type: "GET",
+                dataType: 'json',
+                success: function(response) {
+                    if (response.error === true) {
+                        alert(response.message);
+                        window.location.replace(response.url);
+                    } else {
+                        if (typeof response.payment_id !== 'undefined' && response.payment_id) {
+                            let selectedScheme = payplug.Scheme.AUTO;
+                            let selectedCardType = jQuery('.form-integrated [name="scheme"]:checked');
+                            if (selectedCardType.length > 0) {
+                                selectedCardType = selectedCardType.data('card-type');
+                                if (payplug.Scheme[selectedCardType]) {
+                                    selectedScheme = payplug.Scheme[selectedCardType];
+                                }
+                            }
+                            self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: false});
+                            self.integratedApi.onCompleted(function (event) {
+                                window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
+                            });
+                        } else {
+                            window.location.replace(url.build('payplug_payments/payment/cancel'));
+                        }
+                    }
+                }
+            });
         },
         getCardLogo: function() {
             return window.checkoutConfig.payment.payplug_payments_standard.logo;
