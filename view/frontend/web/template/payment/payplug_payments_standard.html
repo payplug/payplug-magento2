@@ -70,6 +70,9 @@
                             </div>
                         </div>
                     </div>
+                    <!-- ko foreach: getRegion('messages') -->
+                    <!-- ko template: getTemplate() --><!-- /ko -->
+                    <!--/ko-->
                     <div class="transaction-secured">
                         <img data-bind="attr: { src: require.toUrl('Payplug_Payments/images/icons/lock.svg') }" alt="">
                         <!-- ko i18n: 'Transaction secured by' --><!-- /ko -->
@@ -80,9 +83,6 @@
                     </div>
                 </div>
             </div>
-        <!--/ko-->
-        <!-- ko foreach: getRegion('messages') -->
-        <!-- ko template: getTemplate() --><!-- /ko -->
         <!--/ko-->
         <div class="payment-method-billing-address">
             <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
