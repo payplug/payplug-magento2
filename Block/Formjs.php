@@ -66,4 +66,14 @@ class Formjs extends \Magento\Framework\View\Element\Template
     {
         return $this->helper->isEmbedded() || $this->helper->isOneClick();
     }
+
+    /**
+     * Get PayPlug js url
+     *
+     * @return string
+     */
+    public function getPayplugSecureUrl()
+    {
+        return $this->getRequest()->getServer('PAYPLUG_SECURE_URL', 'https://secure.payplug.com');
+    }
 }
