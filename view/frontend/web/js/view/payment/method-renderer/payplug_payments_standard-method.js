@@ -9,8 +9,9 @@ define([
     'Magento_Checkout/js/model/full-screen-loader',
     'payplugIntegrated',
     'mage/url',
+    'ko',
     'mage/translate'
-], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, jQuery, customerData, quote, fullScreenLoader, payplug, url) {
+], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, jQuery, customerData, quote, fullScreenLoader, payplug, url, ko) {
     'use strict';
 
     return Component.extend({
@@ -24,6 +25,7 @@ define([
         sessionCardId: 'payplug-payments-card-id',
         integratedApi: null,
         integratedForm: null,
+        canDisplayIntegratedForm: ko.observable(false),
         inputStyle:{
             default: {
                 color: '#2B343D',
@@ -45,6 +47,17 @@ define([
         initialize: function () {
             this._super();
             this.loadCards();
+            jQuery('body').on('change', '[name="payment[payplug_payments_standard][customer_card_id]"]', function() {
+                var customerCard = jQuery('.payplug-payments-customer-card:checked');
+                if (customerCard.length > 0 && customerCard.data('card-id') === '') {
+                    this.canDisplayIntegratedForm(true);
+                } else {
+                    this.canDisplayIntegratedForm(false);
+                }
+            }.bind(this));
+            if (!this.getInitialSelectedCard()) {
+                this.canDisplayIntegratedForm(true);
+            }
 
             return this;
         },
@@ -85,7 +98,9 @@ define([
                                     selectedScheme = payplug.Scheme[selectedCardType];
                                 }
                             }
-                            self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: false});
+                            let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click &&
+                                jQuery('[name="save_card"]').is(':checked');
+                            self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
                             self.integratedApi.onCompleted(function (event) {
                                 window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
                             });
@@ -133,20 +148,20 @@ define([
             }
         },
         isCardSelected: function (data) {
-            var selectedCard = null;
-            if (sessionStorage.getItem(this.sessionCardId) !== null) {
-                selectedCard = sessionStorage.getItem(this.sessionCardId);
-            } else {
-                selectedCard = window.checkoutConfig.payment.payplug_payments_standard.selected_card_id;
-            }
-
-            if (data.id === selectedCard) {
+            if (data.id === this.getInitialSelectedCard()) {
                 if (this.getSelectedMethod() === null) {
                     this.selectPaymentMethod();
                 }
                 return true;
             }
             return false;
+        },
+        getInitialSelectedCard: function() {
+            if (sessionStorage.getItem(this.sessionCardId) !== null) {
+                return sessionStorage.getItem(this.sessionCardId);
+            }
+
+            return window.checkoutConfig.payment.payplug_payments_standard.selected_card_id;
         },
         isCardDisabled: function() {
             var selectedMethod = this.getSelectedMethod();
@@ -186,17 +201,25 @@ define([
         getData: function () {
             var parentData = this._super();
 
-            var customerCard = jQuery('.payplug-payments-customer-card:checked');
-            if (customerCard.length > 0 && customerCard.data('card-id') !== '') {
+            var customerCardId = this.getSelectedCardId();
+            if (customerCardId !== '') {
                 parentData['additional_data'] = {
-                    'payplug_payments_customer_card_id': customerCard.data('card-id')
+                    'payplug_payments_customer_card_id': customerCardId
                 };
             }
 
             return parentData;
         },
+        getSelectedCardId: function() {
+            var customerCard = jQuery('.payplug-payments-customer-card:checked');
+            if (customerCard.length > 0 && customerCard.data('card-id')) {
+                return customerCard.data('card-id');
+            }
+
+            return '';
+        },
         placeOrder: function(data, event) {
-           if (this.isIntegrated()) {
+           if (this.isIntegrated() && this.getSelectedCardId() === '') {
                let allFieldsAlreadyValid = true;
                jQuery.each(this.integratedForm, function (key, data) {
                    allFieldsAlreadyValid = allFieldsAlreadyValid && this.integratedForm[key].valid;
