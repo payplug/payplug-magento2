@@ -63,22 +63,25 @@ define([
         },
 
         afterPlaceOrder: function () {
-            fullScreenLoader.stopLoader();
             sessionStorage.removeItem(this.sessionCardId);
-            var customerCard = jQuery('.payplug-payments-customer-card:checked');
-            if (customerCard.length > 0 && customerCard.data('card-id') !== '') {
+            if (this.getSelectedCardId() !== '') {
+                fullScreenLoader.stopLoader();
                 lightboxOnSuccessAction.execute(true);
                 return;
             }
-            if (window.checkoutConfig.payment.payplug_payments_standard.is_embedded) {
-                lightboxOnSuccessAction.execute();
-                return;
-            }
             if (!this.isIntegrated()) {
+                if (window.checkoutConfig.payment.payplug_payments_standard.is_embedded) {
+                    fullScreenLoader.stopLoader();
+                    lightboxOnSuccessAction.execute();
+                    return;
+                }
+
+                fullScreenLoader.stopLoader();
                 redirectOnSuccessAction.execute();
                 return;
             }
 
+            fullScreenLoader.startLoader();
             let self = this;
             jQuery.ajax({
                 url: url.build('payplug_payments/payment/standard') + '?should_redirect=0&integrated=1',
@@ -98,6 +101,7 @@ define([
                                     selectedScheme = payplug.Scheme[selectedCardType];
                                 }
                             }
+                            fullScreenLoader.stopLoader();
                             let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click &&
                                 jQuery('[name="save_card"]').is(':checked');
                             self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});

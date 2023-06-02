@@ -64,12 +64,12 @@ class Cancel extends AbstractPayment
 
             $this->payplugHelper->cancelOrderAndInvoice($order);
 
-            $failureMessage = $this->_request->getParam('failure_message', null);
-            if ($this->payplugHelper->isPaymentApplePay($order)) {
-                $failureMessage = 'The transaction was aborted and your card has not been charged';
-            }
-            if ($failureMessage !== null) {
-                $this->messageManager->addErrorMessage(__($failureMessage));
+            $failureMessage = $this->_request->getParam(
+                'failure_message',
+                __('The transaction was aborted and your card has not been charged')
+            );
+            if (!empty($failureMessage)) {
+                $this->messageManager->addErrorMessage($failureMessage);
             }
 
             $this->rebuildCart($order);

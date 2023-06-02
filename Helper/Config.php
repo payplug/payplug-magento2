@@ -202,7 +202,8 @@ class Config extends AbstractHelper
     public function isEmbedded()
     {
         return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED ||
-            $this->getConfigValue('payment_page_backup') == self::PAYMENT_PAGE_EMBEDDED;
+            $this->getConfigValue('payment_page_backup') == self::PAYMENT_PAGE_EMBEDDED ||
+            ($this->isIntegrated() && $this->getConfigValue('payment_page_backup') == self::PAYMENT_PAGE_MANUAL);
     }
 
     /**
