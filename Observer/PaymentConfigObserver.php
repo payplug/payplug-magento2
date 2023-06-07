@@ -2,6 +2,8 @@
 
 namespace Payplug\Payments\Observer;
 
+use Laminas\Validator\EmailAddress;
+use Laminas\Validator\NotEmpty;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
@@ -684,12 +686,14 @@ class PaymentConfigObserver implements ObserverInterface
     private function payplugLogin($email, $pwd, $canChangeConfigConnected = false)
     {
         $error = false;
-        if (!\Zend_Validate::is($pwd, 'NotEmpty')) {
+        $notEmptyValidator = new NotEmpty();
+        if (!$notEmptyValidator->isValid($pwd)) {
             $error = true;
             $this->messageManager->addErrorMessage(__('Password field was empty.'));
         }
 
-        if (!\Zend_Validate::is($email, 'EmailAddress')) {
+        $emailValidator = new EmailAddress();
+        if (!$emailValidator->isValid($email)) {
             $error = true;
             $this->messageManager->addErrorMessage(__('The email address is incorrect.'));
         }
