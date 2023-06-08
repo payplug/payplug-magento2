@@ -97,7 +97,7 @@ class ConfigProvider implements ConfigProviderInterface
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
                     'is_integrated' => $this->payplugConfig->isIntegrated(),
-                    'is_one_click' => $this->payplugConfig->isOneClick(),
+                    'is_one_click' => $this->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
                     'should_refresh_cards' => $this->shouldRefreshCards(),
@@ -148,17 +148,34 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function getSelectedCardId()
     {
-        if (!$this->customerSession->isLoggedIn()) {
+        if (!$this->isOneClick()) {
             return '';
         }
 
-        $lastCardId = $this->payplugCardHelper->getLastCardIdByCustomer($this->customerSession->getCustomer()->getId());
+        $customerId = $this->customerSession->getCustomer()->getId();
+        $lastCardId = $this->payplugCardHelper->getLastCardIdByCustomer($customerId);
 
-        if ($lastCardId != 0) {
-            return $lastCardId;
+        if ($lastCardId === 0) {
+            return '';
+        }
+        $customerCardsForCurrentContext = $this->payplugCardHelper->getCardsByCustomer($customerId);
+        foreach ($customerCardsForCurrentContext as $card) {
+            if ($card->getCustomerCardId() === $lastCardId) {
+                return $lastCardId;
+            }
         }
 
         return '';
+    }
+
+    /**
+     * Check if customer is logged in to enable one click
+     *
+     * @return bool
+     */
+    private function isOneClick()
+    {
+        return $this->payplugConfig->isOneClick() && $this->customerSession->isLoggedIn();
     }
 
     /**
