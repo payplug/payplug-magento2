@@ -6,6 +6,7 @@
             <values>
                 <value id="api_payplug" type="host">api.payplug.com</value>
                 <value id="apple_pay" type="host">applepay.cdn-apple.com</value>
+                <value id="payplug_integrated" type="host">https://cdn.payplug.com/js/integrated-payment/</value>
             </values>
         </policy>
         <policy id="frame-src">

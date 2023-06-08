@@ -33,8 +33,68 @@
             <span><!-- ko i18n: 'Please specify a payment method.' --><!-- /ko --></span>
         </div>
         <!--/ko-->
-        <!-- ko foreach: getRegion('messages') -->
-        <!-- ko template: getTemplate() --><!-- /ko -->
+        <!-- ko if: isIntegrated() -->
+            <div class="integrated-container" data-bind="css: {'after-cards': canDisplayCards()}, afterRender: initIntegratedForm()">
+                <div class="form-integrated"  data-bind="visible: canDisplayIntegratedForm">
+                    <div class="cardholder-input-container input-container"></div>
+                    <div class="error-container">
+                        <div class="invalid-field"><!-- ko i18n: 'Invalid Name and/or Last Name.' --><!-- /ko --></div>
+                        <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                    </div>
+                    <div class="schemes-container">
+                        <div class="card-title"><!-- ko i18n: 'Your card' --><!-- /ko --></div>
+                        <div class="schemes">
+                            <label class="scheme" title="Visa"><input type="radio" name="scheme" value="visa" data-card-type="VISA"/><span></span></label>
+                            <label class="scheme" title="Mastercard"><input type="radio" name="scheme" value="mastercard" data-card-type="MASTERCARD"/><span></span></label>
+                            <label class="scheme" title="CB"><input type="radio" name="scheme" value="cb" data-card-type="CARTE_BLEUE"/><span></span></label>
+                        </div>
+                    </div>
+                    <div class="pan-input-container input-container"></div>
+                    <div class="error-container">
+                        <div class="invalid-field"><!-- ko i18n: 'Invalid card number.' --><!-- /ko --></div>
+                        <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                    </div>
+                    <div class="exp-cvv-container">
+                        <div>
+                            <div class="exp-input-container input-container"></div>
+                            <div class="error-container">
+                                <div class="invalid-field"><!-- ko i18n: 'Invalid expiration date.' --><!-- /ko --></div>
+                                <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="cvv-input-container input-container"></div>
+                            <div class="error-container">
+                                <div class="invalid-field"><!-- ko i18n: 'Invalid CVV.' --><!-- /ko --></div>
+                                <div class="empty-field"><!-- ko i18n: 'Mandatory field.' --><!-- /ko --></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ko if: window.checkoutConfig.payment.payplug_payments_standard.is_one_click -->
+                    <div class="save-card-container">
+                        <input type="checkbox" name="save_card" id="payplug_save_card">
+                        <label for="payplug_save_card"><!-- ko i18n: 'Save my credit card' --><!-- /ko --></label>
+                    </div>
+                    <!--/ko-->
+                    <!-- ko foreach: getRegion('messages') -->
+                    <!-- ko template: getTemplate() --><!-- /ko -->
+                    <!--/ko-->
+                    <div class="transaction-secured">
+                        <img data-bind="attr: { src: require.toUrl('Payplug_Payments/images/icons/lock.svg') }" alt="">
+                        <!-- ko i18n: 'Transaction secured by' --><!-- /ko -->
+                        <img data-bind="attr: { src: require.toUrl('Payplug_Payments/images/icons/payplug.svg') }" alt="">
+                    </div>
+                    <div class="policy">
+                        <a data-bind="attr:{href: $t('payplug-integrated-privacy-policy-link'), title: $t('Privacy policy')}"><!-- ko i18n: 'Privacy policy' --><!-- /ko --></a>
+                    </div>
+                </div>
+            </div>
+        <!--/ko-->
+
+        <!-- ko if: !canDisplayIntegratedForm() -->
+            <!-- ko foreach: getRegion('messages') -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
         <!--/ko-->
         <div class="payment-method-billing-address">
             <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->

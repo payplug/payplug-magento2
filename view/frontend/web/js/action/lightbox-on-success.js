@@ -1,9 +1,10 @@
 define(
     [
         'mage/url',
-        'jquery'
+        'jquery',
+        'payplugIntegrated'
     ],
-    function (url, jQuery) {
+    function (url, jQuery, payplug) {
         'use strict';
 
         return {
@@ -12,8 +13,8 @@ define(
             returnUrl: 'payplug_payments/payment/paymentReturn',
 
             initialize: function(context) {
-                var closeIframe = Payplug._closeIframe;
-                Payplug._closeIframe = function(callback) {
+                var closeIframe = payplug.Form._closeIframe;
+                payplug.Form._closeIframe = function(callback) {
                     closeIframe.apply(this, callback);
                     if (typeof window.redirection_url !== 'undefined' && window.redirection_url) {
                         // Payment is completed and redirection is handled by PayPlug form.js
@@ -42,7 +43,7 @@ define(
                                 window.location.replace(url.build(_this.returnUrl));
                             } else {
                                 if (typeof response.url !== 'undefined' && response.url !== false) {
-                                    Payplug.showPayment(response.url, isOneClick);
+                                    payplug.Form.showPayment(response.url, isOneClick);
                                 } else {
                                     _this.cancelPayplugPayment();
                                 }

@@ -57,6 +57,11 @@ class StandardBuilder extends AbstractBuilder
         if ($this->isOneClick($storeId) && $currentCard != null) {
             $paymentData['payment_method'] = $currentCard;
             $paymentData['initiator'] = 'PAYER';
+        } elseif ($this->payplugConfig->isIntegrated()) {
+            $paymentData['integration'] = 'INTEGRATED_PAYMENT';
+            if (isset($paymentData['hosted_payment']['cancel_url'])) {
+                unset($paymentData['hosted_payment']['cancel_url']);
+            }
         }
 
         return $paymentData;

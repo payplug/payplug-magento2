@@ -46,6 +46,8 @@
                 <field id="oney_min_amounts"/>
                 <field id="oney_max_amounts"/>
                 <field id="can_use_oney"/>
+                <field id="can_use_integrated_payments"/>
+                <field id="payment_page_backup"/>
             </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">

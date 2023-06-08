@@ -67,6 +67,7 @@ class PaymentHandler implements HandlerInterface
                 $isPaid = 0;
             }
             $payment->setAdditionalInformation('is_paid', $isPaid);
+            $payment->setAdditionalInformation('payplug_payment_id', $payplugPayment->id);
 
             try {
                 if ($payplugPayment->payment_method && isset($payplugPayment->payment_method['merchant_session'])) {

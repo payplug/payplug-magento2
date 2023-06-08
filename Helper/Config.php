@@ -8,7 +8,10 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Model\Api\Login;
 use Payplug\Payplug;
 
 class Config extends AbstractHelper
@@ -19,6 +22,8 @@ class Config extends AbstractHelper
     public const ENVIRONMENT_LIVE = 'live';
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
+    public const PAYMENT_PAGE_INTEGRATED = 'integrated';
+    public const PAYMENT_PAGE_MANUAL = 'manual';
 
     public const MODULE_VERSION = '1.24.1';
 
@@ -38,6 +43,16 @@ class Config extends AbstractHelper
     private $productMetadata;
 
     /**
+     * @var AdapterInterface
+     */
+    private $resourceConnection;
+
+    /**
+     * @var Login
+     */
+    private $login;
+
+    /**
      * @var string
      */
     private $scope;
@@ -52,17 +67,23 @@ class Config extends AbstractHelper
      * @param WriterInterface          $configWriter
      * @param System                   $systemConfigType
      * @param ProductMetadataInterface $productMetadata
+     * @param ResourceConnection       $resourceConnection
+     * @param Login                    $login
      */
     public function __construct(
         Context $context,
         WriterInterface $configWriter,
         System $systemConfigType,
-        ProductMetadataInterface $productMetadata
+        ProductMetadataInterface $productMetadata,
+        ResourceConnection $resourceConnection,
+        Login $login
     ) {
         parent::__construct($context);
         $this->configWriter = $configWriter;
         $this->systemConfigType = $systemConfigType;
         $this->productMetadata = $productMetadata;
+        $this->resourceConnection = $resourceConnection->getConnection();
+        $this->login = $login;
     }
 
     /**
@@ -118,11 +139,7 @@ class Config extends AbstractHelper
      */
     public function setPayplugApiKey($storeId, $isSandbox)
     {
-        if ($isSandbox) {
-            $key = $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        } else {
-            $key = $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        }
+        $key = $this->getApiKey($isSandbox, $storeId);
 
         if (!empty($key)) {
             Payplug::init(['secretKey' => $key, 'apiVersion' => '2019-08-06']);
@@ -147,6 +164,23 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Retrieve api key
+     *
+     * @param $storeId
+     * @param $isSandbox
+     *
+     * @return string|null
+     */
+    public function getApiKey($isSandbox, $storeId = null)
+    {
+        if ($isSandbox) {
+            return $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        }
+
+        return $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+    }
+
+    /**
      * Get is_sandbox flag depending on environment mode
      *
      * @param int $store
@@ -167,7 +201,19 @@ class Config extends AbstractHelper
      */
     public function isEmbedded()
     {
-        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED;
+        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED ||
+            $this->getConfigValue('payment_page_backup') == self::PAYMENT_PAGE_EMBEDDED ||
+            ($this->isIntegrated() && $this->getConfigValue('payment_page_backup') == self::PAYMENT_PAGE_MANUAL);
+    }
+
+    /**
+     * Get is integrated config
+     *
+     * @return bool
+     */
+    public function isIntegrated()
+    {
+        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_INTEGRATED;
     }
 
     /**
@@ -285,6 +331,8 @@ class Config extends AbstractHelper
             'payplug_payments/general/can_create_deferred_payment',
             'payplug_payments/general/can_use_oney',
             'payplug_payments/general/merchand_country',
+            'payplug_payments/general/payment_page_backup',
+            'payplug_payments/general/can_use_integrated_payments',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
@@ -397,5 +445,106 @@ class Config extends AbstractHelper
         }
 
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
+    }
+
+    /**
+     * Force standard payment as integrated if merchant is allowed
+     * Rollback to previous configuration if merchant is not allowed anymore
+     *
+     * @param int|null $websiteId
+     * @param bool     $isAdmin
+     */
+    public function handleIntegratedPayment(?int $websiteId, bool $isAdmin = false): void
+    {
+        $scope = null;
+        $scopeId = null;
+        if ($websiteId !== null) {
+            if ($this->getConfigFromDb(ScopeInterface::SCOPE_WEBSITE, $websiteId, 'connected')) {
+                $scope = ScopeInterface::SCOPE_WEBSITE;
+                $scopeId = $websiteId;
+            }
+        }
+        if ($scope === null || $scopeId === null) {
+            if ($this->getConfigFromDb(ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0, 'connected')) {
+                $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+                $scopeId = 0;
+            }
+        }
+
+        if ($scope === null || $scopeId === null) {
+            return;
+        }
+        if ($isAdmin && $websiteId !== null && $scope === ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+            // Payplug is connected on default level
+            // Admin is viewing configuration from website level
+            // Configuration should not be changed
+            return;
+        }
+
+        $apiKey = $this->scopeConfig->getValue(self::CONFIG_PATH . 'test_api_key', $scope, $scopeId);
+        if ($this->scopeConfig->getValue(self::CONFIG_PATH . 'environmentmode', $scope, $scopeId) === self::ENVIRONMENT_LIVE) {
+            $apiKey = $this->scopeConfig->getValue(self::CONFIG_PATH . 'live_api_key', $scope, $scopeId);
+        }
+        if (empty($apiKey)) {
+            return;
+        }
+
+        $paymentPage = $this->getConfigFromDb($scope, $scopeId, 'payment_page');
+        $paymentPageBackup = $this->getConfigFromDb($scope, $scopeId, 'payment_page_backup');
+        try {
+            $result = $this->login->getAccount($apiKey);
+            $canUseIntegratedPayment = $result['answer']['permissions']['can_use_integrated_payments'] ?? false;
+            if ($canUseIntegratedPayment) {
+                // Merchant can use integrated payment
+                // If payment is not set to integrated payment
+                // And the payment has not yet been changed back manually
+                if ($paymentPage !== Config::PAYMENT_PAGE_INTEGRATED && $paymentPageBackup !== self::PAYMENT_PAGE_MANUAL) {
+                    $this->configWriter->save(self::CONFIG_PATH . 'payment_page', self::PAYMENT_PAGE_INTEGRATED, $scope, $scopeId);
+                    $this->configWriter->save(self::CONFIG_PATH . 'payment_page_backup', $paymentPage, $scope, $scopeId);
+                    $this->systemConfigType->clean();
+                }
+            } else {
+                $this->_logger->error('cannotUseIntegrated');
+                // Merchant cannot use integrated payment
+                // If payment is set to integrated payment
+                // Set payment back to previous value if available, popup otherwise
+                if ($paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
+                    $newPaymentPage = self::PAYMENT_PAGE_EMBEDDED;
+                    if (!empty($paymentPageBackup) && $paymentPageBackup !== self::PAYMENT_PAGE_MANUAL) {
+                        $newPaymentPage = $paymentPageBackup;
+                    }
+                    $this->configWriter->save(self::CONFIG_PATH . 'payment_page', $newPaymentPage, $scope, $scopeId);
+                    $this->configWriter->save(self::CONFIG_PATH . 'payment_page_backup', self::PAYMENT_PAGE_MANUAL, $scope, $scopeId);
+                    $this->systemConfigType->clean();
+                }
+            }
+        } catch (\Exception $e) {
+            $this->_logger->error('Could not retrieve Payplug account for integrated payment');
+        }
+    }
+
+    /**
+     * Get config value from database directly
+     * Avoids cache issues
+     * Make sure to retrive data from specified scope only
+     *
+     * @param string $scope
+     * @param int    $scopeId
+     * @param string $path
+     *
+     * @return mixed
+     */
+    private function getConfigFromDb(string $scope, int $scopeId, string $path)
+    {
+        $select = $this->resourceConnection->select()
+            ->from(
+                ['main_table' => $this->resourceConnection->getTableName('core_config_data')],
+                'value'
+            )
+            ->where('main_table.scope like ?', $scope . '%')
+            ->where('main_table.scope_id = ?', $scopeId)
+            ->where('main_table.path = ?', self::CONFIG_PATH . $path);
+
+        return $this->resourceConnection->fetchOne($select);
     }
 }
