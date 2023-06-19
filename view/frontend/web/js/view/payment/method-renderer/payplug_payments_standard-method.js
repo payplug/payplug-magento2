@@ -214,16 +214,6 @@ define([
         },
         placeOrder: function(data, event) {
            if (this.isIntegrated() && this.getSelectedCardId() === '') {
-               let allFieldsAlreadyValid = true;
-               jQuery.each(this.integratedForm, function (key, data) {
-                   allFieldsAlreadyValid = allFieldsAlreadyValid && this.integratedForm[key].valid;
-               }.bind(this));
-               if (allFieldsAlreadyValid) {
-                   this._super(data, event);
-
-                   return;
-               }
-
                this.integratedApi.validateForm();
                let original = this._super.bind(this);
                this.integratedApi.onValidateForm(({isFormValid}) => {
