@@ -135,20 +135,10 @@ define([
         loadCards: function () {
             if (window.checkoutConfig.payment.payplug_payments_standard.is_one_click) {
                 var cacheKey = 'payplug-payments-cards';
-
-                if (window.checkoutConfig.payment.payplug_payments_standard.should_refresh_cards) {
-                    // Issue in Magento 2.1 with private content not refreshed properly by Magento
-                    var self = this;
-                    customerData.reload([cacheKey], false).done(function(jqXHR) {
-                        self.cards = jqXHR[cacheKey].cards;
-                    });
-                } else {
-                    var dataObject = customerData.get(cacheKey);
-                    var data = dataObject();
-                    if (data.cards) {
-                        this.cards = data.cards;
-                    }
-                }
+                var self = this;
+                customerData.reload([cacheKey], false).done(function(jqXHR) {
+                    self.cards = jqXHR[cacheKey].cards;
+                });
             }
         },
         isCardSelected: function (data) {
@@ -224,16 +214,6 @@ define([
         },
         placeOrder: function(data, event) {
            if (this.isIntegrated() && this.getSelectedCardId() === '') {
-               let allFieldsAlreadyValid = true;
-               jQuery.each(this.integratedForm, function (key, data) {
-                   allFieldsAlreadyValid = allFieldsAlreadyValid && this.integratedForm[key].valid;
-               }.bind(this));
-               if (allFieldsAlreadyValid) {
-                   this._super(data, event);
-
-                   return;
-               }
-
                this.integratedApi.validateForm();
                let original = this._super.bind(this);
                this.integratedApi.onValidateForm(({isFormValid}) => {

@@ -100,7 +100,6 @@ class ConfigProvider implements ConfigProviderInterface
                     'is_one_click' => $this->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
-                    'should_refresh_cards' => $this->shouldRefreshCards(),
                     'display_cards_in_container' => $this->shouldDisplayCardsInContainer(),
                     'is_sandbox' => $this->payplugConfig->getIsSandbox(),
                 ],
@@ -176,23 +175,6 @@ class ConfigProvider implements ConfigProviderInterface
     private function isOneClick()
     {
         return $this->payplugConfig->isOneClick() && $this->customerSession->isLoggedIn();
-    }
-
-    /**
-     * Check magento version
-     *
-     * @return bool
-     */
-    public function shouldRefreshCards()
-    {
-        // Issue in Magento 2.1 & Magento 2.4 with private content not refreshed properly by Magento
-        if (strpos($this->payplugConfig->getMagentoVersion(), '2.1.') === 0 ||
-            strpos($this->payplugConfig->getMagentoVersion(), '2.4.') === 0
-        ) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
