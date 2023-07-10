@@ -96,11 +96,12 @@ class ConfigProvider implements ConfigProviderInterface
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
-                    'is_one_click' => $this->payplugConfig->isOneClick(),
+                    'is_integrated' => $this->payplugConfig->isIntegrated(),
+                    'is_one_click' => $this->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
-                    'should_refresh_cards' => $this->shouldRefreshCards(),
                     'display_cards_in_container' => $this->shouldDisplayCardsInContainer(),
+                    'is_sandbox' => $this->payplugConfig->getIsSandbox(),
                 ],
             ],
         ] : [];
@@ -146,34 +147,34 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function getSelectedCardId()
     {
-        if (!$this->customerSession->isLoggedIn()) {
+        if (!$this->isOneClick()) {
             return '';
         }
 
-        $lastCardId = $this->payplugCardHelper->getLastCardIdByCustomer($this->customerSession->getCustomer()->getId());
+        $customerId = $this->customerSession->getCustomer()->getId();
+        $lastCardId = $this->payplugCardHelper->getLastCardIdByCustomer($customerId);
 
-        if ($lastCardId != 0) {
-            return $lastCardId;
+        if ($lastCardId === 0) {
+            return '';
+        }
+        $customerCardsForCurrentContext = $this->payplugCardHelper->getCardsByCustomer($customerId);
+        foreach ($customerCardsForCurrentContext as $card) {
+            if ($card->getCustomerCardId() === $lastCardId) {
+                return $lastCardId;
+            }
         }
 
         return '';
     }
 
     /**
-     * Check magento version
+     * Check if customer is logged in to enable one click
      *
      * @return bool
      */
-    public function shouldRefreshCards()
+    private function isOneClick()
     {
-        // Issue in Magento 2.1 & Magento 2.4 with private content not refreshed properly by Magento
-        if (strpos($this->payplugConfig->getMagentoVersion(), '2.1.') === 0 ||
-            strpos($this->payplugConfig->getMagentoVersion(), '2.4.') === 0
-        ) {
-            return true;
-        }
-
-        return false;
+        return $this->payplugConfig->isOneClick() && $this->customerSession->isLoggedIn();
     }
 
     /**

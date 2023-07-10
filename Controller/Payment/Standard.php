@@ -43,6 +43,21 @@ class Standard extends AbstractPayment
                 return $response;
             }
 
+            if ($this->getRequest()->getParam('integrated')) {
+                $paymentId = $order->getPayment()->getAdditionalInformation('payplug_payment_id');
+                $order->getPayment()->unsAdditionalInformation('payplug_payment_id');
+
+                if (empty($paymentId)) {
+                    throw new \Exception('Could not retrieve payment id for integrated payment');
+                }
+                $response->setData([
+                    'payment_id' => $paymentId,
+                    'error' => false,
+                ]);
+
+                return $response;
+            }
+
             if (empty($url)) {
                 throw new \Exception('Could not retrieve payment url');
             }

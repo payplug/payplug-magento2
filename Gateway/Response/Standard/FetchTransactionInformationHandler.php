@@ -133,7 +133,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
             return;
         }
 
-        if ($payment->save_card == 1 || ($payment->card->id != '' && $payment->hosted_payment != '')) {
+        if ($payment->card && $payment->card->id != '') {
             try {
                 $this->customerCardRepository->get($payment->card->id, 'card_token');
                 return;

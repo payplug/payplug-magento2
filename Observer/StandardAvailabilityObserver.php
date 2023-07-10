@@ -6,15 +6,18 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Payment\Model\Method\Adapter;
-use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManager;
+use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Api\Login;
 
 class StandardAvailabilityObserver implements ObserverInterface
 {
@@ -29,13 +32,39 @@ class StandardAvailabilityObserver implements ObserverInterface
     private $payplugHelper;
 
     /**
-     * @param Config $payplugConfig
-     * @param Data   $payplugHelper
+     * @var Login
      */
-    public function __construct(Config $payplugConfig, Data $payplugHelper)
-    {
+    private $login;
+
+    /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
+     * @var StoreManager
+     */
+    private $storeManager;
+
+    /**
+     * @param Config       $payplugConfig
+     * @param Data         $payplugHelper
+     * @param Login        $login
+     * @param Logger       $logger
+     * @param StoreManager $storeManager
+     */
+    public function __construct(
+        Config $payplugConfig,
+        Data $payplugHelper,
+        Login $login,
+        Logger $logger,
+        StoreManager $storeManager
+    ) {
         $this->payplugConfig = $payplugConfig;
         $this->payplugHelper = $payplugHelper;
+        $this->login = $login;
+        $this->logger = $logger;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -81,6 +110,16 @@ class StandardAvailabilityObserver implements ObserverInterface
         if (empty($testApiKey) && empty($liveApiKey)) {
             $checkResult->setData('is_available', false);
             return;
+        }
+
+        $apiKey = $liveApiKey;
+        $environmentMode = $this->payplugConfig->getConfigValue(
+            'environmentmode',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+        if ($environmentMode == Config::ENVIRONMENT_TEST) {
+            $apiKey = $testApiKey;
         }
 
         $prefix = '';
@@ -135,6 +174,33 @@ class StandardAvailabilityObserver implements ObserverInterface
             }
         }
 
+        if ($adapter->getCode() === ApplePay::METHOD_CODE) {
+            $onboardDomains = [];
+            try {
+                $result = $this->login->getAccount($apiKey);
+                $onboardDomains = $result['answer']['payment_methods']['apple_pay']['allowed_domain_names'] ?? [];
+            } catch (\Exception $e) {
+                $this->logger->error('Could not retrieve Payplug account data', [
+                    'exception' => $e,
+                ]);
+            }
+
+            $merchandDomain = parse_url($this->payplugConfig->getConfigValue(
+                'base_url',
+                ScopeInterface::SCOPE_STORE,
+                $storeId,
+                'web/secure/'
+            ), PHP_URL_HOST);
+            if (!in_array($merchandDomain, $onboardDomains)) {
+                $this->logger->error('Payplug ApplePay is not available for this domain. It will be hidden from available payment methods in checkout.', [
+                    'merchant_domain' => $merchandDomain,
+                ]);
+                $checkResult->setData('is_available', false);
+
+                return;
+            }
+        }
+
         $amount = (int) round($quote->getGrandTotal() * 100);
 
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
@@ -147,6 +213,10 @@ class StandardAvailabilityObserver implements ObserverInterface
                 $checkResult->setData('is_available', false);
                 return;
             }
+        }
+
+        if ($adapter->getCode() == Standard::METHOD_CODE) {
+            $this->payplugConfig->handleIntegratedPayment($this->storeManager->getWebsite()->getId());
         }
     }
 }

@@ -34,9 +34,6 @@ class Formjs extends \Magento\Framework\View\Element\Template
     public function getJsUrls(): array
     {
         $urls = [];
-        if ($this->isEmbedded()) {
-            $urls[] = $this->getPayplugJsUrl();
-        }
         if ($this->_scopeConfig->getValue('payment/payplug_payments_apple_pay/active', ScopeInterface::SCOPE_STORE)) {
             $urls[] = 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
         }
@@ -49,21 +46,8 @@ class Formjs extends \Magento\Framework\View\Element\Template
      *
      * @return string
      */
-    public function getPayplugJsUrl()
+    public function getPayplugSecureUrl()
     {
-        $url = $this->getRequest()->getServer('PAYPLUG_API_URL', 'https://api.payplug.com');
-        $url .= '/js/1/form.latest.js';
-
-        return $url;
-    }
-
-    /**
-     * Get embedded option
-     *
-     * @return bool
-     */
-    public function isEmbedded()
-    {
-        return $this->helper->isEmbedded() || $this->helper->isOneClick();
+        return $this->getRequest()->getServer('PAYPLUG_SECURE_URL', 'https://secure.payplug.com');
     }
 }

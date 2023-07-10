@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use Laminas\Validator\EmailAddress;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\PaymentException;
 use Payplug\Payments\Helper\Config;
@@ -80,7 +81,8 @@ class OndemandBuilder extends AbstractBuilder
             }
             $sentByValue = $phoneResult['phone'];
         } elseif ($sentBy === Payment::SENT_BY_EMAIL) {
-            if (!\Zend_Validate::is($sentByValue, 'EmailAddress')) {
+            $emailValidator = new EmailAddress();
+            if (!$emailValidator->isValid($sentByValue)) {
                 throw new PaymentException(__('Invalid email format %1', $sentByValue));
             }
         }

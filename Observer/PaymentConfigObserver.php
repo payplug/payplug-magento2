@@ -2,6 +2,8 @@
 
 namespace Payplug\Payments\Observer;
 
+use Laminas\Validator\EmailAddress;
+use Laminas\Validator\NotEmpty;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
@@ -195,7 +197,22 @@ class PaymentConfigObserver implements ObserverInterface
             $apiKey = $this->liveApiKey ?? $this->getConfig('live_api_key');
         }
         if (!empty($apiKey)) {
-            $this->getAccountPermissions($apiKey);
+            $permissions = $this->getAccountPermissions($apiKey);
+            if ($fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED) {
+                if (!$permissions['can_use_integrated_payments']) {
+                    $groups['general']['fields']['payment_page']['value'] = $this->getConfig('payment_page');
+                    $this->messageManager->addErrorMessage(__(
+                        'You do not have access to this feature yet. ' .
+                        'To activate it, please fill in the following form: ' .
+                        'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
+                    ));
+                }
+            } else {
+                $paymentPageBackup = $this->getConfig('payment_page_backup');
+                if (!empty($paymentPageBackup) && $paymentPageBackup !== Config::PAYMENT_PAGE_MANUAL) {
+                    $this->saveConfig('payment_page_backup', Config::PAYMENT_PAGE_MANUAL);
+                }
+            }
         }
 
         $this->request->setPostValue('groups', $groups);
@@ -416,7 +433,7 @@ class PaymentConfigObserver implements ObserverInterface
             } else {
                 $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
                 $this->messageManager->addErrorMessage(
-                    __('The Bancontact payment feature is not available for the TEST mode.')
+                    __('Bancontact is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.')
                 );
             }
         }
@@ -464,7 +481,7 @@ class PaymentConfigObserver implements ObserverInterface
                     ));
                 } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
                     $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
-                    $message = 'Apple Pay payment is not available for the TEST mode. Please activate the LIVE mode.';
+                    $message = 'Apple Pay is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.';
                     $this->messageManager->addErrorMessage(__($message));
                 }
             }
@@ -509,7 +526,7 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             } else {
                 $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
-                $message = 'Amex payments are not available for the TEST mode. Please activate the LIVE mode.';
+                $message = 'Amex is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.';
                 $this->messageManager->addErrorMessage(__($message));
             }
         }
@@ -684,12 +701,14 @@ class PaymentConfigObserver implements ObserverInterface
     private function payplugLogin($email, $pwd, $canChangeConfigConnected = false)
     {
         $error = false;
-        if (!\Zend_Validate::is($pwd, 'NotEmpty')) {
+        $notEmptyValidator = new NotEmpty();
+        if (!$notEmptyValidator->isValid($pwd)) {
             $error = true;
             $this->messageManager->addErrorMessage(__('Password field was empty.'));
         }
 
-        if (!\Zend_Validate::is($email, 'EmailAddress')) {
+        $emailValidator = new EmailAddress();
+        if (!$emailValidator->isValid($email)) {
             $error = true;
             $this->messageManager->addErrorMessage(__('The email address is incorrect.'));
         }
@@ -826,6 +845,7 @@ class PaymentConfigObserver implements ObserverInterface
             'can_use_bancontact',
             'can_use_apple_pay',
             'can_use_amex',
+            'can_use_integrated_payments',
         ];
         foreach ($permissions as $permission) {
             $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);
