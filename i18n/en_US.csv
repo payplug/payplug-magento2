@@ -230,3 +230,7 @@
 "The amount must be between €100 and €3,000.","The amount must be between €100 and €3,000."
 "and","and"
 "The value is not within the specified range.","The value is not within the specified range."
+"PayPlug Payments - Satispay","PayPlug Payments - Satispay"
+"Satispay is only available for payers with billing addresses in Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia.","Satispay is only available for payers with billing addresses in Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia."
+"You don't have access to this feature yet. To activate Satispay, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248599064860","You don't have access to this feature yet. To activate Satispay, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248599064860"
+"Satispay is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","Satispay is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it."

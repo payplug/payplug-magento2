@@ -8,6 +8,7 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Framework\Phrase;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Helper\Config;
@@ -59,6 +60,11 @@ class PaymentConfigObserver implements ObserverInterface
      * @var string
      */
     private $liveApiKey;
+
+    /**
+     * @var array
+     */
+    private $permissions = [];
 
     /**
      * @param Http             $request
@@ -121,6 +127,9 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if ($this->canProcessSection($postParams, 'payplug_payments_amex')) {
             $this->processAmexConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_satispay')) {
+            $this->processSatispayConfig($postParams['groups']);
         }
     }
 
@@ -472,44 +481,20 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processBancontactConfig($groups)
     {
-        $fields = $groups['payplug_payments_bancontact']['fields'];
-
-        $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_bancontact');
-
-        if (!empty($fields['active']['value'])) {
-            $environmentMode = $this->getConfig('environmentmode');
-
-            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                $apiKey = $this->getConfig('live_api_key');
-                if (empty($apiKey)) {
-                    $this->messageManager->addErrorMessage(
-                        __('We are not able to retrieve your account information. ' .
-                            'Please go to section Sales > Payplug Payments to log in again.')
-                    );
-                } else {
-                    $permissions = $this->getAccountPermissions($apiKey);
-
-                    if (empty($permissions['can_use_bancontact'])) {
-                        $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
-                        $message = 'You do not have access to this feature yet. ' .
-                            'To activate Bancontact, please fill in the following form: %1 (%2)';
-                        $this->messageManager->addErrorMessage(__(
-                            $message,
-                            'https://support.payplug.com/hc/fr/requests/new?ticket_form_id=4583813991452',
-                            'support@payplug.com'
-                        ));
-                    }
-                }
-            } else {
-                $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
-                $this->messageManager->addErrorMessage(
-                    __('Bancontact is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.')
-                );
-            }
-        }
-
-        $this->request->setPostValue('groups', $groups);
+        $this->processLiveOnlyMethod(
+            $groups,
+            'bancontact',
+            __(
+                'You do not have access to this feature yet. ' .
+                'To activate Bancontact, please fill in the following form: %1 (%2)',
+                'https://support.payplug.com/hc/fr/requests/new?ticket_form_id=4583813991452',
+                'support@payplug.com'
+            ),
+            __(
+                'Bancontact is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
     }
 
     /**
@@ -568,10 +553,58 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processAmexConfig($groups)
     {
-        $fields = $groups['payplug_payments_amex']['fields'];
+        $this->processLiveOnlyMethod(
+            $groups,
+            'amex',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate American Express, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420'
+            ),
+            __(
+                'Amex is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Satispay configuration
+     *
+     * @param array $groups
+     */
+    private function processSatispayConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'satispay',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate Satispay, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248599064860'
+            ),
+            __(
+                'Satispay is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Process method available only in LIVE mode
+     *
+     * @param array  $groups
+     * @param string $method
+     * @param Phrase $liveModeNoPermissionMessage
+     * @param Phrase $testModeMessage
+     */
+    private function processLiveOnlyMethod($groups, $method, $liveModeNoPermissionMessage, $testModeMessage)
+    {
+        $groupCode = 'payplug_payments_' . $method;
+        $fields = $groups[$groupCode]['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_amex');
+        $groups = $this->validatePayplugConnection($fields, $groups, $groupCode);
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -586,19 +619,14 @@ class PaymentConfigObserver implements ObserverInterface
                 } else {
                     $permissions = $this->getAccountPermissions($apiKey);
 
-                    if (empty($permissions['can_use_amex'])) {
-                        $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
-                        $this->messageManager->addErrorMessage(__(
-                            'You don\'t have access to this feature yet. ' .
-                            'To activate American Express, please fill in the following form: ' .
-                            'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420'
-                        ));
+                    if (empty($permissions['can_use_' . $method])) {
+                        $groups[$groupCode]['fields']['active']['value'] = 0;
+                        $this->messageManager->addErrorMessage($liveModeNoPermissionMessage);
                     }
                 }
             } else {
-                $groups['payplug_payments_amex']['fields']['active']['value'] = 0;
-                $message = 'Amex is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.';
-                $this->messageManager->addErrorMessage(__($message));
+                $groups[$groupCode]['fields']['active']['value'] = 0;
+                $this->messageManager->addErrorMessage($testModeMessage);
             }
         }
 
@@ -834,14 +862,17 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function getAccountPermissions($apiKey)
     {
-        $result = $this->login->getAccount($apiKey);
-        if (!$result['status']) {
-            $this->messageManager->addErrorMessage(__($result['message']));
-
-            return [];
+        if (!array_key_exists($apiKey, $this->permissions)) {
+            $result = $this->login->getAccount($apiKey);
+            if (!$result['status']) {
+                $this->messageManager->addErrorMessage(__($result['message']));
+                $this->permissions[$apiKey] = [];
+            } else {
+                $this->permissions[$apiKey] = $this->treatAccountResponse($result['answer']);
+            }
         }
 
-        return $this->treatAccountResponse($result['answer']);
+        return $this->permissions[$apiKey];
     }
 
     /**
@@ -935,6 +966,32 @@ class PaymentConfigObserver implements ObserverInterface
             'can_use_amex',
             'can_use_integrated_payments',
         ];
+
+        $pproMethods = [
+            'satispay',
+        ];
+        foreach ($pproMethods as $method) {
+            $jsonAnswer['permissions']['can_use_' . $method] =
+                $jsonAnswer['payment_methods'][$method]['enabled'] ?? false;
+            $permissions[] = 'can_use_' . $method;
+            $this->saveConfig(
+                $method . '_countries',
+                json_encode($jsonAnswer['payment_methods'][$method]['allowed_countries'] ?? [])
+            );
+            $this->saveConfig(
+                $method . '_min_amounts',
+                $this->processAmounts(
+                    $jsonAnswer['payment_methods'][$method]['min_amounts'] ?? []
+                )
+            );
+            $this->saveConfig(
+                $method . '_max_amounts',
+                $this->processAmounts(
+                    $jsonAnswer['payment_methods'][$method]['max_amounts'] ?? []
+                )
+            );
+        }
+
         foreach ($permissions as $permission) {
             $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);
         }

@@ -410,6 +410,25 @@ class Config extends AbstractHelper
             'payment/payplug_payments_apple_pay/sort_order',
         ];
 
+        $pproMethods = [
+            'satispay',
+        ];
+        foreach ($pproMethods as $method) {
+            $keys = array_merge($keys, [
+                'payment/payplug_payments_' . $method . '/active',
+                'payment/payplug_payments_' . $method . '/title',
+                'payment/payplug_payments_' . $method . '/processing_order_status',
+                'payment/payplug_payments_' . $method . '/canceled_order_status',
+                'payment/payplug_payments_' . $method . '/allowspecific',
+                'payment/payplug_payments_' . $method . '/default_country',
+                'payment/payplug_payments_' . $method . '/sort_order',
+                'payplug_payments/general/' . $method . '_countries',
+                'payplug_payments/general/' . $method . '_min_amounts',
+                'payplug_payments/general/' . $method . '_max_amounts',
+                'payplug_payments/general/can_use_' . $method,
+            ]);
+        }
+
         foreach ($keys as $key) {
             $this->configWriter->delete($key, $this->scope, $this->scopeId);
         }
