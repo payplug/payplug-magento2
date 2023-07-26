@@ -5,14 +5,14 @@ namespace Payplug\Payments\Model\Payment\ApplePay;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
+use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
-class ConfigProvider implements ConfigProviderInterface
+class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
 {
     /**
      * @var string
@@ -23,16 +23,6 @@ class ConfigProvider implements ConfigProviderInterface
      * @var MethodInterface
      */
     private $method;
-
-    /**
-     * @var Repository
-     */
-    private $assetRepo;
-
-    /**
-     * @var RequestInterface
-     */
-    private $request;
 
     /**
      * @var ScopeConfigInterface
@@ -51,8 +41,7 @@ class ConfigProvider implements ConfigProviderInterface
         PaymentHelper $paymentHelper,
         ScopeConfigInterface $scopeConfig
     ) {
-        $this->assetRepo = $assetRepo;
-        $this->request = $request;
+        parent::__construct($assetRepo, $request);
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
         $this->scopeConfig = $scopeConfig;
     }
@@ -81,24 +70,5 @@ class ConfigProvider implements ConfigProviderInterface
                 ],
             ],
         ] : [];
-    }
-
-    /**
-     * Retrieve url of a view file
-     *
-     * @param string $fileId
-     * @param array  $params
-     *
-     * @return string
-     */
-    private function getViewFileUrl($fileId, array $params = [])
-    {
-        try {
-            $params = array_merge(['_secure' => $this->request->isSecure()], $params);
-
-            return $this->assetRepo->getUrlWithParams($fileId, $params);
-        } catch (LocalizedException $e) {
-            return null;
-        }
     }
 }

@@ -127,6 +127,8 @@ class StandardAvailabilityObserver implements ObserverInterface
         if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $prefix = 'oney_';
             $path = Config::ONEY_CONFIG_PATH;
+        } elseif ($this->payplugHelper->isCodePayplugPaymentPpro($adapter->getCode())) {
+            $prefix = str_replace('payplug_payments_', '', $adapter->getCode()) . '_';
         }
 
         $currency = $quote->getCurrency()->getQuoteCurrencyCode();

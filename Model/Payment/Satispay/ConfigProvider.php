@@ -1,13 +1,13 @@
 <?php
 
-namespace Payplug\Payments\Model\Payment\Bancontact;
+namespace Payplug\Payments\Model\Payment\Satispay;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
-use Payplug\Payments\Gateway\Config\Bancontact;
+use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
 class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
@@ -15,7 +15,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
     /**
      * @var string
      */
-    private $methodCode = Bancontact::METHOD_CODE;
+    private $methodCode = Satispay::METHOD_CODE;
 
     /**
      * @var MethodInterface
@@ -46,7 +46,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         return $this->method->isAvailable() ? [
             'payment' => [
                 $this->methodCode => [
-                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/bancontact.svg'),
+                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/satispay.svg'),
                 ],
             ],
         ] : [];
