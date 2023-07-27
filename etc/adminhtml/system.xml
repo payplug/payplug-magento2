@@ -56,6 +56,10 @@
                 <field id="sofort_min_amounts"/>
                 <field id="sofort_max_amounts"/>
                 <field id="can_use_sofort"/>
+                <field id="giropay_countries"/>
+                <field id="giropay_min_amounts"/>
+                <field id="giropay_max_amounts"/>
+                <field id="can_use_giropay"/>
             </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -426,6 +430,40 @@
                     <label>Payment from Applicable Countries</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
                     <comment>SOFORT is only available for payers with billing addresses in Austria, Belgium, Germany, Spain, Italy, Netherlands.</comment>
+                </field>
+                <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Default Country</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
+                    <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Sort Order</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="model"/>
+                <field id="specificcountry"/>
+            </group>
+            <group id="payplug_payments_giropay" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>PayPlug Payments - Giropay</label>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                </field>
+                <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Processing order status</label>
+                    <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
+                </field>
+                <field id="canceled_order_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Canceled order status</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
+                </field>
+                <field id="allowspecific" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Payment from Applicable Countries</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
+                    <comment>Giropay is only available for payers with billing addresses in Germany.</comment>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>

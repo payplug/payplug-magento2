@@ -134,6 +134,9 @@ class PaymentConfigObserver implements ObserverInterface
         if ($this->canProcessSection($postParams, 'payplug_payments_sofort')) {
             $this->processSofortConfig($postParams['groups']);
         }
+        if ($this->canProcessSection($postParams, 'payplug_payments_giropay')) {
+            $this->processGiropayConfig($postParams['groups']);
+        }
     }
 
     /**
@@ -616,6 +619,28 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Giropay configuration
+     *
+     * @param array $groups
+     */
+    private function processGiropayConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'giropay',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate Giropay, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248632664476'
+            ),
+            __(
+                'Giropay is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
      * Process method available only in LIVE mode
      *
      * @param array  $groups
@@ -994,7 +1019,8 @@ class PaymentConfigObserver implements ObserverInterface
 
         $pproMethods = [
             'satispay',
-            'sofort'
+            'sofort',
+            'giropay',
         ];
         foreach ($pproMethods as $method) {
             $jsonAnswer['permissions']['can_use_' . $method] =
