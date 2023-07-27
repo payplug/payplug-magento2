@@ -131,6 +131,9 @@ class PaymentConfigObserver implements ObserverInterface
         if ($this->canProcessSection($postParams, 'payplug_payments_satispay')) {
             $this->processSatispayConfig($postParams['groups']);
         }
+        if ($this->canProcessSection($postParams, 'payplug_payments_sofort')) {
+            $this->processSofortConfig($postParams['groups']);
+        }
     }
 
     /**
@@ -591,6 +594,28 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Sofort configuration
+     *
+     * @param array $groups
+     */
+    private function processSofortConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'sofort',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate SOFORT, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248655934108'
+            ),
+            __(
+                'SOFORT is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
      * Process method available only in LIVE mode
      *
      * @param array  $groups
@@ -969,6 +994,7 @@ class PaymentConfigObserver implements ObserverInterface
 
         $pproMethods = [
             'satispay',
+            'sofort'
         ];
         foreach ($pproMethods as $method) {
             $jsonAnswer['permissions']['can_use_' . $method] =

@@ -412,6 +412,7 @@ class Config extends AbstractHelper
 
         $pproMethods = [
             'satispay',
+            'sofort',
         ];
         foreach ($pproMethods as $method) {
             $keys = array_merge($keys, [

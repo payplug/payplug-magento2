@@ -238,3 +238,8 @@
 "Payplug Payment Method","Metodo di pagamento"
 "SEPA Credit Transfer","Bonifico SEPA"
 "The automatic refund is not available from your back-office. Please contact support@payplug.com","Il rimborso automatico non è possibile dal tuo back-office. Contatta supporto@payplug.com"
+"PayPlug Payments - SOFORT","Pagamenti Payplug - SOFORT"
+"SOFORT is only available for payers with billing addresses in Austria, Belgium, Germany, Spain, Italy, Netherlands.","SOFORT è disponibile solo per i clienti con indirizzo di fatturazione in Austria, Belgio, Germania, Spagna, Italia, Olanda."
+"You don't have access to this feature yet. To activate SOFORT, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248655934108","Non puoi ancora accedere a questa funzionalità. Per attivare SOFORT, compila questo modulo: https://support.payplug.com/hc/it/requests/new?ticket_form_id=8248655934108"
+"SOFORT is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","SOFORT non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
+"To pay with SOFORT, your billing address needs to be in one of the following countries: Austria, Belgium, Germany, Spain, Italy, Netherlands.","Per pagare con SOFORT, il indirizzo di fatturazione deve trovarsi in uno dei seguenti paesi: Austria, Belgio, Germania, Spagna, Italia, Olanda."

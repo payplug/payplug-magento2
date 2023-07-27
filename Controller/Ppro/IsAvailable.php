@@ -6,6 +6,7 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Phrase;
 use Payplug\Payments\Gateway\Config\Satispay;
+use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Helper\Config;
 
 class IsAvailable extends \Magento\Framework\App\Action\Action
@@ -91,6 +92,12 @@ class IsAvailable extends \Magento\Framework\App\Action\Action
                 'To pay with Satispay, your billing address needs to be in one of the following countries: ' .
                 'Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, ' .
                 'Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia.'
+            );
+        }
+        if ($method === Sofort::METHOD_CODE) {
+            return __(
+                'To pay with SOFORT, your billing address needs to be in one of the following countries: ' .
+                'Austria, Belgium, Germany, Spain, Italy, Netherlands.'
             );
         }
 
