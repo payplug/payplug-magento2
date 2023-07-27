@@ -253,3 +253,8 @@
 "You don't have access to this feature yet. To activate iDEAL, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248663314844","Non puoi ancora accedere a questa funzionalità. Per attivare iDEAL, compila questo modulo: https://support.payplug.com/hc/it/requests/new?ticket_form_id=8248663314844"
 "iDEAL is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","iDEAL non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
 "To pay with iDEAL, your billing address needs to be in the Netherlands.","Per pagare con iDEAL, il indirizzo di fatturazione dev'essere in Olanda."
+"PayPlug Payments - MyBank","Pagamenti Payplug - MyBank"
+"MyBank is only available for payers with billing addresses in Italy.","MyBank è disponibile solo per i clienti con indirizzo di fatturazione in Italia."
+"You don't have access to this feature yet. To activate MyBank, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248631711516","Non puoi ancora accedere a questa funzionalità. Per attivare MyBank, compila questo modulo: https://support.payplug.com/hc/it/requests/new?ticket_form_id=8248631711516"
+"MyBank is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","MyBank non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
+"To pay with MyBank, your billing address needs to be in Italy.","Per pagare con MyBank, il indirizzo di fatturazione dev'essere in Italia."

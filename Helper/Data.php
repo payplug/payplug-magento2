@@ -33,6 +33,7 @@ use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Gateway\Config\Giropay;
 use Payplug\Payments\Gateway\Config\Ideal;
+use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Gateway\Config\Standard;
@@ -337,6 +338,9 @@ class Data extends AbstractHelper
                 Order::STATE_PAYMENT_REVIEW
             ],
             Ideal::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Mybank::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
         ];
@@ -837,6 +841,7 @@ class Data extends AbstractHelper
             Sofort::METHOD_CODE,
             Giropay::METHOD_CODE,
             Ideal::METHOD_CODE,
+            Mybank::METHOD_CODE,
         ]);
     }
 
@@ -854,6 +859,7 @@ class Data extends AbstractHelper
             Sofort::METHOD_CODE,
             Giropay::METHOD_CODE,
             Ideal::METHOD_CODE,
+            Mybank::METHOD_CODE,
         ]);
     }
 

@@ -7,6 +7,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Phrase;
 use Payplug\Payments\Gateway\Config\Giropay;
 use Payplug\Payments\Gateway\Config\Ideal;
+use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Helper\Config;
@@ -110,6 +111,11 @@ class IsAvailable extends \Magento\Framework\App\Action\Action
         if ($method === Ideal::METHOD_CODE) {
             return __(
                 'To pay with iDEAL, your billing address needs to be in the Netherlands.'
+            );
+        }
+        if ($method === Mybank::METHOD_CODE) {
+            return __(
+                'To pay with MyBank, your billing address needs to be in Italy.'
             );
         }
 
