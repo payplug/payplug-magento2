@@ -137,6 +137,9 @@ class PaymentConfigObserver implements ObserverInterface
         if ($this->canProcessSection($postParams, 'payplug_payments_giropay')) {
             $this->processGiropayConfig($postParams['groups']);
         }
+        if ($this->canProcessSection($postParams, 'payplug_payments_ideal')) {
+            $this->processIdealConfig($postParams['groups']);
+        }
     }
 
     /**
@@ -641,6 +644,28 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Ideal configuration
+     *
+     * @param array $groups
+     */
+    private function processIdealConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'ideal',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate iDEAL, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248663314844'
+            ),
+            __(
+                'iDEAL is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
      * Process method available only in LIVE mode
      *
      * @param array  $groups
@@ -1021,6 +1046,7 @@ class PaymentConfigObserver implements ObserverInterface
             'satispay',
             'sofort',
             'giropay',
+            'ideal',
         ];
         foreach ($pproMethods as $method) {
             $jsonAnswer['permissions']['can_use_' . $method] =

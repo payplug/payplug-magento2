@@ -248,3 +248,8 @@
 "You don't have access to this feature yet. To activate Giropay, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248632664476","Non puoi ancora accedere a questa funzionalità. Per attivare Giropay, compila questo modulo: https://support.payplug.com/hc/it/requests/new?ticket_form_id=8248632664476"
 "Giropay is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","Giropay non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
 "To pay with Giropay, your billing address needs to be in Germany.","Per pagare con Giropay, il indirizzo di fatturazione dev'essere in Germania."
+"PayPlug Payments - iDEAL","Pagamenti Payplug - iDEAL"
+"iDEAL is only available for payers with billing addresses in the Netherlands.","iDEAL è disponibile solo per i clienti con indirizzo di fatturazione in Olanda."
+"You don't have access to this feature yet. To activate iDEAL, please fill in the following form: https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248663314844","Non puoi ancora accedere a questa funzionalità. Per attivare iDEAL, compila questo modulo: https://support.payplug.com/hc/it/requests/new?ticket_form_id=8248663314844"
+"iDEAL is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","iDEAL non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
+"To pay with iDEAL, your billing address needs to be in the Netherlands.","Per pagare con iDEAL, il indirizzo di fatturazione dev'essere in Olanda."
