@@ -87,5 +87,19 @@ require(
                 $('row_payplug_payments_general_pwd').hide();
             }
         }
+
+        let typeSelect = $('payplug_payments_general_payment_page');
+        handlePaymentPageTypeComment();
+        typeSelect.observe('change', function () {
+            handlePaymentPageTypeComment();
+        });
+
+        function handlePaymentPageTypeComment() {
+            if (typeSelect.value === 'integrated') {
+                typeSelect.siblings('p.note')[0].show();
+            } else {
+                typeSelect.siblings('p.note')[0].hide();
+            }
+        }
     }
 );

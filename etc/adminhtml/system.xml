@@ -25,9 +25,10 @@
                     <label>Mode</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Mode</source_model>
                 </field>
-                <field id="payment_page" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="payment_page" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment Page</label>
                     <source_model>Payplug\Payments\Model\Config\Source\PaymentPage</source_model>
+                    <comment>The Embedded Payment display is only compatible with a standardized checkout page that meets the Magento guidelines. Some checkout customizations will not allow the feature to work (changing the “Place order” button, etc.).</comment>
                 </field>
                 <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Invoice on payment validation</label>
