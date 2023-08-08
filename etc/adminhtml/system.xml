@@ -195,7 +195,6 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-
                 <field id="min_threshold" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable this option for amounts between</label>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
@@ -204,7 +203,6 @@
                     <label>and</label>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
                 </field>
-
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
@@ -231,7 +229,6 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-
                 <field id="min_threshold" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable this option for amounts between</label>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
@@ -240,8 +237,6 @@
                     <label>and</label>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
                 </field>
-
-
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
