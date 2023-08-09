@@ -389,17 +389,19 @@ class PaymentConfigObserver implements ObserverInterface
                         $isActive = true;
                     }
                 }
+
+                if(!$this->validateThresholdValues($fields) || empty($permissions['can_use_oney']) ){
+                    $groups[$oney]['fields']['min_threshold']['value'] = $this->min_threshold;
+                    $groups[$oney]['fields']['max_threshold']['value'] = $this->max_threshold;
+
+                    $this->messageManager->addErrorMessage(
+                        __('The value is not within the specified range.')
+                    );
+                }
+
             }
             $bothActive = $bothActive && $isActive;
 
-            if(!$this->validateThresholdValues($fields)){
-                $groups[$oney]['fields']['min_threshold']['value'] = $this->min_threshold;
-                $groups[$oney]['fields']['max_threshold']['value'] = $this->max_threshold;
-
-                $this->messageManager->addErrorMessage(
-                    __('The value is not within the specified range.')
-                );
-            }
         }
 
         if ($bothActive) {
