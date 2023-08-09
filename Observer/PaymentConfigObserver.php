@@ -9,6 +9,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
 
@@ -48,6 +49,16 @@ class PaymentConfigObserver implements ObserverInterface
      * @var string
      */
     private $testApiKey;
+
+    /**
+     * @var int
+     */
+    private $min_threshold = \Payplug\Payments\Helper\Oney::MIN_THRESHOLD;
+
+    /**
+     * @var int
+     */
+    private $max_threshold = \Payplug\Payments\Helper\Oney::MAX_THRESHOLD;
 
     /**
      * @var string
@@ -380,7 +391,17 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             }
             $bothActive = $bothActive && $isActive;
+
+            if(!$this->validateThresholdValues($fields)){
+                $groups[$oney]['fields']['min_threshold']['value'] = $this->min_threshold;
+                $groups[$oney]['fields']['max_threshold']['value'] = $this->max_threshold;
+
+                $this->messageManager->addErrorMessage(
+                    __('The value is not within the specified range.')
+                );
+            }
         }
+
         if ($bothActive) {
             $this->messageManager->addErrorMessage(
                 __('Please note: it is impossible to offer Oney and Oney with no fees simultaneously in your store. ' .
@@ -392,6 +413,26 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         $this->request->setPostValue('groups', $groups);
+    }
+
+    private function validateThresholdValues($fields){
+        $min_threshold = intval($fields['min_threshold']["value"]);
+        $max_threshold = intval($fields['max_threshold']["value"]);
+
+        if($min_threshold >= $max_threshold){
+            return false;
+        }
+
+        if($min_threshold < $this->min_threshold){
+            return false;
+        }
+
+        if($max_threshold > $this->max_threshold){
+            return false;
+        }
+
+        return true;
+
     }
 
     /**

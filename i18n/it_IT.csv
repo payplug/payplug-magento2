@@ -229,3 +229,4 @@
 "Enable this option for amounts between","Attiva questa opzione per somme tra"
 "The amount must be between €100 and €3,000.","L'importo deve essere compreso tra 100€ e 3.000€."
 "and","e"
+"The value is not within the specified range.","Il valore non è compreso nell'intervallo specificato."

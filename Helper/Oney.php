@@ -40,6 +40,10 @@ class Oney extends AbstractHelper
 
     public const MAX_ITEMS = 1000;
 
+    public const MAX_THRESHOLD = 3000;
+
+    public const MIN_THRESHOLD = 100;
+
     /**
      * @var Config
      */
