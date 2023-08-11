@@ -40,10 +40,6 @@ class Oney extends AbstractHelper
 
     public const MAX_ITEMS = 1000;
 
-    public const MAX_THRESHOLD = 3000;
-
-    public const MIN_THRESHOLD = 100;
-
     /**
      * @var Config
      */
@@ -376,7 +372,7 @@ class Oney extends AbstractHelper
             $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
         }
 
-        return $this->payplugConfig->getAmountsByCurrency($currency, $storeId, 'oney_');
+        return $this->payplugConfig->getAmountsByCurrency($currency, $storeId, Config::ONEY_CONFIG_PATH, 'oney_' );
     }
 
     /**

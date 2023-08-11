@@ -81,8 +81,6 @@
                 <title>Oney</title>
                 <processing_order_status>processing</processing_order_status>
                 <canceled_order_status>canceled</canceled_order_status>
-                <min_threshold>100</min_threshold>
-                <max_threshold>3000</max_threshold>
                 <allowspecific>0</allowspecific>
                 <sort_order>0</sort_order>
                 <default_country>FR</default_country>
@@ -107,8 +105,6 @@
                 <title>Oney Without Fees</title>
                 <processing_order_status>processing</processing_order_status>
                 <canceled_order_status>canceled</canceled_order_status>
-                <min_threshold>100</min_threshold>
-                <max_threshold>3000</max_threshold>
                 <allowspecific>0</allowspecific>
                 <sort_order>0</sort_order>
                 <default_country>FR</default_country>
