@@ -548,7 +548,8 @@ class PaymentConfigObserver implements ObserverInterface
                     ));
                 } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
                     $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
-                    $message = 'Apple Pay is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.';
+                    $message = 'Apple Pay is unavailable in TEST mode. ' .
+                        'Please switch your Payplug plugin to LIVE mode to activate it.';
                     $this->messageManager->addErrorMessage(__($message));
                 }
             }

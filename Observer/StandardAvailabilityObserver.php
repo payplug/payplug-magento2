@@ -196,7 +196,8 @@ class StandardAvailabilityObserver implements ObserverInterface
                 'web/secure/'
             ), PHP_URL_HOST);
             if (!in_array($merchandDomain, $onboardDomains)) {
-                $this->logger->error('Payplug ApplePay is not available for this domain. It will be hidden from available payment methods in checkout.', [
+                $this->logger->error('Payplug ApplePay is not available for this domain. ' .
+                    'It will be hidden from available payment methods in checkout.', [
                     'merchant_domain' => $merchandDomain,
                 ]);
                 $checkResult->setData('is_available', false);

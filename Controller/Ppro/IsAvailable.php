@@ -82,6 +82,8 @@ class IsAvailable extends \Magento\Framework\App\Action\Action
     }
 
     /**
+     * Retrieve error message for given payment method
+     *
      * @param string $method
      *
      * @return Phrase
