@@ -15,12 +15,12 @@ class PaymentPage implements \Magento\Framework\Option\ArrayInterface
     {
         $options = [
             [
-                'value' => Config::PAYMENT_PAGE_REDIRECT,
-                'label' => __('PayPlug redirected payment'),
-            ],
-            [
                 'value' => Config::PAYMENT_PAGE_INTEGRATED,
                 'label' => __('PayPlug embedded payment'),
+            ],
+            [
+                'value' => Config::PAYMENT_PAGE_REDIRECT,
+                'label' => __('PayPlug redirected payment'),
             ],
             [
                 'value' => Config::PAYMENT_PAGE_EMBEDDED,

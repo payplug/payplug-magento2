@@ -218,9 +218,5 @@ class StandardAvailabilityObserver implements ObserverInterface
                 return;
             }
         }
-
-        if ($adapter->getCode() == Standard::METHOD_CODE) {
-            $this->payplugConfig->handleIntegratedPayment($this->storeManager->getWebsite()->getId());
-        }
     }
 }

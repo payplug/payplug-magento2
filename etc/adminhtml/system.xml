@@ -48,7 +48,6 @@
                 <field id="oney_max_amounts"/>
                 <field id="can_use_oney"/>
                 <field id="can_use_integrated_payments"/>
-                <field id="payment_page_backup"/>
                 <field id="satispay_countries"/>
                 <field id="satispay_min_amounts"/>
                 <field id="satispay_max_amounts"/>
