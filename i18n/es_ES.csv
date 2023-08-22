@@ -187,3 +187,7 @@
 "Invalid expiration date.","Invalid expiration date."
 "Invalid CVV.","Invalid CVV."
 "Save my credit card","Save my credit card"
+"Enable this option for amounts between","Enable this option for amounts between"
+"The amount must be between €100 and €3,000.","The amount must be between €100 and €3,000."
+"and","and"
+"The value is not within the specified range.","The value is not within the specified range."

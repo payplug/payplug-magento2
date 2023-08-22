@@ -17,6 +17,7 @@ use Payplug\Payplug;
 class Config extends AbstractHelper
 {
     public const CONFIG_PATH = 'payplug_payments/general/';
+    public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
 
     public const ENVIRONMENT_TEST = 'test';
     public const ENVIRONMENT_LIVE = 'live';
@@ -25,7 +26,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
     public const PAYMENT_PAGE_MANUAL = 'manual';
 
-    public const MODULE_VERSION = '1.25.0';
+    public const MODULE_VERSION = '1.26.0';
 
     /**
      * @var WriterInterface
@@ -292,14 +293,18 @@ class Config extends AbstractHelper
      *
      * @return void
      */
-    public function setConfigValue($field, $value, $scope = ScopeInterface::SCOPE_STORE, $scopeId = null)
+    public function setConfigValue($field, $value, $scope = ScopeInterface::SCOPE_STORE, $scopeId = null, $path = null)
     {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
             $scopeId = $this->scopeId;
         }
 
-        $this->configWriter->save(self::CONFIG_PATH . $field, $value, $scope, $scopeId);
+        if($path === null){
+            $path = self::CONFIG_PATH;
+        }
+
+        $this->configWriter->save( $path. $field, $value, $scope, $scopeId);
     }
 
     /**
@@ -368,6 +373,10 @@ class Config extends AbstractHelper
             'payment/payplug_payments_oney/title',
             'payment/payplug_payments_oney/processing_order_status',
             'payment/payplug_payments_oney/canceled_order_status',
+            'payment/payplug_payments_oney/oney_min_amounts',
+            'payment/payplug_payments_oney/oney_max_amounts',
+            'payment/payplug_payments_oney/oney_min_threshold',
+            'payment/payplug_payments_oney/oney_max_threshold',
             'payment/payplug_payments_oney/allowspecific',
             'payment/payplug_payments_oney/specificcountry',
             'payment/payplug_payments_oney/sort_order',
@@ -376,6 +385,8 @@ class Config extends AbstractHelper
             'payment/payplug_payments_oney_without_fees/title',
             'payment/payplug_payments_oney_without_fees/processing_order_status',
             'payment/payplug_payments_oney_without_fees/canceled_order_status',
+            'payment/payplug_payments_oney_without_fees/oney_min_threshold',
+            'payment/payplug_payments_oney_without_fees/oney_max_threshold',
             'payment/payplug_payments_oney_without_fees/allowspecific',
             'payment/payplug_payments_oney_without_fees/specificcountry',
             'payment/payplug_payments_oney_without_fees/sort_order',
@@ -411,15 +422,22 @@ class Config extends AbstractHelper
      * @param string $isoCode
      * @param int    $storeId
      * @param string $amountPrefix
+     * @param string $path
      *
      * @return bool|array
      */
-    public function getAmountsByCurrency($isoCode, $storeId, $amountPrefix = '')
+    public function getAmountsByCurrency($isoCode, $storeId, $path, $amountPrefix = '', )
     {
         $minAmounts = [];
         $maxAmounts = [];
-        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId);
-        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId);
+
+        if($path===null){
+            $path=SELF::CONFIG_PATH;
+        }
+
+        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
+        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
+
         foreach (explode(';', $minAmountsConfig) as $amountCur) {
             $cur = [];
             if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
