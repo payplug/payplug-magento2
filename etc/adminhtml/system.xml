@@ -198,11 +198,13 @@
                 <field id="oney_min_amounts"/>
                 <field id="oney_min_threshold" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable this option for amounts between</label>
+                    <frontend_class>validate-number validate-number-range number-range-100-3000</frontend_class>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
                 </field>
                 <field id="oney_max_amounts"/>
                 <field id="oney_max_threshold" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>and</label>
+                    <frontend_class>validate-number validate-number-range number-range-100-3000</frontend_class>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -233,10 +235,12 @@
                 </field>
                 <field id="oney_min_threshold" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable this option for amounts between</label>
+                    <frontend_class>validate-number validate-number-range number-range-100-3000</frontend_class>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
                 </field>
                 <field id="oney_max_threshold" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>and</label>
+                    <frontend_class>validate-number validate-number-range number-range-100-3000</frontend_class>
                     <comment><![CDATA[The amount must be between €100 and €3,000.]]></comment>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
