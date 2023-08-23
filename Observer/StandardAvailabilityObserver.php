@@ -123,6 +123,7 @@ class StandardAvailabilityObserver implements ObserverInterface
         }
 
         $prefix = '';
+        $path = Config::CONFIG_PATH;
         if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $prefix = 'oney_';
             $path = Config::ONEY_CONFIG_PATH;
