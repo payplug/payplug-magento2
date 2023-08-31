@@ -388,36 +388,39 @@ class PaymentConfigObserver implements ObserverInterface
                     }
                 }
 
-                $storeId = $this->storeManager->getStore()->getId();
-                $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
+                //if customer loggedin && have permissions
+                if($isActive) {
+                    $storeId = $this->storeManager->getStore()->getId();
+                    $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
-                $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH);
-                $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH);
+                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH);
+                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH);
 
-                $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId,Config::CONFIG_PATH, 'oney_' );
+                    $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId, Config::CONFIG_PATH, 'oney_');
 
-                if( !$this->validateThresholdValues($fields, $oney_default_thresholds) ){
-                    $groups[$oney]['fields']['oney_min_threshold']['value'] = ($oney_default_thresholds["min_amount"]/100);
-                    $groups[$oney]['fields']['oney_max_threshold']['value'] = ($oney_default_thresholds["max_amount"]/100);
+                    if( !$this->validateThresholdValues($fields, $oney_default_thresholds) ){
+                        $groups[$oney]['fields']['oney_min_threshold']['value'] = ($oney_default_thresholds["min_amount"]/100);
+                        $groups[$oney]['fields']['oney_max_threshold']['value'] = ($oney_default_thresholds["max_amount"]/100);
 
-                    $this->messageManager->addErrorMessage(
-                        __('The value is not within the specified range.')
+                        $this->messageManager->addErrorMessage(
+                            __('The value is not within the specified range.')
+                        );
+                    }
+
+                    //save thresholds on the same format as general/oney_max_amount
+                    $this->saveOneyConfig('oney_min_amounts', preg_replace(
+                            "/(?<=:).*$/i",
+                            $groups[$oney]['fields']['oney_min_threshold']['value'] * 100,
+                            $minAmountsConfig
+                        )
                     );
-                }
 
-                //save thresholds on the same format as general/oney_max_amount
-                $this->saveOneyConfig('oney_min_amounts', preg_replace(
+                    $this->saveOneyConfig('oney_max_amounts', preg_replace(
                         "/(?<=:).*$/i",
-                        $groups[$oney]['fields']['oney_min_threshold']['value']*100,
-                        $minAmountsConfig
-                    )
-                );
-
-                $this->saveOneyConfig('oney_max_amounts', preg_replace(
-                    "/(?<=:).*$/i",
-                    $groups[$oney]['fields']['oney_max_threshold']['value']*100,
-                    $maxAmountsConfig
-                ));
+                        $groups[$oney]['fields']['oney_max_threshold']['value'] * 100,
+                        $maxAmountsConfig
+                    ));
+                }
 
             }
             $bothActive = $bothActive && $isActive;
