@@ -304,7 +304,7 @@ class Config extends AbstractHelper
             $path = self::CONFIG_PATH;
         }
 
-        $this->configWriter->save( $path. $field, $value, $scope, $scopeId);
+        $this->configWriter->save( $path . $field, $value, $scope, $scopeId);
     }
 
     /**
