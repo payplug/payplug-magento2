@@ -396,7 +396,7 @@ class PaymentConfigObserver implements ObserverInterface
 
                 $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId,Config::CONFIG_PATH, 'oney_' );
 
-                if( !$this->validateThresholdValues($fields, $oney_default_thresholds) || empty($permissions['can_use_oney']) ){
+                if( !$this->validateThresholdValues($fields, $oney_default_thresholds) ){
                     $groups[$oney]['fields']['oney_min_threshold']['value'] = ($oney_default_thresholds["min_amount"]/100);
                     $groups[$oney]['fields']['oney_max_threshold']['value'] = ($oney_default_thresholds["max_amount"]/100);
 
