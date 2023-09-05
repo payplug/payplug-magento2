@@ -393,8 +393,13 @@ class PaymentConfigObserver implements ObserverInterface
                     $storeId = $this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
-                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH);
-                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH);
+                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
+
+                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
 
                     $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId, Config::CONFIG_PATH, 'oney_');
 
@@ -904,9 +909,6 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('oney_countries', $configuration['oney_countries']);
         $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
-
-        $this->saveOneyConfig('oney_min_amounts', $configuration['oney_min_amounts']);
-        $this->saveOneyConfig('oney_max_amounts', $configuration['oney_max_amounts']);
 
         $this->saveOneyConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
         $this->saveOneyConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
