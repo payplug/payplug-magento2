@@ -372,7 +372,7 @@ class Oney extends AbstractHelper
             $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
         }
 
-        return $this->payplugConfig->getAmountsByCurrency($currency, $storeId, 'oney_');
+        return $this->payplugConfig->getAmountsByCurrency($currency, $storeId, Config::ONEY_CONFIG_PATH, 'oney_' );
     }
 
     /**
