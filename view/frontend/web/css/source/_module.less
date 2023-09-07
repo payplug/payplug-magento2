@@ -27,9 +27,20 @@
         font-weight: bold;
     }
 }
-.bancontact-checkout-error, .apple-pay-checkout-error, .amex-checkout-error {
+.bancontact-checkout-error,
+.apple-pay-checkout-error,
+.amex-checkout-error {
     color: @payplug-error;
     margin-bottom: 15px;
+}
+.payplug-ppro-method.ppro-unavailable {
+    .payment-method-title label,
+    .ppro-checkout-error {
+        color: @oney-color7;
+    }
+    img {
+        opacity: 50%;
+    }
 }
 .oney-product {
     margin-bottom: 15px;
@@ -995,7 +1006,9 @@
         }
     }
 }
-.payplug-apple-pay-method, .payplug-amex-method {
+.payplug-apple-pay-method,
+.payplug-amex-method,
+.payplug-ppro-method {
     .payment-method-title {
         &, & label {
             align-items: center;
@@ -1004,7 +1017,8 @@
         }
     }
 }
-.payplug-apple-pay-method {
+.payplug-apple-pay-method,
+.payplug-ppro-method {
     .payment-method-title {
         input[type='radio'], img {
             margin-right: 10px;
@@ -1015,6 +1029,13 @@
     .payment-method-title {
         img {
             height: 50px;
+        }
+    }
+}
+.payplug-ppro-method {
+    .payment-method-title {
+        img {
+            height: 35px;
         }
     }
 }

@@ -81,6 +81,15 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
 
         try {
             $order = $this->orderRepository->get($this->request->getParam('order_id'));
+
+            if ($this->helper->isCodePayplugPaymentPpro($order->getPayment()->getMethod())) {
+                $this->messageManager->addErrorMessage(__(
+                    'The automatic refund is not available from your back-office. Please contact support@payplug.com'
+                ));
+
+                return;
+            }
+
             $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
             $payment = $payplugPayment->retrieve($order->getStoreId());
 

@@ -5,15 +5,15 @@ namespace Payplug\Payments\Model\Payment\OneyWithoutFees;
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Oney;
+use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
-class ConfigProvider implements ConfigProviderInterface
+class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
 {
     /**
      * @var string
@@ -29,16 +29,6 @@ class ConfigProvider implements ConfigProviderInterface
      * @var ScopeConfigInterface
      */
     private $scopeConfig;
-
-    /**
-     * @var Repository
-     */
-    private $assetRepo;
-
-    /**
-     * @var RequestInterface
-     */
-    private $request;
 
     /**
      * @var Oney
@@ -59,9 +49,8 @@ class ConfigProvider implements ConfigProviderInterface
         PaymentHelper $paymentHelper,
         Oney $oneyHelper
     ) {
+        parent::__construct($assetRepo, $request);
         $this->scopeConfig = $scopeConfig;
-        $this->assetRepo = $assetRepo;
-        $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
         $this->oneyHelper = $oneyHelper;
     }
@@ -103,23 +92,5 @@ class ConfigProvider implements ConfigProviderInterface
         $localeCode = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);
 
         return $localeCode === 'it_IT';
-    }
-
-    /**
-     * Retrieve url of a view file
-     *
-     * @param string $fileId
-     * @param array  $params
-     *
-     * @return string
-     */
-    private function getViewFileUrl($fileId, array $params = [])
-    {
-        try {
-            $params = array_merge(['_secure' => $this->request->isSecure()], $params);
-            return $this->assetRepo->getUrlWithParams($fileId, $params);
-        } catch (LocalizedException $e) {
-            return null;
-        }
     }
 }

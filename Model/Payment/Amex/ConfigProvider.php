@@ -4,13 +4,13 @@ namespace Payplug\Payments\Model\Payment\Amex;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
 use Payplug\Payments\Gateway\Config\Amex;
+use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
-class ConfigProvider implements ConfigProviderInterface
+class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
 {
     /**
      * @var string
@@ -23,16 +23,6 @@ class ConfigProvider implements ConfigProviderInterface
     private $method;
 
     /**
-     * @var Repository
-     */
-    private $assetRepo;
-
-    /**
-     * @var RequestInterface
-     */
-    private $request;
-
-    /**
      * @param Repository       $assetRepo
      * @param RequestInterface $request
      * @param PaymentHelper    $paymentHelper
@@ -42,8 +32,7 @@ class ConfigProvider implements ConfigProviderInterface
         RequestInterface $request,
         PaymentHelper $paymentHelper
     ) {
-        $this->assetRepo = $assetRepo;
-        $this->request = $request;
+        parent::__construct($assetRepo, $request);
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
     }
 
@@ -61,24 +50,5 @@ class ConfigProvider implements ConfigProviderInterface
                 ],
             ],
         ] : [];
-    }
-
-    /**
-     * Retrieve url of a view file
-     *
-     * @param string $fileId
-     * @param array  $params
-     *
-     * @return string
-     */
-    private function getViewFileUrl($fileId, array $params = [])
-    {
-        try {
-            $params = array_merge(['_secure' => $this->request->isSecure()], $params);
-
-            return $this->assetRepo->getUrlWithParams($fileId, $params);
-        } catch (LocalizedException $e) {
-            return null;
-        }
     }
 }

@@ -127,6 +127,8 @@ class StandardAvailabilityObserver implements ObserverInterface
         if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $prefix = 'oney_';
             $path = Config::ONEY_CONFIG_PATH;
+        } elseif ($this->payplugHelper->isCodePayplugPaymentPpro($adapter->getCode())) {
+            $prefix = str_replace('payplug_payments_', '', $adapter->getCode()) . '_';
         }
 
         $currency = $quote->getCurrency()->getQuoteCurrencyCode();
@@ -194,7 +196,8 @@ class StandardAvailabilityObserver implements ObserverInterface
                 'web/secure/'
             ), PHP_URL_HOST);
             if (!in_array($merchandDomain, $onboardDomains)) {
-                $this->logger->error('Payplug ApplePay is not available for this domain. It will be hidden from available payment methods in checkout.', [
+                $this->logger->error('Payplug ApplePay is not available for this domain. ' .
+                    'It will be hidden from available payment methods in checkout.', [
                     'merchant_domain' => $merchandDomain,
                 ]);
                 $checkResult->setData('is_available', false);
@@ -215,10 +218,6 @@ class StandardAvailabilityObserver implements ObserverInterface
                 $checkResult->setData('is_available', false);
                 return;
             }
-        }
-
-        if ($adapter->getCode() == Standard::METHOD_CODE) {
-            $this->payplugConfig->handleIntegratedPayment($this->storeManager->getWebsite()->getId());
         }
     }
 }

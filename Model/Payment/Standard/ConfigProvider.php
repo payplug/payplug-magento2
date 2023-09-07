@@ -6,7 +6,6 @@ use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
@@ -14,8 +13,9 @@ use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
-class ConfigProvider implements ConfigProviderInterface
+class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
 {
     /**
      * @var string
@@ -31,16 +31,6 @@ class ConfigProvider implements ConfigProviderInterface
      * @var ScopeConfigInterface
      */
     private $scopeConfig;
-
-    /**
-     * @var Repository
-     */
-    private $assetRepo;
-
-    /**
-     * @var RequestInterface
-     */
-    private $request;
 
     /**
      * @var Config
@@ -75,9 +65,8 @@ class ConfigProvider implements ConfigProviderInterface
         Card $payplugCardHelper,
         Session $customerSession
     ) {
+        parent::__construct($assetRepo, $request);
         $this->scopeConfig = $scopeConfig;
-        $this->assetRepo = $assetRepo;
-        $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
         $this->payplugConfig = $payplugConfig;
         $this->payplugCardHelper = $payplugCardHelper;
@@ -175,24 +164,6 @@ class ConfigProvider implements ConfigProviderInterface
     private function isOneClick()
     {
         return $this->payplugConfig->isOneClick() && $this->customerSession->isLoggedIn();
-    }
-
-    /**
-     * Retrieve url of a view file
-     *
-     * @param string $fileId
-     * @param array  $params
-     *
-     * @return string
-     */
-    private function getViewFileUrl($fileId, array $params = [])
-    {
-        try {
-            $params = array_merge(['_secure' => $this->request->isSecure()], $params);
-            return $this->assetRepo->getUrlWithParams($fileId, $params);
-        } catch (LocalizedException $e) {
-            return null;
-        }
     }
 
     /**

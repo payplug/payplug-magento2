@@ -31,6 +31,11 @@ use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\Gateway\Config\Giropay;
+use Payplug\Payments\Gateway\Config\Ideal;
+use Payplug\Payments\Gateway\Config\Mybank;
+use Payplug\Payments\Gateway\Config\Satispay;
+use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Model\Order\Payment;
 use Payplug\Payments\Model\Order\Processing;
@@ -323,6 +328,21 @@ class Data extends AbstractHelper
             Amex::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
+            Satispay::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Sofort::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Giropay::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Ideal::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Mybank::METHOD_CODE => [
+                Order::STATE_PAYMENT_REVIEW
+            ],
         ];
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
@@ -529,10 +549,10 @@ class Data extends AbstractHelper
     {
         $method = $order->getPayment()->getMethod();
         if (!$this->isCodePayplugPayment($method) ||
-            $this->isCodePayplugPaymentOney($method) ||
-            $method === Bancontact::METHOD_CODE ||
-            $method === ApplePay::METHOD_CODE ||
-            $method === Amex::METHOD_CODE
+            ($method !== Standard::METHOD_CODE &&
+                $method !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE &&
+                $method !== Ondemand::METHOD_CODE
+            )
         ) {
             return false;
         }
@@ -808,75 +828,39 @@ class Data extends AbstractHelper
      */
     public function isCodePayplugPayment($code)
     {
-        return $code == Standard::METHOD_CODE ||
-            $code == \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE ||
-            $code == Ondemand::METHOD_CODE ||
-            $code == Oney::METHOD_CODE ||
-            $code == OneyWithoutFees::METHOD_CODE ||
-            $code == Bancontact::METHOD_CODE ||
-            $code == ApplePay::METHOD_CODE ||
-            $code == Amex::METHOD_CODE;
+        return in_array($code, [
+            Standard::METHOD_CODE,
+            \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE,
+            Ondemand::METHOD_CODE,
+            Oney::METHOD_CODE,
+            OneyWithoutFees::METHOD_CODE,
+            Bancontact::METHOD_CODE,
+            ApplePay::METHOD_CODE,
+            Amex::METHOD_CODE,
+            Satispay::METHOD_CODE,
+            Sofort::METHOD_CODE,
+            Giropay::METHOD_CODE,
+            Ideal::METHOD_CODE,
+            Mybank::METHOD_CODE,
+        ]);
     }
 
     /**
-     * Check if payment is a Oney PayPlug payment
+     * Check if payment is a PayPlug payment with PPRO
      *
      * @param string $code
      *
      * @return bool
      */
-    public function isCodePayplugPaymentOney($code)
+    public function isCodePayplugPaymentPpro($code)
     {
-        return $code == Oney::METHOD_CODE ||
-            $code == OneyWithoutFees::METHOD_CODE;
-    }
-
-    /**
-     * Check if order is linked to a Bancontact payment
-     *
-     * @param Order $order
-     *
-     * @return bool
-     */
-    public function isPaymentBancontact($order)
-    {
-        if ($order->getPayment() === false) {
-            return false;
-        }
-
-        return $order->getPayment()->getMethod() == Bancontact::METHOD_CODE;
-    }
-
-    /**
-     * Check if order is linked to an Apple Pay payment
-     *
-     * @param Order $order
-     *
-     * @return bool
-     */
-    public function isPaymentApplePay($order)
-    {
-        if ($order->getPayment() === false) {
-            return false;
-        }
-
-        return $order->getPayment()->getMethod() == ApplePay::METHOD_CODE;
-    }
-
-    /**
-     * Check if order is linked to a Amex payment
-     *
-     * @param Order $order
-     *
-     * @return bool
-     */
-    public function isPaymentAmex($order)
-    {
-        if ($order->getPayment() === false) {
-            return false;
-        }
-
-        return $order->getPayment()->getMethod() == Amex::METHOD_CODE;
+        return in_array($code, [
+            Satispay::METHOD_CODE,
+            Sofort::METHOD_CODE,
+            Giropay::METHOD_CODE,
+            Ideal::METHOD_CODE,
+            Mybank::METHOD_CODE,
+        ]);
     }
 
     /**
