@@ -123,12 +123,14 @@ class StandardAvailabilityObserver implements ObserverInterface
         }
 
         $prefix = '';
+        $path = Config::CONFIG_PATH;
         if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $prefix = 'oney_';
+            $path = Config::ONEY_CONFIG_PATH;
         }
 
         $currency = $quote->getCurrency()->getQuoteCurrencyCode();
-        $amountsByCurrency = $this->payplugConfig->getAmountsByCurrency($currency, $quote->getStoreId(), $prefix);
+        $amountsByCurrency = $this->payplugConfig->getAmountsByCurrency($currency, $quote->getStoreId(), $path, $prefix);
         if ($amountsByCurrency === false) {
             $checkResult->setData('is_available', false);
             return;
