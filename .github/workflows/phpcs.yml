@@ -28,7 +28,5 @@ jobs:
         args: >
           -Dsonar.organization=${{ secrets.SONAR_ORGA }}
           -Dsonar.projectKey=github-payplug-payplug-magento2
-          -Dsonar.sources=lib/
-          -Dsonar.test.exclusions=tests/**
-          -Dsonar.tests=tests/
+          -Dsonar.sources=.
           -Dsonar.verbose=true
