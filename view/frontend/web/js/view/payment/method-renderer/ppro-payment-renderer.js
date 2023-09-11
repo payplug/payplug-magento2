@@ -19,6 +19,7 @@ define([
         isLoading: false,
         isPproPlaceOrderDisabled: ko.observable(false),
         pproDisabledMessage: ko.observable(''),
+        pproErrorType: ko.observable(''),
 
         initialize: function () {
             var self = this;
@@ -86,7 +87,7 @@ define([
                         self.isPproPlaceOrderDisabled(false);
                         self.pproDisabledMessage('');
                     } else {
-                        self.processPproFailure(response.data.message);
+                        self.processPproFailure(response.data.message, response.data.type);
                     }
                     self.updateLoading(false);
                 }).fail(function (response) {
@@ -109,9 +110,10 @@ define([
                 fullScreenLoader.stopLoader();
             }
         },
-        processPproFailure: function(message) {
+        processPproFailure: function(message, errorType) {
             this.isPproPlaceOrderDisabled(true);
             this.pproDisabledMessage(message);
+            this.pproErrorType(typeof errorType === 'undefined' ? '' : errorType);
         },
         // Functions to be defined by each ppro payment renderer
         getConfiguration: function() {

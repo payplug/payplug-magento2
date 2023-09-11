@@ -8,7 +8,7 @@
     </div>
     <div class="payment-method-content">
         <!-- ko if: pproDisabledMessage() -->
-        <p class="ppro-checkout-error" data-bind="text: pproDisabledMessage()"></p>
+        <p class="ppro-checkout-error" data-bind="text: pproDisabledMessage(), attr: {'data-error-type': pproErrorType()}"></p>
         <!-- /ko -->
 
         <!-- ko foreach: getRegion('messages') -->
