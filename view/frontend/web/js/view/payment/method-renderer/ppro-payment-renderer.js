@@ -17,9 +17,17 @@ define([
 
         redirectAfterPlaceOrder: false,
         isLoading: false,
-        isPproPlaceOrderDisabled: ko.observable(false),
-        pproDisabledMessage: ko.observable(''),
-        pproErrorType: ko.observable(''),
+
+        initObservable: function () {
+            this._super()
+                .observe({
+                    'isPproPlaceOrderDisabled': false,
+                    'pproDisabledMessage': '',
+                    'pproErrorType': '',
+                });
+
+            return this;
+        },
 
         initialize: function () {
             var self = this;
@@ -31,9 +39,6 @@ define([
                     self.updatePproMethod();
                 }
             });
-            if (quote.paymentMethod() && quote.paymentMethod().method === self.getCode()) {
-                self.updatePproMethod();
-            }
             quote.shippingAddress.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updatePproMethod();
