@@ -37,6 +37,9 @@
     .payment-method-title label,
     .ppro-checkout-error {
         color: @oney-color7;
+        &[data-error-type="mode-test"] {
+            color: @payplug-error;
+        }
     }
     img {
         opacity: 50%;
@@ -1032,10 +1035,22 @@
         }
     }
 }
-.payplug-ppro-method {
-    .payment-method-title {
-        img {
-            height: 35px;
+.payment-method-title {
+    img {
+        [data-ppro-container="payplug_payments_satispay"] & {
+            width: 100px;
+        }
+        [data-ppro-container="payplug_payments_sofort"] & {
+            width: 80px;
+        }
+        [data-ppro-container="payplug_payments_giropay"] & {
+            width: 110px;
+        }
+        [data-ppro-container="payplug_payments_ideal"] & {
+            width: 50px;
+        }
+        [data-ppro-container="payplug_payments_mybank"] & {
+            width: 70px;
         }
     }
 }

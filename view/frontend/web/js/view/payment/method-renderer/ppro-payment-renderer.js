@@ -17,8 +17,17 @@ define([
 
         redirectAfterPlaceOrder: false,
         isLoading: false,
-        isPproPlaceOrderDisabled: ko.observable(false),
-        pproDisabledMessage: ko.observable(''),
+
+        initObservable: function () {
+            this._super()
+                .observe({
+                    'isPproPlaceOrderDisabled': false,
+                    'pproDisabledMessage': '',
+                    'pproErrorType': '',
+                });
+
+            return this;
+        },
 
         initialize: function () {
             var self = this;
@@ -30,9 +39,6 @@ define([
                     self.updatePproMethod();
                 }
             });
-            if (quote.paymentMethod() && quote.paymentMethod().method === self.getCode()) {
-                self.updatePproMethod();
-            }
             quote.shippingAddress.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updatePproMethod();
@@ -86,7 +92,7 @@ define([
                         self.isPproPlaceOrderDisabled(false);
                         self.pproDisabledMessage('');
                     } else {
-                        self.processPproFailure(response.data.message);
+                        self.processPproFailure(response.data.message, response.data.type);
                     }
                     self.updateLoading(false);
                 }).fail(function (response) {
@@ -109,9 +115,10 @@ define([
                 fullScreenLoader.stopLoader();
             }
         },
-        processPproFailure: function(message) {
+        processPproFailure: function(message, errorType) {
             this.isPproPlaceOrderDisabled(true);
             this.pproDisabledMessage(message);
+            this.pproErrorType(typeof errorType === 'undefined' ? '' : errorType);
         },
         // Functions to be defined by each ppro payment renderer
         getConfiguration: function() {
