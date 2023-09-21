@@ -27,9 +27,23 @@
         font-weight: bold;
     }
 }
-.bancontact-checkout-error, .apple-pay-checkout-error, .amex-checkout-error {
+.bancontact-checkout-error,
+.apple-pay-checkout-error,
+.amex-checkout-error {
     color: @payplug-error;
     margin-bottom: 15px;
+}
+.payplug-ppro-method.ppro-unavailable {
+    .payment-method-title label,
+    .ppro-checkout-error {
+        color: @oney-color7;
+        &[data-error-type="mode-test"] {
+            color: @payplug-error;
+        }
+    }
+    img {
+        opacity: 50%;
+    }
 }
 .oney-product {
     margin-bottom: 15px;
@@ -995,7 +1009,9 @@
         }
     }
 }
-.payplug-apple-pay-method, .payplug-amex-method {
+.payplug-apple-pay-method,
+.payplug-amex-method,
+.payplug-ppro-method {
     .payment-method-title {
         &, & label {
             align-items: center;
@@ -1004,7 +1020,8 @@
         }
     }
 }
-.payplug-apple-pay-method {
+.payplug-apple-pay-method,
+.payplug-ppro-method {
     .payment-method-title {
         input[type='radio'], img {
             margin-right: 10px;
@@ -1015,6 +1032,25 @@
     .payment-method-title {
         img {
             height: 50px;
+        }
+    }
+}
+.payment-method-title {
+    img {
+        [data-ppro-container="payplug_payments_satispay"] & {
+            width: 100px;
+        }
+        [data-ppro-container="payplug_payments_sofort"] & {
+            width: 80px;
+        }
+        [data-ppro-container="payplug_payments_giropay"] & {
+            width: 110px;
+        }
+        [data-ppro-container="payplug_payments_ideal"] & {
+            width: 50px;
+        }
+        [data-ppro-container="payplug_payments_mybank"] & {
+            width: 70px;
         }
     }
 }

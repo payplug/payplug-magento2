@@ -49,6 +49,41 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="payplug_payments_satispay_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Satispay\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="payplug_payments_sofort_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Sofort\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="payplug_payments_giropay_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Giropay\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="payplug_payments_ideal_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Ideal\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Checkout\Model\CompositeConfigProvider">
+        <arguments>
+            <argument name="configProviders" xsi:type="array">
+                <item name="payplug_payments_mybank_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Mybank\ConfigProvider</item>
+            </argument>
+        </arguments>
+    </type>
     <type name="Magento\Customer\CustomerData\SectionPoolInterface">
         <arguments>
             <argument name="sectionSourceMap" xsi:type="array">
