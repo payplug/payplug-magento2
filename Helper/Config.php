@@ -446,13 +446,13 @@ class Config extends AbstractHelper
      *
      * @return bool|array
      */
-    public function getAmountsByCurrency($isoCode, $storeId, $path, $amountPrefix = '', )
+    public function getAmountsByCurrency($isoCode, $storeId, $path, $amountPrefix = '')
     {
         $minAmounts = [];
         $maxAmounts = [];
 
         if($path===null){
-            $path=SELF::CONFIG_PATH;
+            $path=self::CONFIG_PATH;
         }
 
         $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
