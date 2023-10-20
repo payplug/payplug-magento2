@@ -5,7 +5,7 @@ namespace Payplug\Payments\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Sales\Model\Order;
-use Magento\Checkout\Model\Session\Proxy;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 class PaymentReturnObserver implements ObserverInterface
 {
@@ -13,12 +13,14 @@ class PaymentReturnObserver implements ObserverInterface
     /**
      * @var Proxy
      */
-    private $checkoutSession;
+    protected $checkoutSession;
 
     /**
-     * @param Logger $checkoutSession
+     * @param CheckoutSession $checkoutSession
      */
-    public function __construct( Proxy $checkoutSession )
+    public function __construct(
+        CheckoutSession $checkoutSession
+    )
     {
         $this->checkoutSession = $checkoutSession;
     }
