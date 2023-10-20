@@ -1172,4 +1172,11 @@
     <type name="Magento\Sales\Model\Order">
         <plugin name="payplug_payment_sales_model_order_plugin" type="Payplug\Payments\Plugin\Order\ModelPlugin" sortOrder="1"/>
     </type>
+
+    <type name="Payplug\Payments\Observer\PaymentReturnObserver">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
+
 </config>
