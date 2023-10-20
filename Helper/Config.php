@@ -8,19 +8,24 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Model\Api\Login;
 use Payplug\Payplug;
 
 class Config extends AbstractHelper
 {
     public const CONFIG_PATH = 'payplug_payments/general/';
+    public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
 
     public const ENVIRONMENT_TEST = 'test';
     public const ENVIRONMENT_LIVE = 'live';
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
+    public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
-    public const MODULE_VERSION = '1.23.0';
+    public const MODULE_VERSION = '1.27.1';
 
     /**
      * @var WriterInterface
@@ -38,6 +43,16 @@ class Config extends AbstractHelper
     private $productMetadata;
 
     /**
+     * @var AdapterInterface
+     */
+    private $resourceConnection;
+
+    /**
+     * @var Login
+     */
+    private $login;
+
+    /**
      * @var string
      */
     private $scope;
@@ -52,17 +67,23 @@ class Config extends AbstractHelper
      * @param WriterInterface          $configWriter
      * @param System                   $systemConfigType
      * @param ProductMetadataInterface $productMetadata
+     * @param ResourceConnection       $resourceConnection
+     * @param Login                    $login
      */
     public function __construct(
         Context $context,
         WriterInterface $configWriter,
         System $systemConfigType,
-        ProductMetadataInterface $productMetadata
+        ProductMetadataInterface $productMetadata,
+        ResourceConnection $resourceConnection,
+        Login $login
     ) {
         parent::__construct($context);
         $this->configWriter = $configWriter;
         $this->systemConfigType = $systemConfigType;
         $this->productMetadata = $productMetadata;
+        $this->resourceConnection = $resourceConnection->getConnection();
+        $this->login = $login;
     }
 
     /**
@@ -118,11 +139,7 @@ class Config extends AbstractHelper
      */
     public function setPayplugApiKey($storeId, $isSandbox)
     {
-        if ($isSandbox) {
-            $key = $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        } else {
-            $key = $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        }
+        $key = $this->getApiKey($isSandbox, $storeId);
 
         if (!empty($key)) {
             Payplug::init(['secretKey' => $key, 'apiVersion' => '2019-08-06']);
@@ -147,6 +164,23 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Retrieve api key
+     *
+     * @param $storeId
+     * @param $isSandbox
+     *
+     * @return string|null
+     */
+    public function getApiKey($isSandbox, $storeId = null)
+    {
+        if ($isSandbox) {
+            return $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        }
+
+        return $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+    }
+
+    /**
      * Get is_sandbox flag depending on environment mode
      *
      * @param int $store
@@ -168,6 +202,16 @@ class Config extends AbstractHelper
     public function isEmbedded()
     {
         return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED;
+    }
+
+    /**
+     * Get is integrated config
+     *
+     * @return bool
+     */
+    public function isIntegrated()
+    {
+        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_INTEGRATED;
     }
 
     /**
@@ -246,14 +290,18 @@ class Config extends AbstractHelper
      *
      * @return void
      */
-    public function setConfigValue($field, $value, $scope = ScopeInterface::SCOPE_STORE, $scopeId = null)
+    public function setConfigValue($field, $value, $scope = ScopeInterface::SCOPE_STORE, $scopeId = null, $path = null)
     {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
             $scopeId = $this->scopeId;
         }
 
-        $this->configWriter->save(self::CONFIG_PATH . $field, $value, $scope, $scopeId);
+        if($path === null){
+            $path = self::CONFIG_PATH;
+        }
+
+        $this->configWriter->save( $path . $field, $value, $scope, $scopeId);
     }
 
     /**
@@ -285,6 +333,8 @@ class Config extends AbstractHelper
             'payplug_payments/general/can_create_deferred_payment',
             'payplug_payments/general/can_use_oney',
             'payplug_payments/general/merchand_country',
+            'payplug_payments/general/payment_page_backup',
+            'payplug_payments/general/can_use_integrated_payments',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
@@ -320,6 +370,10 @@ class Config extends AbstractHelper
             'payment/payplug_payments_oney/title',
             'payment/payplug_payments_oney/processing_order_status',
             'payment/payplug_payments_oney/canceled_order_status',
+            'payment/payplug_payments_oney/oney_min_amounts',
+            'payment/payplug_payments_oney/oney_max_amounts',
+            'payment/payplug_payments_oney/oney_min_threshold',
+            'payment/payplug_payments_oney/oney_max_threshold',
             'payment/payplug_payments_oney/allowspecific',
             'payment/payplug_payments_oney/specificcountry',
             'payment/payplug_payments_oney/sort_order',
@@ -328,6 +382,8 @@ class Config extends AbstractHelper
             'payment/payplug_payments_oney_without_fees/title',
             'payment/payplug_payments_oney_without_fees/processing_order_status',
             'payment/payplug_payments_oney_without_fees/canceled_order_status',
+            'payment/payplug_payments_oney_without_fees/oney_min_threshold',
+            'payment/payplug_payments_oney_without_fees/oney_max_threshold',
             'payment/payplug_payments_oney_without_fees/allowspecific',
             'payment/payplug_payments_oney_without_fees/specificcountry',
             'payment/payplug_payments_oney_without_fees/sort_order',
@@ -351,6 +407,29 @@ class Config extends AbstractHelper
             'payment/payplug_payments_apple_pay/sort_order',
         ];
 
+        $pproMethods = [
+            'satispay',
+            'sofort',
+            'giropay',
+            'ideal',
+            'mybank',
+        ];
+        foreach ($pproMethods as $method) {
+            $keys = array_merge($keys, [
+                'payment/payplug_payments_' . $method . '/active',
+                'payment/payplug_payments_' . $method . '/title',
+                'payment/payplug_payments_' . $method . '/processing_order_status',
+                'payment/payplug_payments_' . $method . '/canceled_order_status',
+                'payment/payplug_payments_' . $method . '/allowspecific',
+                'payment/payplug_payments_' . $method . '/default_country',
+                'payment/payplug_payments_' . $method . '/sort_order',
+                'payplug_payments/general/' . $method . '_countries',
+                'payplug_payments/general/' . $method . '_min_amounts',
+                'payplug_payments/general/' . $method . '_max_amounts',
+                'payplug_payments/general/can_use_' . $method,
+            ]);
+        }
+
         foreach ($keys as $key) {
             $this->configWriter->delete($key, $this->scope, $this->scopeId);
         }
@@ -363,15 +442,22 @@ class Config extends AbstractHelper
      * @param string $isoCode
      * @param int    $storeId
      * @param string $amountPrefix
+     * @param string $path
      *
      * @return bool|array
      */
-    public function getAmountsByCurrency($isoCode, $storeId, $amountPrefix = '')
+    public function getAmountsByCurrency($isoCode, $storeId, $path, $amountPrefix = '')
     {
         $minAmounts = [];
         $maxAmounts = [];
-        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId);
-        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId);
+
+        if($path===null){
+            $path=self::CONFIG_PATH;
+        }
+
+        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
+        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
+
         foreach (explode(';', $minAmountsConfig) as $amountCur) {
             $cur = [];
             if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
@@ -397,5 +483,30 @@ class Config extends AbstractHelper
         }
 
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
+    }
+
+    /**
+     * Get config value from database directly
+     * Avoids cache issues
+     * Make sure to retrive data from specified scope only
+     *
+     * @param string $scope
+     * @param int    $scopeId
+     * @param string $path
+     *
+     * @return mixed
+     */
+    private function getConfigFromDb(string $scope, int $scopeId, string $path)
+    {
+        $select = $this->resourceConnection->select()
+            ->from(
+                ['main_table' => $this->resourceConnection->getTableName('core_config_data')],
+                'value'
+            )
+            ->where('main_table.scope like ?', $scope . '%')
+            ->where('main_table.scope_id = ?', $scopeId)
+            ->where('main_table.path = ?', self::CONFIG_PATH . $path);
+
+        return $this->resourceConnection->fetchOne($select);
     }
 }

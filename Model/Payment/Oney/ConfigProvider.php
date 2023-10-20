@@ -3,15 +3,14 @@
 namespace Payplug\Payments\Model\Payment\Oney;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
 use Payplug\Payments\Gateway\Config\Oney;
+use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
-class ConfigProvider implements ConfigProviderInterface
+class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
 {
     /**
      * @var string
@@ -24,42 +23,23 @@ class ConfigProvider implements ConfigProviderInterface
     private $method;
 
     /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
-
-    /**
-     * @var Repository
-     */
-    private $assetRepo;
-
-    /**
-     * @var RequestInterface
-     */
-    private $request;
-
-    /**
      * @var \Payplug\Payments\Helper\Oney
      */
     private $oneyHelper;
 
     /**
-     * @param ScopeConfigInterface          $scopeConfig
      * @param Repository                    $assetRepo
      * @param RequestInterface              $request
      * @param PaymentHelper                 $paymentHelper
      * @param \Payplug\Payments\Helper\Oney $oneyHelper
      */
     public function __construct(
-        ScopeConfigInterface $scopeConfig,
         Repository $assetRepo,
         RequestInterface $request,
         PaymentHelper $paymentHelper,
         \Payplug\Payments\Helper\Oney $oneyHelper
     ) {
-        $this->scopeConfig = $scopeConfig;
-        $this->assetRepo = $assetRepo;
-        $this->request = $request;
+        parent::__construct($assetRepo, $request);
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
         $this->oneyHelper = $oneyHelper;
     }
@@ -82,23 +62,5 @@ class ConfigProvider implements ConfigProviderInterface
                 ],
             ],
         ] : [];
-    }
-
-    /**
-     * Retrieve url of a view file
-     *
-     * @param string $fileId
-     * @param array  $params
-     *
-     * @return string
-     */
-    private function getViewFileUrl($fileId, array $params = [])
-    {
-        try {
-            $params = array_merge(['_secure' => $this->request->isSecure()], $params);
-            return $this->assetRepo->getUrlWithParams($fileId, $params);
-        } catch (LocalizedException $e) {
-            return null;
-        }
     }
 }

@@ -6,7 +6,6 @@ use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
@@ -14,8 +13,9 @@ use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
-class ConfigProvider implements ConfigProviderInterface
+class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
 {
     /**
      * @var string
@@ -31,16 +31,6 @@ class ConfigProvider implements ConfigProviderInterface
      * @var ScopeConfigInterface
      */
     private $scopeConfig;
-
-    /**
-     * @var Repository
-     */
-    private $assetRepo;
-
-    /**
-     * @var RequestInterface
-     */
-    private $request;
 
     /**
      * @var Config
@@ -75,9 +65,8 @@ class ConfigProvider implements ConfigProviderInterface
         Card $payplugCardHelper,
         Session $customerSession
     ) {
+        parent::__construct($assetRepo, $request);
         $this->scopeConfig = $scopeConfig;
-        $this->assetRepo = $assetRepo;
-        $this->request = $request;
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
         $this->payplugConfig = $payplugConfig;
         $this->payplugCardHelper = $payplugCardHelper;
@@ -96,11 +85,12 @@ class ConfigProvider implements ConfigProviderInterface
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
-                    'is_one_click' => $this->payplugConfig->isOneClick(),
+                    'is_integrated' => $this->payplugConfig->isIntegrated(),
+                    'is_one_click' => $this->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
-                    'should_refresh_cards' => $this->shouldRefreshCards(),
                     'display_cards_in_container' => $this->shouldDisplayCardsInContainer(),
+                    'is_sandbox' => $this->payplugConfig->getIsSandbox(),
                 ],
             ],
         ] : [];
@@ -146,52 +136,34 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function getSelectedCardId()
     {
-        if (!$this->customerSession->isLoggedIn()) {
+        if (!$this->isOneClick()) {
             return '';
         }
 
-        $lastCardId = $this->payplugCardHelper->getLastCardIdByCustomer($this->customerSession->getCustomer()->getId());
+        $customerId = $this->customerSession->getCustomer()->getId();
+        $lastCardId = $this->payplugCardHelper->getLastCardIdByCustomer($customerId);
 
-        if ($lastCardId != 0) {
-            return $lastCardId;
+        if ($lastCardId === 0) {
+            return '';
+        }
+        $customerCardsForCurrentContext = $this->payplugCardHelper->getCardsByCustomer($customerId);
+        foreach ($customerCardsForCurrentContext as $card) {
+            if ($card->getCustomerCardId() === $lastCardId) {
+                return $lastCardId;
+            }
         }
 
         return '';
     }
 
     /**
-     * Check magento version
+     * Check if customer is logged in to enable one click
      *
      * @return bool
      */
-    public function shouldRefreshCards()
+    private function isOneClick()
     {
-        // Issue in Magento 2.1 & Magento 2.4 with private content not refreshed properly by Magento
-        if (strpos($this->payplugConfig->getMagentoVersion(), '2.1.') === 0 ||
-            strpos($this->payplugConfig->getMagentoVersion(), '2.4.') === 0
-        ) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Retrieve url of a view file
-     *
-     * @param string $fileId
-     * @param array  $params
-     *
-     * @return string
-     */
-    private function getViewFileUrl($fileId, array $params = [])
-    {
-        try {
-            $params = array_merge(['_secure' => $this->request->isSecure()], $params);
-            return $this->assetRepo->getUrlWithParams($fileId, $params);
-        } catch (LocalizedException $e) {
-            return null;
-        }
+        return $this->payplugConfig->isOneClick() && $this->customerSession->isLoggedIn();
     }
 
     /**

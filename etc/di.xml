@@ -629,6 +629,487 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="PayplugPaymentAmexFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\Amex::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentAmexValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentAmexValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentAmexCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentAmexValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentAmexValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentAmexValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\Amex</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentAmexCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Amex</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentAmexCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Amex</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentAmexValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentAmexCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentAmexCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\Amex">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\Amex::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentAmexCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentAmexCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentAmexCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+                <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="AmexCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">
+        <arguments>
+            <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentAmexCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayplugPaymentAmexCaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">AmexCaptureClient</argument>
+            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="AmexTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">
+        <arguments>
+            <argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\AmexBuilder</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentAmexCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">AmexTransactionDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PayplugPaymentSatispayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\Satispay::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentSatispayValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentSatispayValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentSatispayCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSatispayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentSatispayValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSatispayValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\Satispay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSatispayCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Satispay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSatispayCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Satispay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSatispayValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentSatispayCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentSatispayCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\Satispay">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\Satispay::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentSatispayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentSatispayCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentSatispayCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="SatispayCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">
+        <arguments>
+            <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSatispayCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayplugPaymentSatispayCaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">SatispayCaptureClient</argument>
+            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="SatispayTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">
+        <arguments>
+            <argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\SatispayBuilder</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSatispayCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">SatispayTransactionDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PayplugPaymentSofortFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\Sofort::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentSofortValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentSofortValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentSofortCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSofortValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentSofortValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSofortValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\Sofort</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSofortCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Sofort</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSofortCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Sofort</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSofortValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentSofortCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentSofortCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\Sofort">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\Sofort::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentSofortCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentSofortCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentSofortCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="SofortCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">
+        <arguments>
+            <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSofortCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayplugPaymentSofortCaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">SofortCaptureClient</argument>
+            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="SofortTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">
+        <arguments>
+            <argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\SofortBuilder</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentSofortCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">SofortTransactionDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PayplugPaymentGiropayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\Giropay::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentGiropayValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentGiropayValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentGiropayCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentGiropayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentGiropayValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentGiropayValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\Giropay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentGiropayCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Giropay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentGiropayCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Giropay</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentGiropayValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentGiropayCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentGiropayCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\Giropay">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\Giropay::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentGiropayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentGiropayCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentGiropayCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="GiropayCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">
+        <arguments>
+            <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentGiropayCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayplugPaymentGiropayCaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">GiropayCaptureClient</argument>
+            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="GiropayTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">
+        <arguments>
+            <argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\GiropayBuilder</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentGiropayCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">GiropayTransactionDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PayplugPaymentIdealFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\Ideal::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentIdealValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentIdealValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentIdealCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentIdealValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentIdealValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentIdealValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\Ideal</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentIdealCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Ideal</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentIdealCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Ideal</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentIdealValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentIdealCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentIdealCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\Ideal">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\Ideal::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentIdealCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentIdealCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentIdealCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="IdealCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">
+        <arguments>
+            <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentIdealCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayplugPaymentIdealCaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">IdealCaptureClient</argument>
+            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="IdealTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">
+        <arguments>
+            <argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\IdealBuilder</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentIdealCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">IdealTransactionDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="PayplugPaymentMybankFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">Payplug\Payments\Gateway\Config\Mybank::METHOD_CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Payplug\Payments\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">PayplugPaymentMybankValueHandlerPool</argument>
+            <argument name="validatorPool" xsi:type="object">PayplugPaymentMybankValidatorPool</argument>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentMybankCommandPool</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentMybankValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">PayplugPaymentMybankValueHandlerPoolConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentMybankValueHandlerPoolConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">Payplug\Payments\Gateway\Config\Mybank</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentMybankCountryValidator" type="Magento\Payment\Gateway\Validator\CountryValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Mybank</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentMybankCurrencyValidator" type="Payplug\Payments\Gateway\Validator\CurrencyValidator">
+        <arguments>
+            <argument name="config" xsi:type="object">Payplug\Payments\Gateway\Config\Mybank</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentMybankValidatorPool" type="Magento\Payment\Gateway\Validator\ValidatorPool">
+        <arguments>
+            <argument name="validators" xsi:type="array">
+                <item name="country" xsi:type="string">PayplugPaymentMybankCountryValidator</item>
+                <item name="currency" xsi:type="string">PayplugPaymentMybankCurrencyValidator</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Payplug\Payments\Gateway\Config\Mybank">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">Payplug\Payments\Gateway\Config\Mybank::METHOD_CODE</argument>
+        </arguments>
+    </type>
+    <virtualType name="PayplugPaymentMybankCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="order" xsi:type="string">PayplugPaymentMybankCaptureCommand</item>
+                <item name="capture" xsi:type="string">PayplugPaymentMybankCaptureCommand</item>
+                <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MybankCaptureClient" type="Payplug\Payments\Gateway\Http\Client\Capture">
+        <arguments>
+            <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentMybankCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">PayplugPaymentMybankCaptureRequest</argument>
+            <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">MybankCaptureClient</argument>
+            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\Standard\PaymentHandler</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="MybankTransactionDataBuilder" type="Payplug\Payments\Gateway\Request\Payment\TransactionDataBuilder">
+        <arguments>
+            <argument name="builder" xsi:type="object">Payplug\Payments\Helper\Transaction\MybankBuilder</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="PayplugPaymentMybankCaptureRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">MybankTransactionDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="Magento\Sales\Model\ResourceModel\Order\Grid" type="Magento\Sales\Model\ResourceModel\Grid">
         <arguments>
             <argument name="joins" xsi:type="array">

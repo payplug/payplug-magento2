@@ -3,6 +3,7 @@
 namespace Payplug\Payments\Block;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -95,38 +96,48 @@ class Info extends \Magento\Payment\Block\Info
 
         $amount = $order->getOrderCurrency()->formatPrecision((float)($payment->amount / 100), 2, [], false, false);
 
-        $cardType = __('Other');
-        if (in_array(strtolower($payment->card->brand ?? ''), ['visa', 'mastercard', 'maestro'])) {
-            $cardType = $payment->card->brand;
-        } elseif (strtolower($payment->card->brand ?? '') == 'carte_bancaire') {
-            $cardType = __('CB');
+        if ($this->payplugHelper->isCodePayplugPaymentPpro($order->getPayment()->getMethod())) {
+            $methodLines = [
+                'Payplug Payment Method' => __('SEPA Credit Transfer'),
+            ];
+        } else {
+            $cardType = __('Other');
+            if (in_array(strtolower($payment->card->brand ?? ''), ['visa', 'mastercard', 'maestro'])) {
+                $cardType = $payment->card->brand;
+            } elseif (strtolower($payment->card->brand ?? '') == 'carte_bancaire') {
+                $cardType = __('CB');
+            }
+
+            $country = __('n/c');
+            if ($payment->card->country !== null) {
+                $country = $payment->card->country;
+            }
+
+            $cardMask = __('n/c');
+            if ($payment->card->last4 !== null) {
+                $cardMask = '**** **** **** ' . (string)$payment->card->last4;
+            }
+
+            $expirationDate = __('n/c');
+            if ($payment->card->exp_month !== null) {
+                $expirationDate = date('m/y', strtotime('01.'.$payment->card->exp_month.'.'.$payment->card->exp_year));
+            }
+
+            $methodLines = [
+                'Credit card' => $cardType . ' (' . $country . ')',
+                'Card mask' => $cardMask,
+                '3-D Secure' => $payment->is_3ds ? __('Yes') : __('No'),
+                'Expiration Date' => $expirationDate,
+            ];
         }
 
-        $country = __('n/c');
-        if ($payment->card->country !== null) {
-            $country = $payment->card->country;
-        }
-
-        $cardMask = __('n/c');
-        if ($payment->card->last4 !== null) {
-            $cardMask = '**** **** **** ' . (string) $payment->card->last4;
-        }
-
-        $expirationDate = __('n/c');
-        if ($payment->card->exp_month !== null) {
-            $expirationDate = date('m/y', strtotime('01.'.$payment->card->exp_month.'.'.$payment->card->exp_year));
-        }
-
-        return [
+        return array_merge([
             'Payplug Payment ID' => $payment->id,
             'Status' => $status,
             'Amount' => $amount,
             'Paid at' => date('d/m/Y H:i', $payment->created_at),
-            'Credit card' => $cardType . ' (' . $country . ')',
-            'Card mask' => $cardMask,
-            '3-D Secure' => $payment->is_3ds ? __('Yes') : __('No'),
-            'Expiration Date' => $expirationDate,
+        ], $methodLines, [
             'Mode' => $payment->is_live ? __('PayPlug LIVE mode') : __('PayPlug TEST mode'),
-        ];
+        ]);
     }
 }

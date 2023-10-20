@@ -66,6 +66,54 @@
                                                                         </item>
                                                                     </item>
                                                                 </item>
+                                                                <item name="payplug_payments_amex" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments_amex</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="payplug_payments_amex" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
+                                                                <item name="payplug_payments_satispay" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments_satispay</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="payplug_payments_satispay" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
+                                                                <item name="payplug_payments_sofort" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments_sofort</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="payplug_payments_sofort" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
+                                                                <item name="payplug_payments_giropay" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments_giropay</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="payplug_payments_giropay" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
+                                                                <item name="payplug_payments_ideal" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments_ideal</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="payplug_payments_ideal" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
+                                                                <item name="payplug_payments_mybank" xsi:type="array">
+                                                                    <item name="component" xsi:type="string">Payplug_Payments/js/view/payment/payplug_payments_mybank</item>
+                                                                    <item name="methods" xsi:type="array">
+                                                                        <item name="payplug_payments_mybank" xsi:type="array">
+                                                                            <item name="isBillingAddressRequired" xsi:type="boolean">true</item>
+                                                                        </item>
+                                                                    </item>
+                                                                </item>
                                                             </item>
                                                         </item>
                                                     </item>

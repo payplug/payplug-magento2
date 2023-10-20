@@ -2,11 +2,15 @@
 
 namespace Payplug\Payments\Observer;
 
+use Laminas\Validator\EmailAddress;
+use Laminas\Validator\NotEmpty;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Framework\Phrase;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
 
@@ -48,26 +52,39 @@ class PaymentConfigObserver implements ObserverInterface
     private $testApiKey;
 
     /**
+     * @var StoreManager
+     */
+    private $storeManager;
+
+    /**
      * @var string
      */
     private $liveApiKey;
+
+    /**
+     * @var array
+     */
+    private $permissions = [];
 
     /**
      * @param Http             $request
      * @param Login            $login
      * @param Config           $helper
      * @param ManagerInterface $messageManager
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Http $request,
         Login $login,
         Config $helper,
-        ManagerInterface $messageManager
+        ManagerInterface $messageManager,
+        StoreManagerInterface $storeManager
     ) {
         $this->request = $request;
         $this->login = $login;
         $this->helper = $helper;
         $this->messageManager = $messageManager;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -107,6 +124,24 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if ($this->canProcessSection($postParams, 'payplug_payments_apple_pay')) {
             $this->processApplePayConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_amex')) {
+            $this->processAmexConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_satispay')) {
+            $this->processSatispayConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_sofort')) {
+            $this->processSofortConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_giropay')) {
+            $this->processGiropayConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_ideal')) {
+            $this->processIdealConfig($postParams['groups']);
+        }
+        if ($this->canProcessSection($postParams, 'payplug_payments_mybank')) {
+            $this->processMybankConfig($postParams['groups']);
         }
     }
 
@@ -192,7 +227,21 @@ class PaymentConfigObserver implements ObserverInterface
             $apiKey = $this->liveApiKey ?? $this->getConfig('live_api_key');
         }
         if (!empty($apiKey)) {
-            $this->getAccountPermissions($apiKey);
+            $permissions = $this->getAccountPermissions($apiKey);
+            if ($fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED) {
+                if (!$permissions['can_use_integrated_payments']) {
+                    $paymentPage = $this->getConfig('payment_page');
+                    if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
+                        $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
+                    }
+                    $groups['general']['fields']['payment_page']['value'] = $paymentPage;
+                    $this->messageManager->addErrorMessage(__(
+                        'You do not have access to this feature yet. ' .
+                        'To activate it, please fill in the following form: ' .
+                        'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
+                    ));
+                }
+            }
         }
 
         $this->request->setPostValue('groups', $groups);
@@ -358,9 +407,51 @@ class PaymentConfigObserver implements ObserverInterface
                         $isActive = true;
                     }
                 }
+
+                //if customer loggedin && have permissions
+                if($isActive) {
+                    $storeId = $this->storeManager->getStore()->getId();
+                    $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
+
+                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
+
+                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
+
+                    $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId, Config::CONFIG_PATH, 'oney_');
+
+                    if( !$this->validateThresholdValues($fields, $oney_default_thresholds) ){
+                        $groups[$oney]['fields']['oney_min_threshold']['value'] = ($oney_default_thresholds["min_amount"]/100);
+                        $groups[$oney]['fields']['oney_max_threshold']['value'] = ($oney_default_thresholds["max_amount"]/100);
+
+                        $this->messageManager->addErrorMessage(
+                            __('The value is not within the specified range.')
+                        );
+                    }
+
+                    //save thresholds on the same format as general/oney_max_amount
+                    $this->saveOneyConfig('oney_min_amounts', preg_replace(
+                            "/(?<=:).*$/i",
+                            $groups[$oney]['fields']['oney_min_threshold']['value'] * 100,
+                            $minAmountsConfig
+                        )
+                    );
+
+                    $this->saveOneyConfig('oney_max_amounts', preg_replace(
+                        "/(?<=:).*$/i",
+                        $groups[$oney]['fields']['oney_max_threshold']['value'] * 100,
+                        $maxAmountsConfig
+                    ));
+                }
+
             }
             $bothActive = $bothActive && $isActive;
+
         }
+
         if ($bothActive) {
             $this->messageManager->addErrorMessage(
                 __('Please note: it is impossible to offer Oney and Oney with no fees simultaneously in your store. ' .
@@ -374,6 +465,26 @@ class PaymentConfigObserver implements ObserverInterface
         $this->request->setPostValue('groups', $groups);
     }
 
+    private function validateThresholdValues($fields, $oney_thresholds){
+        $min_threshold = intval($fields['oney_min_threshold']["value"]);
+        $max_threshold = intval($fields['oney_max_threshold']["value"]);
+
+        if($min_threshold >= $max_threshold){
+            return false;
+        }
+
+        if($min_threshold < ($oney_thresholds["min_amount"]/100)){
+            return false;
+        }
+
+        if($max_threshold > ($oney_thresholds["max_amount"]/100)){
+            return false;
+        }
+
+        return true;
+
+    }
+
     /**
      * Handle Bancontact configuration
      *
@@ -381,44 +492,20 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processBancontactConfig($groups)
     {
-        $fields = $groups['payplug_payments_bancontact']['fields'];
-
-        $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_bancontact');
-
-        if (!empty($fields['active']['value'])) {
-            $environmentMode = $this->getConfig('environmentmode');
-
-            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                $apiKey = $this->getConfig('live_api_key');
-                if (empty($apiKey)) {
-                    $this->messageManager->addErrorMessage(
-                        __('We are not able to retrieve your account information. ' .
-                            'Please go to section Sales > Payplug Payments to log in again.')
-                    );
-                } else {
-                    $permissions = $this->getAccountPermissions($apiKey);
-
-                    if (empty($permissions['can_use_bancontact'])) {
-                        $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
-                        $message = 'You do not have access to this feature yet. ' .
-                            'To activate Bancontact, please fill in the following form: %1 (%2)';
-                        $this->messageManager->addErrorMessage(__(
-                            $message,
-                            'https://support.payplug.com/hc/fr/requests/new?ticket_form_id=4583813991452',
-                            'support@payplug.com'
-                        ));
-                    }
-                }
-            } else {
-                $groups['payplug_payments_bancontact']['fields']['active']['value'] = 0;
-                $this->messageManager->addErrorMessage(
-                    __('The Bancontact payment feature is not available for the TEST mode.')
-                );
-            }
-        }
-
-        $this->request->setPostValue('groups', $groups);
+        $this->processLiveOnlyMethod(
+            $groups,
+            'bancontact',
+            __(
+                'You do not have access to this feature yet. ' .
+                'To activate Bancontact, please fill in the following form: %1 (%2)',
+                'https://support.payplug.com/hc/fr/requests/new?ticket_form_id=4583813991452',
+                'support@payplug.com'
+            ),
+            __(
+                'Bancontact is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
     }
 
     /**
@@ -461,9 +548,185 @@ class PaymentConfigObserver implements ObserverInterface
                     ));
                 } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
                     $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
-                    $message = 'Apple Pay payment is not available for the TEST mode. Please activate the LIVE mode.';
+                    $message = 'Apple Pay is unavailable in TEST mode. ' .
+                        'Please switch your Payplug plugin to LIVE mode to activate it.';
                     $this->messageManager->addErrorMessage(__($message));
                 }
+            }
+        }
+
+        $this->request->setPostValue('groups', $groups);
+    }
+
+    /**
+     * Handle Amex configuration
+     *
+     * @param array $groups
+     */
+    private function processAmexConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'amex',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate American Express, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=6331992459420'
+            ),
+            __(
+                'Amex is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Satispay configuration
+     *
+     * @param array $groups
+     */
+    private function processSatispayConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'satispay',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate Satispay, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248599064860'
+            ),
+            __(
+                'Satispay is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Sofort configuration
+     *
+     * @param array $groups
+     */
+    private function processSofortConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'sofort',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate SOFORT, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248655934108'
+            ),
+            __(
+                'SOFORT is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Giropay configuration
+     *
+     * @param array $groups
+     */
+    private function processGiropayConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'giropay',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate Giropay, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248632664476'
+            ),
+            __(
+                'Giropay is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Ideal configuration
+     *
+     * @param array $groups
+     */
+    private function processIdealConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'ideal',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate iDEAL, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248663314844'
+            ),
+            __(
+                'iDEAL is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Mybank configuration
+     *
+     * @param array $groups
+     */
+    private function processMybankConfig($groups)
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'mybank',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate MyBank, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248631711516'
+            ),
+            __(
+                'MyBank is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Process method available only in LIVE mode
+     *
+     * @param array  $groups
+     * @param string $method
+     * @param Phrase $liveModeNoPermissionMessage
+     * @param Phrase $testModeMessage
+     */
+    private function processLiveOnlyMethod($groups, $method, $liveModeNoPermissionMessage, $testModeMessage)
+    {
+        $groupCode = 'payplug_payments_' . $method;
+        $fields = $groups[$groupCode]['fields'];
+
+        $this->helper->initScopeData();
+        $groups = $this->validatePayplugConnection($fields, $groups, $groupCode);
+
+        if (!empty($fields['active']['value'])) {
+            $environmentMode = $this->getConfig('environmentmode');
+
+            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
+                $apiKey = $this->getConfig('live_api_key');
+                if (empty($apiKey)) {
+                    $this->messageManager->addErrorMessage(
+                        __('We are not able to retrieve your account information. ' .
+                            'Please go to section Sales > Payplug Payments to log in again.')
+                    );
+                } else {
+                    $permissions = $this->getAccountPermissions($apiKey);
+
+                    if (empty($permissions['can_use_' . $method])) {
+                        $groups[$groupCode]['fields']['active']['value'] = 0;
+                        $this->messageManager->addErrorMessage($liveModeNoPermissionMessage);
+                    }
+                }
+            } else {
+                $groups[$groupCode]['fields']['active']['value'] = 0;
+                $this->messageManager->addErrorMessage($testModeMessage);
             }
         }
 
@@ -624,6 +887,17 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Save PayPlug configuration
+     *
+     * @param string $field
+     * @param string $value
+     */
+    private function saveOneyConfig($field, $value)
+    {
+        $this->helper->setConfigValue($field, $value, ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH);
+    }
+
+    /**
      * Connect to payplug account
      *
      * Handle flags for account connection, verification
@@ -637,12 +911,14 @@ class PaymentConfigObserver implements ObserverInterface
     private function payplugLogin($email, $pwd, $canChangeConfigConnected = false)
     {
         $error = false;
-        if (!\Zend_Validate::is($pwd, 'NotEmpty')) {
+        $notEmptyValidator = new NotEmpty();
+        if (!$notEmptyValidator->isValid($pwd)) {
             $error = true;
             $this->messageManager->addErrorMessage(__('Password field was empty.'));
         }
 
-        if (!\Zend_Validate::is($email, 'EmailAddress')) {
+        $emailValidator = new EmailAddress();
+        if (!$emailValidator->isValid($email)) {
             $error = true;
             $this->messageManager->addErrorMessage(__('The email address is incorrect.'));
         }
@@ -686,14 +962,17 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function getAccountPermissions($apiKey)
     {
-        $result = $this->login->getAccount($apiKey);
-        if (!$result['status']) {
-            $this->messageManager->addErrorMessage(__($result['message']));
-
-            return [];
+        if (!array_key_exists($apiKey, $this->permissions)) {
+            $result = $this->login->getAccount($apiKey);
+            if (!$result['status']) {
+                $this->messageManager->addErrorMessage(__($result['message']));
+                $this->permissions[$apiKey] = [];
+            } else {
+                $this->permissions[$apiKey] = $this->treatAccountResponse($result['answer']);
+            }
         }
 
-        return $this->treatAccountResponse($result['answer']);
+        return $this->permissions[$apiKey];
     }
 
     /**
@@ -740,11 +1019,13 @@ class PaymentConfigObserver implements ObserverInterface
                     $configuration['oney_min_amounts'] = $this->processAmounts(
                         $jsonAnswer['configuration']['oney']['min_amounts']
                     );
+                    $configuration['raw_oney_min_amounts'] = intval($jsonAnswer['configuration']['oney']['min_amounts']['EUR'])/100;
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['max_amounts'])) {
                     $configuration['oney_max_amounts'] = $this->processAmounts(
                         $jsonAnswer['configuration']['oney']['max_amounts']
                     );
+                    $configuration['raw_oney_max_amounts'] = intval($jsonAnswer['configuration']['oney']['max_amounts']['EUR'])/100;
                 }
             }
             if (!empty($jsonAnswer['country'])) {
@@ -759,14 +1040,20 @@ class PaymentConfigObserver implements ObserverInterface
         $this->saveConfig('oney_countries', $configuration['oney_countries']);
         $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
+
+        $this->saveOneyConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
+        $this->saveOneyConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
+
         $this->saveConfig('company_id', $id);
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
 
-        // Harmonize bancontact/applepay flags as a regular permission
+        // Harmonize bancontact/applepay/amex flags as a regular permission
         $jsonAnswer['permissions']['can_use_bancontact'] =
             $jsonAnswer['payment_methods']['bancontact']['enabled'] ?? false;
         $jsonAnswer['permissions']['can_use_apple_pay'] =
             $jsonAnswer['payment_methods']['apple_pay']['enabled'] ?? false;
+        $jsonAnswer['permissions']['can_use_amex'] =
+            $jsonAnswer['payment_methods']['american_express']['enabled'] ?? false;
 
         $permissions = [
             'use_live_mode',
@@ -776,7 +1063,39 @@ class PaymentConfigObserver implements ObserverInterface
             'can_use_oney',
             'can_use_bancontact',
             'can_use_apple_pay',
+            'can_use_amex',
+            'can_use_integrated_payments',
         ];
+
+        $pproMethods = [
+            'satispay',
+            'sofort',
+            'giropay',
+            'ideal',
+            'mybank',
+        ];
+        foreach ($pproMethods as $method) {
+            $jsonAnswer['permissions']['can_use_' . $method] =
+                $jsonAnswer['payment_methods'][$method]['enabled'] ?? false;
+            $permissions[] = 'can_use_' . $method;
+            $this->saveConfig(
+                $method . '_countries',
+                json_encode($jsonAnswer['payment_methods'][$method]['allowed_countries'] ?? [])
+            );
+            $this->saveConfig(
+                $method . '_min_amounts',
+                $this->processAmounts(
+                    $jsonAnswer['payment_methods'][$method]['min_amounts'] ?? []
+                )
+            );
+            $this->saveConfig(
+                $method . '_max_amounts',
+                $this->processAmounts(
+                    $jsonAnswer['payment_methods'][$method]['max_amounts'] ?? []
+                )
+            );
+        }
+
         foreach ($permissions as $permission) {
             $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);
         }
