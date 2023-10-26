@@ -27,4 +27,8 @@
     <event name="payment_method_assign_data_payplug_payments_oney_without_fees">
         <observer name="payplug_payments_oney_without_fees_gateway_data_assign" instance="Payplug\Payments\Observer\OneyDataAssignObserver" />
     </event>
+
+    <event name="controller_action_predispatch_checkout_index_index">
+        <observer name="payplug_payments_checkcout_page" instance="Payplug\Payments\Observer\PaymentReturnObserver"  />
+    </event>
 </config>
