@@ -18,6 +18,7 @@ class Config extends AbstractHelper
 {
     public const CONFIG_PATH = 'payplug_payments/general/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
+    public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
 
     public const ENVIRONMENT_TEST = 'test';
     public const ENVIRONMENT_LIVE = 'live';

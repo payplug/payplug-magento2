@@ -898,6 +898,17 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Save PayPlug configuration
+     *
+     * @param string $field
+     * @param string $value
+     */
+    private function saveOneyWithoutFeesConfig($field, $value)
+    {
+        $this->helper->setConfigValue($field, $value, ScopeInterface::SCOPE_STORE, null, Config::ONEY_WITHOUT_FEES_CONFIG_PATH);
+    }
+
+    /**
      * Connect to payplug account
      *
      * Handle flags for account connection, verification
@@ -1043,6 +1054,9 @@ class PaymentConfigObserver implements ObserverInterface
 
         $this->saveOneyConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
         $this->saveOneyConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
+
+        $this->saveOneyWithoutFeesConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
+        $this->saveOneyWithoutFeesConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
 
         $this->saveConfig('company_id', $id);
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
