@@ -72,7 +72,7 @@ class Cancel extends AbstractPayment
                 $this->messageManager->addErrorMessage($failureMessage);
             }
 
-            $this->rebuildCart($order);
+            $this->getCheckout()->restoreQuote();
 
             return $resultRedirect->setPath($redirectUrlCart);
         } catch (\Exception $e) {
@@ -82,27 +82,4 @@ class Cancel extends AbstractPayment
         }
     }
 
-    /**
-     * Rebuild customer cart after order cancellation
-     *
-     * @param Order $order
-     */
-    private function rebuildCart($order)
-    {
-        /* @var $cart \Magento\Checkout\Model\Cart */
-        $cart = $this->_objectManager->get(\Magento\Checkout\Model\Cart::class);
-        $items = $order->getItemsCollection();
-        try {
-            foreach ($items as $item) {
-                $cart->addOrderItem($item);
-            }
-        } catch (\Exception $e) {
-            $cart->truncate();
-            $this->messageManager->addErrorMessage(
-                __('At least one item is not available anymore. Please try again.')
-            );
-        }
-
-        $cart->save();
-    }
 }
