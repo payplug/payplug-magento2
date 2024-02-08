@@ -458,7 +458,7 @@ class Config extends AbstractHelper
         $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
         $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
 
-        foreach (explode(';', $minAmountsConfig) as $amountCur) {
+        foreach (explode(';', $minAmountsConfig ?? null) as $amountCur) {
             $cur = [];
             if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
                 $minAmounts[$cur[1]] = (int)$cur[2];
@@ -466,7 +466,7 @@ class Config extends AbstractHelper
                 return false;
             }
         }
-        foreach (explode(';', $maxAmountsConfig) as $amountCur) {
+        foreach (explode(';', $maxAmountsConfig ?? null) as $amountCur) {
             $cur = [];
             if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
                 $maxAmounts[$cur[1]] = (int)$cur[2];
