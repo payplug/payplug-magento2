@@ -228,7 +228,7 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if (!empty($apiKey)) {
             $permissions = $this->getAccountPermissions($apiKey);
-            if (isset($fields['payment_page']) && isset($fields['payment_page']['value']) && $fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED) {
+           /* if (isset($fields['payment_page']) && isset($fields['payment_page']['value']) && $fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED) {
                 if (!$permissions['can_use_integrated_payments']) {
                     $paymentPage = $this->getConfig('payment_page');
                     if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
@@ -241,7 +241,7 @@ class PaymentConfigObserver implements ObserverInterface
                         'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
                     ));
                 }
-            }
+            }*/
         }
 
         $this->request->setPostValue('groups', $groups);
