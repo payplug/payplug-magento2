@@ -29,6 +29,10 @@ class PaymentDataAssignObserver extends AbstractDataAssignObserver
             $cardId = $additionalData['payplug_payments_customer_card_id'];
         }
 
+        if(is_null($cardId) && isset($additionalData['additional_information']) && isset($additionalData['additional_information']['payplug_payments_customer_card_id'])){
+          $cardId = $additionalData['additional_information']['payplug_payments_customer_card_id'];
+        }
+
         $paymentInfo = $this->readPaymentModelArgument($observer);
 
         $paymentInfo->setAdditionalInformation(
