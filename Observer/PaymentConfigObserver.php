@@ -424,25 +424,35 @@ class PaymentConfigObserver implements ObserverInterface
                     $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId, Config::CONFIG_PATH, 'oney_');
 
                     if( !$this->validateThresholdValues($fields, $oney_default_thresholds) ){
-                        $groups[$oney]['fields']['oney_min_threshold']['value'] = ($oney_default_thresholds["min_amount"]/100);
-                        $groups[$oney]['fields']['oney_max_threshold']['value'] = ($oney_default_thresholds["max_amount"]/100);
 
                         $this->messageManager->addErrorMessage(
                             __('The value is not within the specified range.')
                         );
                     }
 
+                    //website scope value
+                    if(isset($groups[$oney]['fields']['oney_min_threshold']['value'])){
+                      $min = $groups[$oney]['fields']['oney_min_threshold']['value'];
+                      $max = $groups[$oney]['fields']['oney_max_threshold']['value'];
+                    }else{
+
+                      //inherit value
+                      $min = $groups[$oney]['fields']['oney_min_threshold']['inherit'];
+                      $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
+                    }
+
+
                     //save thresholds on the same format as general/oney_max_amount
                     $this->saveOneyConfig('oney_min_amounts', preg_replace(
                             "/(?<=:).*$/i",
-                            $groups[$oney]['fields']['oney_min_threshold']['value'] * 100,
+                            $min * 100,
                             $minAmountsConfig
                         )
                     );
 
                     $this->saveOneyConfig('oney_max_amounts', preg_replace(
                         "/(?<=:).*$/i",
-                        $groups[$oney]['fields']['oney_max_threshold']['value'] * 100,
+                      $max * 100,
                         $maxAmountsConfig
                     ));
                 }
@@ -466,8 +476,25 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     private function validateThresholdValues($fields, $oney_thresholds){
-        $min_threshold = intval($fields['oney_min_threshold']["value"]);
-        $max_threshold = intval($fields['oney_max_threshold']["value"]);
+
+        if(isset($fields['oney_min_threshold']["value"])){
+          $min_threshold = intval($fields['oney_min_threshold']["value"]);
+          $max_threshold = intval($fields['oney_max_threshold']["value"]);
+        }
+
+        //website scope has on inherit
+        elseif(isset($fields['oney_min_threshold']["inherit"])){
+          $min_threshold = intval($fields['oney_min_threshold']["inherit"]);
+          $max_threshold = intval($fields['oney_max_threshold']["inherit"]);
+
+        }else{
+         return false;
+
+        }
+
+        if($oney_thresholds === false){
+          return false;
+        }
 
         if($min_threshold >= $max_threshold){
             return false;
@@ -898,6 +925,17 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Save PayPlug configuration
+     *
+     * @param string $field
+     * @param string $value
+     */
+    private function saveOneyWithoutFeesConfig($field, $value)
+    {
+        $this->helper->setConfigValue($field, $value, ScopeInterface::SCOPE_STORE, null, Config::ONEY_WITHOUT_FEES_CONFIG_PATH);
+    }
+
+    /**
      * Connect to payplug account
      *
      * Handle flags for account connection, verification
@@ -1043,6 +1081,9 @@ class PaymentConfigObserver implements ObserverInterface
 
         $this->saveOneyConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
         $this->saveOneyConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
+
+        $this->saveOneyWithoutFeesConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
+        $this->saveOneyWithoutFeesConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
 
         $this->saveConfig('company_id', $id);
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
