@@ -228,7 +228,18 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if (!empty($apiKey)) {
             $permissions = $this->getAccountPermissions($apiKey);
-            if ($fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED) {
+
+
+            $payment_value = null;
+            if(isset($fields['payment_page']['value'])){
+              $payment_value = isset($fields['payment_page']['value']);
+            }
+
+            if(isset($fields['payment_page']['inherit'])){
+              $payment_value = isset($fields['payment_page']['inherit']);
+            }
+
+            if ( $payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
                 if (!$permissions['can_use_integrated_payments']) {
                     $paymentPage = $this->getConfig('payment_page');
                     if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
