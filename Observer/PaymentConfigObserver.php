@@ -232,11 +232,11 @@ class PaymentConfigObserver implements ObserverInterface
 
             $payment_value = null;
             if(isset($fields['payment_page']['value'])){
-              $payment_value = isset($fields['payment_page']['value']);
+              $payment_value = $fields['payment_page']['value'];
             }
 
             if(isset($fields['payment_page']['inherit'])){
-              $payment_value = isset($fields['payment_page']['inherit']);
+              $payment_value = $fields['payment_page']['inherit'];
             }
 
             if ( $payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
@@ -813,7 +813,7 @@ class PaymentConfigObserver implements ObserverInterface
         ];
         if (!$this->payplugConfigConnected) {
             // To connect on website level, all fields must be provided
-            if (!$this->checkRequiredFields($fieldsRequiredForInit, $fields)) {
+            if ($this->checkRequiredFields($fieldsRequiredForInit, $fields)) {
                 return;
             }
             foreach ($fieldsRequiredForInit as $field) {
@@ -850,7 +850,7 @@ class PaymentConfigObserver implements ObserverInterface
         foreach ($fieldsRequiredForInit as $field) {
             if (isset($fields[$field]['value'])) {
                 foreach ($fieldsRequiredForInit as $fieldCheck) {
-                    if (!isset($fields[$fieldCheck]['value'])) {
+                    if ( !isset($fields[$fieldCheck]['value']) && !isset($fields[$fieldCheck]['inherit'])) {
                         return false;
                     }
                 }
