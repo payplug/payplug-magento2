@@ -47,6 +47,7 @@ class PaymentReturn extends AbstractPayment
         $resultRedirect = $this->resultRedirectFactory->create();
 
         $redirectUrlSuccess = 'checkout/onepage/success';
+        $redirectUrlCart = 'checkout/cart';
         try {
             $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
 
@@ -57,6 +58,26 @@ class PaymentReturn extends AbstractPayment
             }
             $order = $this->salesOrderFactory->create();
             $order->loadByIncrementId($lastIncrementId);
+
+            $payment = $this->payplugHelper->getOrderPayment($lastIncrementId)->retrieve();
+
+
+            if (!$payment->is_paid) {
+                $this->payplugHelper->cancelOrderAndInvoice($order);
+
+                $failureMessage = $this->_request->getParam(
+                    'failure_message',
+                    __('The transaction was aborted and your card has not been charged')
+                );
+
+                if (!empty($failureMessage)) {
+                    $this->messageManager->addErrorMessage($failureMessage);
+                }
+
+                $this->getCheckout()->restoreQuote();
+
+                return $resultRedirect->setPath($redirectUrlCart);
+            }
 
             if (!$order->getId()) {
                 $this->logger->error(sprintf('Could not retrieve order with id %s', $lastIncrementId));
