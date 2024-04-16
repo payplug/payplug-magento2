@@ -240,7 +240,7 @@ class PaymentConfigObserver implements ObserverInterface
             }
 
             if ( $payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
-                if (!$permissions['can_use_integrated_payments']) {
+                if ( !isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
                     $paymentPage = $this->getConfig('payment_page');
                     if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
                         $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
