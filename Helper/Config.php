@@ -26,7 +26,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
-    public const MODULE_VERSION = '1.27.3';
+    public const MODULE_VERSION = '1.27.4';
 
     /**
      * @var WriterInterface
