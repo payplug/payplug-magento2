@@ -228,8 +228,19 @@ class PaymentConfigObserver implements ObserverInterface
         }
         if (!empty($apiKey)) {
             $permissions = $this->getAccountPermissions($apiKey);
-            if ($fields['payment_page']['value'] == Config::PAYMENT_PAGE_INTEGRATED) {
-                if (!$permissions['can_use_integrated_payments']) {
+
+
+            $payment_value = null;
+            if(isset($fields['payment_page']['value'])){
+              $payment_value = $fields['payment_page']['value'];
+            }
+
+            if(isset($fields['payment_page']['inherit'])){
+              $payment_value = $fields['payment_page']['inherit'];
+            }
+
+            if ( $payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
+                if ( !isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
                     $paymentPage = $this->getConfig('payment_page');
                     if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
                         $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
@@ -802,7 +813,7 @@ class PaymentConfigObserver implements ObserverInterface
         ];
         if (!$this->payplugConfigConnected) {
             // To connect on website level, all fields must be provided
-            if (!$this->checkRequiredFields($fieldsRequiredForInit, $fields)) {
+            if ($this->checkRequiredFields($fieldsRequiredForInit, $fields)) {
                 return;
             }
             foreach ($fieldsRequiredForInit as $field) {
@@ -839,7 +850,7 @@ class PaymentConfigObserver implements ObserverInterface
         foreach ($fieldsRequiredForInit as $field) {
             if (isset($fields[$field]['value'])) {
                 foreach ($fieldsRequiredForInit as $fieldCheck) {
-                    if (!isset($fields[$fieldCheck]['value'])) {
+                    if ( !isset($fields[$fieldCheck]['value']) && !isset($fields[$fieldCheck]['inherit'])) {
                         return false;
                     }
                 }

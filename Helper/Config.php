@@ -26,7 +26,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
-    public const MODULE_VERSION = '1.27.3';
+    public const MODULE_VERSION = '1.27.4';
 
     /**
      * @var WriterInterface
@@ -458,6 +458,10 @@ class Config extends AbstractHelper
 
         $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
         $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
+
+        if(empty($minAmountsConfig) || empty($maxAmountsConfig)){
+            return false;
+        }
 
         foreach (explode(';', $minAmountsConfig) as $amountCur) {
             $cur = [];
