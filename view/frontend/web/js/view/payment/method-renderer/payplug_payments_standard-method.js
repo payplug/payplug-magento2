@@ -101,7 +101,6 @@ define([
                                     selectedScheme = payplug.Scheme[selectedCardType];
                                 }
                             }
-                            //fullScreenLoader.stopLoader();
                             let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click &&
                                 jQuery('[name="save_card"]').is(':checked');
                             self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
