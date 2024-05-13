@@ -410,7 +410,7 @@ class Data extends AbstractHelper
      *
      * @throws OrderAlreadyProcessingException
      */
-    public function updateOrder($order)
+    public function updateOrder($order, $data = [])
     {
         try {
             $orderProcessing = $this->orderProcessingRepository->get($order->getId(), 'order_id');
@@ -442,6 +442,13 @@ class Data extends AbstractHelper
 
             $this->updateOrderPayment($order);
             $this->updateOrderStatus($order, false);
+
+            if(!empty($data)){
+              if(!empty($data['status']) ) {
+                $order->setStatus($data['status']);
+              }
+            }
+
             $this->orderRepository->save($order);
             $this->refreshSalesGrid($order->getId());
         } finally {
@@ -449,6 +456,19 @@ class Data extends AbstractHelper
         }
 
         return $order;
+    }
+
+  /**
+   * Get payment
+   *
+   * @param $order
+   * @param $storeId
+   * @return \Payplug\Resource\Payment
+   */
+    public function getPayment($order, $storeId){
+      $orderPayment = $this->getPaymentForOrder($order);
+      $payplugPayment = $orderPayment->retrieve($storeId);
+      return $payplugPayment;
     }
 
     /**
