@@ -14,6 +14,8 @@ define([
 ], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, jQuery, customerData, quote, fullScreenLoader, payplug, url, ko) {
     'use strict';
 
+    const PAYPLUG_DOMAIN = "https://secure-qa.payplug.com";
+
     return Component.extend({
         defaults: {
             template: 'Payplug_Payments/payment/payplug_payments_standard',
@@ -43,7 +45,6 @@ define([
                 color: '#E91932'
             }
         },
-
         initialize: function () {
             this._super();
             this.loadCards();
@@ -61,7 +62,6 @@ define([
 
             return this;
         },
-
         afterPlaceOrder: function () {
             sessionStorage.removeItem(this.sessionCardId);
             if (this.getSelectedCardId() !== '') {
@@ -101,13 +101,30 @@ define([
                                     selectedScheme = payplug.Scheme[selectedCardType];
                                 }
                             }
-                            fullScreenLoader.stopLoader();
                             let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click &&
                                 jQuery('[name="save_card"]').is(':checked');
                             self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
                             self.integratedApi.onCompleted(function (event) {
-                                window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
+
+                              jQuery.ajax({
+                                url: url.build('payplug_payments/payment/checkPayment'),
+                                type: "GET",
+                                dataType: 'json',
+                                data: {payment_id: response.payment_id},
+                                success: function (res) {
+
+                                  fullScreenLoader.stopLoader();
+
+
+                                  if(res.error === true){
+                                    window.location.replace(url.build('payplug_payments/payment/cancel'));
+                                  }else{
+                                    window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
+                                  }
+                                }
+                              });
                             });
+                          fullScreenLoader.stopLoader();
                         } else {
                             window.location.replace(url.build('payplug_payments/payment/cancel'));
                         }
