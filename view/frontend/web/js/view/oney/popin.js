@@ -31,6 +31,10 @@ define([
             body.on('change', '.super-attribute-select', function () {
                 self._updateOneyWrapper();
             });
+
+            body.on('click', '.oneyPopin_navigation li', function () {
+                self._selectOption($(this));
+            });
     
             body.on('click', function (event) {
                 const clicked = $(event.target);
@@ -132,9 +136,41 @@ define([
             }).done(function (response) {
                 if (response.success) {
                     popin.removeClass('loading').html(response.html);
+                    self._setDefaultPaymentOption();
                     self.hasChanged = false;
                 }
             });
+        },
+
+        /**
+         * Set default payment option
+         * @private
+         */
+        _setDefaultPaymentOption: function (){
+            const options = $('.oneyPopin').find('.oneyPopin_navigation li');
+
+            if (options.length > 0) {
+                this._selectOption($(options[0]));
+            }
+        },
+
+        /**
+         * Select option
+         * @param {jQuery} option
+         * @private
+         */
+        _selectOption: function (option) {
+            if (option.hasClass('selected')) {
+                return;
+            }
+
+            const type = option.data('type');
+
+            $('.oneyPopin_navigation li').removeClass('selected');
+            $('.oneyPopin_navigation li[data-type=' + type + ']').closest('li').addClass('selected');
+    
+            $('.oneyPopin_option').removeClass('oneyPopin_option-show');
+            $('.oneyPopin_option[data-type=' + type + ']').addClass('oneyPopin_option-show');
         },
 
         /**
