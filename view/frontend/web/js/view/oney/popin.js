@@ -102,11 +102,7 @@ define([
             let formData = this._getFormData();
             formData.wrapper = true;
     
-            $.ajax({
-                url: urlBuilder.build('payplug_payments/oney/simulation'),
-                type: 'POST',
-                data: formData,
-            }).done(function (response) {
+            this._getPaymentSimulations(formData).done(function (response) {
                 if (response.success) {
                     $('.oney-wrapper').html(response.html);
                     self.hasChanged = true;
@@ -121,6 +117,7 @@ define([
         _updateOneySimulation: function () {
             const self = this;
             const popin = $(this.popin);
+            const formData = this._getFormData();
 
             popin
                 .addClass('loading')
@@ -128,17 +125,29 @@ define([
                     icon: require.toUrl('images/loader-1.gif'),
                 })
                 .loader('show');
-    
-            $.ajax({
-                url: urlBuilder.build('payplug_payments/oney/simulation'),
-                type: 'POST',
-                data: this._getFormData(),
-            }).done(function (response) {
+
+            this._getPaymentSimulations(formData).done(function (response) {
                 if (response.success) {
-                    popin.removeClass('loading').html(response.html);
                     self._setDefaultPaymentOption();
                     self.hasChanged = false;
+
+                    popin
+                        .removeClass('loading')
+                        .html(response.html);
                 }
+            });
+        },
+
+        /**
+         * Get payment simulations
+         * @return {Promise}
+         * @private
+         */
+        _getPaymentSimulations: function (formData) {
+            return $.ajax({
+                url: urlBuilder.build('payplug_payments/oney/simulation'),
+                type: 'POST',
+                data: formData
             });
         },
 
