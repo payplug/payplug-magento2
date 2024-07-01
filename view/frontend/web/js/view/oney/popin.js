@@ -206,8 +206,7 @@ define([
          * Hide popin
          */
         hidePopin: function () {
-            const popin = $(this.popin);
-            popin.removeClass('oneyPopin-open');
+            $(this.popin).removeClass('oneyPopin-open');
             this.triggerButton.removeClass('oneyCta-open');
         },
 
@@ -215,8 +214,7 @@ define([
          * Show popin
          */
         showPopin: function () {
-            const popin = $(this.popin);
-            popin.addClass('oneyPopin-open');
+            $(this.popin).addClass('oneyPopin-open');
             this.triggerButton.addClass('oneyCta-open');
 
             if (this.hasChanged) {
