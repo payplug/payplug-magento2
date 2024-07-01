@@ -5,9 +5,20 @@ define([
     'use strict';
 
     $.widget('payplug.oneyPopin', {
-        hasChanged: true,
-        popin: '.oneyPopin',
-        triggerButton: $('.oneyCta'),
+        options: {
+            popin: '.oneyPopin'
+        },
+
+        /**
+         * @private
+         */
+        _create: function () {
+            this.hasChanged = true;
+            this.triggerButton = this.element;
+            this.popin = this.options.popin; 
+
+            this._bind();
+        },
 
         /**
          * @private
@@ -45,13 +56,6 @@ define([
                     self.hidePopin();
                 }
             });
-        },
-
-        /**
-         * @private
-         */
-        _create: function () {
-            this._bind();
         },
 
         /**
