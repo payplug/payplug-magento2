@@ -1,7 +1,5 @@
+<?xml version="1.0"?>
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
-    <head>
-        <link src="Payplug_Payments::js/oney.js"/>
-    </head>
     <body>
         <referenceContainer name="checkout.cart.totals.container">
             <block class="Magento\Framework\View\Element\Template" name="payplug-payments-product-oney-wrapper" after="checkout.cart.totals" template="Payplug_Payments::oney/simulation_wrapper_checkout.phtml">
