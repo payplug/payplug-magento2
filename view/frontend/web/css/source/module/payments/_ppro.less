@@ -1,12 +1,20 @@
-.payplug-ppro-method.ppro-unavailable {
-    .payment-method-title label,
-    .ppro-checkout-error {
-        color: @oney-color7;
-        &[data-error-type="mode-test"] {
-            color: @payplug-error;
+//
+//  Common
+//  _____________________________________________
+
+& when (@media-common = true) {
+    .payplug-ppro-method.ppro-unavailable {
+        .payment-method-title label,
+        .ppro-checkout-error {
+            color: @oney-color7;
+
+            &[data-error-type="mode-test"] {
+                color: @payplug-error;
+            }
         }
-    }
-    img {
-        opacity: 50%;
+
+        img {
+            opacity: 50%;
+        }
     }
 }
