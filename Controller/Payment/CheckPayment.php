@@ -6,7 +6,12 @@ namespace Payplug\Payments\Controller\Payment;
 
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
+use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 
 class CheckPayment extends AbstractPayment
 {
@@ -14,6 +19,11 @@ class CheckPayment extends AbstractPayment
      * Retrieve PayPlug Standard payment url
      *
      * @return Json
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws OrderAlreadyProcessingException
      */
     public function execute(): Json
     {
