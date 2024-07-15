@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add CHANGELOG.md [#211](https://github.com/payplug/payplug-magento2/pull/211)
 - Add declare strict types along with real returns and php 8.0 [#209](https://github.com/payplug/payplug-magento2/pull/209)
 - Add missing xml version declarations [#208](https://github.com/payplug/payplug-magento2/pull/208)
+- Add secure-magenta.dalenys.com in CSP whitelist [#212](https://github.com/payplug/payplug-magento2/pull/212)
 - Add strict returns and fix typos for CheckPayment class [#209](https://github.com/payplug/payplug-magento2/pull/209)
 - Add the real exceptions throw to function declaration [#209](https://github.com/payplug/payplug-magento2/pull/209)
 
