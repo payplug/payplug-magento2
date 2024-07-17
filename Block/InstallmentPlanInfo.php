@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Block;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\View\Element\Template\Context;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -10,40 +14,23 @@ use Payplug\Payments\Model\OrderPaymentRepository;
 
 class InstallmentPlanInfo extends Info
 {
-    /**
-     * @var string
-     */
-    protected $_template = 'Payplug_Payments::info/installment_plan.phtml';
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param Data                                             $payplugHelper
-     * @param Logger                                           $payplugLogger
-     * @param OrderPaymentRepository                           $orderPaymentRepository
-     * @param array                                            $data
-     */
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
+        Context $context,
         Data $payplugHelper,
         Logger $payplugLogger,
-        OrderPaymentRepository $orderPaymentRepository,
+        private OrderPaymentRepository $orderPaymentRepository,
         array $data = []
     ) {
         parent::__construct($context, $payplugHelper, $payplugLogger, $data);
-        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
      * Get some admin specific information in format of array($label => $value)
      *
      * @return array
+     * @throws LocalizedException
      */
-    public function getAdminSpecificInformation()
+    public function getAdminSpecificInformation(): array
     {
         try {
             $orderIncrementId = $this->getInfo()->getOrder()->getIncrementId();
@@ -76,8 +63,8 @@ class InstallmentPlanInfo extends Info
 
         $installmentPlanInfo = [
             'status' => sprintf(
-                __('This order is subjected to an installment plan, whose status is <strong>%s</strong>'),
-                __($status)
+                (string)__('This order is subjected to an installment plan, whose status is <strong>%s</strong>'),
+                (string)__($status)
             ),
             'installment_plan_id' => $orderInstallmentPlan->getInstallmentPlanId(),
             'payments' => [],
