@@ -1,21 +1,28 @@
 <?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\InstallmentPlanInfo;
+
 /**
- * @var \Payplug\Payments\Block\InstallmentPlanInfo $block
+ * @var Escaper $escaper
+ * @var InstallmentPlanInfo $block
  */
 $specificInfo = $block->getAdminSpecificInformation();
 ?>
-<?= $block->escapeHtml($block->getMethod()->getTitle()) ?>
+<?= $escaper->escapeHtml($block->getMethod()->getTitle()) ?>
 <?php if ($specificInfo): ?>
     <p><?= /* @noEscape */ $specificInfo['status']; ?></p>
     <p>
-        <?= $block->escapeHtml(sprintf('%s : %s', __('Installment plan id'), $specificInfo['installment_plan_id'])); ?>
+        <?= $escaper->escapeHtml(sprintf('%s : %s', (string)__('Installment plan id'), $specificInfo['installment_plan_id'])); ?>
     </p>
 
     <table class="data-table admin__table-primary">
         <tr>
-            <th><?= $block->escapeHtml(__('Date')); ?></th>
-            <th><?= $block->escapeHtml(__('Amount')); ?></th>
-            <th><?= $block->escapeHtml(__('Status')); ?></th>
+            <th><?= $escaper->escapeHtml(__('Date')); ?></th>
+            <th><?= $escaper->escapeHtml(__('Amount')); ?></th>
+            <th><?= $escaper->escapeHtml(__('Status')); ?></th>
             <th></th>
         </tr>
         <?php foreach ($specificInfo['payments'] as $key => $paymentInfo): ?>
@@ -32,7 +39,7 @@ $specificInfo = $block->getAdminSpecificInformation();
                                 aria-expanded="false"
                                 aria-controls="payment-detail-<?= /* @noEscape */ $key; ?>"
                         >
-                            <?= $block->escapeHtml(__('Details')); ?>
+                            <?= $escaper->escapeHtml(__('Details')); ?>
                         </button>
                     <?php endif; ?>
                 </td>
@@ -43,12 +50,12 @@ $specificInfo = $block->getAdminSpecificInformation();
                         <table class="data-table admin__table-secondary">
                             <?php foreach ($paymentInfo['details'] as $label => $value): ?>
                                 <tr>
-                                    <th><?= $block->escapeHtml(__($label)) ?>:</th>
+                                    <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
                                     <td>
                                         <?php
                                         $formattedValue = implode("\n", $block->getValueAsArray($value, true));
                                         ?>
-                                        <?= /* @noEscape */ nl2br($block->escapeHtml($formattedValue)) ?>
+                                        <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -65,10 +72,10 @@ $specificInfo = $block->getAdminSpecificInformation();
         $url = $block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $orderId]);
         ?>
         <a class="action-default"
-           href="<?= $block->escapeHtmlAttr($url); ?>"
+           href="<?= $escaper->escapeHtmlAttr($url); ?>"
            onclick="return confirmAbortInstallmentPlan()"
         >
-            <?= $block->escapeHtml(__('Abort')); ?>
+            <?= $escaper->escapeHtml(__('Abort')); ?>
         </a>
     <?php endif; ?>
 <?php endif;?>
@@ -77,6 +84,6 @@ $specificInfo = $block->getAdminSpecificInformation();
 
 <script>
     function confirmAbortInstallmentPlan() {
-        return confirm('<?= $block->escapeJs(__('Are you sure you want to abort the installment plan?')); ?>');
+        return confirm('<?= $escaper->escapeJs(__('Are you sure you want to abort the installment plan?')); ?>');
     }
 </script>

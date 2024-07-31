@@ -1,9 +1,16 @@
 <?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\Info;
+
 /**
- * @var \Payplug\Payments\Block\Info $block
+ * @var Escaper $escaper
+ * @var Info $block
  */
 $specificInfo = $block->getSpecificInformation();
-$title = $block->escapeHtml($block->getMethod()->getTitle());
+$title = $escaper->escapeHtml($block->getMethod()->getTitle());
 ?>
 <dl class="payment-method">
     <dt class="title"><?= /* @noEscape */ $title ?></dt>
@@ -13,12 +20,12 @@ $title = $block->escapeHtml($block->getMethod()->getTitle());
                 <caption class="table-caption"><?= /* @noEscape */ $title ?></caption>
                 <?php foreach ($specificInfo as $label => $value): ?>
                     <tr>
-                        <th scope="row"><?= $block->escapeHtml($label) ?></th>
+                        <th scope="row"><?= $escaper->escapeHtml($label) ?></th>
                         <td>
                             <?php
                             $formattedValue = implode("\n", $block->getValueAsArray($value, true));
                             ?>
-                            <?= /* @noEscape */ nl2br($block->escapeHtml($formattedValue)) ?>
+                            <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

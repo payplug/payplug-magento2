@@ -1,8 +1,16 @@
 <?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\Form\Ondemand;
+
 /**
- * @var \Payplug\Payments\Block\Form\Ondemand $block
+ * @var Escaper $escaper
+ * @var Ondemand $block
  */
-$code = $block->escapeHtml($block->getMethodCode());
+
+$code = $escaper->escapeHtml($block->getMethodCode());
 $sentBy = $block->getAdditionalData('sent_by');
 $language = $block->getAdditionalData('language');
 ?>
@@ -10,16 +18,16 @@ $language = $block->getAdditionalData('language');
           style="display:none">
     <div class="field-type admin__field _required payment-link-sent-by">
         <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_sent_by">
-            <span><?= $block->escapeHtml(__('Sent by method')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Sent by method')) ?></span>
         </label>
         <div class="admin__field-control">
             <select id="<?= /* @noEscape */ $code ?>_sent_by" name="payment[sent_by]"
                     class="required-entry admin__control-select">
                 <?php foreach ($block->getSentByOptions() as $typeCode => $typeName): ?>
-                    <option value="<?= $block->escapeHtml($typeCode) ?>"
+                    <option value="<?= $escaper->escapeHtml($typeCode) ?>"
                             <?php if ($typeCode == $sentBy): ?>selected="selected"<?php endif ?>
                     >
-                        <?= $block->escapeHtml($typeName) ?>
+                        <?= $escaper->escapeHtml($typeName) ?>
                     </option>
                 <?php endforeach ?>
             </select>
@@ -27,17 +35,17 @@ $language = $block->getAdditionalData('language');
     </div>
     <div class="field-number admin__field _required payment-link-sent-by-value">
         <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_sent_by_value">
-            <span><?= $block->escapeHtml(__('Mobile')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Mobile')) ?></span>
         </label>
         <div class="admin__field-control">
             <input type="text" id="<?= /* @noEscape */ $code ?>_sent_by_value" name="payment[sent_by_value]"
-                   title="<?= $block->escapeHtml(__('Mobile / Email')) ?>" class="admin__control-text required-entry"
+                   title="<?= $escaper->escapeHtml(__('Mobile / Email')) ?>" class="admin__control-text required-entry"
                    value="<?= /* @noEscape */ $block->getAdditionalData('sent_by_value') ?>"/>
         </div>
     </div>
     <div class="field-type admin__field _required">
         <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_language">
-            <span><?= $block->escapeHtml(__('Language')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Language')) ?></span>
         </label>
         <div class="admin__field-control">
             <select id="<?= /* @noEscape */ $code ?>_language"
@@ -45,10 +53,10 @@ $language = $block->getAdditionalData('language');
                     class="required-entry admin__control-select"
             >
                 <?php foreach ($block->getLanguages() as $languageCode => $languageName): ?>
-                    <option value="<?= $block->escapeHtml($languageCode) ?>"
+                    <option value="<?= $escaper->escapeHtml($languageCode) ?>"
                             <?php if ($languageCode == $language): ?>selected="selected"<?php endif ?>
                     >
-                        <?= $block->escapeHtml($languageName) ?>
+                        <?= $escaper->escapeHtml($languageName) ?>
                     </option>
                 <?php endforeach ?>
             </select>
@@ -56,12 +64,12 @@ $language = $block->getAdditionalData('language');
     </div>
     <div class="field-number admin__field">
         <label class="admin__field-label" for="<?= /* @noEscape */ $code ?>_description">
-            <span><?= $block->escapeHtml(__('Description')) ?></span>
+            <span><?= $escaper->escapeHtml(__('Description')) ?></span>
         </label>
         <div class="admin__field-control">
             <textarea id="<?= /* @noEscape */ $code ?>_description"
                       name="payment[description]"
-                      title="<?= $block->escapeHtml(__('Description')) ?>"
+                      title="<?= $escaper->escapeHtml(__('Description')) ?>"
                       class="admin__control-text"
                       maxlength="<?= \Payplug\Payments\Helper\Ondemand::DESCRIPTION_MAX_LENGTH ?>"
             ><?= /* @noEscape */ $block->getAdditionalData('description') ?></textarea>
@@ -70,11 +78,11 @@ $language = $block->getAdditionalData('language');
     <div class="field-number admin__field">
         <div class="admin__field-control">
             <?php $buttonTitle = __('Save'); ?>
-            <button title="<?= $block->escapeHtml($buttonTitle); ?>"
+            <button title="<?= $escaper->escapeHtml($buttonTitle); ?>"
                     type="button"
                     class="action-default scalable action-secondary"
             >
-                <span><?= $block->escapeHtml($buttonTitle); ?></span>
+                <span><?= $escaper->escapeHtml($buttonTitle); ?></span>
             </button>
         </div>
     </div>
