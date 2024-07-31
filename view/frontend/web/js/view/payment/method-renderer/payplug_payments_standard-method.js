@@ -26,6 +26,8 @@ define([
 ) {
     'use strict';
 
+    const PAYPLUG_DOMAIN = "https://secure-qa.payplug.com";
+
     return Component.extend({
         defaults: {
             template: 'Payplug_Payments/payment/payplug_payments_standard',
@@ -125,6 +127,7 @@ define([
                                 $('[name="save_card"]').is(':checked');
                             self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
                             self.integratedApi.onCompleted(function (event) {
+
                               $.ajax({
                                 url: url.build('payplug_payments/payment/checkPayment'),
                                 type: "GET",
