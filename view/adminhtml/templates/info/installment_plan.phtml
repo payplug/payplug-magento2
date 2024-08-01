@@ -62,7 +62,7 @@ $specificInfo = $block->getAdminSpecificInformation();
     <?php if ($specificInfo['can_abort']): ?>
         <?php
         $orderId = $block->getInfo()->getOrder()->getId();
-        $url = $block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $orderId]);
+        $url = $block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $orderId, 'form_key' => $block->getFormKey()]);
         ?>
         <a class="action-default"
            href="<?= $block->escapeHtmlAttr($url); ?>"
