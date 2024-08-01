@@ -1,11 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Adminhtml\Order;
 
 use Magento\Backend\App\Action;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Response\Http\FileFactory;
+use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\PaymentException;
+use Magento\Framework\Registry;
+use Magento\Framework\Translate\InlineInterface;
+use Magento\Framework\View\Result\LayoutFactory;
+use Magento\Framework\View\Result\PageFactory;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Controller\Adminhtml\Order as AdminOrder;
 use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
@@ -13,51 +27,26 @@ use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Psr\Log\LoggerInterface;
 
-class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
+class SendNewPaymentLink extends AdminOrder
 {
-    /**
-     * @var Logger
-     */
-    private $payplugLogger;
-
-    /**
-     * @var Data
-     */
-    private $payplugHelper;
-
-    /**
-     * @param Action\Context                                   $context
-     * @param \Magento\Framework\Registry                      $coreRegistry
-     * @param \Magento\Framework\App\Response\Http\FileFactory $fileFactory
-     * @param \Magento\Framework\Translate\InlineInterface     $translateInline
-     * @param \Magento\Framework\View\Result\PageFactory       $resultPageFactory
-     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-     * @param \Magento\Framework\View\Result\LayoutFactory     $resultLayoutFactory
-     * @param \Magento\Framework\Controller\Result\RawFactory  $resultRawFactory
-     * @param OrderManagementInterface                         $orderManagement
-     * @param OrderRepositoryInterface                         $orderRepository
-     * @param LoggerInterface                                  $logger
-     * @param Logger                                           $payplugLogger
-     * @param Data                                             $payplugHelper
-     */
     public function __construct(
         Action\Context $context,
-        \Magento\Framework\Registry $coreRegistry,
-        \Magento\Framework\App\Response\Http\FileFactory $fileFactory,
-        \Magento\Framework\Translate\InlineInterface $translateInline,
-        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
-        \Magento\Framework\View\Result\LayoutFactory $resultLayoutFactory,
-        \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
+        Registry $coreRegistry,
+        FileFactory $fileFactory,
+        InlineInterface $translateInline,
+        PageFactory $resultPageFactory,
+        JsonFactory $resultJsonFactory,
+        LayoutFactory $resultLayoutFactory,
+        RawFactory $resultRawFactory,
         OrderManagementInterface $orderManagement,
         OrderRepositoryInterface $orderRepository,
         LoggerInterface $logger,
-        Logger $payplugLogger,
-        Data $payplugHelper
+        private  Logger $payplugLogger,
+        private Data $payplugHelper,
+        private Validator $formKeyValidator,
+        private RequestInterface $request,
+        private FormKey $formKey
     ) {
-        $this->payplugLogger = $payplugLogger;
-        $this->payplugHelper = $payplugHelper;
-
         parent::__construct(
             $context,
             $coreRegistry,
@@ -75,12 +64,19 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
 
     /**
      * OnDemand new payment link send
-     *
-     * @return \Magento\Framework\App\ResponseInterface
      */
-    public function execute()
+    public function execute(): Redirect
     {
         $resultRedirect = $this->resultRedirectFactory->create();
+
+        $formKeyValidation = $this->formKeyValidator->validate($this->request);
+        if (!$formKeyValidation) {
+            $this->messageManager->addErrorMessage(
+                __('Your session has expired')
+            );
+
+            return $resultRedirect->setPath('*/*/');
+        }
 
         $formData = $this->getRequest()->getParam('form');
         if ($formData === null) {
@@ -107,12 +103,13 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
                 $this->_getSession()->setPaymentLinkFormData($formData);
 
                 return $resultRedirect->setPath('payplug_payments_admin/order/newPaymentLinkForm', [
-                    'order_id' => $order->getId()
+                    'order_id' => $order->getId(),
+                    'form_key' => $this->formKey->getFormKey() ?: ''
                 ]);
             } catch (PayplugException $e) {
                 $this->payplugLogger->error($e->__toString());
                 $this->messageManager->addErrorMessage(
-                    sprintf(__('An error occurred while sending new payment link: %s.'), $e->getMessage())
+                    sprintf((string)__('An error occurred while sending new payment link: %s.'), $e->getMessage())
                 );
             } catch (OrderAlreadyProcessingException $e) {
                 // Order is already being processed (by payment return controller or IPN)
@@ -121,7 +118,7 @@ class SendNewPaymentLink extends \Magento\Sales\Controller\Adminhtml\Order
             } catch (\Exception $e) {
                 $this->payplugLogger->error($e->getMessage());
                 $this->messageManager->addErrorMessage(
-                    sprintf(__('An error occurred while sending new payment link: %s.'), $e->getMessage())
+                    sprintf((string)__('An error occurred while sending new payment link: %s.'), $e->getMessage())
                 );
             }
 
