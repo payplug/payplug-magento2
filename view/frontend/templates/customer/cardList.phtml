@@ -30,7 +30,7 @@
                     </span>
                 </td>
                 <td class="delete">
-                    <a href="<?= $block->escapeHtmlAttr($block->getDeleteCardUrl($customerCardId)) ?>">
+                    <a href="<?= $block->escapeHtmlAttr($block->getDeleteCardUrl((int)$customerCardId)) ?>">
                         <?= $block->escapeHtml(__('Delete this card')) ?>
                     </a>
                 </td>
