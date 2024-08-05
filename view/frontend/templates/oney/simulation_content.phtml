@@ -131,11 +131,11 @@ $pricingHelper = $this->helper(Data::class);
         <?php if ($block->isMerchandItalian()): ?>
             <span class="legal-it">
                 <?php if (!$isOneyWithoutFees): ?>
-                <a href="<?= $escaper->escapeHtmlAttr($block->getMoreInfoUrl()); ?>" target="_blank" download>
+                <a href="<?= $escaper->escapeUrl($block->getMoreInfoUrl()); ?>" target="_blank" download>
                     <?= $escaper->escapeHtml(__('More info')); ?>
                 </a>
                 <?php else: ?>
-                <a href="<?= $escaper->escapeHtmlAttr($block->getMoreInfoUrlWithoutFees()); ?>" target="_blank" download>
+                <a href="<?= $escaper->escapeUrl($block->getMoreInfoUrlWithoutFees()); ?>" target="_blank" download>
                     <?= $escaper->escapeHtml(__('More info')); ?>
                 </a>
                 <?php endif; ?>

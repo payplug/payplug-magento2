@@ -23,9 +23,9 @@ $title = $escaper->escapeHtml($block->getMethod()->getTitle());
                         <th scope="row"><?= $escaper->escapeHtml($label) ?></th>
                         <td>
                             <?php
-                            $formattedValue = implode("\n", $block->getValueAsArray($value, true));
+                            $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));
                             ?>
-                            <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
+                            <?= nl2br($escaper->escapeHtml($formattedValue)) ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>
