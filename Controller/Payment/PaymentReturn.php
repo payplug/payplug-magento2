@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Controller\ResultInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
@@ -14,10 +16,8 @@ class PaymentReturn extends AbstractPayment
 {
     /**
      * Handle return from PayPlug payment page
-     *
-     * @return mixed
      */
-    public function execute(): mixed
+    public function execute(): Redirect|ResultInterface
     {
         $resultRedirect = $this->resultRedirectFactory->create();
 
@@ -90,10 +90,6 @@ class PaymentReturn extends AbstractPayment
 
     /**
      * Return true if we are paying with oney and the payment isn't rejected but waiting for approval
-     *
-     * @param Payment|null $payment
-     *
-     * @return bool
      */
     public function isOneyPending(?Payment $payment): bool
     {
