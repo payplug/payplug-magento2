@@ -1,48 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
-use Magento\Sales\Model\Order;
-use Magento\Sales\Model\OrderRepository;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
-use Payplug\Payments\Helper\Data;
-use Payplug\Payments\Logger\Logger;
+use Payplug\Resource\Payment;
 
 class PaymentReturn extends AbstractPayment
 {
     /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
-
-    /**
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \Magento\Checkout\Model\Session       $checkoutSession
-     * @param \Magento\Sales\Model\OrderFactory     $salesOrderFactory
-     * @param Logger                                $logger
-     * @param Data                                  $payplugHelper
-     * @param OrderRepository                       $orderRepository
-     */
-    public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\OrderFactory $salesOrderFactory,
-        Logger $logger,
-        Data $payplugHelper,
-        OrderRepository $orderRepository
-    ) {
-        parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
-        $this->orderRepository = $orderRepository;
-    }
-
-    /**
      * Handle return from PayPlug payment page
-     *
-     * @return mixed
      */
-    public function execute()
+    public function execute(): Redirect|ResultInterface
     {
         $resultRedirect = $this->resultRedirectFactory->create();
 
@@ -61,13 +36,12 @@ class PaymentReturn extends AbstractPayment
 
             $payment = $this->payplugHelper->getOrderPayment($lastIncrementId)->retrieve();
 
-
-            if (!$payment->is_paid) {
+            if (!$payment->is_paid && !$this->isOneyPending($payment)) {
                 $this->payplugHelper->cancelOrderAndInvoice($order);
 
                 $failureMessage = $this->_request->getParam(
                     'failure_message',
-                    __('The transaction was aborted and your card has not been charged')
+                    (string)__('The transaction was aborted and your card has not been charged')
                 );
 
                 if (!empty($failureMessage)) {
@@ -112,5 +86,20 @@ class PaymentReturn extends AbstractPayment
 
             return $resultRedirect->setPath($redirectUrlSuccess);
         }
+    }
+
+    /**
+     * Return true if we are paying with oney and the payment isn't rejected but waiting for approval
+     */
+    public function isOneyPending(?Payment $payment): bool
+    {
+        if ($payment) {
+            $paymentMethod = $payment->payment_method;
+            if ($payment->is_paid === false && $paymentMethod['is_pending'] && $paymentMethod['type']) {
+                return (str_contains($paymentMethod['type'], 'oney') && $paymentMethod['is_pending'] === true);
+            }
+        }
+
+        return false;
     }
 }

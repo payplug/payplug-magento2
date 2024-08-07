@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper;
 
 use Magento\Framework\Api\Filter;
@@ -15,6 +17,8 @@ use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\Api\SortOrderBuilderFactory;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
@@ -37,166 +41,78 @@ use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Gateway\Config\Standard;
+use Payplug\Payments\Helper\Ondemand as OndemandHelper;
+use Payplug\Payments\Model\Order\InstallmentPlan as OrderInstallmentPlan;
 use Payplug\Payments\Model\Order\Payment;
+use Payplug\Payments\Model\Order\PaymentFactory;
 use Payplug\Payments\Model\Order\Processing;
 use Payplug\Payments\Model\Order\ProcessingFactory as PayplugOrderProcessingFactory;
 use Payplug\Payments\Model\OrderInstallmentPlanRepository;
 use Payplug\Payments\Model\OrderPaymentRepository;
 use Payplug\Payments\Model\OrderProcessingRepository;
+use Payplug\Resource\InstallmentPlan as ResourceInstallmentPlan;
 use Payplug\Resource\IVerifiableAPIResource;
-use Payplug\Payments\Helper\Ondemand as OndemandHelper;
+use Payplug\Resource\Payment as ResourcePayment;
 
 class Data extends AbstractHelper
 {
-    /**
-     * @var \Payplug\Payments\Model\Order\PaymentFactory
-     */
-    private $paymentFactory;
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
-
-    /**
-     * @var PayplugOrderProcessingFactory
-     */
-    private $orderProcessingFactory;
-
-    /**
-     * @var OrderProcessingRepository
-     */
-    private $orderProcessingRepository;
-
-    /**
-     * @var OrderInstallmentPlanRepository
-     */
-    private $orderInstallmentPlanRepository;
-
-    /**
-     * @var GridInterface
-     */
-    private $salesGrid;
-
-    /**
-     * @var SearchCriteriaInterfaceFactory
-     */
-    private $searchCriteriaInterfaceFactory;
-
-    /**
-     * @var FilterBuilderFactory
-     */
-    private $filterBuilderFactory;
-
-    /**
-     * @var FilterGroupBuilderFactory
-     */
-    private $filterGroupBuilderFactory;
-
-    /**
-     * @var SortOrderBuilderFactory
-     */
-    private $sortOrderBuilderFactory;
-
-    /**
-     * @var OndemandHelper
-     */
-    private $ondemandHelper;
-
-    /**
-     * @param Context                                      $context
-     * @param \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory
-     * @param OrderPaymentRepository                       $orderPaymentRepository
-     * @param OrderRepository                              $orderRepository
-     * @param PayplugOrderProcessingFactory                $orderProcessingFactory
-     * @param OrderProcessingRepository                    $orderProcessingRepository
-     * @param OrderInstallmentPlanRepository               $orderInstallmentPlanRepository
-     * @param GridInterface                                $salesGrid
-     * @param SearchCriteriaInterfaceFactory               $searchCriteriaInterfaceFactory
-     * @param FilterBuilderFactory                         $filterBuilderFactory
-     * @param FilterGroupBuilderFactory                    $filterGroupBuilderFactory
-     * @param SortOrderBuilderFactory                      $sortOrderBuilderFactory
-     * @param OndemandHelper                               $ondemandHelper
-     */
     public function __construct(
         Context $context,
-        \Payplug\Payments\Model\Order\PaymentFactory $paymentFactory,
-        OrderPaymentRepository $orderPaymentRepository,
-        OrderRepository $orderRepository,
-        PayplugOrderProcessingFactory $orderProcessingFactory,
-        OrderProcessingRepository $orderProcessingRepository,
-        OrderInstallmentPlanRepository $orderInstallmentPlanRepository,
-        GridInterface $salesGrid,
-        SearchCriteriaInterfaceFactory $searchCriteriaInterfaceFactory,
-        FilterBuilderFactory $filterBuilderFactory,
-        FilterGroupBuilderFactory $filterGroupBuilderFactory,
-        SortOrderBuilderFactory $sortOrderBuilderFactory,
-        OndemandHelper $ondemandHelper
+        private PaymentFactory $paymentFactory,
+        private OrderPaymentRepository $orderPaymentRepository,
+        private OrderRepository $orderRepository,
+        private PayplugOrderProcessingFactory $orderProcessingFactory,
+        private OrderProcessingRepository $orderProcessingRepository,
+        private OrderInstallmentPlanRepository $orderInstallmentPlanRepository,
+        private GridInterface $salesGrid,
+        private SearchCriteriaInterfaceFactory $searchCriteriaInterfaceFactory,
+        private FilterBuilderFactory $filterBuilderFactory,
+        private FilterGroupBuilderFactory $filterGroupBuilderFactory,
+        private SortOrderBuilderFactory $sortOrderBuilderFactory,
+        private OndemandHelper $ondemandHelper
     ) {
         parent::__construct($context);
-        $this->paymentFactory = $paymentFactory;
-        $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->orderRepository = $orderRepository;
-        $this->orderProcessingFactory = $orderProcessingFactory;
-        $this->orderProcessingRepository = $orderProcessingRepository;
-        $this->orderInstallmentPlanRepository = $orderInstallmentPlanRepository;
-        $this->salesGrid = $salesGrid;
-        $this->searchCriteriaInterfaceFactory = $searchCriteriaInterfaceFactory;
-        $this->filterBuilderFactory = $filterBuilderFactory;
-        $this->filterGroupBuilderFactory = $filterGroupBuilderFactory;
-        $this->sortOrderBuilderFactory = $sortOrderBuilderFactory;
-        $this->ondemandHelper = $ondemandHelper;
     }
 
     /**
-     * Get order payment
+     * @param int|string $orderId
      *
-     * @param int $orderId
-     *
-     * @return \Payplug\Payments\Model\Order\Payment
+     * @return Payment
+     * @throws NoSuchEntityException
      */
-    public function getOrderPayment($orderId)
+    public function getOrderPayment(int|string $orderId): Payment
     {
         return $this->orderPaymentRepository->get($orderId, 'order_id');
     }
 
     /**
-     * Get order payment
+     * @param int|string $paymentId
      *
-     * @param string $paymentId
-     *
-     * @return \Payplug\Payments\Model\Order\Payment
+     * @return Payment
+     * @throws NoSuchEntityException
      */
-    public function getOrderPaymentByPaymentId($paymentId)
+    public function getOrderPaymentByPaymentId(int|string $paymentId): Payment
     {
         return $this->orderPaymentRepository->get($paymentId, 'payment_id');
     }
 
     /**
-     * Get order installment plan
+     * @param int|string $orderId
      *
-     * @param int $orderId
-     *
-     * @return \Payplug\Payments\Model\Order\InstallmentPlan
+     * @return OrderInstallmentPlan
+     * @throws NoSuchEntityException
      */
-    public function getOrderInstallmentPlan($orderId)
+    public function getOrderInstallmentPlan(int|string $orderId): OrderInstallmentPlan
     {
         return $this->orderInstallmentPlanRepository->get($orderId, 'order_id');
     }
 
     /**
-     * Get order last payment
+     * @param int|string $orderId
      *
-     * @param int $orderId
-     *
-     * @return \Payplug\Payments\Model\Order\Payment|null
+     * @return Payment|null
      */
-    public function getOrderLastPayment($orderId)
+    public function getOrderLastPayment(int|string $orderId): ?Payment
     {
         $orderPayments = $this->getOrderPayments($orderId);
 
@@ -204,13 +120,11 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get order payments
-     *
-     * @param int $orderId
+     * @param int|string $orderId
      *
      * @return array|Payment[]
      */
-    public function getOrderPayments($orderId)
+    public function getOrderPayments(int|string $orderId): array
     {
         /** @var SearchCriteriaInterface $criteria */
         $criteria = $this->searchCriteriaInterfaceFactory->create();
@@ -231,9 +145,8 @@ class Data extends AbstractHelper
         $criteria->setSortOrders([$sortOrder]);
 
         $result = $this->orderPaymentRepository->getList($criteria);
-        $orderPayments = $result->getItems();
 
-        return $orderPayments;
+        return $result->getItems();
     }
 
     /**
@@ -245,7 +158,7 @@ class Data extends AbstractHelper
      *
      * @return FilterGroup
      */
-    private function getFieldFilter($field, $value, $type = 'eq')
+    private function getFieldFilter(string $field, mixed $value, string $type = 'eq'): FilterGroup
     {
         /** @var Filter $filter */
         /** @var FilterBuilder $filterBuilder */
@@ -265,13 +178,11 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get payment error message
-     *
      * @param IVerifiableAPIResource $resource
      *
      * @return string
      */
-    public function getPaymentErrorMessage($resource)
+    public function getPaymentErrorMessage(IVerifiableAPIResource $resource): string
     {
         if ($resource->failure === null) {
             return '';
@@ -291,7 +202,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function canUpdatePayment($order)
+    public function canUpdatePayment(Order $order): bool
     {
         if ($order->getPayment() === false) {
             return false;
@@ -344,6 +255,7 @@ class Data extends AbstractHelper
                 Order::STATE_PAYMENT_REVIEW
             ],
         ];
+
         if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
             return false;
         }
@@ -358,7 +270,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function canSendNewPaymentLink($order)
+    public function canSendNewPaymentLink(Order $order): bool
     {
         if ($order->getPayment() === false) {
             return false;
@@ -376,12 +288,16 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Update order status
-     *
      * @param Order $order
-     * @param bool  $save
+     * @param bool $save
+     *
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws AlreadyExistsException
+     * @throws InputException
      */
-    public function updateOrderStatus($order, $save = true)
+    public function updateOrderStatus(Order $order, bool $save = true): void
     {
         $field = null;
 
@@ -393,7 +309,7 @@ class Data extends AbstractHelper
         if ($field !== null) {
             $orderStatus = $order->getPayment()->getMethodInstance()->getConfigData($field, $order->getStoreId());
             if (!empty($orderStatus) && $orderStatus !== $order->getStatus()) {
-                $order->addStatusToHistory($orderStatus, __('Custom Payplug Payments status'));
+                $order->addStatusToHistory($orderStatus, (string)__('Custom Payplug Payments status'));
                 if ($save) {
                     $this->orderRepository->save($order);
                 }
@@ -402,22 +318,24 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Update order
-     *
      * @param Order $order
+     * @param array $data
      *
      * @return Order
-     *
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      * @throws OrderAlreadyProcessingException
      */
-    public function updateOrder($order, $data = [])
+    public function updateOrder(Order $order, array $data = []): Order
     {
         try {
             $orderProcessing = $this->orderProcessingRepository->get($order->getId(), 'order_id');
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
             if ($createdAt > new \DateTime("now - 1 min")) {
                 // Order is currently being processed
-                throw new OrderAlreadyProcessingException(__('Order is currently being processed.'));
+                throw new OrderAlreadyProcessingException((string)__('Order is currently being processed.'));
             }
             // Order has been set as processing for more than a minute
             // Delete and recreate a new flag
@@ -459,16 +377,15 @@ class Data extends AbstractHelper
     }
 
   /**
-   * Get payment
-   *
    * @param $order
    * @param $storeId
-   * @return \Payplug\Resource\Payment
+   * @return ResourcePayment
    */
-    public function getPayment($order, $storeId){
+    public function getPayment($order, $storeId): ResourcePayment
+    {
       $orderPayment = $this->getPaymentForOrder($order);
-      $payplugPayment = $orderPayment->retrieve($storeId);
-      return $payplugPayment;
+
+      return $orderPayment->retrieve($storeId);
     }
 
     /**
@@ -476,7 +393,7 @@ class Data extends AbstractHelper
      *
      * @param Order $order
      */
-    public function checkPaymentFailureAndAbortPayment(Order $order)
+    public function checkPaymentFailureAndAbortPayment(Order $order): void
     {
         try {
             if ($order->getPayment() === false) {
@@ -485,7 +402,7 @@ class Data extends AbstractHelper
 
             $code = $order->getPayment()->getMethod();
             if ($code !== Standard::METHOD_CODE &&
-                $code !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE
+                $code !== InstallmentPlan::METHOD_CODE
             ) {
                 return;
             }
@@ -520,16 +437,15 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Get order payment
-     *
      * @param Order $order
      *
      * @return Payment|null
+     * @throws NoSuchEntityException
      */
-    public function getPaymentForOrder(Order $order)
+    public function getPaymentForOrder(Order $order): ?Payment
     {
         $storeId = $order->getStoreId();
-        if ($order->getPayment()->getMethod() === \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE) {
+        if ($order->getPayment()->getMethod() === InstallmentPlan::METHOD_CODE) {
             $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
             $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
             foreach ($installmentPlan->schedule as $schedule) {
@@ -570,7 +486,7 @@ class Data extends AbstractHelper
         $method = $order->getPayment()->getMethod();
         if (!$this->isCodePayplugPayment($method) ||
             ($method !== Standard::METHOD_CODE &&
-                $method !== \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE &&
+                $method !== InstallmentPlan::METHOD_CODE &&
                 $method !== Ondemand::METHOD_CODE
             )
         ) {
@@ -592,7 +508,7 @@ class Data extends AbstractHelper
      * @throws LocalizedException
      * @throws OrderAlreadyProcessingException
      */
-    public function forceOrderCancel(Order $order)
+    public function forceOrderCancel(Order $order): void
     {
         if (!$order->canCancel()) {
             return;
@@ -611,7 +527,7 @@ class Data extends AbstractHelper
             if ($order->getState() !== Order::STATE_CANCELED) {
                 // Order is no longer in review and hasn't been canceled
                 // It means that the payment was validated
-                throw new LocalizedException(__('The order has been updated without being canceled ' .
+                throw new LocalizedException((string)__('The order has been updated without being canceled ' .
                     'because its payment has been validated.'));
             }
 
@@ -627,8 +543,6 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Cancel order payment
-     *
      * @param Order $order
      *
      * @return bool
@@ -653,7 +567,7 @@ class Data extends AbstractHelper
                 // Payment is already aborted, keep processing to cancel order
                 return true;
             }
-            throw new LocalizedException(__('An error occurred. Please try again.'));
+            throw new LocalizedException((string)__('An error occurred. Please try again.'));
         }
     }
 
@@ -663,7 +577,7 @@ class Data extends AbstractHelper
      * @param Order $order
      * @param bool  $cancelPayment
      */
-    public function cancelInstallmentPlan(Order $order, bool $cancelPayment = false)
+    public function cancelInstallmentPlan(Order $order, bool $cancelPayment = false): void
     {
         $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
@@ -691,11 +605,12 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Cancel Standard payment
-     *
      * @param Order $order
+     *
+     * @return void
+     * @throws NoSuchEntityException
      */
-    public function cancelStandardPayment(Order $order)
+    public function cancelStandardPayment(Order $order): void
     {
         $orderPayment = $this->getOrderPayment($order->getIncrementId());
         $orderPayment->abort($order->getStoreId());
@@ -708,7 +623,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function isOrderValidated($order)
+    public function isOrderValidated(Order $order): bool
     {
         if ($order->getState() == Order::STATE_PROCESSING || $order->getState() == Order::STATE_COMPLETE) {
             return true;
@@ -740,18 +655,20 @@ class Data extends AbstractHelper
      * @param array $paymentLinkData
      *
      * @return Order
-     *
-     * @throws PaymentException
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws NoSuchEntityException
      * @throws OrderAlreadyProcessingException
+     * @throws PaymentException
      */
-    public function sendNewPaymentLink($order, $paymentLinkData)
+    public function sendNewPaymentLink(Order $order, array $paymentLinkData): Order
     {
         try {
             $orderProcessing = $this->orderProcessingRepository->get($order->getId(), 'order_id');
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
             if ($createdAt > new \DateTime("now - 1 min")) {
                 // Order is currently being processed
-                throw new OrderAlreadyProcessingException(__('Order is currently being processed.'));
+                throw new OrderAlreadyProcessingException((string)__('Order is currently being processed.'));
             }
             // Order has been set as processing for more than a minute
             // Delete and recreate a new flag
@@ -787,13 +704,11 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Create OrderProcessing entity
-     *
      * @param Order $order
      *
      * @return Processing
      */
-    private function createOrderProcessing($order)
+    private function createOrderProcessing(Order $order): Processing
     {
         /** @var Processing $orderProcessing */
         $orderProcessing = $this->orderProcessingFactory->create();
@@ -801,6 +716,7 @@ class Data extends AbstractHelper
         $date = new \DateTime();
         $orderProcessing->setCreatedAt($date->format('Y-m-d H:i:s'));
         $this->orderProcessingRepository->save($orderProcessing);
+
         return $orderProcessing;
     }
 
@@ -811,13 +727,13 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function canAbortInstallmentPlan($order)
+    public function canAbortInstallmentPlan(Order $order): bool
     {
         if ($order->getPayment() === false) {
             return false;
         }
 
-        if ($order->getPayment()->getMethod() != \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE) {
+        if ($order->getPayment()->getMethod() != InstallmentPlan::METHOD_CODE) {
             return false;
         }
 
@@ -829,13 +745,13 @@ class Data extends AbstractHelper
      *
      * @return array
      */
-    public function getInstallmentPlanStatusesLabel()
+    public function getInstallmentPlanStatusesLabel(): array
     {
         return [
-            \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_NEW => 'New',
-            \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_ONGOING => 'Ongoing',
-            \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_ABORTED => 'Aborted',
-            \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_COMPLETE => 'Complete',
+            OrderInstallmentPlan::STATUS_NEW => 'New',
+            OrderInstallmentPlan::STATUS_ONGOING => 'Ongoing',
+            OrderInstallmentPlan::STATUS_ABORTED => 'Aborted',
+            OrderInstallmentPlan::STATUS_COMPLETE => 'Complete',
         ];
     }
 
@@ -846,11 +762,11 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function isCodePayplugPayment($code)
+    public function isCodePayplugPayment(string $code): bool
     {
         return in_array($code, [
             Standard::METHOD_CODE,
-            \Payplug\Payments\Gateway\Config\InstallmentPlan::METHOD_CODE,
+            InstallmentPlan::METHOD_CODE,
             Ondemand::METHOD_CODE,
             Oney::METHOD_CODE,
             OneyWithoutFees::METHOD_CODE,
@@ -872,7 +788,7 @@ class Data extends AbstractHelper
      *
      * @return bool
      */
-    public function isCodePayplugPaymentPpro($code)
+    public function isCodePayplugPaymentPpro(string $code): bool
     {
         return in_array($code, [
             Satispay::METHOD_CODE,
@@ -884,20 +800,20 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Update InstallmentPlan status
+     * @param OrderInstallmentPlan $orderInstallmentPlan
+     * @param ResourceInstallmentPlan $installmentPlan
      *
-     * @param \Payplug\Payments\Model\Order\InstallmentPlan $orderInstallmentPlan
-     * @param \Payplug\Resource\InstallmentPlan             $installmentPlan
+     * @return void
      */
-    public function updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan)
+    public function updateInstallmentPlanStatus(OrderInstallmentPlan $orderInstallmentPlan, ResourceInstallmentPlan $installmentPlan): void
     {
-        $status = \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_NEW;
+        $status = OrderInstallmentPlan::STATUS_NEW;
         if ($installmentPlan->is_active && !$installmentPlan->is_fully_paid) {
-            $status = \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_ONGOING;
+            $status = OrderInstallmentPlan::STATUS_ONGOING;
         } elseif (!$installmentPlan->is_active) {
-            $status = \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_COMPLETE;
+            $status = OrderInstallmentPlan::STATUS_COMPLETE;
             if (!$installmentPlan->is_fully_paid) {
-                $status = \Payplug\Payments\Model\Order\InstallmentPlan::STATUS_ABORTED;
+                $status = OrderInstallmentPlan::STATUS_ABORTED;
             }
         }
 
@@ -908,19 +824,22 @@ class Data extends AbstractHelper
     /**
      * Refresh admin order grid
      *
-     * @param int $orderId
+     * @param int|string $orderId
+     *
+     * @return void
      */
-    public function refreshSalesGrid($orderId)
+    public function refreshSalesGrid(int|string $orderId): void
     {
         $this->salesGrid->refresh($orderId);
     }
 
     /**
-     * Update order & payment
-     *
      * @param Order $order
+     *
+     * @return void
+     * @throws LocalizedException
      */
-    private function updateOrderPayment($order)
+    private function updateOrderPayment(Order $order): void
     {
         $payment = $order->getPayment();
         $transactionId = $payment->getLastTransId();
@@ -973,15 +892,16 @@ class Data extends AbstractHelper
      * @param Order $order
      *
      * @return bool
+     * @throws NoSuchEntityException
      */
-    private function isPaymentFailure($order)
+    private function isPaymentFailure(Order $order): bool
     {
         if ($order->getPayment()->getMethod() == InstallmentPlan::METHOD_CODE) {
             $payment = $this->getOrderInstallmentPlan($order->getIncrementId());
         } else {
             $payment = $this->getOrderPayment($order->getIncrementId());
         }
-        /** @var Payment|\Payplug\Payments\Model\Order\InstallmentPlan $payplugPayment */
+        /** @var Payment|OrderInstallmentPlan $payplugPayment */
         $payplugPayment = $payment->retrieve($order->getStoreId());
 
         if ($payplugPayment->failure) {
@@ -992,12 +912,16 @@ class Data extends AbstractHelper
     }
 
     /**
-     * Cancel order & invoice
-     *
      * @param Order $order
-     * @param bool  $checkPaymentStatus
+     * @param bool $checkPaymentStatus
+     *
+     * @return void
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    public function cancelOrderAndInvoice($order, $checkPaymentStatus = true)
+    public function cancelOrderAndInvoice(Order $order, bool $checkPaymentStatus = true): void
     {
         if ($order->getState() != Order::STATE_PAYMENT_REVIEW) {
             return;
