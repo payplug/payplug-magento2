@@ -1,6 +1,6 @@
 # Payplug Payments Module
 
-## Installation
+## Installation 
 
 ### Installation via Magento Back Office
 
