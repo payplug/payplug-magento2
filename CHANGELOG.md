@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.0.0](https://github.com/payplug/payplug-magento2/releases/tag/4.0.0) - 2024-08-27
+## [4.0.0](https://github.com/payplug/payplug-magento2/releases/tag/4.0.0) - 2024-08-28
 
 > **NOTE**
 > This version goes directly from 1.27.4 to 4.0.0 to make a clean slate and avoid maintaining two logics as was done on previous versions (one in 1.27.X and the other one in 3.5.X).
