@@ -95,7 +95,7 @@ class PaymentReturn extends AbstractPayment
     {
         if ($payment) {
             $paymentMethod = $payment->payment_method;
-            if ($payment->is_paid === false && $paymentMethod['is_pending'] && $paymentMethod['type']) {
+            if ($payment->is_paid === false && isset($paymentMethod['is_pending']) && isset($paymentMethod['type'])) {
                 return (str_contains($paymentMethod['type'], 'oney') && $paymentMethod['is_pending'] === true);
             }
         }
