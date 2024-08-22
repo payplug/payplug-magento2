@@ -15,14 +15,14 @@ $code = $block->getMethodCode();
 $sentBy = $block->getAdditionalData('sent_by');
 $language = $block->getAdditionalData('language');
 ?>
-<fieldset class="admin__fieldset payment-method" id="payment_form_<?= $escaper->escapeHtml($code) ?>"
+<fieldset class="admin__fieldset payment-method" id="payment_form_<?= $escaper->escapeHtmlAttr($code) ?>"
           style="display:none">
     <div class="field-type admin__field _required payment-link-sent-by">
-        <label class="admin__field-label" for="<?= $escaper->escapeHtml($code) ?>_sent_by">
+        <label class="admin__field-label" for="<?= $escaper->escapeHtmlAttr($code) ?>_sent_by">
             <span><?= $escaper->escapeHtml(__('Sent by method')) ?></span>
         </label>
         <div class="admin__field-control">
-            <select id="<?= $escaper->escapeHtml($code) ?>_sent_by" name="payment[sent_by]"
+            <select id="<?= $escaper->escapeHtmlAttr($code) ?>_sent_by" name="payment[sent_by]"
                     class="required-entry admin__control-select">
                 <?php foreach ($block->getSentByOptions() as $typeCode => $typeName): ?>
                     <option value="<?= $escaper->escapeHtmlAttr($typeCode) ?>"
@@ -35,21 +35,21 @@ $language = $block->getAdditionalData('language');
         </div>
     </div>
     <div class="field-number admin__field _required payment-link-sent-by-value">
-        <label class="admin__field-label" for="<?= $escaper->escapeHtml($code) ?>_sent_by_value">
+        <label class="admin__field-label" for="<?= $escaper->escapeHtmlAttr($code) ?>_sent_by_value">
             <span><?= $escaper->escapeHtml(__('Mobile')) ?></span>
         </label>
         <div class="admin__field-control">
-            <input type="text" id="<?= $escaper->escapeHtml($code) ?>_sent_by_value" name="payment[sent_by_value]"
+            <input type="text" id="<?= $escaper->escapeHtmlAttr($code) ?>_sent_by_value" name="payment[sent_by_value]"
                    title="<?= $escaper->escapeHtmlAttr(__('Mobile / Email')) ?>" class="admin__control-text required-entry"
                    value="<?= /* @noEscape */ $block->getAdditionalData('sent_by_value') ?>"/>
         </div>
     </div>
     <div class="field-type admin__field _required">
-        <label class="admin__field-label" for="<?= $escaper->escapeHtml($code) ?>_language">
+        <label class="admin__field-label" for="<?= $escaper->escapeHtmlAttr($code) ?>_language">
             <span><?= $escaper->escapeHtml(__('Language')) ?></span>
         </label>
         <div class="admin__field-control">
-            <select id="<?= $escaper->escapeHtml($code) ?>_language"
+            <select id="<?= $escaper->escapeHtmlAttr($code) ?>_language"
                     name="payment[language]"
                     class="required-entry admin__control-select"
             >
@@ -64,11 +64,11 @@ $language = $block->getAdditionalData('language');
         </div>
     </div>
     <div class="field-number admin__field">
-        <label class="admin__field-label" for="<?= $escaper->escapeHtml($code) ?>_description">
+        <label class="admin__field-label" for="<?= $escaper->escapeHtmlAttr($code) ?>_description">
             <span><?= $escaper->escapeHtml(__('Description')) ?></span>
         </label>
         <div class="admin__field-control">
-            <textarea id="<?= $escaper->escapeHtml($code) ?>_description"
+            <textarea id="<?= $escaper->escapeHtmlAttr($code) ?>_description"
                       name="payment[description]"
                       title="<?= $escaper->escapeHtmlAttr(__('Description')) ?>"
                       class="admin__control-text"
