@@ -5,16 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.0.0](https://github.com/payplug/payplug-magento2/releases/tag/4.0.0) - 2024-XX-XX
+## [4.0.0](https://github.com/payplug/payplug-magento2/releases/tag/4.0.0) - 2024-08-28
 
 > **NOTE**
-> This new version goes directly from 1.27.4 to 4.0.0 to make a clean slate and avoid maintaining two logics as was done on previous versions (one in 1.27.X and the other one in 3.5.X).
+> This version goes directly from 1.27.4 to 4.0.0 to make a clean slate and avoid maintaining two logics as was done on previous versions (one in 1.27.X and the other one in 3.5.X).
 
 ### Features
 
 - Optimize Oney payment load and script
+- Fix bad redirection after 3DS payment failure
+- Fix wrong return URL in case of pending file Oney
+- Fix transaction stays indefinitely in payment review with 3DS integrated payment
 
-**[view diff](https://github.com/payplug/payplug-magento2/compare/1.27.4...4.0.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/1.27.4...4.0.0)**
 
 ### Added
 
@@ -30,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Factorize payment simulation Ajax calls [#208](https://github.com/payplug/payplug-magento2/pull/208)
 - Get popin payment option navigation back [#208](https://github.com/payplug/payplug-magento2/pull/208)
 - Optimize Oney popin script show/hide [#208](https://github.com/payplug/payplug-magento2/pull/208)
+- Type more thoroughly the returns [#218](https://github.com/payplug/payplug-magento2/pull/218/files)
 - Update and refacto Oney view handler script [#208](https://github.com/payplug/payplug-magento2/pull/208)
 - Update oney popin script constructor [#208](https://github.com/payplug/payplug-magento2/pull/208)
 - Update order status [#209](https://github.com/payplug/payplug-magento2/pull/209)
@@ -40,6 +44,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remove Oney script head tag call [#208](https://github.com/payplug/payplug-magento2/pull/208)
 - Remove residual comment - Update order status [#209](https://github.com/payplug/payplug-magento2/pull/209)
+
+### Fixed
+
+- Allow success order placement on oney pending payment [#218](https://github.com/payplug/payplug-magento2/pull/218/files)
+- Fix Undefined array key after 3DS failed payment [#225](https://github.com/payplug/payplug-magento2/pull/225)
+- Fix the use of phrases instead of string in php 8 [#217](https://github.com/payplug/payplug-magento2/pull/217)
 
 ## [1.27.4](https://github.com/payplug/payplug-magento2/releases/tag/1.27.4) - 2024-05-02
 

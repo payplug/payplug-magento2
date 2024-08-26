@@ -93,9 +93,9 @@ class PaymentReturn extends AbstractPayment
      */
     public function isOneyPending(?Payment $payment): bool
     {
-        if ($payment) {
+        if ($payment && isset($payment->payment_method)) {
             $paymentMethod = $payment->payment_method;
-            if ($payment->is_paid === false && $paymentMethod['is_pending'] && $paymentMethod['type']) {
+            if ($payment->is_paid === false && isset($paymentMethod['is_pending']) && isset($paymentMethod['type'])) {
                 return (str_contains($paymentMethod['type'], 'oney') && $paymentMethod['is_pending'] === true);
             }
         }
