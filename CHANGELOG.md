@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix bad redirection after 3DS payment failure
 - Fix wrong return URL in case of pending file Oney
 - Fix transaction stays indefinitely in payment review with 3DS integrated payment
+- Php 8.1 support
 
 **[View diff](https://github.com/payplug/payplug-magento2/compare/1.27.4...4.0.0)**
 
