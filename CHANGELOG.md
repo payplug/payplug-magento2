@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Allow success order placement on oney pending payment [#218](https://github.com/payplug/payplug-magento2/pull/218/files)
+- Prevent type error on order placements [#226](https://github.com/payplug/payplug-magento2/pull/226/commits/1878eb759e2d7f48c10b5a64959b6615a5ff1ec6)
 - Fix Undefined array key after 3DS failed payment [#225](https://github.com/payplug/payplug-magento2/pull/225)
 - Fix the use of phrases instead of string in php 8 [#217](https://github.com/payplug/payplug-magento2/pull/217)
 
