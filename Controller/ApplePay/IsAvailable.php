@@ -34,13 +34,13 @@ class IsAvailable extends Action
             if ($this->configHelper->getIsSandbox()) {
                 $result->setData([
                     'success' => false,
-                    'data' => ['message' => __('The Apple Pay payment is not available for the TEST mode.')]
+                    'data' => ['message' => (string)__('The Apple Pay payment is not available for the TEST mode.')]
                 ]);
             }
         } catch (\Exception $e) {
             $result->setData([
                 'success' => false,
-                'data' => ['message' => __('An error occurred while getting Apple Pay details. Please try again.')]
+                'data' => ['message' => (string)__('An error occurred while getting Apple Pay details. Please try again.')]
             ]);
         }
 

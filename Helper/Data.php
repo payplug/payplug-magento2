@@ -309,7 +309,7 @@ class Data extends AbstractHelper
         if ($field !== null) {
             $orderStatus = $order->getPayment()->getMethodInstance()->getConfigData($field, $order->getStoreId());
             if (!empty($orderStatus) && $orderStatus !== $order->getStatus()) {
-                $order->addStatusToHistory($orderStatus, __('Custom Payplug Payments status'));
+                $order->addStatusToHistory($orderStatus, (string)__('Custom Payplug Payments status'));
                 if ($save) {
                     $this->orderRepository->save($order);
                 }
@@ -335,7 +335,7 @@ class Data extends AbstractHelper
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
             if ($createdAt > new \DateTime("now - 1 min")) {
                 // Order is currently being processed
-                throw new OrderAlreadyProcessingException(__('Order is currently being processed.'));
+                throw new OrderAlreadyProcessingException((string)__('Order is currently being processed.'));
             }
             // Order has been set as processing for more than a minute
             // Delete and recreate a new flag
@@ -527,7 +527,7 @@ class Data extends AbstractHelper
             if ($order->getState() !== Order::STATE_CANCELED) {
                 // Order is no longer in review and hasn't been canceled
                 // It means that the payment was validated
-                throw new LocalizedException(__('The order has been updated without being canceled ' .
+                throw new LocalizedException((string)__('The order has been updated without being canceled ' .
                     'because its payment has been validated.'));
             }
 
@@ -567,7 +567,7 @@ class Data extends AbstractHelper
                 // Payment is already aborted, keep processing to cancel order
                 return true;
             }
-            throw new LocalizedException(__('An error occurred. Please try again.'));
+            throw new LocalizedException((string)__('An error occurred. Please try again.'));
         }
     }
 
@@ -668,7 +668,7 @@ class Data extends AbstractHelper
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
             if ($createdAt > new \DateTime("now - 1 min")) {
                 // Order is currently being processed
-                throw new OrderAlreadyProcessingException(__('Order is currently being processed.'));
+                throw new OrderAlreadyProcessingException((string)__('Order is currently being processed.'));
             }
             // Order has been set as processing for more than a minute
             // Delete and recreate a new flag
@@ -872,7 +872,7 @@ class Data extends AbstractHelper
                         . __('Transaction ID: "%1"', $transactionId);
                     $order->addStatusToHistory(
                         $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING),
-                        $message
+                        (string)$message
                     );
                 } else {
                     // Order amounts and status history are already handled
