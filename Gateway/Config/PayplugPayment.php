@@ -19,8 +19,13 @@ class PayplugPayment extends Config
 
     /**
      * Retrieve information from payment configuration
+     *
+     * @param string $field
+     * @param int|null $storeId
+     *
+     * @return mixed
      */
-    public function getValue($field, ?int $storeId = null): mixed
+    public function getValue($field, $storeId = null)
     {
         if ($field === 'order_place_redirect_url') {
             // Prevent order email sending when placing the order
