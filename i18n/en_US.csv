@@ -82,7 +82,6 @@
 "Invalid expiration date.","Invalid expiration date."
 "Invalid mobile number %1 for country %2","Invalid mobile number %1 for country %2"
 "Invalid sent by option: %1","Sending failed by %1"
-"Invoice on payment validation","Invoice after payment"
 "Italian","Italian"
 "Language","Language"
 "Last payment %1 has already been paid. Please wait for the automatic notification or update the payment manually.","The last payment %1 has already been paid. You should receive an automatic notification shortly. If not, please update the payment manually."

@@ -324,7 +324,6 @@ class Config extends AbstractHelper
             'payplug_payments/general/pwd',
             'payplug_payments/general/environmentmode',
             'payplug_payments/general/payment_page',
-            'payplug_payments/general/invoice_on_payment',
             'payplug_payments/general/oney_countries',
             'payplug_payments/general/oney_min_amounts',
             'payplug_payments/general/oney_max_amounts',

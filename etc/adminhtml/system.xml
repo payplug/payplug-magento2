@@ -30,11 +30,6 @@
                     <source_model>Payplug\Payments\Model\Config\Source\PaymentPage</source_model>
                     <comment>The Embedded Payment display is only compatible with a standardized checkout page that meets the Magento guidelines. Some checkout customizations will not allow the feature to work (changing the “Place order” button, etc.).</comment>
                 </field>
-                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Invoice on payment validation</label>
-                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
                 <field id="test_api_key"/>
                 <field id="live_api_key"/>
                 <field id="min_amounts"/>
@@ -92,14 +87,14 @@
                     <label>Authorized order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
                     <depends>
-                        <field id="payment/payplug_payments_standard/payment_mode">0</field>
+                        <field id="payment_mode">0</field>
                     </depends>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
                     <depends>
-                        <field id="payment/payplug_payments_standard/payment_mode">1</field>
+                        <field id="payment_mode">1</field>
                     </depends>
                 </field>
                 <field id="canceled_order_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
