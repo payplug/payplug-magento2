@@ -6,7 +6,7 @@
                 <title>Credit card checkout</title>
                 <one_click>0</one_click>
                 <payment_mode>1</payment_mode>
-                <authorized_order_status>authorized</authorized_order_status>
+                <authorized_order_status>processing</authorized_order_status>
                 <processing_order_status>processing</processing_order_status>
                 <canceled_order_status>canceled</canceled_order_status>
                 <allowspecific>0</allowspecific>
