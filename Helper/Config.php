@@ -76,7 +76,7 @@ class Config extends AbstractHelper
     /**
      * Get payment mode (1 = Authorization and Capture / 0 = Authorization only)
      */
-    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, ?string $storeId = null): ?string
+    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, mixed $storeId = null): ?string
     {
         return (string)$this->getConfigValue('', $scope, $storeId, self::PAYPLUG_PAYMENT_MODE_CONFIG_PATH);
     }
@@ -110,7 +110,7 @@ class Config extends AbstractHelper
     /**
      * Set API secret key
      */
-    public function setPayplugApiKey(?int $storeId, bool $isSandbox): void
+    public function setPayplugApiKey(mixed $storeId, bool $isSandbox): void
     {
         $key = $this->getApiKey($isSandbox, $storeId);
 
@@ -137,21 +137,21 @@ class Config extends AbstractHelper
     /**
      * Retrieve api key
      */
-    public function getApiKey($isSandbox, $storeId = null): ?string
+    public function getApiKey($isSandbox, mixed $storeId = null): ?string
     {
         if ($isSandbox) {
-            return $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, (string)$storeId);
+            return $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
         }
 
-        return $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, (string)$storeId);
+        return $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
     }
 
     /**
      * Get is_sandbox flag depending on environment mode
      */
-    public function getIsSandbox(?int $store = null): bool
+    public function getIsSandbox(mixed $store = null): bool
     {
-        $environmentMode = $this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, (string)$store);
+        $environmentMode = $this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store);
 
         return $environmentMode == self::ENVIRONMENT_TEST;
     }
@@ -175,13 +175,13 @@ class Config extends AbstractHelper
     /**
      * Get one click flag
      */
-    public function isOneClick(?int $storeId = null): bool
+    public function isOneClick(mixed $storeId = null): mixed
     {
-        return $this->getConfigValue('can_save_cards', ScopeInterface::SCOPE_STORE, (string)$storeId) &&
+        return $this->getConfigValue('can_save_cards', ScopeInterface::SCOPE_STORE, $storeId) &&
             $this->getConfigValue(
                 'one_click',
                 ScopeInterface::SCOPE_STORE,
-                (string)$storeId,
+                $storeId,
                 'payment/payplug_payments_standard/'
             );
     }
@@ -222,7 +222,7 @@ class Config extends AbstractHelper
     /**
      * Set config value
      */
-    public function setConfigValue(string $field, string $value, string $scope = ScopeInterface::SCOPE_STORE, ?string $scopeId = null, ?string $path = null): void
+    public function setConfigValue(string $field, string $value, string $scope = ScopeInterface::SCOPE_STORE, mixed $scopeId = null, ?string $path = null): void
     {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
@@ -371,7 +371,7 @@ class Config extends AbstractHelper
     /**
      * Get valid range of amount for a given currency
      */
-    public function getAmountsByCurrency(string $isoCode, int $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
+    public function getAmountsByCurrency(string $isoCode, mixed $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
     {
         $minAmounts = [];
         $maxAmounts = [];
@@ -380,8 +380,8 @@ class Config extends AbstractHelper
             $path=self::CONFIG_PATH;
         }
 
-        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, (string)$storeId, $path);
-        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, (string)$storeId, $path);
+        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
+        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
 
         if(empty($minAmountsConfig) || empty($maxAmountsConfig)){
             return false;
