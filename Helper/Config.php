@@ -13,6 +13,7 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Model\Api\Login;
 use Payplug\Payplug;
 
@@ -43,7 +44,8 @@ class Config extends AbstractHelper
         protected System $systemConfigType,
         protected ProductMetadataInterface $productMetadata,
         protected ResourceConnection $resourceConnection,
-        protected Login $login
+        protected Login $login,
+        protected StoreManagerInterface $storeManager
     ) {
         parent::__construct($context);
     }
@@ -76,19 +78,19 @@ class Config extends AbstractHelper
     /**
      * Get payment mode (1 = Authorization and Capture / 0 = Authorization only)
      */
-    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, mixed $storeId = null): ?string
+    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, mixed $websiteId = null): ?string
     {
-        return (string)$this->getConfigValue('', $scope, $storeId, self::PAYPLUG_PAYMENT_MODE_CONFIG_PATH);
+        return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_MODE_CONFIG_PATH);
     }
 
     /**
      * Return true if the standard payment is on Authorization only
-     *
-     * @return bool
      */
-    public function isStandardPaymentModeDeffered(): bool
+    public function isStandardPaymentModeDeferred(): bool
     {
-        return $this->getStandardPaymentMode() === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
+        $websiteId = $this->storeManager->getStore()->getWebsiteId();
+
+        return $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, $websiteId) === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
     }
 
     /**
