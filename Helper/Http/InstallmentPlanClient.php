@@ -1,13 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Http;
+
+use Payplug\InstallmentPlan;
+use Payplug\Resource\APIResource;
 
 class InstallmentPlanClient extends AbstractClient
 {
     /**
      * @inheritdoc
      */
-    protected function prepareReturnData($payplugObject, $data)
+    protected function prepareReturnData(APIResource $payplugObject, array $data): array
     {
         return ['installment_plan' => $payplugObject];
     }
@@ -15,8 +20,8 @@ class InstallmentPlanClient extends AbstractClient
     /**
      * @inheritdoc
      */
-    protected function createPayplugObject($payplugData)
+    protected function createPayplugObject(array $payplugData): ?APIResource
     {
-        return \Payplug\InstallmentPlan::create($payplugData);
+        return InstallmentPlan::create($payplugData);
     }
 }
