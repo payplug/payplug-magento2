@@ -1,16 +1,23 @@
 <?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\OndemandInfo;
+
 /**
- * @var \Payplug\Payments\Block\OndemandInfo $block
+ * @var Escaper $escaper
+ * @var OndemandInfo $block
  */
 $specificInfo = $block->getAdminSpecificInformation();
 ?>
-<?= $block->escapeHtml($block->getMethod()->getTitle()) ?>
+<?= $escaper->escapeHtml($block->getMethod()->getTitle()) ?>
 <?php if ($specificInfo && isset($specificInfo['payments'])): ?>
     <table class="data-table admin__table-primary">
         <tr>
-            <th><?= $block->escapeHtml(__('Date')); ?></th>
-            <th><?= $block->escapeHtml(__('Amount')); ?></th>
-            <th><?= $block->escapeHtml(__('Status')); ?></th>
+            <th><?= $escaper->escapeHtml(__('Date')); ?></th>
+            <th><?= $escaper->escapeHtml(__('Amount')); ?></th>
+            <th><?= $escaper->escapeHtml(__('Status')); ?></th>
             <th></th>
         </tr>
         <?php foreach ($specificInfo['payments'] as $key => $paymentInfo): ?>
@@ -27,7 +34,7 @@ $specificInfo = $block->getAdminSpecificInformation();
                                 aria-expanded="false"
                                 aria-controls="payment-detail-<?= /* @noEscape */ $key; ?>"
                         >
-                            <?= $block->escapeHtml(__('Details')); ?>
+                            <?= $escaper->escapeHtml(__('Details')); ?>
                         </button>
                     <?php endif; ?>
                 </td>
@@ -38,12 +45,12 @@ $specificInfo = $block->getAdminSpecificInformation();
                         <table class="data-table admin__table-secondary">
                             <?php foreach ($paymentInfo['details'] as $label => $value): ?>
                                 <tr>
-                                    <th><?= $block->escapeHtml(__($label)) ?>:</th>
+                                    <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
                                     <td>
                                         <?php
-                                        $formattedValue = implode("\n", $block->getValueAsArray($value, true));
+                                        $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));
                                         ?>
-                                        <?= /* @noEscape */ nl2br($block->escapeHtml($formattedValue)) ?>
+                                        <?= nl2br($escaper->escapeHtml($formattedValue)) ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
