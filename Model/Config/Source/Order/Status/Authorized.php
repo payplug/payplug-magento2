@@ -14,6 +14,6 @@ class Authorized extends Status
      */
     protected $_stateStatuses = [
         Order::STATE_PENDING_PAYMENT,
-        Order::STATE_PROCESSING
+        Order::STATE_PAYMENT_REVIEW
     ];
 }

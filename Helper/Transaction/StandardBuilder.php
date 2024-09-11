@@ -64,7 +64,26 @@ class StandardBuilder extends AbstractBuilder
             }
         }
 
+        //Manage the deferred paiement mode
+        if ($this->payplugConfig->isStandardPaymentModeDeferred()) {
+            $paymentData['auto_capture'] = false;
+        }
+
         return $paymentData;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function buildAmountData($order)
+    {
+        $amountData = parent::buildAmountData($order);
+        if ($this->payplugConfig->isStandardPaymentModeDeferred()) {
+            $amountData['authorized_amount'] = $amountData['amount'];
+            unset($amountData['amount']);
+        }
+
+        return $amountData;
     }
 
     /**
