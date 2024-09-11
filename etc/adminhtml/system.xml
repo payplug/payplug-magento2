@@ -82,6 +82,7 @@
                 <field id="payment_mode" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Credit Card Payment Mode</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AuthorizationType</source_model>
+                    <comment><![CDATA[<span style="color:green;">Authorization & Capture</span> mean that the order is captured automatically as soon as it is authorized.</br><span style="color:blue;">Authorization only</span> mean that the order require your approval to be captured even after authorization.]]></comment>
                 </field>
                 <field id="authorized_order_status" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Authorized order status</label>
