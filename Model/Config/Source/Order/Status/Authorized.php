@@ -7,10 +7,13 @@ namespace Payplug\Payments\Model\Config\Source\Order\Status;
 use Magento\Sales\Model\Config\Source\Order\Status;
 use Magento\Sales\Model\Order;
 
-class Canceled extends Status
+class Authorized extends Status
 {
     /**
-     * @var string
+     * string[]
      */
-    protected $_stateStatuses = Order::STATE_CANCELED;
+    protected $_stateStatuses = [
+        Order::STATE_PENDING_PAYMENT,
+        Order::STATE_PROCESSING
+    ];
 }
