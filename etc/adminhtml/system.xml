@@ -79,7 +79,7 @@
                     <label>One-click payment</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="payment_mode" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="payment_action" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Credit Card Payment Mode</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AuthorizationType</source_model>
                     <comment><![CDATA[<span style="color:green;">Authorization & Capture</span> mean that the order is captured automatically as soon as it is authorized.</br><span style="color:blue;">Authorization only</span> mean that the order require your approval to be captured even after authorization.]]></comment>
@@ -88,14 +88,14 @@
                     <label>Authorized order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Authorized</source_model>
                     <depends>
-                        <field id="payment_mode">0</field>
+                        <field id="payment_action">authorize</field>
                     </depends>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
                     <depends>
-                        <field id="payment_mode">1</field>
+                        <field id="payment_action">authorize_capture</field>
                     </depends>
                 </field>
                 <field id="canceled_order_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">

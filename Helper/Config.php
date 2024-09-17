@@ -25,13 +25,13 @@ class Config extends AbstractHelper
     public const CONFIG_PATH = 'payplug_payments/general/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
-    public const PAYPLUG_PAYMENT_MODE_CONFIG_PATH = 'payment/payplug_payments_standard/payment_mode';
+    public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
     public const ENVIRONMENT_TEST = 'test';
     public const ENVIRONMENT_LIVE = 'live';
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
-    public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = '0';
+    public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
     public const MODULE_VERSION = '4.0.0';
 
     private ?AdapterInterface $adapter = null;
@@ -76,11 +76,11 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get payment mode (1 = Authorization and Capture / 0 = Authorization only)
+     * Get payment mode (authorization / authorization_capture)
      */
     public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, mixed $websiteId = null): ?string
     {
-        return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_MODE_CONFIG_PATH);
+        return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_ACTION_CONFIG_PATH);
     }
 
     /**

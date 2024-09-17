@@ -1,28 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Checkout\Model\Session;
+use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Logger\Logger;
 
 class Standard extends AbstractPayment
 {
+    public function __construct(
+        Context $context,
+        Session $checkoutSession,
+        OrderFactory $salesOrderFactory,
+        Logger $logger,
+        Data $payplugHelper,
+        protected FormKey $formKey
+    )
+    {
+        parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
+    }
+
     /**
      * Retrieve PayPlug Standard payment url
-     *
-     * @return Json
      */
-    public function execute()
+    public function execute(): Redirect|ResultInterface
     {
         $shouldRedirect = $this->getRequest()->getParam('should_redirect', true);
 
         /** @var Json $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
         $responseParams = [
-            'url' => $this->_url->getUrl('payplug_payments/payment/cancel', ['is_canceled_by_provider' => true]),
+            'url' => $this->_url->getUrl('payplug_payments/payment/cancel', [
+                'is_canceled_by_provider' => true,
+                'form_key' => $this->formKey->getFormKey() ?: ''
+            ]),
             'error' => true,
             'message' => __('An error occurred while processing the order.')
         ];
@@ -80,7 +103,10 @@ class Standard extends AbstractPayment
                 );
                 return $this->resultRedirectFactory->create()->setPath(
                     'payplug_payments/payment/cancel',
-                    ['is_canceled_by_provider' => true]
+                    [
+                        'is_canceled_by_provider' => true,
+                        'form_key' => $this->formKey->getFormKey() ?: ''
+                    ]
                 );
             }
 
@@ -93,7 +119,10 @@ class Standard extends AbstractPayment
                 $this->messageManager->addErrorMessage($e->getMessage());
                 return $this->resultRedirectFactory->create()->setPath(
                     'payplug_payments/payment/cancel',
-                    ['is_canceled_by_provider' => true]
+                    [
+                        'is_canceled_by_provider' => true,
+                        'form_key' => $this->formKey->getFormKey() ?: ''
+                    ]
                 );
             }
 
@@ -109,7 +138,10 @@ class Standard extends AbstractPayment
                 );
                 return $this->resultRedirectFactory->create()->setPath(
                     'payplug_payments/payment/cancel',
-                    ['is_canceled_by_provider' => true]
+                    [
+                        'is_canceled_by_provider' => true,
+                        'form_key' => $this->formKey->getFormKey() ?: ''
+                    ]
                 );
             }
 
@@ -126,7 +158,7 @@ class Standard extends AbstractPayment
      *
      * @throws \Exception
      */
-    private function getLastOrder()
+    private function getLastOrder(): Order
     {
         $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
 
