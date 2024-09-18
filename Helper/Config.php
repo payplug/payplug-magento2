@@ -26,6 +26,7 @@ class Config extends AbstractHelper
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
+    public const PAYPLUG_PAYMENT_AUTHORIZED_STATUS_CONFIG_PATH = 'payment/payplug_payments_standard/authorized_order_status';
     public const ENVIRONMENT_TEST = 'test';
     public const ENVIRONMENT_LIVE = 'live';
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
@@ -91,6 +92,13 @@ class Config extends AbstractHelper
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
 
         return $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, $websiteId) === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
+    }
+
+    public function getStandardAuthorizedStatus(): ?string
+    {
+        $websiteId = $this->storeManager->getStore()->getWebsiteId();
+
+        return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, $websiteId, self::PAYPLUG_PAYMENT_AUTHORIZED_STATUS_CONFIG_PATH);
     }
 
     /**
