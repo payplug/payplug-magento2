@@ -187,11 +187,9 @@ class Ipn extends AbstractPayment
 
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
-
         try {
-            $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
+            $this->payplugHelper->getOrderInstallmentPlan((string)$order->getIncrementId());
             $response->setStatusHeader(200, null, "200 payment for installment plan not processed");
-
             return;
         } catch (NoSuchEntityException $e) {
             // We want to process payment IPN for orders not linked to an installment plan
