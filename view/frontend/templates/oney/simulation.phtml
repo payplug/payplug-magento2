@@ -1,7 +1,17 @@
 <?php
-/** @var \Payplug\Payments\Block\Oney\Simulation $block */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\Oney\Simulation;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+
+/**
+ * @var Escaper $escaper
+ * @var Simulation $block
+ */
 $oneySimulation = $block->getOneySimulation(true);
-$isOneyWithoutFees = $oneySimulation->getMethod() === \Payplug\Payments\Gateway\Config\OneyWithoutFees::METHOD_CODE;
+$isOneyWithoutFees = $oneySimulation->getMethod() === OneyWithoutFees::METHOD_CODE;
 $isItalianStore = $block->isItalianStore();
 $hasError = false;
 if (!$oneySimulation->getSuccess()) {
@@ -11,7 +21,7 @@ if (!$oneySimulation->getSuccess()) {
 <div class="oneyCta<?= $isOneyWithoutFees ? ' oney-without-fees' : ''; ?><?= $isItalianStore ? ' oney-it' : ''; ?>">
     <button type="button"
             class="oneyCta_button<?php if ($hasError): ?> oneyCta_button-disabled<?php endif; ?>">
-        <span><?= $block->escapeHtml(__('Or pay in')); ?></span>
+        <span><?= $escaper->escapeHtml(__('Or pay in')); ?></span>
         <span class="oneyCta_logo oneyLogo oneyLogo-x3x4"></span>
         <span class="oneyCta_tooltip oneyLogo oneyLogo-tooltip"></span>
     </button>

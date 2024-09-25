@@ -105,12 +105,13 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
     {
         $localeCode = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);
 
-        $filename = 'supported_cards';
+        $filePath = 'icons/payment-cards.svg';
+
         if ($localeCode == 'it_IT') {
-            $filename = 'supported_cards_it';
+            $filePath = 'supported_cards_it.png';
         }
 
-        return $this->getViewFileUrl('Payplug_Payments::images/' . $filename . '.png');
+        return $this->getViewFileUrl('Payplug_Payments::images/' . $filePath);
     }
 
     /**

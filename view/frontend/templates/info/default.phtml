@@ -6,26 +6,26 @@ use Magento\Framework\Escaper;
 use Payplug\Payments\Block\Info;
 
 /**
- * @var Info $block
  * @var Escaper $escaper
+ * @var Info $block
  */
 $specificInfo = $block->getSpecificInformation();
 $title = $escaper->escapeHtml($block->getMethod()->getTitle());
 ?>
 <dl class="payment-method">
-    <dt class="title"><?= $escaper->escapeHtml($title); ?></dt>
+    <dt class="title"><?= /* @noEscape */ $title ?></dt>
     <?php if ($specificInfo): ?>
         <dd class="content">
             <table class="data table">
-                <caption class="table-caption"><?= $escaper->escapeHtml($title); ?></caption>
+                <caption class="table-caption"><?= /* @noEscape */ $title ?></caption>
                 <?php foreach ($specificInfo as $label => $value): ?>
                     <tr>
                         <th scope="row"><?= $escaper->escapeHtml($label) ?></th>
                         <td>
                             <?php
-                            $formattedValue = implode("\n", $block->getValueAsArray($value, true));
+                            $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));
                             ?>
-                            <?= $escaper->escapeHtml(nl2br($escaper->escapeHtml($formattedValue))); ?>
+                            <?= nl2br($escaper->escapeHtml($formattedValue)) ?>
                         </td>
                     </tr>
                 <?php endforeach; ?>

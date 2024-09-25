@@ -1,18 +1,29 @@
 <?php
-/** @var \Payplug\Payments\Block\Oney\Simulation $block */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Framework\Pricing\Helper\Data;
+use Payplug\Payments\Block\Oney\Simulation;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+
+/**
+ * @var Escaper $escaper
+ * @var Simulation $block
+ */
 $hasError = false;
 $oneySimulation = $block->getOneySimulation();
 $message = $oneySimulation->getMessage();
 if (!$oneySimulation->getSuccess() || !empty($message)) {
     $hasError = true;
 }
-$isOneyWithoutFees = $oneySimulation->getMethod() === \Payplug\Payments\Gateway\Config\OneyWithoutFees::METHOD_CODE;
-$pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
+$isOneyWithoutFees = $oneySimulation->getMethod() === OneyWithoutFees::METHOD_CODE;
+$pricingHelper = $this->helper(Data::class);
 ?>
 <?php if ($hasError): ?>
     <p class="oneyPopin_error"><?= /* @noEscape */ $message; ?></p>
 <?php else: ?>
-    <button class="oneyPopin_close"><?= $block->escapeHtml(__('Close')); ?></button>
+    <button class="oneyPopin_close"><?= $escaper->escapeHtml(__('Close')); ?></button>
     <span class="oneyPopin_title">
         <?php if ($isOneyWithoutFees): ?>
             <?= /* @noEscape */ __(
@@ -27,14 +38,14 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
         <?php endif; ?>
     </span>
     <ul class="oneyPopin_navigation">
-        <li data-type="3x"><button type="button"><?= $block->escapeHtml(__('Payment in %1', '3x')); ?></button></li>
-        <li data-type="4x"><button type="button"><?= $block->escapeHtml(__('Payment in %1', '4x')); ?></button></li>
+        <li data-type="3x"><button type="button"><?= $escaper->escapeHtml(__('Payment in %1', '3x')); ?></button></li>
+        <li data-type="4x"><button type="button"><?= $escaper->escapeHtml(__('Payment in %1', '4x')); ?></button></li>
     </ul>
     <?php foreach ($oneySimulation->getOptions() as $option): ?>
         <span class="oneyPopin_option" data-type="<?= /* @noEscape */ $option->getType(); ?>">
             <ul>
                 <li>
-                    <span><b><?= $block->escapeHtml(__('For an amount of:')); ?></b></span>
+                    <span><b><?= $escaper->escapeHtml(__('For an amount of:')); ?></b></span>
                     <span>
                         <b>
                             <?= /* @noEscape */ $pricingHelper->currency($oneySimulation->getAmount(), true, false); ?>
@@ -42,7 +53,7 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                     </span>
                 </li>
                 <li>
-                    <span><?= $block->escapeHtml(__('Contribution:')); ?></span>
+                    <span><?= $escaper->escapeHtml(__('Contribution:')); ?></span>
                     <span>
                         <b>
                             <?= /* @noEscape */ $pricingHelper->currency($option->getFirstDeposit(), true, false); ?>
@@ -52,15 +63,15 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                 <?php if (!$isOneyWithoutFees): ?>
                     <li>
                         <small>
-                            (<?= $block->escapeHtml(__('Financing cost:')); ?>
+                            (<?= $escaper->escapeHtml(__('Financing cost:')); ?>
                             <b><?= /* @noEscape */ $pricingHelper->currency($option->getCost(), true, false); ?></b>
-                            <?= $block->escapeHtml(__('TAEG:')); ?> <b><?= /* @noEscape */ $option->getRate(); ?>%</b>)
+                            <?= $escaper->escapeHtml(__('TAEG:')); ?> <b><?= /* @noEscape */ $option->getRate(); ?>%</b>)
                         </small>
                     </li>
                 <?php endif; ?>
                 <?php foreach ($option->getSchedules() as $i => $schedule): ?>
                     <li>
-                        <span><?= $block->escapeHtml(__(sprintf('Installment %d:', $i + 1))); ?></span>
+                        <span><?= $escaper->escapeHtml(__(sprintf('Installment %d:', $i + 1))); ?></span>
                         <span>
                             <b>
                                 <?= /* @noEscape */ $pricingHelper->currency($schedule->getAmount(), true, false); ?>
@@ -70,7 +81,7 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                 <?php endforeach; ?>
                 <?php if (!$isOneyWithoutFees): ?>
                     <li>
-                        <span><b><?= $block->escapeHtml(__('Total cost:')); ?></b></span>
+                        <span><b><?= $escaper->escapeHtml(__('Total cost:')); ?></b></span>
                         <span>
                             <b>
                                 <?= /* @noEscape */ $pricingHelper->currency($option->getTotalAmount(), true, false); ?>
@@ -80,9 +91,9 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
                 <?php else: ?>
                     <li>
                         <small>
-                            (<?= $block->escapeHtml(__('Financing cost:')); ?>
+                            (<?= $escaper->escapeHtml(__('Financing cost:')); ?>
                             <b><?= /* @noEscape */ $pricingHelper->currency(0, true, false); ?></b>
-                            <?= $block->escapeHtml(__('TAEG:')); ?> <b>0%</b>)
+                            <?= $escaper->escapeHtml(__('TAEG:')); ?> <b>0%</b>)
                         </small>
                     </li>
                 <?php endif; ?>
@@ -120,12 +131,12 @@ $pricingHelper = $this->helper(\Magento\Framework\Pricing\Helper\Data::class);
         <?php if ($block->isMerchandItalian()): ?>
             <span class="legal-it">
                 <?php if (!$isOneyWithoutFees): ?>
-                <a href="<?= $block->escapeHtmlAttr($block->getMoreInfoUrl()); ?>" target="_blank" download>
-                    <?= $block->escapeHtml(__('More info')); ?>
+                <a href="<?= $escaper->escapeUrl($block->getMoreInfoUrl()); ?>" target="_blank" download>
+                    <?= $escaper->escapeHtml(__('More info')); ?>
                 </a>
                 <?php else: ?>
-                <a href="<?= $block->escapeHtmlAttr($block->getMoreInfoUrlWithoutFees()); ?>" target="_blank" download>
-                    <?= $block->escapeHtml(__('More info')); ?>
+                <a href="<?= $escaper->escapeUrl($block->getMoreInfoUrlWithoutFees()); ?>" target="_blank" download>
+                    <?= $escaper->escapeHtml(__('More info')); ?>
                 </a>
                 <?php endif; ?>
             </span>
