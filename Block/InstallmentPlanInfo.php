@@ -14,8 +14,6 @@ use Payplug\Payments\Model\OrderPaymentRepository;
 
 class InstallmentPlanInfo extends Info
 {
-    protected $_template = 'Payplug_Payments::info/installment_plan.phtml';
-
     public function __construct(
         Context $context,
         Data $payplugHelper,
