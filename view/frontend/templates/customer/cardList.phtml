@@ -41,7 +41,7 @@ use Payplug\Payments\Block\Customer\CardList;
                     </span>
                 </td>
                 <td class="delete">
-                    <a href="<?= $escaper->escapeUrl($block->getDeleteCardUrl($customerCardId)) ?>">
+                    <a href="<?= $escaper->escapeUrl($block->getDeleteCardUrl((int)$customerCardId)) ?>">
                         <?= $escaper->escapeHtml(__('Delete this card')) ?>
                     </a>
                 </td>

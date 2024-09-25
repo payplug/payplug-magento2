@@ -1,22 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Plugin\Adminhtml\Widget;
+
+use Magento\Sales\Block\Adminhtml\Order\Invoice\View;
 
 class SalesInvoiceViewContext extends SalesViewContext
 {
     /**
      * Add Payplug update payment button on admin invoice view
-     *
-     * @param \Magento\Sales\Block\Adminhtml\Order\Invoice\View $subject
-     *
-     * @return null
      */
-    public function beforeSetLayout(\Magento\Sales\Block\Adminhtml\Order\Invoice\View $subject)
+    public function beforeSetLayout(View $subject): void
     {
         if ($subject->getInvoice() && $subject->getInvoice()->getId() && $subject->getInvoice()->getOrder()) {
-            return $this->addPayplugLinks($subject->getInvoice()->getOrder(), $subject);
+            $this->addPayplugLinks($subject->getInvoice()->getOrder(), $subject);
         }
-
-        return null;
     }
 }

@@ -1,50 +1,49 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Block\Adminhtml\Config;
 
+use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget\Button;
+use Magento\Config\Block\System\Config\Form\Field;
+use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 
-class Logout extends \Magento\Config\Block\System\Config\Form\Field
+class Logout extends Field
 {
-    /**
-     * @var Config
-     */
-    private $helper;
-
-    /**
-     * @param \Magento\Backend\Block\Template\Context $context
-     * @param Config                                  $helper
-     * @param array                                   $data
-     */
-    public function __construct(\Magento\Backend\Block\Template\Context $context, Config $helper, array $data = [])
-    {
-        $this->helper = $helper;
+    public function __construct(
+        Context $context,
+        private Config $helper,
+        array $data = []
+    ) {
         parent::__construct($context, $data);
     }
 
     /**
      * Retrieve element HTML markup
      *
-     * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
+     * @param AbstractElement $element
      *
      * @return string
      */
-    protected function _getElementHtml(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    protected function _getElementHtml(AbstractElement $element): string
     {
         $this->helper->initScopeData();
 
-        /** @var \Magento\Backend\Block\Widget\Button $buttonBlock  */
-        $buttonBlock = $this->getForm()->getLayout()->createBlock(\Magento\Backend\Block\Widget\Button::class);
+        /** @var Button $buttonBlock  */
+        $buttonBlock = $this->getForm()->getLayout()->createBlock(Button::class);
 
         $html = '<p>' . $this->helper->getConfigValue('email') . '</p>';
         $data = [
             'id' => 'payplug_payments_disconnectUrl',
             'label' => $element->getLabel(),
-            'onclick' => "setLocation('" . $this->getButtonUrl() . "')",
+            'onclick' => "setLocation('" . $this->getButtonUrl() . "')"
         ];
 
         $html .= $buttonBlock->setData($data)->toHtml();
+
         return $html;
     }
 
@@ -53,7 +52,7 @@ class Logout extends \Magento\Config\Block\System\Config\Form\Field
      *
      * @return string
      */
-    private function getButtonUrl()
+    private function getButtonUrl(): string
     {
         $parameters = [];
         $scope = $this->helper->getConfigScope();
@@ -65,8 +64,8 @@ class Logout extends \Magento\Config\Block\System\Config\Form\Field
             $parameters['website'] = $scopeId;
         }
 
-        $disconnectUrl = $this->getUrl('payplug_payments_admin/config/logout', $parameters);
+        $parameters['form_key'] = $this->formKey->getFormKey() ?: '';
 
-        return $disconnectUrl;
+        return $this->getUrl('payplug_payments_admin/config/logout', $parameters);
     }
 }

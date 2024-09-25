@@ -872,7 +872,7 @@ class Data extends AbstractHelper
                         . __('Transaction ID: "%1"', $transactionId);
                     $order->addStatusToHistory(
                         $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING),
-                        $message
+                        (string)$message
                     );
                 } else {
                     // Order amounts and status history are already handled
