@@ -19,9 +19,9 @@ $specificInfo = $block->getAdminSpecificInformation();
                 <th><?= $escaper->escapeHtml(__($label)); ?>:</th>
                 <td>
                     <?php
-                    $formattedValue = implode("\n", $block->getValueAsArray($value, true));
+                    $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));
                     ?>
-                    <?= $escaper->escapeHtml(nl2br($escaper->escapeHtml($formattedValue))); ?>
+                    <?= /* @noEscape */  nl2br($escaper->escapeHtml($formattedValue)); ?>
                 </td>
             </tr>
         <?php endforeach; ?>

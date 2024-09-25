@@ -21,7 +21,7 @@ class OndemandInfo extends Info
     }
 
     /**
-     *  Get some admin specific information in format of array($label => $value)
+     * Get some admin specific information in format of array($label => $value)
      *
      * @return array
      * @throws LocalizedException

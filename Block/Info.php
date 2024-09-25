@@ -8,6 +8,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Payment\Block\Info as BaseInfo;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
@@ -69,7 +70,7 @@ class Info extends BaseInfo
      *
      * @return array
      */
-    protected function buildPaymentDetails(Payment $payment, Order $order): array
+    protected function buildPaymentDetails(Payment $payment, OrderInterface $order): array
     {
         $status = __('Not Paid');
         if ($payment->is_refunded) {

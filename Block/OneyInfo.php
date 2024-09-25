@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Block;
 
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Oney;
@@ -19,7 +20,7 @@ class OneyInfo extends Info
      *
      * @return array
      */
-    protected function buildPaymentDetails(Payment $payment, Order $order): array
+    protected function buildPaymentDetails(Payment $payment, OrderInterface $order): array
     {
         $paymentDetails = parent::buildPaymentDetails($payment, $order);
 
