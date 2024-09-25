@@ -1,10 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Transaction;
 
 use Laminas\Validator\EmailAddress;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\PaymentException;
+use Magento\Payment\Gateway\Data\OrderAdapterInterface;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Model\Quote;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Ondemand;
@@ -15,36 +21,22 @@ use Payplug\Payments\Model\Order\Payment;
 
 class OndemandBuilder extends AbstractBuilder
 {
-    /**
-     * @var OndemandOptions
-     */
-    private $onDemandHelper;
-
-    /**
-     * @param Context         $context
-     * @param Config          $payplugConfig
-     * @param Country         $countryHelper
-     * @param Phone           $phoneHelper
-     * @param Logger          $logger
-     * @param OndemandOptions $onDemandHelper
-     */
     public function __construct(
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
         Phone $phoneHelper,
         Logger $logger,
-        OndemandOptions $onDemandHelper
+        FormKey $formKey,
+        private OndemandOptions $onDemandHelper,
     ) {
-        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger);
-
-        $this->onDemandHelper = $onDemandHelper;
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey);
     }
 
     /**
      * @inheritdoc
      */
-    public function buildPaymentData($order, $payment, $quote)
+    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
         unset($paymentData['hosted_payment']['return_url']);
@@ -103,7 +95,7 @@ class OndemandBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildTransaction($order, $payment, $quote)
+    public function buildTransaction(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $transaction = parent::buildTransaction($order, $payment, $quote);
 

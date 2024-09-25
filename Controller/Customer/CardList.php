@@ -1,44 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Customer;
 
 use Magento\Customer\Model\Session;
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\View\Result\Page;
 use Magento\Framework\View\Result\PageFactory;
 
-class CardList extends \Magento\Framework\App\Action\Action
+class CardList extends Action
 {
-    /**
-     * @var Session
-     */
-    private $customerSession;
-
-    /**
-     * @var PageFactory
-     */
-    private $pageFactory;
-
-    /**
-     * @param Context     $context
-     * @param Session     $customerSession
-     * @param PageFactory $pageFactory
-     */
-    public function __construct(Context $context, Session $customerSession, PageFactory $pageFactory)
-    {
-        $this->customerSession = $customerSession;
-        $this->pageFactory = $pageFactory;
+    public function __construct(
+        Context $context,
+        private Session $customerSession,
+        private PageFactory $pageFactory
+    ) {
         parent::__construct($context);
     }
 
     /**
      * Check customer authentication
-     *
-     * @param RequestInterface $request
-     *
-     * @return \Magento\Framework\App\ResponseInterface
      */
-    public function dispatch(RequestInterface $request)
+    public function dispatch(RequestInterface $request): ResponseInterface|Page
     {
         if (!$this->customerSession->authenticate()) {
             $this->_actionFlag->set('', 'no-dispatch', true);
@@ -49,10 +36,8 @@ class CardList extends \Magento\Framework\App\Action\Action
 
     /**
      * Display customer cards
-     *
-     * @return mixed
      */
-    public function execute()
+    public function execute(): Page
     {
         $title = __('My Saved Cards');
         $page = $this->pageFactory->create();

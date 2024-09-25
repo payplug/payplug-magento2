@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Block;
 
-use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Template\Context;
 use Payplug\Exception\PayplugException;
@@ -14,21 +14,26 @@ use Payplug\Payments\Model\OrderPaymentRepository;
 
 class InstallmentPlanInfo extends Info
 {
+    protected $_template = 'Payplug_Payments::info/installment_plan.phtml';
+
     public function __construct(
         Context $context,
         Data $payplugHelper,
         Logger $payplugLogger,
         private OrderPaymentRepository $orderPaymentRepository,
+        private FormKey $formKey,
         array $data = []
     ) {
         parent::__construct($context, $payplugHelper, $payplugLogger, $data);
     }
 
+    public function getFormKey(): string
+    {
+        return $this->formKey->getFormKey() ?: '';
+    }
+
     /**
      * Get some admin specific information in format of array($label => $value)
-     *
-     * @return array
-     * @throws LocalizedException
      */
     public function getAdminSpecificInformation(): array
     {
