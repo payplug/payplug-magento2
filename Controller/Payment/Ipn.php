@@ -6,14 +6,19 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\OrderPaymentRepository;
 use Payplug\Resource\InstallmentPlan;
 use Payplug\Resource\Payment;
 use Payplug\Resource\Refund;
@@ -39,7 +44,10 @@ class Ipn extends AbstractPayment
         \Magento\Sales\Model\OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        Config $payplugConfig
+        Config $payplugConfig,
+        protected OrderPaymentRepository $paymentRepository,
+        protected CartRepositoryInterface $cartRepository,
+        protected OrderRepository $orderRepository
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
@@ -196,6 +204,34 @@ class Ipn extends AbstractPayment
         }
 
         if (!$payment->is_paid) {
+            if (!$order->getIncrementId() && $payment->metadata['ID Quote']) {
+                /** @var Quote $quote */
+                $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
+                //If we are actually reviewing a standard deferred payment
+                if ($quote->getPayment()->getMethod() === StandardConfig::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
+
+                    //Add the additionnals informations to the deferred Order payment object
+                    $quote->getPayment()->setAdditionalInformation('is_authorized', true);
+                    $quote->getPayment()->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
+                    $quote->getPayment()->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
+                    $quote->getPayment()->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
+                    $this->cartRepository->save($quote);
+
+                    //Add the history to the deferred Order
+                    $order->addCommentToStatusHistory(sprintf('Payplug authorized an amount of %s. Authorization available from %s to %s.',
+                        $payment->authorization->authorized_amount,
+                        date('Y-m-d H:i:s', $payment->authorization->authorized_at),
+                        date('Y-m-d H:i:s', $payment->authorization->expires_at)
+                    ));
+
+                   // TODO $this->orderRepository->save($order); The save crash because the order miss the payment object ?!
+
+                    $response->setStatusHeader(200, null, "200 payment for deferred standard payment not processed");
+
+                    return;
+                }
+            }
+
             $this->logger->info('Transaction was not paid.');
             $this->logger->info('Canceling order');
         }
