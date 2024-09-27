@@ -22,6 +22,9 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
@@ -261,6 +264,27 @@ class Data extends AbstractHelper
         }
 
         return true;
+    }
+
+    /**
+     * Check if order's payment can be captured (in case of deferred)
+     */
+    public function canCaptureOnline(?OrderInterface $order = null, ?CartInterface $quote = null): bool
+    {
+        $payment = null;
+        if ($order) {
+            $payment = $order->getPayment();
+        } else if ($quote) {
+            $payment = $quote->getPayment();
+        }
+
+        $this->_logger->info(print_r($payment->getAdditionalInformation(), true));
+        if ($payment && $payment->getAdditionalInformation('is_authorized')) {
+            //Maybe add a check on the authorized amount, and the state of the order and perhaps the authorization date
+            return true;
+        }
+
+        return false;
     }
 
     /**

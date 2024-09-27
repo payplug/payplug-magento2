@@ -15,6 +15,7 @@ use Magento\Framework\Exception\PaymentException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 
@@ -26,7 +27,8 @@ class Standard extends AbstractPayment
         OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        protected FormKey $formKey
+        protected FormKey $formKey,
+        protected Config $config
     )
     {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
@@ -35,7 +37,7 @@ class Standard extends AbstractPayment
     /**
      * Retrieve PayPlug Standard payment url
      */
-    public function execute(): Redirect|ResultInterface
+    public function execute(): Redirect|ResultInterface|Json
     {
         $shouldRedirect = $this->getRequest()->getParam('should_redirect', true);
 

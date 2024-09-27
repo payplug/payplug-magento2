@@ -26,6 +26,7 @@ class SetDeferredProcessingOrderStatus implements ObserverInterface
 
         if (!$this->config->isStandardPaymentModeDeferred()
             || $order->getPayment()?->getMethod() !== Standard::METHOD_CODE
+            || $order->hasInvoices()
         ) {
             return;
         }
