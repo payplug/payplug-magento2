@@ -38,7 +38,6 @@ use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Gateway\Config\Ideal;
 use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
-use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Ondemand as OndemandHelper;
 use Payplug\Payments\Model\Order\InstallmentPlan as OrderInstallmentPlan;
@@ -239,9 +238,6 @@ class Data extends AbstractHelper
                 Order::STATE_PAYMENT_REVIEW
             ],
             Satispay::METHOD_CODE => [
-                Order::STATE_PAYMENT_REVIEW
-            ],
-            Sofort::METHOD_CODE => [
                 Order::STATE_PAYMENT_REVIEW
             ],
             Ideal::METHOD_CODE => [
@@ -770,7 +766,6 @@ class Data extends AbstractHelper
             ApplePay::METHOD_CODE,
             Amex::METHOD_CODE,
             Satispay::METHOD_CODE,
-            Sofort::METHOD_CODE,
             Ideal::METHOD_CODE,
             Mybank::METHOD_CODE,
         ]);
@@ -787,7 +782,6 @@ class Data extends AbstractHelper
     {
         return in_array($code, [
             Satispay::METHOD_CODE,
-            Sofort::METHOD_CODE,
             Ideal::METHOD_CODE,
             Mybank::METHOD_CODE,
         ]);
