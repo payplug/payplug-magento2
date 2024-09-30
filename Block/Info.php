@@ -9,7 +9,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Payment\Block\Info as BaseInfo;
 use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -66,7 +65,7 @@ class Info extends BaseInfo
      * Get PayPlug payment details
      *
      * @param Payment $payment
-     * @param Order $order
+     * @param OrderInterface $order
      *
      * @return array
      */

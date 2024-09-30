@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Payplug\Payments\Block;
 
 use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Sales\Model\Order;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Oney;
 use Payplug\Resource\Payment;
@@ -16,7 +15,7 @@ class OneyInfo extends Info
      * Get PayPlug Oney payment details
      *
      * @param Payment $payment
-     * @param Order $order
+     * @param OrderInterface $order
      *
      * @return array
      */
