@@ -66,13 +66,6 @@
     <type name="Magento\Checkout\Model\CompositeConfigProvider">
         <arguments>
             <argument name="configProviders" xsi:type="array">
-                <item name="payplug_payments_giropay_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Giropay\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_ideal_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Ideal\ConfigProvider</item>
             </argument>
         </arguments>
