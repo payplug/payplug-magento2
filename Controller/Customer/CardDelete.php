@@ -30,7 +30,7 @@ class CardDelete extends Action
     /**
      * Check customer authentication
      */
-    public function dispatch(RequestInterface $request): ResponseInterface|Page
+    public function dispatch(RequestInterface $request): ResponseInterface|Page|Redirect
     {
         if (!$this->customerSession->authenticate()) {
             $this->_actionFlag->set('', 'no-dispatch', true);
