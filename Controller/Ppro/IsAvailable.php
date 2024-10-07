@@ -9,11 +9,9 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Phrase;
-use Payplug\Payments\Gateway\Config\Giropay;
 use Payplug\Payments\Gateway\Config\Ideal;
 use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
-use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Helper\Config;
 
 class IsAvailable extends Action
@@ -82,17 +80,6 @@ class IsAvailable extends Action
                 'To pay with Satispay, your billing address needs to be in one of the following countries: ' .
                 'Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, ' .
                 'Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia.'
-            );
-        }
-        if ($method === Sofort::METHOD_CODE) {
-            return __(
-                'To pay with SOFORT, your billing address needs to be in one of the following countries: ' .
-                'Austria, Belgium, Germany, Spain, Italy, Netherlands.'
-            );
-        }
-        if ($method === Giropay::METHOD_CODE) {
-            return __(
-                'To pay with Giropay, your billing address needs to be in Germany.'
             );
         }
         if ($method === Ideal::METHOD_CODE) {
