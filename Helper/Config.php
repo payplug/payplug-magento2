@@ -410,8 +410,6 @@ class Config extends AbstractHelper
 
         $pproMethods = [
             'satispay',
-            'sofort',
-            'giropay',
             'ideal',
             'mybank',
         ];
