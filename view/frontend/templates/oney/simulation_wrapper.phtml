@@ -1,5 +1,12 @@
 <?php
-/** @var Magento\Catalog\Block\Product\View $block */
+
+declare(strict_types=1);
+
+use Magento\Catalog\Block\Product\View;
+
+/**
+ * @var View $block
+ */
 $price = $block->getProduct()->getFinalPrice(1);
 ?>
 <div class="oney-wrapper oney-product">

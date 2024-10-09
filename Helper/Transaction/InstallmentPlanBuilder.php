@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Transaction;
 
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Model\Quote;
 
 class InstallmentPlanBuilder extends AbstractBuilder
 {
     /**
      * @inheritdoc
      */
-    public function buildAmountData($order)
+    public function buildAmountData(OrderAdapterInterface $order): array
     {
         return [];
     }
@@ -18,7 +21,7 @@ class InstallmentPlanBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData($order, $payment, $quote)
+    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
         unset($paymentData['force_3ds']);

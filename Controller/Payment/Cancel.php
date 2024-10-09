@@ -1,37 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Checkout\Model\Session;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\OrderRepository;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 
 class Cancel extends AbstractPayment
 {
-    /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
-
-    /**
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \Magento\Checkout\Model\Session       $checkoutSession
-     * @param \Magento\Sales\Model\OrderFactory     $salesOrderFactory
-     * @param Logger                                $logger
-     * @param Data                                  $payplugHelper
-     * @param OrderRepository                       $orderRepository
-     */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\OrderFactory $salesOrderFactory,
+        Context $context,
+        Session $checkoutSession,
+        OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        OrderRepository $orderRepository
+        private OrderRepository $orderRepository,
+        private Validator $formKeyValidator,
+        private RequestInterface $request
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
-        $this->orderRepository = $orderRepository;
     }
 
     /**
@@ -42,8 +37,17 @@ class Cancel extends AbstractPayment
     public function execute()
     {
         $resultRedirect = $this->resultRedirectFactory->create();
-
         $redirectUrlCart = 'checkout/cart';
+
+        $formKeyValidation = $this->formKeyValidator->validate($this->request);
+        if (!$formKeyValidation) {
+            $this->messageManager->addErrorMessage(
+                __('Your session has expired')
+            );
+
+            return $resultRedirect->setPath($redirectUrlCart);
+        }
+
         try {
             $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
 
