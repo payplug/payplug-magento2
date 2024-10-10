@@ -49,7 +49,7 @@ class AutoCaptureDeferredPayments
 
         $currentDay = $this->timezone->date();
 
-        // Get all the order payment that are not paid and using the payplug standard deferred
+        // Get all the order payment that are not paid and using the payplug standard deferred (sales_order_payment table)
         $searchOrderPaymentCriteria = $this->searchCriteriaBuilder
             ->addFilter('method', Standard::METHOD_CODE)
             ->addFilter('base_amount_paid', null, 'null')
@@ -59,7 +59,7 @@ class AutoCaptureDeferredPayments
 
         $this->logger->info(count($ordersPayments));
 
-        // We map the quote payment and order payment ids together
+        // We map the quote and order ids together
         $quoteIds = [];
         $quotePaymentsToOrderPayments = [];
         foreach ($ordersPayments as $orderPayment) {
@@ -71,12 +71,8 @@ class AutoCaptureDeferredPayments
         $this->logger->info('Mapping : ');
         $this->logger->info(print_r($quotePaymentsToOrderPayments, true));
 
-        // As the authorization date is saved on the quote payment object, we load them
+        // As the authorization date is saved on the quote payment object, we load them (quote_payment table)
         $quotePaymentCollection = $this->quotePaymentCollectionFactory->create();
-       /* $quotePayments = $quotePaymentCollection
-            ->addFilter('payment_id', ['in' => $quotePaymentIds])
-            ->addFilter('additional_information', '%is_authorized%', 'like')
-            ->getItems();*/
         $quotePayments = $quotePaymentCollection
             ->addFieldToSelect('*')
             ->addFieldToFilter('quote_id', ['in' => $quoteIds])
@@ -120,7 +116,6 @@ class AutoCaptureDeferredPayments
 
     public function createInvoiceAndCapture(OrderInterface $order): void
     {
-
         $orderId = $order->getId();
 
         if (!$orderId) {
@@ -136,6 +131,8 @@ class AutoCaptureDeferredPayments
         $this->logger->info(sprintf('The order id %s is now being invoiced and captured.', $orderId));
 
         $invoice = $this->invoiceService->prepareInvoice($order);
+        $invoice->setRequestedCaptureCase($invoice::CAPTURE_ONLINE);
+        $invoice->addComment('Order automatically invoiced and captured after 7 days of authorization.');
         //Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
         $invoice->register();
         $invoice->save();

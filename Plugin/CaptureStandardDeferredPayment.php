@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Payplug\Payments\Plugin\Adminhtml;
+namespace Payplug\Payments\Plugin;
 
 use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Event\ManagerInterface;
@@ -35,6 +35,7 @@ class CaptureStandardDeferredPayment
 
     public function aroundExecute(ProcessInvoiceOperation $subject, callable $proceed, ...$args): OrderPaymentInterface
     {
+
         /** @var OrderPaymentInterface $magentoPayment */
         $magentoPayment = $args[0];
         /** @var InvoiceInterface $invoice */
