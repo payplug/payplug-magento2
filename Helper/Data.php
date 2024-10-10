@@ -278,9 +278,8 @@ class Data extends AbstractHelper
             $payment = $quote->getPayment();
         }
 
-        $this->_logger->info(print_r($payment->getAdditionalInformation(), true));
         if ($payment && $payment->getAdditionalInformation('is_authorized')) {
-            //Maybe add a check on the authorized amount, and the state of the order and perhaps the authorization date
+            //Todo Maybe add a check on the authorized amount, and the state of the order and perhaps the authorization date
             return true;
         }
 

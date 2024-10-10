@@ -60,6 +60,8 @@ class CreatePayplugTransactionOnAuthorizeOnly
         }
         $payment->setAdditionalInformation('is_paid', $isPaid);
         $payment->setAdditionalInformation('payplug_payment_id', $payplugPayment->id);
+        $payment->setAdditionalInformation('is_deferred_payment_standard', true);
+        $payment->setAdditionalInformation('quote_id', $payment->getOrder()->getQuoteId());
 
         try {
             if ($payplugPayment->payment_method && isset($payplugPayment->payment_method['merchant_session'])) {

@@ -217,6 +217,7 @@ class Ipn extends AbstractPayment
                     $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
                     $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
                     $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
+                    $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
                     $this->cartRepository->save($quote);
                     $response->setStatusHeader(200, null, "200 payment for deferred standard payment not processed");
 
