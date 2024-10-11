@@ -34,7 +34,7 @@ class AutoCaptureDeferredPayments
 
     /**
      * Loop through all pending deferred payments, and force to capture them
-     * if the time elapsed since the order creation exceed 7 days
+     * if the time elapsed since the order creation exceed 6 days
      */
     public function execute(): void
     {
@@ -71,14 +71,14 @@ class AutoCaptureDeferredPayments
             ->addFieldToFilter('additional_information', ['like' => '%is_authorized%'])
             ->getItems();
 
-        // Using the quotePayment additionnal info we filter on the authorization date exceeding or equal to 7 days
+        // Using the quotePayment additionnal info we filter on the authorization date exceeding or equal to 6 days
         foreach($quotePayments as $quotePayment) {
             //Unix timestamp
             $authorizedAtTimestamp = $quotePayment->getAdditionalInformation('authorized_at');
             $deferredPaymentValidationDate = new DateTime();
             $deferredPaymentValidationDate->setTimestamp($authorizedAtTimestamp);
             $difference = $currentDay->diff($deferredPaymentValidationDate);
-            if ($difference->days >= 7) {
+            if ($difference->days >= 6) {
                 // We add the order id to the array of the invoiceables ones
                 $orderId = $quotePaymentsToOrderPayments[$quotePayment->getQuoteId()];
                 $this->logger->info(sprintf(
@@ -125,7 +125,7 @@ class AutoCaptureDeferredPayments
 
         $invoice = $this->invoiceService->prepareInvoice($order);
         $invoice->setRequestedCaptureCase($invoice::CAPTURE_ONLINE);
-        $invoice->addComment('Order automatically invoiced and captured after 7 days of authorization.');
+        $invoice->addComment('Order automatically invoiced and captured after 6 days of authorization.');
         //Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
         $invoice->register();
         $invoice->save();
