@@ -14,8 +14,8 @@ use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Payment\Repository;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Service\InvoiceService;
-use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Gateway\Config\Standard;
+use Payplug\Payments\Logger\Logger;
 
 class AutoCaptureDeferredPayments
 {
@@ -33,7 +33,7 @@ class AutoCaptureDeferredPayments
     }
 
     /**
-     * Loop through all of the pendant deferred paiements, and force to capture them
+     * Loop through all pending deferred payments, and force to capture them
      * if the time elapsed since the order creation exceed 7 days
      */
     public function execute(): void
