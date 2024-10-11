@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Cron;
 
-use DateInterval;
 use DateTime;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\App\Cache\Manager;
 use Magento\Framework\DB\Transaction;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\ResourceModel\Quote\Payment\CollectionFactory;
 use Magento\Sales\Api\Data\OrderInterface;
@@ -17,7 +14,6 @@ use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Payment\Repository;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Service\InvoiceService;
-use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Gateway\Config\Standard;
 
@@ -42,7 +38,7 @@ class AutoCaptureDeferredPayments
      */
     public function execute(): void
     {
-        $this->logger->info('Running AutoCaptureDeferredPayments Cron');
+        $this->logger->info('Running the AutoCaptureDeferredPayments cron');
 
         // All the invoiceable order will populate this array
         $orderToInvoiceIds = [];
@@ -54,22 +50,18 @@ class AutoCaptureDeferredPayments
             ->addFilter('method', Standard::METHOD_CODE)
             ->addFilter('base_amount_paid', null, 'null')
             ->addFilter('additional_information', '%is_deferred_payment%', 'like')
+            ->addFilter('additional_information', '%fail_to_capture%', 'nlike')
             ->create();
         $ordersPayments = $this->paymentRepository->getList($searchOrderPaymentCriteria)->getItems();
-
-        $this->logger->info(count($ordersPayments));
 
         // We map the quote and order ids together
         $quoteIds = [];
         $quotePaymentsToOrderPayments = [];
         foreach ($ordersPayments as $orderPayment) {
-            $quoteId =  $orderPayment->getAdditionalInformation('quote_id');
+            $quoteId = $orderPayment->getAdditionalInformation('quote_id');
             $quoteIds[] = $quoteId;
             $quotePaymentsToOrderPayments[$quoteId] = $orderPayment->getParentId();
         }
-
-        $this->logger->info('Mapping : ');
-        $this->logger->info(print_r($quotePaymentsToOrderPayments, true));
 
         // As the authorization date is saved on the quote payment object, we load them (quote_payment table)
         $quotePaymentCollection = $this->quotePaymentCollectionFactory->create();
@@ -81,14 +73,11 @@ class AutoCaptureDeferredPayments
 
         // Using the quotePayment additionnal info we filter on the authorization date exceeding or equal to 7 days
         foreach($quotePayments as $quotePayment) {
-            $this->logger->info('PaymentId : ');
-            $this->logger->info($quotePayment->getQuoteId());
             //Unix timestamp
             $authorizedAtTimestamp = $quotePayment->getAdditionalInformation('authorized_at');
             $deferredPaymentValidationDate = new DateTime();
             $deferredPaymentValidationDate->setTimestamp($authorizedAtTimestamp);
             $difference = $currentDay->diff($deferredPaymentValidationDate);
-            $this->logger->info($difference->days);
             if ($difference->days >= 7) {
                 // We add the order id to the array of the invoiceables ones
                 $orderId = $quotePaymentsToOrderPayments[$quotePayment->getQuoteId()];
@@ -100,18 +89,17 @@ class AutoCaptureDeferredPayments
             }
         }
 
-        $this->logger->info(print_r($orderToInvoiceIds, true));
         // We get all the invoiceables orders and we capture them
         $searchOrderCriteria = $this->searchCriteriaBuilder
             ->addFilter('entity_id', $orderToInvoiceIds, 'in')
             ->create();
         $orders = $this->orderRepository->getList($searchOrderCriteria)->getItems();
 
-        $this->logger->info('Orders past 7 days : ');
-        $this->logger->info(count($orders));
         foreach($orders as $order) {
             $this->createInvoiceAndCapture($order);
         }
+
+        $this->logger->info('The AutoCaptureDeferredPayments cron is over');
     }
 
     public function createInvoiceAndCapture(OrderInterface $order): void
@@ -120,11 +108,16 @@ class AutoCaptureDeferredPayments
 
         if (!$orderId) {
             $this->logger->info(sprintf('The order id %s does no longer exist. Not capturing.', $orderId));
+
             return;
         }
 
         if (!$order->canInvoice()) {
             $this->logger->info(sprintf('The order id %s does not allow an invoice to be create. Not capturing.', $orderId));
+            $orderPayment = $order->getPayment();
+            $orderPayment->setAdditionalInformation('fail_to_capture', true);
+            $this->paymentRepository->save($orderPayment);
+
             return;
         }
 
