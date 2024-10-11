@@ -8,6 +8,7 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Repository;
 use Magento\Sales\Model\OrderRepository;
@@ -16,6 +17,7 @@ use Payplug\Exception\PayplugException;
 use Payplug\Notification;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
+use Payplug\Payments\Gateway\Response\Standard\FetchTransactionInformationHandler;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -49,7 +51,8 @@ class Ipn extends AbstractPayment
         protected OrderPaymentRepository $paymentRepository,
         protected CartRepositoryInterface $cartRepository,
         protected OrderRepository $orderRepository,
-        protected Repository $magentoPaymentRepository
+        protected Repository $magentoPaymentRepository,
+        protected FetchTransactionInformationHandler $fetchTransactionInformationHandler
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
@@ -205,28 +208,30 @@ class Ipn extends AbstractPayment
             // We want to process payment IPN for orders not linked to an installment plan
         }
 
+        $standardDeferredQuote = $this->isStandardDeferredPayment($order, $payment);
         if (!$payment->is_paid) {
-            if (!$order->getIncrementId() && $payment->metadata['ID Quote']) {
-                /** @var Quote $quote */
-                $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
-                $quotePayment = $quote->getPayment();
-                //If we are actually reviewing a standard deferred payment
-                if ($quotePayment->getMethod() === StandardConfig::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
-                    //Add the additionnals informations to the deferred Order payment object
-                    $quotePayment->setAdditionalInformation('is_authorized', true);
-                    $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
-                    $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
-                    $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
-                    $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
-                    $this->cartRepository->save($quote);
-                    $response->setStatusHeader(200, null, "200 payment for deferred standard payment not processed");
+            //If we are actually reviewing a standard deferred payment not yet captured
+            if ($standardDeferredQuote) {
+                $quotePayment = $standardDeferredQuote->getPayment();
+                //Add the additionnals informations to the deferred Order payment object
+                $quotePayment->setAdditionalInformation('is_authorized', true);
+                $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
+                $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
+                $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
+                $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
+                $this->cartRepository->save($standardDeferredQuote);
+                $response->setStatusHeader(200, null, "200 payment for deferred standard payment not processed");
 
-                    return;
-                }
+                return;
             }
 
             $this->logger->info('Transaction was not paid.');
             $this->logger->info('Canceling order');
+        }
+
+        // If this is a standard deferred payment captured, we try saving the customer card after the Capture IPN (Only doable after payment)
+        if ($standardDeferredQuote) {
+            $this->fetchTransactionInformationHandler->saveCustomerCard($payment, $standardDeferredQuote->getCustomerId(), $standardDeferredQuote->getStoreId());
         }
 
         $this->logger->info('Gathering payment details...', [
@@ -235,6 +240,20 @@ class Ipn extends AbstractPayment
         $this->logger->info('Order state current: ' . $order->getState());
 
         $this->processOrder($response, $order);
+    }
+
+    private function isStandardDeferredPayment(OrderInterface $order, Payment $payment): ?Quote
+    {
+        if (!$order->getIncrementId() && $payment->metadata['ID Quote']) {
+            /** @var Quote $quote */
+            $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
+            $quotePayment = $quote->getPayment();
+            if ($quotePayment->getMethod() === StandardConfig::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
+                return $quote;
+            }
+        }
+
+        return null;
     }
 
     /**
