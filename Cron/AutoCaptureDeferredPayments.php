@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Payplug\Payments\Cron;
 
 use DateTime;
+use Laminas\Mail\Message;
+use Laminas\Mail\Transport\Sendmail;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\DB\Transaction;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -28,7 +30,9 @@ class AutoCaptureDeferredPayments
         private OrderRepository $orderRepository,
         private InvoiceService $invoiceService,
         private InvoiceSender $invoiceSender,
-        private Transaction $transaction
+        private Transaction $transaction,
+        private Message $laminas,
+        private Sendmail $sendmail
     ) {
     }
 
@@ -139,5 +143,26 @@ class AutoCaptureDeferredPayments
         $order->addCommentToStatusHistory(
             __('Notified customer about invoice creation #%1.', $invoice->getId())
         )->setIsCustomerNotified(true)->save();
+
+        //Todo get the seller mail from the config, perhaps using the order->getStoreId() to get the store email
+        $this->sendEmail(
+            'test@test.com',
+            ['test@test.com'],
+            'Forced payment capture',
+            sprintf('The order id %s have been invoiced and captured.', $orderId)
+        );
+    }
+
+    public function sendEmail(string $fromMail, array $toMails, string $subject, string $message): void
+    {
+        $this->laminas->setSubject($subject);
+        $this->laminas->setBody($message);
+        $this->laminas->setFrom($fromMail, "NoReply");
+        $sender = array_shift($toMails);
+        $this->laminas->addTo($sender);
+        if ($toMails > 1) {
+            $this->laminas->addCc($toMails);
+        }
+        $this->sendmail->send($this->laminas);
     }
 }
