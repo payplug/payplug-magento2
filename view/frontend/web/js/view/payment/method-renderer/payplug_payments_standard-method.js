@@ -26,8 +26,6 @@ define([
 ) {
     'use strict';
 
-    const PAYPLUG_DOMAIN = "https://secure-qa.payplug.com";
-
     return Component.extend({
         defaults: {
             template: 'Payplug_Payments/payment/payplug_payments_standard',
