@@ -1,61 +1,49 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Adminhtml\Order;
 
 use Magento\Backend\App\Action;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\Response\Http\FileFactory;
+use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\Controller\Result\RawFactory;
+use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\Registry;
+use Magento\Framework\Translate\InlineInterface;
+use Magento\Framework\View\Result\LayoutFactory;
+use Magento\Framework\View\Result\Page;
+use Magento\Framework\View\Result\PageFactory;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Controller\Adminhtml\Order as AdminOrder;
 use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Psr\Log\LoggerInterface;
 
-class NewPaymentLinkForm extends \Magento\Sales\Controller\Adminhtml\Order
+class NewPaymentLinkForm extends AdminOrder
 {
-    /**
-     * @var Logger
-     */
-    private $payplugLogger;
-
-    /**
-     * @var Data
-     */
-    private $payplugHelper;
-
-    /**
-     * @param Action\Context                                   $context
-     * @param \Magento\Framework\Registry                      $coreRegistry
-     * @param \Magento\Framework\App\Response\Http\FileFactory $fileFactory
-     * @param \Magento\Framework\Translate\InlineInterface     $translateInline
-     * @param \Magento\Framework\View\Result\PageFactory       $resultPageFactory
-     * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-     * @param \Magento\Framework\View\Result\LayoutFactory     $resultLayoutFactory
-     * @param \Magento\Framework\Controller\Result\RawFactory  $resultRawFactory
-     * @param OrderManagementInterface                         $orderManagement
-     * @param OrderRepositoryInterface                         $orderRepository
-     * @param LoggerInterface                                  $logger
-     * @param Logger                                           $payplugLogger
-     * @param Data                                             $payplugHelper
-     */
     public function __construct(
         Action\Context $context,
-        \Magento\Framework\Registry $coreRegistry,
-        \Magento\Framework\App\Response\Http\FileFactory $fileFactory,
-        \Magento\Framework\Translate\InlineInterface $translateInline,
-        \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory,
-        \Magento\Framework\View\Result\LayoutFactory $resultLayoutFactory,
-        \Magento\Framework\Controller\Result\RawFactory $resultRawFactory,
+        Registry $coreRegistry,
+        FileFactory $fileFactory,
+        InlineInterface $translateInline,
+        PageFactory $resultPageFactory,
+        JsonFactory $resultJsonFactory,
+        LayoutFactory $resultLayoutFactory,
+        RawFactory $resultRawFactory,
         OrderManagementInterface $orderManagement,
         OrderRepositoryInterface $orderRepository,
         LoggerInterface $logger,
-        Logger $payplugLogger,
-        Data $payplugHelper
+        private Logger $payplugLogger,
+        private Data $payplugHelper,
+        private Validator $formKeyValidator,
+        private RequestInterface $request
     ) {
-        $this->payplugLogger = $payplugLogger;
-        $this->payplugHelper = $payplugHelper;
-
         parent::__construct(
             $context,
             $coreRegistry,
@@ -73,12 +61,19 @@ class NewPaymentLinkForm extends \Magento\Sales\Controller\Adminhtml\Order
 
     /**
      * OnDemand new payment link view
-     *
-     * @return \Magento\Framework\App\ResponseInterface
      */
-    public function execute()
+    public function execute(): Redirect|Page
     {
         $resultRedirect = $this->resultRedirectFactory->create();
+
+        $formKeyValidation = $this->formKeyValidator->validate($this->request);
+        if (!$formKeyValidation) {
+            $this->messageManager->addErrorMessage(
+                __('Your session has expired')
+            );
+
+            return $resultRedirect->setPath('*/*/');
+        }
 
         if ($order = $this->_initOrder()) {
             if (!$this->payplugHelper->canSendNewPaymentLink($order)) {

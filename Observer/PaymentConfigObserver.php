@@ -131,12 +131,6 @@ class PaymentConfigObserver implements ObserverInterface
         if ($this->canProcessSection($postParams, 'payplug_payments_satispay')) {
             $this->processSatispayConfig($postParams['groups']);
         }
-        if ($this->canProcessSection($postParams, 'payplug_payments_sofort')) {
-            $this->processSofortConfig($postParams['groups']);
-        }
-        if ($this->canProcessSection($postParams, 'payplug_payments_giropay')) {
-            $this->processGiropayConfig($postParams['groups']);
-        }
         if ($this->canProcessSection($postParams, 'payplug_payments_ideal')) {
             $this->processIdealConfig($postParams['groups']);
         }
@@ -641,50 +635,6 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
-     * Handle Sofort configuration
-     *
-     * @param array $groups
-     */
-    private function processSofortConfig($groups)
-    {
-        $this->processLiveOnlyMethod(
-            $groups,
-            'sofort',
-            __(
-                'You don\'t have access to this feature yet. ' .
-                'To activate SOFORT, please fill in the following form: ' .
-                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248655934108'
-            ),
-            __(
-                'SOFORT is unavailable in TEST mode. ' .
-                'Please switch your Payplug plugin to LIVE mode to activate it.'
-            )
-        );
-    }
-
-    /**
-     * Handle Giropay configuration
-     *
-     * @param array $groups
-     */
-    private function processGiropayConfig($groups)
-    {
-        $this->processLiveOnlyMethod(
-            $groups,
-            'giropay',
-            __(
-                'You don\'t have access to this feature yet. ' .
-                'To activate Giropay, please fill in the following form: ' .
-                'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8248632664476'
-            ),
-            __(
-                'Giropay is unavailable in TEST mode. ' .
-                'Please switch your Payplug plugin to LIVE mode to activate it.'
-            )
-        );
-    }
-
-    /**
      * Handle Ideal configuration
      *
      * @param array $groups
@@ -1121,8 +1071,6 @@ class PaymentConfigObserver implements ObserverInterface
 
         $pproMethods = [
             'satispay',
-            'sofort',
-            'giropay',
             'ideal',
             'mybank',
         ];

@@ -1,53 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Block;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Sales\Model\Order;
+use Magento\Framework\View\Element\Template\Context;
+use Magento\Payment\Block\Info as BaseInfo;
+use Magento\Sales\Api\Data\OrderInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Resource\Payment;
 
-class Info extends \Magento\Payment\Block\Info
+class Info extends BaseInfo
 {
-    /**
-     * @var string
-     */
     protected $_template = 'Payplug_Payments::info/default.phtml';
 
-    /**
-     * @var Data
-     */
-    protected $payplugHelper;
-
-    /**
-     * @var Logger
-     */
-    protected $payplugLogger;
-
-    /**
-     * @param \Magento\Framework\View\Element\Template\Context $context
-     * @param Data                                             $payplugHelper
-     * @param Logger                                           $payplugLogger
-     * @param array                                            $data
-     */
     public function __construct(
-        \Magento\Framework\View\Element\Template\Context $context,
-        Data $payplugHelper,
-        Logger $payplugLogger,
+        Context $context,
+        protected Data $payplugHelper,
+        protected Logger $payplugLogger,
         array $data = []
     ) {
         parent::__construct($context, $data);
-        $this->payplugHelper = $payplugHelper;
-        $this->payplugLogger = $payplugLogger;
     }
 
     /**
-     * Get some admin specific information in format of array($label => $value)
+     *  Get some admin specific information in format of array($label => $value)
      *
      * @return array
+     * @throws LocalizedException
      */
-    public function getAdminSpecificInformation()
+    public function getAdminSpecificInformation(): array
     {
         try {
             $orderIncrementId = $this->getInfo()->getOrder()->getIncrementId();
@@ -78,12 +64,12 @@ class Info extends \Magento\Payment\Block\Info
     /**
      * Get PayPlug payment details
      *
-     * @param \Payplug\Resource\Payment $payment
-     * @param Order                     $order
+     * @param Payment $payment
+     * @param OrderInterface $order
      *
      * @return array
      */
-    protected function buildPaymentDetails($payment, $order)
+    protected function buildPaymentDetails(Payment $payment, OrderInterface $order): array
     {
         $status = __('Not Paid');
         if ($payment->is_refunded) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Model\Payment\Amex;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
@@ -22,15 +24,10 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      */
     private $method;
 
-    /**
-     * @param Repository       $assetRepo
-     * @param RequestInterface $request
-     * @param PaymentHelper    $paymentHelper
-     */
     public function __construct(
-        Repository $assetRepo,
-        RequestInterface $request,
-        PaymentHelper $paymentHelper
+        protected Repository $assetRepo,
+        protected RequestInterface $request,
+        protected PaymentHelper $paymentHelper
     ) {
         parent::__construct($assetRepo, $request);
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
@@ -38,10 +35,8 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
 
     /**
      * Get Standard payment config
-     *
-     * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->method->isAvailable() ? [
             'payment' => [

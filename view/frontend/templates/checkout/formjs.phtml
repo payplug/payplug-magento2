@@ -1,5 +1,17 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\Formjs;
+
+/**
+ * @var Escaper $escaper
+ * @var Formjs $block
+ */
+?>
 <?php foreach ($block->getJsUrls() as $url): ?>
-    <script src="<?= $block->escapeHtmlAttr($url); ?>"></script>
+    <script src="<?= $escaper->escapeUrl($url); ?>"></script>
 <?php endforeach; ?>
 <script>
 window.PAYPLUG_DOMAIN = '<?= $block->getPayplugSecureUrl(); ?>';

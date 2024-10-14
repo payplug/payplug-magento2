@@ -1,18 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Plugin\Adminhtml\Widget;
+
+use Magento\Sales\Block\Adminhtml\Order\View;
 
 class SalesOrderViewContext extends SalesViewContext
 {
     /**
      * Add Payplug update payment button on admin order view
-     *
-     * @param \Magento\Sales\Block\Adminhtml\Order\View $subject
-     *
-     * @return null
      */
-    public function beforeSetLayout(\Magento\Sales\Block\Adminhtml\Order\View $subject)
+    public function beforeSetLayout(View $subject): void
     {
-        return $this->addPayplugLinks($subject->getOrder(), $subject);
+        $this->addPayplugLinks($subject->getOrder(), $subject);
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\ApplePay;
 
 use Magento\Framework\Controller\Result\Json;
@@ -13,17 +15,15 @@ class GetTransactionData extends AbstractPayment
 {
     /**
      * Retrieve PayPlug Apple Pay transaction data
-     *
-     * @return Json
      */
-    public function execute()
+    public function execute(): Json
     {
         /** @var Json $response */
         $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
         $responseParams = [
             'merchand_data' => [],
             'error' => true,
-            'message' => __('An error occurred while processing the order.'),
+            'message' => (string)__('An error occurred while processing the order.'),
         ];
 
         try {
@@ -63,11 +63,9 @@ class GetTransactionData extends AbstractPayment
     /**
      * Get last order
      *
-     * @return Order
-     *
      * @throws \Exception
      */
-    private function getLastOrder()
+    private function getLastOrder(): Order
     {
         $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
 

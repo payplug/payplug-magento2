@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Transaction;
 
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
@@ -16,36 +19,22 @@ use Payplug\Payments\Logger\Logger;
 
 class OneyBuilder extends AbstractBuilder
 {
-    /**
-     * @var Oney
-     */
-    private $oneyHelper;
-
-    /**
-     * @param Context $context
-     * @param Config  $payplugConfig
-     * @param Country $countryHelper
-     * @param Phone   $phoneHelper
-     * @param Logger  $logger
-     * @param Oney    $oneyHelper
-     */
     public function __construct(
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
         Phone $phoneHelper,
         Logger $logger,
-        Oney $oneyHelper
+        FormKey $formKey,
+        private Oney $oneyHelper
     ) {
-        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger);
-
-        $this->oneyHelper = $oneyHelper;
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey);
     }
 
     /**
      * @inheritdoc
      */
-    public function buildTransaction($order, $payment, $quote)
+    public function buildTransaction(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $this->validateTransaction($order, $payment, $quote);
 
@@ -118,7 +107,7 @@ class OneyBuilder extends AbstractBuilder
      */
     private function validateBillingMobilePhone($order)
     {
-        $exceptionMessage = __('Please fill in a mobile phone on your billing address.');
+        $exceptionMessage = (string)__('Please fill in a mobile phone on your billing address.');
         $address = $order->getBillingAddress();
         if (empty($address->getTelephone())) {
             throw new \Exception($exceptionMessage);
@@ -225,7 +214,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildCustomerData($order, $payment, $quote)
+    public function buildCustomerData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $customerData = parent::buildCustomerData($order, $payment, $quote);
 
@@ -262,7 +251,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildAmountData($order)
+    public function buildAmountData(OrderAdapterInterface $order): array
     {
         $amountData = parent::buildAmountData($order);
         $amountData['authorized_amount'] = $amountData['amount'];
@@ -274,7 +263,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData($order, $payment, $quote)
+    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
