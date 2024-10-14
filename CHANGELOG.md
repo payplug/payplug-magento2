@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix various escpaers
 - Update and optimize payment methods logos
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/4.0.0...4.1.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.0.0...v4.1.0)**
 
 ### Added
 
@@ -62,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix transaction stays indefinitely in payment review with 3DS integrated payment
 - Php 8.1 support
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/1.27.4...4.0.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/1.27.4...v4.0.0)**
 
 ### Added
 
