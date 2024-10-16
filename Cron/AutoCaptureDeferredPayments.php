@@ -16,6 +16,7 @@ use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Payment\Repository;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Service\InvoiceService;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Logger\Logger;
 
@@ -32,7 +33,8 @@ class AutoCaptureDeferredPayments
         private InvoiceSender $invoiceSender,
         private Transaction $transaction,
         private Message $laminas,
-        private Sendmail $sendmail
+        private Sendmail $sendmail,
+        private Config $config
     ) {
     }
 
@@ -144,10 +146,10 @@ class AutoCaptureDeferredPayments
             __('Notified customer about invoice creation #%1.', $invoice->getId())
         )->setIsCustomerNotified(true)->save();
 
-        //Todo get the seller mail from the config, perhaps using the order->getStoreId() to get the store email
+        $websiteOwnerEmail = $this->config->getWebsiteOwnerEmail();
         $this->sendEmail(
-            'test@test.com',
-            ['test@test.com'],
+            $websiteOwnerEmail,
+            [$websiteOwnerEmail],
             'Forced payment capture',
             sprintf('The order id %s have been invoiced and captured.', $orderId)
         );
