@@ -35,12 +35,11 @@ class CaptureStandardDeferredPayment
 
     public function aroundExecute(ProcessInvoiceOperation $subject, callable $proceed, ...$args): OrderPaymentInterface
     {
-
         /** @var OrderPaymentInterface $magentoPayment */
         $magentoPayment = $args[0];
         /** @var InvoiceInterface $invoice */
         $invoice = $args[1];
-        $order = $this->orderRepository->get($magentoPayment->getOrder()->getId());
+        $order = $magentoPayment->getOrder()->getId() ? $this->orderRepository->get($magentoPayment->getOrder()->getId()) : $magentoPayment->getOrder();
         $quote = $this->quoteRepository->get($order->getQuoteId());
         $quotePayment = $quote->getPayment();
         if ($magentoPayment->getMethod() !== Standard::METHOD_CODE
