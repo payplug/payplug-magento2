@@ -1,10 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Transaction;
 
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
+use Magento\Payment\Gateway\Data\OrderAdapterInterface;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
@@ -14,36 +20,22 @@ use Payplug\Payments\Logger\Logger;
 
 class StandardBuilder extends AbstractBuilder
 {
-    /**
-     * @var Card
-     */
-    private $cardHelper;
-
-    /**
-     * @param Context      $context
-     * @param Config       $payplugConfig
-     * @param Country      $countryHelper
-     * @param Phone        $phoneHelper
-     * @param Logger       $logger
-     * @param Card         $cardHelper
-     */
     public function __construct(
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
         Phone $phoneHelper,
         Logger $logger,
-        Card $cardHelper
+        FormKey $formKey,
+        private Card $cardHelper
     ) {
-        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger);
-
-        $this->cardHelper = $cardHelper;
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey);
     }
 
     /**
      * @inheritdoc
      */
-    public function buildPaymentData($order, $payment, $quote)
+    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 

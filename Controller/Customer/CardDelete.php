@@ -1,45 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Customer;
 
 use Magento\Customer\Model\Session;
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ResponseInterface;
+use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\View\Result\Page;
 use Payplug\Payments\Helper\Card;
 
-class CardDelete extends \Magento\Framework\App\Action\Action
+class CardDelete extends Action
 {
-    /**
-     * @var Card
-     */
-    private $helper;
-
-    /**
-     * @var Session
-     */
-    private $customerSession;
-
-    /**
-     * @param Context $context
-     * @param Card    $helper
-     * @param Session $customerSession
-     */
-    public function __construct(Context $context, Card $helper, Session $customerSession)
-    {
+    public function __construct(
+        Context $context,
+        private Card $helper,
+        private Session $customerSession,
+        private Validator $formKeyValidator,
+        private RequestInterface $request
+    ) {
         parent::__construct($context);
-        $this->helper = $helper;
-        $this->customerSession = $customerSession;
     }
 
     /**
      * Check customer authentication
-     *
-     * @param RequestInterface $request
-     *
-     * @return \Magento\Framework\App\ResponseInterface
      */
-    public function dispatch(RequestInterface $request)
+    public function dispatch(RequestInterface $request): ResponseInterface|Page|Redirect
     {
         if (!$this->customerSession->authenticate()) {
             $this->_actionFlag->set('', 'no-dispatch', true);
@@ -50,11 +41,20 @@ class CardDelete extends \Magento\Framework\App\Action\Action
 
     /**
      * Delete customer card
-     *
-     * @return mixed
      */
-    public function execute()
+    public function execute(): Redirect
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
+        $formKeyValidation = $this->formKeyValidator->validate($this->request);
+        if (!$formKeyValidation) {
+            $this->messageManager->addErrorMessage(
+                __('Your session has expired')
+            );
+
+            return $resultRedirect->setPath('payplug_payments/customer/cardList');
+        }
+
         try {
             $customerId = $this->customerSession->getCustomer()->getId();
             $customerCardId = $this->getRequest()->getParam('customer_card_id');
@@ -63,7 +63,6 @@ class CardDelete extends \Magento\Framework\App\Action\Action
         } catch (NoSuchEntityException $e) {
             $this->messageManager->addErrorMessage($e->getMessage());
         }
-        $resultRedirect = $this->resultRedirectFactory->create();
 
         return $resultRedirect->setPath('payplug_payments/customer/cardList');
     }

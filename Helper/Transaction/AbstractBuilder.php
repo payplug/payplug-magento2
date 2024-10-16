@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Transaction;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Data\Form\FormKey;
 use Magento\Payment\Gateway\Data\AddressAdapterInterface;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
@@ -17,58 +20,21 @@ use Payplug\Payments\Logger\Logger;
 
 abstract class AbstractBuilder extends AbstractHelper
 {
-    /**
-     * @var Config
-     */
-    protected $payplugConfig;
-
-    /**
-     * @var Country
-     */
-    protected $countryHelper;
-
-    /**
-     * @var Phone
-     */
-    protected $phoneHelper;
-
-    /**
-     * @var Logger
-     */
-    protected $logger;
-
-    /**
-     * @param Context      $context
-     * @param Config       $payplugConfig
-     * @param Country      $countryHelper
-     * @param Phone        $phoneHelper
-     * @param Logger       $logger
-     */
     public function __construct(
         Context $context,
-        Config $payplugConfig,
-        Country $countryHelper,
-        Phone $phoneHelper,
-        Logger $logger
+        protected Config $payplugConfig,
+        protected Country $countryHelper,
+        protected Phone $phoneHelper,
+        protected Logger $logger,
+        protected FormKey $formKey
     ) {
         parent::__construct($context);
-
-        $this->payplugConfig = $payplugConfig;
-        $this->countryHelper = $countryHelper;
-        $this->phoneHelper = $phoneHelper;
-        $this->logger = $logger;
     }
 
     /**
      * Build PayPlug payment transaction
-     *
-     * @param OrderAdapterInterface $order
-     * @param InfoInterface         $payment
-     * @param Quote                 $quote
-     *
-     * @return array
      */
-    public function buildTransaction($order, $payment, $quote)
+    public function buildTransaction(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $transaction = array_merge(
             $this->buildAmountData($order),
@@ -86,12 +52,8 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build amount data
-     *
-     * @param OrderAdapterInterface $order
-     *
-     * @return array
      */
-    public function buildAmountData($order)
+    public function buildAmountData(OrderAdapterInterface $order): array
     {
         $paymentTab = [
             'amount' => (int) round(($order->getGrandTotalAmount() ?: $order->getBaseGrandTotal()) * 100),
@@ -101,14 +63,8 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build customer data
-     *
-     * @param OrderAdapterInterface $order
-     * @param InfoInterface         $payment
-     * @param Quote                 $quote
-     *
-     * @return array
      */
-    public function buildCustomerData($order, $payment, $quote)
+    public function buildCustomerData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $language = $this->payplugConfig->getConfigValue(
             'code',
@@ -163,15 +119,8 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build customer address data
-     *
-     * @param object $address
-     * @param string $language
-     * @param array  $allowedCountries
-     * @param string $defaultCountry
-     *
-     * @return array
      */
-    private function buildAddressData($address, $language, $allowedCountries, $defaultCountry)
+    private function buildAddressData(object $address, string $language, array $allowedCountries, string $defaultCountry): array
     {
         $street1 = null;
         $street2 = null;
@@ -228,13 +177,8 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build order data
-     *
-     * @param OrderAdapterInterface $order
-     * @param Quote                 $quote
-     *
-     * @return array
      */
-    public function buildOrderData($order, $quote)
+    public function buildOrderData(OrderAdapterInterface $order, Quote $quote): array
     {
         $currency = $order->getCurrencyCode();
         $quoteId = $quote->getId();
@@ -260,14 +204,8 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build payment data
-     *
-     * @param OrderAdapterInterface $order
-     * @param InfoInterface         $payment
-     * @param Quote                 $quote
-     *
-     * @return array
      */
-    public function buildPaymentData($order, $payment, $quote)
+    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $quoteId = $quote->getId();
         $storeId = $order->getStoreId();
@@ -292,6 +230,7 @@ abstract class AbstractBuilder extends AbstractHelper
                 '_secure'  => true,
                 'quote_id' => $quoteId,
                 '_nosid' => true,
+                'form_key' => $this->formKey->getFormKey() ?: ''
             ]),
         ];
 

@@ -1,26 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Block;
 
-use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Sales\Model\Order;
-use Payplug\Exception\PayplugException;
+use Magento\Sales\Api\Data\OrderInterface;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
-use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Helper\Oney;
-use Payplug\Payments\Logger\Logger;
+use Payplug\Resource\Payment;
 
 class OneyInfo extends Info
 {
     /**
      * Get PayPlug Oney payment details
      *
-     * @param \Payplug\Resource\Payment $payment
-     * @param Order                     $order
+     * @param Payment $payment
+     * @param OrderInterface $order
      *
      * @return array
      */
-    protected function buildPaymentDetails($payment, $order)
+    protected function buildPaymentDetails(Payment $payment, OrderInterface $order): array
     {
         $paymentDetails = parent::buildPaymentDetails($payment, $order);
 

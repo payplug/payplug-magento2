@@ -33,8 +33,9 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
+
+    public const MODULE_VERSION = '4.1.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
-    public const MODULE_VERSION = '4.0.0';
 
     private ?AdapterInterface $adapter = null;
     private ?string $scope = null;
@@ -359,8 +360,6 @@ class Config extends AbstractHelper
 
         $pproMethods = [
             'satispay',
-            'sofort',
-            'giropay',
             'ideal',
             'mybank',
         ];

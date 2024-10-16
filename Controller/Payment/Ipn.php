@@ -1,15 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Checkout\Model\Session;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Raw;
+use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\Order\Payment\Repository;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\ScopeInterface;
@@ -28,26 +37,13 @@ use Payplug\Resource\Refund;
 
 class Ipn extends AbstractPayment
 {
-    /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
-     * @param \Magento\Framework\App\Action\Context $context
-     * @param \Magento\Checkout\Model\Session       $checkoutSession
-     * @param \Magento\Sales\Model\OrderFactory     $salesOrderFactory
-     * @param Logger                                $logger
-     * @param Data                                  $payplugHelper
-     * @param Config                                $payplugConfig
-     */
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
-        \Magento\Checkout\Model\Session $checkoutSession,
-        \Magento\Sales\Model\OrderFactory $salesOrderFactory,
+        Context $context,
+        Session $checkoutSession,
+        OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        Config $payplugConfig,
+        private Config $payplugConfig,
         protected OrderPaymentRepository $paymentRepository,
         protected CartRepositoryInterface $cartRepository,
         protected OrderRepository $orderRepository,
@@ -56,8 +52,7 @@ class Ipn extends AbstractPayment
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
-        $this->payplugConfig = $payplugConfig;
-        $formKey = $this->_objectManager->get(\Magento\Framework\Data\Form\FormKey::class);
+        $formKey = $this->_objectManager->get(FormKey::class);
         $this->getRequest()->setParam('form_key', $formKey->getFormKey());
     }
 
@@ -66,7 +61,7 @@ class Ipn extends AbstractPayment
      *
      * Can update order status when payment or refund notification is received
      */
-    public function execute()
+    public function execute(): Redirect|ResultInterface|Json
     {
         $this->logger->info('--- Starting IPN Action ---');
 
@@ -75,7 +70,7 @@ class Ipn extends AbstractPayment
         $response->setContents('');
 
         try {
-            /** @var \Magento\Framework\App\Request\Http $this->getRequest() */
+            /** @var Http $this->getRequest() */
             $body = $this->getRequest()->getContent();
             $debug = (int) $this->getRequest()->getParam('debug');
 
@@ -132,26 +127,16 @@ class Ipn extends AbstractPayment
 
     /**
      * Get configuration value
-     *
-     * @param string      $field
-     * @param int         $storeId
-     * @param string|null $path
-     *
-     * @return mixed
      */
-    private function getConfigValue($field, $storeId, $path = null)
+    private function getConfigValue(string $field, int $storeId, ?string $path = null): mixed
     {
         return $this->payplugConfig->getConfigValue($field, ScopeInterface::SCOPE_STORE, $storeId, $path);
     }
 
     /**
      * Process debug ipn call
-     *
-     * @param Raw $response
-     *
-     * @return Raw|Json
      */
-    private function processDebugCall($response)
+    private function processDebugCall(Raw $response): Raw|Json|ResultInterface
     {
         $this->logger->info('This is a debug call.');
         $cid = (int) $this->payplugConfig->getConfigValue('company_id');
@@ -186,11 +171,8 @@ class Ipn extends AbstractPayment
 
     /**
      * Process ipn payment call
-     *
-     * @param Raw     $response
-     * @param Payment $resource
      */
-    private function processPayment($response, $resource)
+    private function processPayment(Raw $response, Payment $resource): void
     {
         $this->logger->info('This is a payment call.');
         $payment = $resource;
@@ -200,9 +182,11 @@ class Ipn extends AbstractPayment
 
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
+
         try {
             $this->payplugHelper->getOrderInstallmentPlan((string)$order->getIncrementId());
             $response->setStatusHeader(200, null, "200 payment for installment plan not processed");
+
             return;
         } catch (NoSuchEntityException $e) {
             // We want to process payment IPN for orders not linked to an installment plan
@@ -258,11 +242,8 @@ class Ipn extends AbstractPayment
 
     /**
      * Handle payment update
-     *
-     * @param Raw     $response
-     * @param Order   $order
      */
-    private function processOrder($response, $order)
+    private function processOrder(Raw $response, Order $order): void
     {
         $responseCode = null;
         $responseDetail = null;
@@ -298,11 +279,8 @@ class Ipn extends AbstractPayment
 
     /**
      * Process installment plan ipn call
-     *
-     * @param Raw             $response
-     * @param InstallmentPlan $resource
      */
-    private function processInstallmentPlan($response, $resource)
+    private function processInstallmentPlan(Raw $response, InstallmentPlan $resource): void
     {
         $this->logger->info('This is an installment plan call.');
         $installmentPlan = $resource;
@@ -336,11 +314,8 @@ class Ipn extends AbstractPayment
 
     /**
      * Process refund ipn call
-     *
-     * @param Raw    $response
-     * @param Refund $resource
      */
-    private function processRefund($response, $resource)
+    private function processRefund(Raw $response, Refund $resource): void
     {
         $this->logger->info('This is a refund call.');
         $this->logger->info('Refund ID : '.$resource->id);

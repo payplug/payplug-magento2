@@ -15,9 +15,9 @@ use Magento\Framework\Exception\PaymentException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
-use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Helper\Config;
 
 class Standard extends AbstractPayment
 {
@@ -155,8 +155,6 @@ class Standard extends AbstractPayment
 
     /**
      * Get last order
-     *
-     * @return Order
      *
      * @throws \Exception
      */

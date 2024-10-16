@@ -1,53 +1,32 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Oney;
 
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObject;
 use Payplug\Payments\Helper\Oney;
 use Payplug\Payments\Logger\Logger;
 
-class SimulationCheckout extends \Magento\Framework\App\Action\Action
+class SimulationCheckout extends Action
 {
-    /**
-     * @var JsonFactory
-     */
-    private $resultJsonFactory;
-
-    /**
-     * @var Oney
-     */
-    private $oneyHelper;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @param Context     $context
-     * @param JsonFactory $resultJsonFactory
-     * @param Oney        $oneyHelper
-     * @param Logger      $logger
-     */
     public function __construct(
         Context $context,
-        JsonFactory $resultJsonFactory,
-        Oney $oneyHelper,
-        Logger $logger
+        private JsonFactory $resultJsonFactory,
+        private Oney $oneyHelper,
+        private Logger $logger
     ) {
         parent::__construct($context);
-
-        $this->resultJsonFactory = $resultJsonFactory;
-        $this->oneyHelper = $oneyHelper;
-        $this->logger = $logger;
     }
 
     /**
      * @inheritdoc
      */
-    public function execute()
+    public function execute(): Json
     {
         $result = $this->resultJsonFactory->create();
 
@@ -86,12 +65,8 @@ class SimulationCheckout extends \Magento\Framework\App\Action\Action
 
     /**
      * Transform simulation object into array
-     *
-     * @param DataObject $object
-     *
-     * @return array
      */
-    private function transformSimulationResultToArray(DataObject $object)
+    private function transformSimulationResultToArray(DataObject $object): array
     {
         $currentData = $object->toArray();
         foreach ($currentData as $currentKey => $currentDatum) {
