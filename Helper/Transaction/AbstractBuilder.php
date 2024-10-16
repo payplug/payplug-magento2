@@ -55,8 +55,15 @@ abstract class AbstractBuilder extends AbstractHelper
      */
     public function buildAmountData(OrderAdapterInterface $order): array
     {
+        $unroundedAmount = 0;
+        if ($order->getGrandTotalAmount()) {
+            $unroundedAmount = $order->getGrandTotalAmount();
+        } else if ($order->getBaseGrandTotal()) {
+            $unroundedAmount = $order->getBaseGrandTotal();
+        }
+
         $paymentTab = [
-            'amount' => (int) round(($order->getGrandTotalAmount() ?: $order->getBaseGrandTotal()) * 100),
+            'amount' => (int) round($unroundedAmount * 100),
         ];
         return $paymentTab;
     }

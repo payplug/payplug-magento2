@@ -67,7 +67,7 @@ class StandardBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildAmountData($order)
+    public function buildAmountData(OrderAdapterInterface $order): array
     {
         $amountData = parent::buildAmountData($order);
         if ($this->payplugConfig->isStandardPaymentModeDeferred()) {

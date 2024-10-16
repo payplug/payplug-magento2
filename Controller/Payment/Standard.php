@@ -29,8 +29,7 @@ class Standard extends AbstractPayment
         Data $payplugHelper,
         protected FormKey $formKey,
         protected Config $config
-    )
-    {
+    ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
 
@@ -58,7 +57,6 @@ class Standard extends AbstractPayment
             $order->getPayment()->unsAdditionalInformation('payment_url');
             $isPaid = (bool)$order->getPayment()->getAdditionalInformation('is_paid', false);
             $order->getPayment()->unsAdditionalInformation('is_paid');
-
             if ($isPaid) {
                 $response->setData([
                     'is_paid' => true,
