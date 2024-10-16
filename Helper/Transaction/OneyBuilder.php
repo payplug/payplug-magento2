@@ -9,7 +9,9 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order\Item;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
@@ -34,7 +36,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildTransaction(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildTransaction(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
     {
         $this->validateTransaction($order, $payment, $quote);
 
@@ -214,7 +216,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildCustomerData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildCustomerData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $customerData = parent::buildCustomerData($order, $payment, $quote);
 
@@ -251,7 +253,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildAmountData(OrderAdapterInterface $order): array
+    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
     {
         $amountData = parent::buildAmountData($order);
         $amountData['authorized_amount'] = $amountData['amount'];
@@ -263,7 +265,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 

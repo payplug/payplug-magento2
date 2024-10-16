@@ -11,6 +11,7 @@ use Magento\Framework\Exception\PaymentException;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
@@ -35,7 +36,7 @@ class StandardBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
@@ -67,7 +68,7 @@ class StandardBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildAmountData(OrderAdapterInterface $order): array
+    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
     {
         $amountData = parent::buildAmountData($order);
         if ($this->payplugConfig->isStandardPaymentModeDeferred()) {
