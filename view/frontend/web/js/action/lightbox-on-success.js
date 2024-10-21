@@ -53,7 +53,7 @@ define(
                 });
             },
             cancelPayplugPayment: function() {
-                window.location.replace(url.build(this.cancelUrl));
+                window.location.replace(url.build(this.cancelUrl) + '?form_key=' + jQuery.cookie('form_key'));
             }
         };
     }

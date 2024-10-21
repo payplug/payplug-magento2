@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0](https://github.com/payplug/payplug-magento2/releases/tag/4.1.0) - 2024-10-02
+
+### Features
+
+- Remove Giropay and Sofort payment methods
+- PHP 8.1 upgrade
+- Security and controllers improvements
+- Fix various escpaers
+- Update and optimize payment methods logos
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.0.0...v4.1.0)**
+
+### Added
+
+- Add the new cb Logo to Magento 2 [#219](https://github.com/payplug/payplug-magento2/pull/219) [#233](https://github.com/payplug/payplug-magento2/pull/233)
+- Add security via form key to multiple controllers along with php 8 [#230](https://github.com/payplug/payplug-magento2/pull/230)
+- Add form key validation and php 8 to the Block/Adminhtml/Config/Logout.php controller [#230](https://github.com/payplug/payplug-magento2/pull/230)
+
+### Changed
+
+- Update and optimize payment cards logos [#219](https://github.com/payplug/payplug-magento2/pull/219) [#233](https://github.com/payplug/payplug-magento2/pull/233) [#234](https://github.com/payplug/payplug-magento2/pull/234) [#237](https://github.com/payplug/payplug-magento2/pull/237) 
+- Replace escapeHtml by escapeUrl in formjs.phtml [#220](https://github.com/payplug/payplug-magento2/pull/220)
+- Use an escapeHtmlAttr for the code in the ondemand template [#220](https://github.com/payplug/payplug-magento2/pull/220)
+- Prevent using NamingConvention\true\string as string [#230](https://github.com/payplug/payplug-magento2/pull/230)
+- Update apple pay controller to php 8 and fix argument must be of type string [#230](https://github.com/payplug/payplug-magento2/pull/230)
+- Upgrade to php 8.1 and add security to Ipn, Simulation, SimulationCheckout.php and AsbtractPayment controler [#230](https://github.com/payplug/payplug-magento2/pull/230)
+- Update Standard and PaymentReturn.php controllers, along with Cancel controller and all the relative depending classes [#230](https://github.com/payplug/payplug-magento2/pull/230)
+- Update controllers classes to php 8.0+ and use the form key [#230](https://github.com/payplug/payplug-magento2/pull/230)
+- Update InstallmentPlanAbort.php and subclasses to php 8 and add form key security [#230](https://github.com/payplug/payplug-magento2/pull/230)
+
+### Removed
+
+- Remove Sofort payment method [#235](https://github.com/payplug/payplug-magento2/pull/235)
+- Remove Giropay payment method [#235](https://github.com/payplug/payplug-magento2/pull/235)
+- Remove the old unused pictures [#219](https://github.com/payplug/payplug-magento2/pull/219) [#233](https://github.com/payplug/payplug-magento2/pull/233)
+
+### Fixed
+
+- Fix cardList escapeUrl [#220](https://github.com/payplug/payplug-magento2/pull/220)
+- Fix escapers [#220](https://github.com/payplug/payplug-magento2/pull/220)
+- Fix phtmls escapers and add strict types for php 8 [#220](https://github.com/payplug/payplug-magento2/pull/220)
+
 ## [4.0.0](https://github.com/payplug/payplug-magento2/releases/tag/4.0.0) - 2024-08-28
 
 > **NOTE**
@@ -18,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix transaction stays indefinitely in payment review with 3DS integrated payment
 - Php 8.1 support
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/1.27.4...4.0.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/1.27.4...v4.0.0)**
 
 ### Added
 
@@ -52,7 +94,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevent type error on order placements [#226](https://github.com/payplug/payplug-magento2/pull/226/commits/1878eb759e2d7f48c10b5a64959b6615a5ff1ec6)
 - Fix Undefined array key after 3DS failed payment [#225](https://github.com/payplug/payplug-magento2/pull/225)
 - Fix the use of phrases instead of string in php 8 [#217](https://github.com/payplug/payplug-magento2/pull/217)
-
 
 ## [1.27.4](https://github.com/payplug/payplug-magento2/releases/tag/1.27.4) - 2024-05-02
 

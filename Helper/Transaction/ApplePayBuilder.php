@@ -1,7 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Transaction;
 
+use Magento\Payment\Gateway\Data\OrderAdapterInterface;
+use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Store\Model\ScopeInterface;
 
 class ApplePayBuilder extends AbstractBuilder
@@ -9,7 +14,7 @@ class ApplePayBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData($order, $payment, $quote)
+    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
     {
         $merchandDomain = parse_url($this->scopeConfig->getValue('web/secure/base_url', ScopeInterface::SCOPE_STORE), PHP_URL_HOST);
 

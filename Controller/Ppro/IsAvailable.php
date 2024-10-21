@@ -1,49 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Ppro;
 
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Phrase;
-use Payplug\Payments\Gateway\Config\Giropay;
 use Payplug\Payments\Gateway\Config\Ideal;
 use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
-use Payplug\Payments\Gateway\Config\Sofort;
 use Payplug\Payments\Helper\Config;
 
-class IsAvailable extends \Magento\Framework\App\Action\Action
+class IsAvailable extends Action
 {
-    /**
-     * @var JsonFactory
-     */
-    private $resultJsonFactory;
-
-    /**
-     * @var Config
-     */
-    private $configHelper;
-
-    /**
-     * @param Context     $context
-     * @param JsonFactory $resultJsonFactory
-     * @param Config      $configHelper
-     */
     public function __construct(
         Context $context,
-        JsonFactory $resultJsonFactory,
-        Config $configHelper
+        private JsonFactory $resultJsonFactory,
+        private Config $configHelper
     ) {
         parent::__construct($context);
-
-        $this->resultJsonFactory = $resultJsonFactory;
-        $this->configHelper = $configHelper;
     }
 
     /**
      * @inheritdoc
      */
-    public function execute()
+    public function execute(): Json
     {
         $result = $this->resultJsonFactory->create();
         $result->setData([
@@ -87,10 +71,6 @@ class IsAvailable extends \Magento\Framework\App\Action\Action
     /**
      * Retrieve error message for given payment method
      *
-     * @param string $method
-     *
-     * @return Phrase
-     *
      * @throws \Exception
      */
     private function getCountryErrorMessage(string $method): Phrase
@@ -100,17 +80,6 @@ class IsAvailable extends \Magento\Framework\App\Action\Action
                 'To pay with Satispay, your billing address needs to be in one of the following countries: ' .
                 'Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, ' .
                 'Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia.'
-            );
-        }
-        if ($method === Sofort::METHOD_CODE) {
-            return __(
-                'To pay with SOFORT, your billing address needs to be in one of the following countries: ' .
-                'Austria, Belgium, Germany, Spain, Italy, Netherlands.'
-            );
-        }
-        if ($method === Giropay::METHOD_CODE) {
-            return __(
-                'To pay with Giropay, your billing address needs to be in Germany.'
             );
         }
         if ($method === Ideal::METHOD_CODE) {

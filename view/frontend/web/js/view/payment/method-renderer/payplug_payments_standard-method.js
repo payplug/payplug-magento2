@@ -12,16 +12,16 @@ define([
     'Magento_Checkout/js/model/full-screen-loader',
     'payplugIntegrated'
 ], function (
-    ko, 
-    $, 
+    ko,
+    $,
     url,
     $t,
-    Component, 
-    redirectOnSuccessAction, 
-    lightboxOnSuccessAction, 
-    customerData, 
-    quote, 
-    fullScreenLoader, 
+    Component,
+    redirectOnSuccessAction,
+    lightboxOnSuccessAction,
+    customerData,
+    quote,
+    fullScreenLoader,
     payplug
 ) {
     'use strict';
@@ -125,6 +125,7 @@ define([
                                 $('[name="save_card"]').is(':checked');
                             self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
                             self.integratedApi.onCompleted(function (event) {
+
                               $.ajax({
                                 url: url.build('payplug_payments/payment/checkPayment'),
                                 type: "GET",
@@ -136,7 +137,7 @@ define([
 
 
                                   if(res.error === true){
-                                    window.location.replace(url.build('payplug_payments/payment/cancel'));
+                                    window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
                                   }else{
                                     window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
                                   }
@@ -145,7 +146,7 @@ define([
                             });
                           fullScreenLoader.stopLoader();
                         } else {
-                            window.location.replace(url.build('payplug_payments/payment/cancel'));
+                            window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
                         }
                     }
                 }
@@ -159,7 +160,7 @@ define([
         getCardLogo: function() {
             return window.checkoutConfig.payment.payplug_payments_standard.logo;
         },
-        
+
         /**
          * Get cards
          * @returns {Object}
@@ -361,11 +362,11 @@ define([
             return window.checkoutConfig.payment.payplug_payments_standard.is_integrated &&
                 typeof window.checkoutConfig.payment.payplug_payments_standard.is_sandbox !== 'undefined';
         },
-        
+
         /**
          * Init integrated form
          * @returns {Boolean}
-         */        
+         */
         initIntegratedForm: function() {
             const self = this;
 
