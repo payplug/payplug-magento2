@@ -1,61 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Oney;
 
+use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\ConfigurableProduct\Api\LinkManagementInterface;
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\View\LayoutInterface;
+use Payplug\Payments\Block\Oney\Simulation as OneySimulationBlock;
+use Payplug\Payments\Logger\Logger;
 
-class Simulation extends \Magento\Framework\App\Action\Action
+class Simulation extends Action
 {
-    /**
-     * @var JsonFactory
-     */
-    private $resultJsonFactory;
-
-    /**
-     * @var ProductFactory
-     */
-    private $productFactory;
-
-    /**
-     * @var LayoutInterface
-     */
-    private $layout;
-
-    /**
-     * @var LinkManagementInterface
-     */
-    private $linkManagement;
-
-    /**
-     * @param Context                 $context
-     * @param JsonFactory             $resultJsonFactory
-     * @param ProductFactory          $productFactory
-     * @param LayoutInterface         $layout
-     * @param LinkManagementInterface $linkManagement
-     */
     public function __construct(
         Context $context,
-        JsonFactory $resultJsonFactory,
-        ProductFactory $productFactory,
-        LayoutInterface $layout,
-        LinkManagementInterface $linkManagement
+        private JsonFactory $resultJsonFactory,
+        private ProductFactory $productFactory,
+        private LayoutInterface $layout,
+        private LinkManagementInterface $linkManagement
     ) {
         parent::__construct($context);
-
-        $this->resultJsonFactory = $resultJsonFactory;
-        $this->productFactory = $productFactory;
-        $this->layout = $layout;
-        $this->linkManagement = $linkManagement;
     }
 
     /**
      * @inheritdoc
      */
-    public function execute()
+    public function execute(): Json
     {
         $result = $this->resultJsonFactory->create();
 
@@ -77,11 +52,10 @@ class Simulation extends \Magento\Framework\App\Action\Action
                 $template = 'Payplug_Payments::oney/simulation.phtml';
             }
 
-            $block = $this->layout->createBlock(\Payplug\Payments\Block\Oney\Simulation::class)
+            $block = $this->layout->createBlock(OneySimulationBlock::class)
                 ->setTemplate($template)
                 ->setAmount($productPrice)
-                ->setQty($qty)
-            ;
+                ->setQty($qty);
 
             $result->setData([
                 'success' => true,
@@ -97,13 +71,9 @@ class Simulation extends \Magento\Framework\App\Action\Action
     /**
      * Get product for oney simulation
      *
-     * @param array $params
-     *
-     * @return \Magento\Catalog\Model\Product|null
-     *
      * @throws \Exception
      */
-    private function getProduct($params)
+    private function getProduct(?array $params): ?Product
     {
         if (!isset($params['product'])) {
             return null;

@@ -1,3 +1,13 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\View\Element\Template;
+
+/**
+ * @var Template $block
+ */
+?>
 <div class="oney-wrapper">
-    <?= $block->getChildBlock('payplug-payments-product-oney-simulation')->toHtml(); ?>
+    <?= $block->getChildHtml('payplug-payments-product-oney-simulation'); ?>
 </div>

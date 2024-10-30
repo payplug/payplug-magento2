@@ -1,33 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Data\Form\FormKey\Validator;
 use Payplug\Payments\Helper\Config;
 
-class Logout extends \Magento\Backend\App\Action
+class Logout extends Action
 {
-    /**
-     * @var Config
-     */
-    private $helper;
-
-    /**
-     * @param \Magento\Backend\App\Action\Context $context
-     * @param Config                              $helper
-     */
-    public function __construct(\Magento\Backend\App\Action\Context $context, Config $helper)
-    {
-        $this->helper = $helper;
+    public function __construct(
+        Context $context,
+        private Config $helper,
+        private Validator $formKeyValidator,
+        private RequestInterface $request,
+    ) {
         parent::__construct($context);
     }
 
     /**
      * Logout PayPlug account
      *
-     * @return \Magento\Framework\App\ResponseInterface
+     * @return Redirect
      */
-    public function execute()
+    public function execute(): Redirect
     {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
+        $formKeyValidation = $this->formKeyValidator->validate($this->request);
+        if (!$formKeyValidation) {
+            $this->messageManager->addErrorMessage(
+                __('Your session has expired')
+            );
+
+            return $resultRedirect->setPath('*/*/');
+        }
+
         $this->helper->initScopeData();
         $this->helper->clearConfig();
 
@@ -43,8 +55,6 @@ class Logout extends \Magento\Backend\App\Action
         if ($store = $this->_request->getParam('store')) {
             $params['store'] = $store;
         }
-
-        $resultRedirect = $this->resultRedirectFactory->create();
 
         return $resultRedirect->setPath('adminhtml/system_config/edit', $params);
     }

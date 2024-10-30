@@ -104,13 +104,13 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
     public function getCardLogo()
     {
         $localeCode = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);
+        $filename = 'payment-cards';
 
-        $filename = 'supported_cards';
         if ($localeCode == 'it_IT') {
-            $filename = 'supported_cards_it';
+            $filename .= '-it';
         }
 
-        return $this->getViewFileUrl('Payplug_Payments::images/' . $filename . '.png');
+        return $this->getViewFileUrl('Payplug_Payments::images/icons/' . $filename . '.svg');
     }
 
     /**
@@ -123,7 +123,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         $cards = ['mastercard', 'visa', 'other'];
         $logos = [];
         foreach ($cards as $card) {
-            $logos[$card] = $this->getViewFileUrl('Payplug_Payments::images/' . $card . '.png');
+            $logos[$card] = $this->getViewFileUrl('Payplug_Payments::images/' . $card . '.svg');
         }
 
         return $logos;

@@ -216,7 +216,7 @@ define([
             this.session.begin();
         },
         cancelPayplugPayment: function() {
-            window.location.replace(url.build(this.cancelUrl));
+            window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         }
     });
 });
