@@ -16,6 +16,8 @@ use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Payment\Repository;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Service\InvoiceService;
+use Payplug\Exception\ForbiddenException;
+use Payplug\Payments\Api\Data\OrderInterface as PayplugOrderInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Logger\Logger;
@@ -120,39 +122,63 @@ class AutoCaptureDeferredPayments
 
         if (!$order->canInvoice()) {
             $this->logger->info(sprintf('The order id %s does not allow an invoice to be create. Not capturing.', $orderId));
-            $orderPayment = $order->getPayment();
-            $orderPayment->setAdditionalInformation('fail_to_capture', true);
-            $this->paymentRepository->save($orderPayment);
+            $this->setFailedToCapture($order);
 
             return;
         }
 
         $this->logger->info(sprintf('The order id %s is now being invoiced and captured.', $orderId));
 
-        $invoice = $this->invoiceService->prepareInvoice($order);
-        $invoice->setRequestedCaptureCase($invoice::CAPTURE_ONLINE);
-        $invoice->addComment('Order automatically invoiced and captured after 6 days of authorization.');
-        //Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
-        $invoice->register();
-        $invoice->save();
+        try {
+            $invoice = $this->invoiceService->prepareInvoice($order);
+            $invoice->setRequestedCaptureCase($invoice::CAPTURE_ONLINE);
+            $invoice->addComment('Order automatically invoiced and captured after 6 days of authorization.');
+            //Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
+            $invoice->register();
+            $invoice->save();
 
-        $transactionSave = $this->transaction
-            ->addObject($invoice)
-            ->addObject($invoice->getOrder());
-        $transactionSave->save();
-        $this->invoiceSender->send($invoice);
+            $transactionSave = $this->transaction
+                ->addObject($invoice)
+                ->addObject($invoice->getOrder());
+            $transactionSave->save();
+            $this->invoiceSender->send($invoice);
 
-        $order->addCommentToStatusHistory(
-            __('Notified customer about invoice creation #%1.', $invoice->getId())
-        )->setIsCustomerNotified(true)->save();
+            $order->addCommentToStatusHistory(
+                __('Notified customer about invoice creation #%1.', $invoice->getId())
+            )->setIsCustomerNotified(true)->save();
 
-        $websiteOwnerEmail = $this->config->getWebsiteOwnerEmail();
-        $this->sendEmail(
-            $websiteOwnerEmail,
-            [$websiteOwnerEmail],
-            'Forced payment capture',
-            sprintf('The order id %s have been invoiced and captured.', $orderId)
-        );
+            $websiteOwnerEmail = $this->config->getWebsiteOwnerEmail();
+            $this->sendEmail(
+                $websiteOwnerEmail,
+                [$websiteOwnerEmail],
+                'Forced payment capture',
+                sprintf('The order id %s have been invoiced and captured.', $orderId)
+            );
+        } catch(\Exception $e) {
+            $history = '';
+            if (str_contains($e->getMessage(), 'Forbidden error')) {
+                $history = sprintf('The order entity id %s cannot be retrieved anymore from payplug Api.', $order->getEntityId());
+            } else {
+                $history = sprintf('An unexpected error occured with order entityId %s - %s', $order->getEntityId(), $e->getMessage());
+            }
+            $this->logger->info(sprintf('Auto capture cron failed and wont run again for this order. You can try to create the invoice manually. Error message : %s',$history));
+
+            //Get a fresh order without all the invoice collection items associated
+            $order = $this->orderRepository->get($orderId);
+            $order->addCommentToStatusHistory(
+                $history,
+            )->setIsCustomerNotified(false)->save();
+            $order->setStatus(PayplugOrderInterface::FAILED_CAPTURE);
+            $this->orderRepository->save($order);
+            $this->setFailedToCapture($order);
+        }
+    }
+
+    public function setFailedToCapture(OrderInterface $order): void
+    {
+        $orderPayment = $order->getPayment();
+        $orderPayment->setAdditionalInformation('fail_to_capture', true);
+        $this->paymentRepository->save($orderPayment);
     }
 
     public function sendEmail(string $fromMail, array $toMails, string $subject, string $message): void
