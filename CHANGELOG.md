@@ -25,9 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Update Mastercard logo [#382](https://github.com/payplug/payplug-magento2/pull/382)
-- Update payment cards logos [#219](https://github.com/payplug/payplug-magento2/pull/219) [#233](https://github.com/payplug/payplug-magento2/pull/233)
-- Optimisze CB and payment cards SVG files [#219](https://github.com/payplug/payplug-magento2/pull/219) [#233](https://github.com/payplug/payplug-magento2/pull/233)
+- Update and optimize payment cards logos [#219](https://github.com/payplug/payplug-magento2/pull/219) [#233](https://github.com/payplug/payplug-magento2/pull/233) [#234](https://github.com/payplug/payplug-magento2/pull/234) [#237](https://github.com/payplug/payplug-magento2/pull/237) 
 - Replace escapeHtml by escapeUrl in formjs.phtml [#220](https://github.com/payplug/payplug-magento2/pull/220)
 - Use an escapeHtmlAttr for the code in the ondemand template [#220](https://github.com/payplug/payplug-magento2/pull/220)
 - Prevent using NamingConvention\true\string as string [#230](https://github.com/payplug/payplug-magento2/pull/230)
