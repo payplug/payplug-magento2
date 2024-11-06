@@ -35,6 +35,9 @@ class CaptureStandardDeferredPayment
 
     public function aroundExecute(ProcessInvoiceOperation $subject, callable $proceed, ...$args): OrderPaymentInterface
     {
+        if (count($args) < 2) {
+            return $proceed(...$args);
+        }
         /** @var OrderPaymentInterface $magentoPayment */
         $magentoPayment = $args[0];
         /** @var InvoiceInterface $invoice */
@@ -60,33 +63,35 @@ class CaptureStandardDeferredPayment
 
         $payplugPaymentId = $magentoPayment->getAdditionalInformation('payplug_payment_id');
 
-        if ($payplugPaymentId) {
-            try {
-                $payplugPayment = $this->orderPaymentRepository->get($payplugPaymentId, 'payment_id');
-                $paymentCapture = $payplugPayment->retrieve();
-                $paymentObject = $paymentCapture->capture();
-                if ($paymentObject) {
-                    $magentoPayment->setBaseAmountPaidOnline((float)$quotePayment->getAdditionalInformation('authorized_amount') / 100);
-                    $magentoPayment->setLastTransId($payplugPaymentId);
-                    $magentoPayment->setAdditionalInformation('is_paid', true);
-                    $magentoPayment->setAdditionalInformation('was_deferred', true);
-                    $invoice->setIsPaid(true);
-                    $invoice->setTransactionId($payplugPaymentId);
+        if (!$payplugPaymentId) {
+            return $magentoPayment;
+        }
 
-                    $order->addCommentToStatusHistory(sprintf('Payment of %s %s successfully captured and paid on Payplug at %s.',
-                        (int)($paymentObject->amount) / 100,
-                        $paymentObject->currency,
-                        date('Y-m-d H:i:s', $paymentObject->paid_at),
-                    ), Order::STATE_PROCESSING);
+        try {
+            $payplugPayment = $this->orderPaymentRepository->get($payplugPaymentId, 'payment_id');
+            $paymentCapture = $payplugPayment->retrieve();
+            $paymentObject = $paymentCapture->capture();
+            if ($paymentObject) {
+                $magentoPayment->setBaseAmountPaidOnline((float)$quotePayment->getAdditionalInformation('authorized_amount') / 100);
+                $magentoPayment->setLastTransId($payplugPaymentId);
+                $magentoPayment->setAdditionalInformation('is_paid', true);
+                $magentoPayment->setAdditionalInformation('was_deferred', true);
+                $invoice->setIsPaid(true);
+                $invoice->setTransactionId($payplugPaymentId);
 
-                    $this->orderRepository->save($order);
-                }
-            } catch (\Exception $e) {
-                $invoice->setIsPaid(false);
-                $this->logger->info($e->getMessage());
-                //If the connection fail when trying to capture the order, then we do not want the invoice to be created.
-                throw new \Exception($e->getMessage());
+                $order->addCommentToStatusHistory(sprintf('Payment of %s %s successfully captured and paid on Payplug at %s.',
+                    (int)($paymentObject->amount) / 100,
+                    $paymentObject->currency,
+                    date('Y-m-d H:i:s', $paymentObject->paid_at),
+                ), Order::STATE_PROCESSING);
+
+                $this->orderRepository->save($order);
             }
+        } catch (\Exception $e) {
+            $invoice->setIsPaid(false);
+            $this->logger->info($e->getMessage());
+            // If the connection fail when trying to capture the order, then we do not want the invoice to be created.
+            throw new \Exception($e->getMessage());
         }
 
         return $magentoPayment;

@@ -194,10 +194,10 @@ class Ipn extends AbstractPayment
 
         $standardDeferredQuote = $this->isStandardDeferredPayment($order, $payment);
         if (!$payment->is_paid) {
-            //If we are actually reviewing a standard deferred payment not yet captured
+            // If we are actually reviewing a standard deferred payment not yet captured
             if ($standardDeferredQuote) {
                 $quotePayment = $standardDeferredQuote->getPayment();
-                //Add the additionnals informations to the deferred Order payment object
+                // Add the additionnals informations to the deferred Order payment object
                 $quotePayment->setAdditionalInformation('is_authorized', true);
                 $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
                 $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
@@ -228,13 +228,15 @@ class Ipn extends AbstractPayment
 
     private function isStandardDeferredPayment(OrderInterface $order, Payment $payment): ?Quote
     {
-        if (!$order->getIncrementId() && $payment->metadata['ID Quote']) {
-            /** @var Quote $quote */
-            $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
-            $quotePayment = $quote->getPayment();
-            if ($quotePayment->getMethod() === StandardConfig::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
-                return $quote;
-            }
+        if ($order->getIncrementId() || !$payment->metadata['ID Quote']) {
+            return null;
+        }
+
+        /** @var Quote $quote */
+        $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
+        $quotePayment = $quote->getPayment();
+        if ($quotePayment->getMethod() === StandardConfig::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
+            return $quote;
         }
 
         return null;

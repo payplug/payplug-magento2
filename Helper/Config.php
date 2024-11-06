@@ -148,7 +148,7 @@ class Config extends AbstractHelper
             return (bool) $email;
         }
 
-        $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT, '0');
+        $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT);
 
         return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
     }

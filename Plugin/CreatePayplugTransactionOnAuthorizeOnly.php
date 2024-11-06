@@ -51,7 +51,7 @@ class CreatePayplugTransactionOnAuthorizeOnly
 
         $isPaid = 1;
         if (!$payplugPayment->is_paid && $payplugPayment->failure === null) {
-            // save payment url for pending redirect/lightbox payment
+            // Save payment url for pending redirect/lightbox payment
             $payment->setAdditionalInformation(
                 'payment_url',
                 $payplugPayment->hosted_payment ? $payplugPayment->hosted_payment->payment_url : ''

@@ -57,7 +57,7 @@ class StandardBuilder extends AbstractBuilder
             }
         }
 
-        //Manage the deferred paiement mode
+        // Manage the deferred paiement mode
         if ($this->payplugConfig->isStandardPaymentModeDeferred()) {
             $paymentData['auto_capture'] = false;
         }

@@ -56,7 +56,7 @@ class PaymentReturn extends AbstractPayment
 
             $payment = $this->payplugHelper->getOrderPayment((string)$lastIncrementId)->retrieve();
 
-            //If this is the deferred standard paiement then return the user on the success checkout
+            // If this is the deferred standard paiement then return the user on the success checkout
             if (!$payment->is_paid && $this->isAuthorizedOnlyStandardPaiement($order)) {
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
@@ -133,10 +133,6 @@ class PaymentReturn extends AbstractPayment
      */
     public function isAuthorizedOnlyStandardPaiement(?OrderInterface $order): bool
     {
-        if ($order && $order->getPayment()) {
-            return ($this->config->isStandardPaymentModeDeferred() && $order->getPayment()->getMethod() === StandardConfig::METHOD_CODE);
-        }
-
-        return false;
+        return $order?->getPayment()?->getMethod() === StandardConfig::METHOD_CODE && $this->config->isStandardPaymentModeDeferred();
     }
 }

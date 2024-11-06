@@ -24,6 +24,8 @@ use Payplug\Payments\Logger\Logger;
 
 class AutoCaptureDeferredPayments
 {
+    public const FORCED_CAPTURE_DELAY_IN_DAYS = 6;
+
     public function __construct(
         private TimezoneInterface $timezone,
         private Logger $logger,
@@ -34,7 +36,7 @@ class AutoCaptureDeferredPayments
         private InvoiceService $invoiceService,
         private InvoiceSender $invoiceSender,
         private Transaction $transaction,
-        private Message $laminas,
+        private Message $message,
         private Sendmail $sendmail,
         private Config $config
     ) {
@@ -63,11 +65,9 @@ class AutoCaptureDeferredPayments
         $ordersPayments = $this->paymentRepository->getList($searchOrderPaymentCriteria)->getItems();
 
         // We map the quote and order ids together
-        $quoteIds = [];
         $quotePaymentsToOrderPayments = [];
         foreach ($ordersPayments as $orderPayment) {
             $quoteId = $orderPayment->getAdditionalInformation('quote_id');
-            $quoteIds[] = $quoteId;
             $quotePaymentsToOrderPayments[$quoteId] = $orderPayment->getParentId();
         }
 
@@ -75,18 +75,18 @@ class AutoCaptureDeferredPayments
         $quotePaymentCollection = $this->quotePaymentCollectionFactory->create();
         $quotePayments = $quotePaymentCollection
             ->addFieldToSelect('*')
-            ->addFieldToFilter('quote_id', ['in' => $quoteIds])
+            ->addFieldToFilter('quote_id', ['in' => array_keys($quotePaymentsToOrderPayments)])
             ->addFieldToFilter('additional_information', ['like' => '%is_authorized%'])
             ->getItems();
 
+        $deferredPaymentValidationDate = new DateTime();
         // Using the quotePayment additionnal info we filter on the authorization date exceeding or equal to 6 days
         foreach($quotePayments as $quotePayment) {
-            //Unix timestamp
+            // Unix timestamp
             $authorizedAtTimestamp = $quotePayment->getAdditionalInformation('authorized_at');
-            $deferredPaymentValidationDate = new DateTime();
             $deferredPaymentValidationDate->setTimestamp($authorizedAtTimestamp);
             $difference = $currentDay->diff($deferredPaymentValidationDate);
-            if ($difference->days >= 6) {
+            if ($difference->days >= AutoCaptureDeferredPayments::FORCED_CAPTURE_DELAY_IN_DAYS) {
                 // We add the order id to the array of the invoiceables ones
                 $orderId = $quotePaymentsToOrderPayments[$quotePayment->getQuoteId()];
                 $this->logger->info(sprintf(
@@ -133,7 +133,7 @@ class AutoCaptureDeferredPayments
             $invoice = $this->invoiceService->prepareInvoice($order);
             $invoice->setRequestedCaptureCase($invoice::CAPTURE_ONLINE);
             $invoice->addComment('Order automatically invoiced and captured after 6 days of authorization.');
-            //Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
+            // Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
             $invoice->register();
             $invoice->save();
 
@@ -163,7 +163,7 @@ class AutoCaptureDeferredPayments
             }
             $this->logger->info(sprintf('Auto capture cron failed and wont run again for this order. You can try to create the invoice manually. Error message : %s',$history));
 
-            //Get a fresh order without all the invoice collection items associated
+            // Get a fresh order without all the invoice collection items associated
             $order = $this->orderRepository->get($orderId);
             $order->addCommentToStatusHistory(
                 $history,
@@ -183,14 +183,14 @@ class AutoCaptureDeferredPayments
 
     public function sendEmail(string $fromMail, array $toMails, string $subject, string $message): void
     {
-        $this->laminas->setSubject($subject);
-        $this->laminas->setBody($message);
-        $this->laminas->setFrom($fromMail, "NoReply");
+        $this->message->setSubject($subject);
+        $this->message->setBody($message);
+        $this->message->setFrom($fromMail, "NoReply");
         $sender = array_shift($toMails);
-        $this->laminas->addTo($sender);
+        $this->message->addTo($sender);
         if ($toMails > 1) {
-            $this->laminas->addCc($toMails);
+            $this->message->addCc($toMails);
         }
-        $this->sendmail->send($this->laminas);
+        $this->sendmail->send($this->message);
     }
 }

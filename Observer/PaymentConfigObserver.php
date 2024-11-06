@@ -177,7 +177,7 @@ class PaymentConfigObserver implements ObserverInterface
 
         $this->checkWebsiteScopeData($groups, $fields);
 
-        //determine which kind of config is this call
+        // Determine which kind of config is this call
         $isInit = false;
         $isLive = false;
         if (isset($fields['email']['value'])) {
@@ -413,7 +413,7 @@ class PaymentConfigObserver implements ObserverInterface
                     }
                 }
 
-                //if customer loggedin && have permissions
+                // If customer loggedin && have permissions
                 if($isActive) {
                     $storeId = $this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
@@ -435,19 +435,19 @@ class PaymentConfigObserver implements ObserverInterface
                         );
                     }
 
-                    //website scope value
+                    // Website scope value
                     if(isset($groups[$oney]['fields']['oney_min_threshold']['value'])){
                       $min = $groups[$oney]['fields']['oney_min_threshold']['value'];
                       $max = $groups[$oney]['fields']['oney_max_threshold']['value'];
                     }else{
 
-                      //inherit value
+                      // Inherit value
                       $min = $groups[$oney]['fields']['oney_min_threshold']['inherit'];
                       $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
                     }
 
 
-                    //save thresholds on the same format as general/oney_max_amount
+                    // Save thresholds on the same format as general/oney_max_amount
                     $this->saveOneyConfig('oney_min_amounts', preg_replace(
                             "/(?<=:).*$/i",
                             $min * 100,
@@ -487,7 +487,7 @@ class PaymentConfigObserver implements ObserverInterface
           $max_threshold = intval($fields['oney_max_threshold']["value"]);
         }
 
-        //website scope has on inherit
+        // Website scope has on inherit
         elseif(isset($fields['oney_min_threshold']["inherit"])){
           $min_threshold = intval($fields['oney_min_threshold']["inherit"]);
           $max_threshold = intval($fields['oney_max_threshold']["inherit"]);

@@ -31,10 +31,11 @@ class SetDeferredAfterInvoiceOrderStatus implements ObserverInterface
     {
         /** @var Order $order */
         $order = $observer->getOrder();
+        $payment = $order->getPayment();
 
-        if ($order->getPayment()?->getMethod() !== Standard::METHOD_CODE
-            || !$order->getPayment()?->getAdditionalInformation('is_paid')
-            || !$order->getPayment()?->getAdditionalInformation('was_deferred')
+        if ($payment?->getMethod() !== Standard::METHOD_CODE
+            || !$payment?->getAdditionalInformation('is_paid')
+            || !$payment?->getAdditionalInformation('was_deferred')
         ) {
             return;
         }

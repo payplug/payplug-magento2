@@ -263,18 +263,9 @@ class Data extends AbstractHelper
      */
     public function canCaptureOnline(?OrderInterface $order = null, ?CartInterface $quote = null): bool
     {
-        $payment = null;
-        if ($order) {
-            $payment = $order->getPayment();
-        } else if ($quote) {
-            $payment = $quote->getPayment();
-        }
+        $payment = $order?->getPayment() ?? $quote?->getPayment();
 
-        if ($payment && $payment->getAdditionalInformation('is_authorized')) {
-            return true;
-        }
-
-        return false;
+        return (bool)$payment?->getAdditionalInformation('is_authorized');
     }
 
     /**
@@ -886,7 +877,7 @@ class Data extends AbstractHelper
                     );
                 } else {
                     // Order amounts and status history are already handled
-                    // in \Payplug\Payments\Gateway\Response\InstallmentPlan\FetchTransactionInformationHandler::handle
+                    // In \Payplug\Payments\Gateway\Response\InstallmentPlan\FetchTransactionInformationHandler::handle
                     $invoice->setState(Order\Invoice::STATE_PAID);
                 }
             }

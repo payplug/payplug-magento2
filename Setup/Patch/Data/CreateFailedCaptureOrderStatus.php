@@ -55,8 +55,6 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
      */
     public function apply(): CreateFailedCaptureOrderStatus
     {
-        $this->moduleDataSetup->startSetup();
-
         /**
          * @var string $statusCode
          * @var string[] $label
@@ -78,8 +76,6 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
              */
             $status->assignState(Order::STATE_PROCESSING, false, true);
         }
-
-        $this->moduleDataSetup->endSetup();
 
         return $this;
     }

@@ -41,7 +41,7 @@ class CheckPayment extends AbstractPayment
         $payment = $this->payplugHelper->getPayment($order, $storeId);
         $isAuthorizedDeferred = (!empty($payment->authorization) && (int)$payment->authorization->authorized_amount > 0 && (int)$payment->authorization->authorized_at > 0);
 
-        if (((isset($payment->failure)) && (!empty($payment->failure)) || ($payment->is_paid === false && is_null($payment->paid_at)))
+        if ((!empty($payment->failure) || (!$payment->is_paid && is_null($payment->paid_at)))
             && !$isAuthorizedDeferred) {
             $order->setStatus(Order::STATE_CANCELED);
             $this->payplugHelper->updateOrder($order, ['status' => Order::STATE_CANCELED]);
