@@ -132,7 +132,7 @@ class StandardAvailabilityObserver implements ObserverInterface
         }
 
         $currency = $quote->getCurrency()->getQuoteCurrencyCode();
-        $amountsByCurrency = $this->payplugConfig->getAmountsByCurrency($currency, $quote->getStoreId(), $path, $prefix);
+        $amountsByCurrency = $this->payplugConfig->getAmountsByCurrency($currency, (int)$quote->getStoreId(), $path, $prefix);
         if ($amountsByCurrency === false) {
             $checkResult->setData('is_available', false);
             return;

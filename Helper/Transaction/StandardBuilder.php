@@ -143,6 +143,6 @@ class StandardBuilder extends AbstractBuilder
      */
     private function isOneClick($storeId)
     {
-        return $this->payplugConfig->isOneClick($storeId);
+        return $this->payplugConfig->isOneClick((int)$storeId);
     }
 }

@@ -415,7 +415,7 @@ class PaymentConfigObserver implements ObserverInterface
 
                 // If customer loggedin && have permissions
                 if($isActive) {
-                    $storeId = $this->storeManager->getStore()->getId();
+                    $storeId = (int)$this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
                     $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?

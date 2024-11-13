@@ -87,7 +87,7 @@ class Ipn extends AbstractPayment
             $this->logger->info('This is not a debug call.');
 
             $ipnSandbox = $this->getRequest()->getParam('ipn_sandbox');
-            $this->payplugConfig->setPayplugApiKey($ipnStoreId, (bool) $ipnSandbox);
+            $this->payplugConfig->setPayplugApiKey((int)$ipnStoreId, (bool) $ipnSandbox);
             $this->logger->info('Key submited');
 
             $resource = Notification::treat($body);
@@ -146,7 +146,7 @@ class Ipn extends AbstractPayment
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
             $environmentMode = $this->getConfigValue('environmentmode', $ipnStoreId);
             $embeddedMode = $this->getConfigValue('payment_page', $ipnStoreId);
-            $oneClick = $this->payplugConfig->isOneClick($ipnStoreId);
+            $oneClick = $this->payplugConfig->isOneClick((int)$ipnStoreId);
 
             $data = [
                 'is_module_active' => 1,

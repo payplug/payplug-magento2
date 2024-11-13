@@ -215,7 +215,7 @@ abstract class AbstractBuilder extends AbstractHelper
         $quoteId = $quote->getId();
         $storeId = $order->getStoreId();
 
-        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
+        $isSandbox = $this->payplugConfig->getIsSandbox((int)$storeId);
 
         $paymentData = [];
         $paymentData['notification_url'] = $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [

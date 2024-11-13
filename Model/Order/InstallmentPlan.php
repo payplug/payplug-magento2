@@ -162,7 +162,7 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
      */
     public function retrieve($store = null)
     {
-        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
 
         return \Payplug\InstallmentPlan::retrieve($this->getInstallmentPlanId());
     }
@@ -176,7 +176,7 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
      */
     public function abort($store = null)
     {
-        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
 
         return \Payplug\InstallmentPlan::abort($this->getInstallmentPlanId());
     }

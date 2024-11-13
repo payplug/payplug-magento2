@@ -33,8 +33,8 @@ abstract class AbstractClient extends AbstractHelper
             'Magento ' . $this->payplugConfig->getMagentoVersion()
         );
 
-        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
-        $this->payplugConfig->setPayplugApiKey($storeId, $isSandbox);
+        $isSandbox = $this->payplugConfig->getIsSandbox((int)$storeId);
+        $this->payplugConfig->setPayplugApiKey((int)$storeId, $isSandbox);
         $payplugObject = $this->createPayplugObject($payplugData);
 
         return $this->prepareReturnData($payplugObject, $data);

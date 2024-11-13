@@ -75,13 +75,13 @@ class Config extends AbstractHelper
         }
 
         $this->scope = $scope;
-        $this->scopeId = $scopeId;
+        $this->scopeId = (int)$scopeId;
     }
 
     /**
      * Get payment mode (authorization / authorization_capture)
      */
-    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, mixed $websiteId = null): ?string
+    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, int $websiteId = null): ?string
     {
         return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_ACTION_CONFIG_PATH);
     }
@@ -93,21 +93,21 @@ class Config extends AbstractHelper
     {
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
 
-        return $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, $websiteId) === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
+        return $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, (int)$websiteId) === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
     }
 
     public function getStandardAuthorizedStatus(): ?string
     {
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
 
-        return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, $websiteId, self::PAYPLUG_PAYMENT_AUTHORIZED_STATUS_CONFIG_PATH);
+        return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, (int)$websiteId, self::PAYPLUG_PAYMENT_AUTHORIZED_STATUS_CONFIG_PATH);
     }
 
     public function getWebsiteOwnerEmail(): ?string
     {
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
 
-        return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, $websiteId, self::EMAIL_WEBSITE_OWNER_CONFIG_PATH);
+        return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, (int)$websiteId, self::EMAIL_WEBSITE_OWNER_CONFIG_PATH);
     }
 
     /**
@@ -129,7 +129,7 @@ class Config extends AbstractHelper
     /**
      * Set API secret key
      */
-    public function setPayplugApiKey(mixed $storeId, bool $isSandbox): void
+    public function setPayplugApiKey(?int $storeId, bool $isSandbox): void
     {
         $key = $this->getApiKey($isSandbox, $storeId);
 
@@ -156,23 +156,17 @@ class Config extends AbstractHelper
     /**
      * Retrieve api key
      */
-    public function getApiKey($isSandbox, mixed $storeId = null): ?string
+    public function getApiKey(?bool $isSandbox, ?int $storeId = null): ?string
     {
-        if ($isSandbox) {
-            return $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId);
-        }
-
-        return $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        return $isSandbox ? $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId) : $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
     }
 
     /**
      * Get is_sandbox flag depending on environment mode
      */
-    public function getIsSandbox(mixed $store = null): bool
+    public function getIsSandbox(?int $store = null): bool
     {
-        $environmentMode = $this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store);
-
-        return $environmentMode == self::ENVIRONMENT_TEST;
+        return (string)$this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store) === self::ENVIRONMENT_TEST;
     }
 
     /**
@@ -180,7 +174,7 @@ class Config extends AbstractHelper
      */
     public function isEmbedded(): bool
     {
-        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_EMBEDDED;
+        return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_EMBEDDED;
     }
 
     /**
@@ -188,13 +182,13 @@ class Config extends AbstractHelper
      */
     public function isIntegrated(): bool
     {
-        return $this->getConfigValue('payment_page') == self::PAYMENT_PAGE_INTEGRATED;
+        return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_INTEGRATED;
     }
 
     /**
      * Get one click flag
      */
-    public function isOneClick(mixed $storeId = null): mixed
+    public function isOneClick(?int $storeId = null): bool
     {
         return $this->getConfigValue('can_save_cards', ScopeInterface::SCOPE_STORE, $storeId) &&
             $this->getConfigValue(
@@ -224,7 +218,7 @@ class Config extends AbstractHelper
     /**
      * Get config value
      */
-    public function getConfigValue(string $field, string $scope = ScopeInterface::SCOPE_STORE, mixed $scopeId = null, ?string $path = self::CONFIG_PATH): mixed
+    public function getConfigValue(string $field, string $scope = ScopeInterface::SCOPE_STORE, ?int $scopeId = null, ?string $path = self::CONFIG_PATH): mixed
     {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
@@ -241,7 +235,7 @@ class Config extends AbstractHelper
     /**
      * Set config value
      */
-    public function setConfigValue(string $field, string $value, string $scope = ScopeInterface::SCOPE_STORE, mixed $scopeId = null, ?string $path = null): void
+    public function setConfigValue(string $field, string $value, string $scope = ScopeInterface::SCOPE_STORE, ?int $scopeId = null, ?string $path = null): void
     {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
@@ -388,7 +382,7 @@ class Config extends AbstractHelper
     /**
      * Get valid range of amount for a given currency
      */
-    public function getAmountsByCurrency(string $isoCode, mixed $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
+    public function getAmountsByCurrency(string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
     {
         $minAmounts = [];
         $maxAmounts = [];

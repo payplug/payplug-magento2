@@ -255,7 +255,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
      */
     public function retrieve($store = null)
     {
-        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
 
         return \Payplug\Payment::retrieve($this->getPaymentId());
     }
@@ -276,7 +276,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
             'metadata' => $metadata
         ];
 
-        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
 
         return \Payplug\Refund::create($this->getPaymentId(), $data);
     }
@@ -290,7 +290,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
      */
     public function abort($store = null)
     {
-        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
 
         return \Payplug\Payment::abort($this->getPaymentId());
     }
@@ -305,7 +305,7 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
      */
     public function update(array $data, $store = null)
     {
-        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
 
         $payment = \Payplug\Resource\Payment::fromAttributes(['id' => $this->getPaymentId()]);
 
