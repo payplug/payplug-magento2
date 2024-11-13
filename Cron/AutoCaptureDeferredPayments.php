@@ -5,18 +5,17 @@ declare(strict_types=1);
 namespace Payplug\Payments\Cron;
 
 use DateTime;
-use Laminas\Mail\Message;
-use Laminas\Mail\Transport\Sendmail;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\App\Area;
 use Magento\Framework\DB\Transaction;
+use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\ResourceModel\Quote\Payment\CollectionFactory;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\InvoiceManagementInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
-use Magento\Sales\Model\Order\Payment\Repository;
-use Magento\Sales\Model\OrderRepository;
-use Magento\Sales\Model\Service\InvoiceService;
-use Payplug\Exception\ForbiddenException;
 use Payplug\Payments\Api\Data\OrderInterface as PayplugOrderInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Gateway\Config\Standard;
@@ -29,16 +28,15 @@ class AutoCaptureDeferredPayments
     public function __construct(
         private TimezoneInterface $timezone,
         private Logger $logger,
-        private Repository $paymentRepository,
+        private OrderPaymentRepositoryInterface $paymentRepository,
         private CollectionFactory $quotePaymentCollectionFactory,
         private SearchCriteriaBuilder $searchCriteriaBuilder,
-        private OrderRepository $orderRepository,
-        private InvoiceService $invoiceService,
+        private OrderRepositoryInterface $orderRepository,
+        private InvoiceManagementInterface $invoiceService,
         private InvoiceSender $invoiceSender,
         private Transaction $transaction,
-        private Message $message,
-        private Sendmail $sendmail,
-        private Config $config
+        private Config $config,
+        private TransportBuilder $transportBuilder
     ) {
     }
 
@@ -145,14 +143,17 @@ class AutoCaptureDeferredPayments
 
             $order->addCommentToStatusHistory(
                 __('Notified customer about invoice creation #%1.', $invoice->getId())
-            )->setIsCustomerNotified(true)->save();
+            )->setIsCustomerNotified(true);
+
+            $this->orderRepository->save($order);
 
             $websiteOwnerEmail = $this->config->getWebsiteOwnerEmail();
             $this->sendEmail(
                 $websiteOwnerEmail,
-                [$websiteOwnerEmail],
+                $websiteOwnerEmail,
                 'Forced payment capture',
-                sprintf('The order id %s have been invoiced and captured.', $orderId)
+                sprintf('The order id %s have been invoiced and captured.', $orderId),
+                (int)$order->getStoreId()
             );
         } catch(\Exception $e) {
             $history = '';
@@ -167,7 +168,7 @@ class AutoCaptureDeferredPayments
             $order = $this->orderRepository->get($orderId);
             $order->addCommentToStatusHistory(
                 $history,
-            )->setIsCustomerNotified(false)->save();
+            )->setIsCustomerNotified(false);
             $order->setStatus(PayplugOrderInterface::FAILED_CAPTURE);
             $this->orderRepository->save($order);
             $this->setFailedToCapture($order);
@@ -181,16 +182,15 @@ class AutoCaptureDeferredPayments
         $this->paymentRepository->save($orderPayment);
     }
 
-    public function sendEmail(string $fromMail, array $toMails, string $subject, string $message): void
+    public function sendEmail(string $fromMail, string $toMail, string $subject, string $message, int $storeId): void
     {
-        $this->message->setSubject($subject);
-        $this->message->setBody($message);
-        $this->message->setFrom($fromMail, "NoReply");
-        $sender = array_shift($toMails);
-        $this->message->addTo($sender);
-        if ($toMails > 1) {
-            $this->message->addCc($toMails);
-        }
-        $this->sendmail->send($this->message);
+        $variables['data']['comment'] = $message;
+        $this->transportBuilder->setTemplateIdentifier('auto_capture_email_template')->setTemplateOptions(
+            [
+                'area' => Area::AREA_FRONTEND,
+                'store' => $storeId,
+                'subject' => $subject,
+            ]
+        )->setTemplateVars($variables)->addTo($toMail)->setReplyTo($toMail)->getTransport()->sendMessage();
     }
 }
