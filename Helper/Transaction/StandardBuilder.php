@@ -10,7 +10,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
-use Magento\Quote\Model\Quote;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Card;
@@ -36,16 +36,16 @@ class StandardBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
-        $storeId = $order->getStoreId();
-        $customerCardId = $payment->getAdditionalInformation('payplug_payments_customer_card_id');
+        $storeId = (int)$order->getStoreId();
+        $customerCardId = (int)$payment->getAdditionalInformation('payplug_payments_customer_card_id');
         $payment->unsAdditionalInformation('payplug_payments_customer_card_id');
 
-        $currentCard = $this->getCustomerCardToken($customerCardId, $order->getCustomerId());
-        $paymentData['allow_save_card'] = $this->canSaveCard($storeId, $currentCard, $order->getCustomerId());
+        $currentCard = $this->getCustomerCardToken($customerCardId, (int)$order->getCustomerId());
+        $paymentData['allow_save_card'] = $this->canSaveCard($storeId, $currentCard, (int)$order->getCustomerId());
 
         if ($this->isOneClick($storeId) && $currentCard != null) {
             $paymentData['payment_method'] = $currentCard;
@@ -89,7 +89,7 @@ class StandardBuilder extends AbstractBuilder
      *
      * @throws PaymentException
      */
-    private function getCustomerCardToken($customerCardId, $customerId)
+    private function getCustomerCardToken(?int $customerCardId, ?int $customerId): ?string
     {
         if (empty($customerCardId)) {
             return null;
@@ -117,7 +117,7 @@ class StandardBuilder extends AbstractBuilder
      *
      * @return bool
      */
-    private function canSaveCard($storeId, $currentCard, $customerId)
+    private function canSaveCard(int $storeId, ?string $currentCard, ?int $customerId): bool
     {
         if (!$this->isOneClick($storeId)) {
             return false;
@@ -141,8 +141,8 @@ class StandardBuilder extends AbstractBuilder
      *
      * @return bool
      */
-    private function isOneClick($storeId)
+    private function isOneClick(int $storeId): bool
     {
-        return $this->payplugConfig->isOneClick((int)$storeId);
+        return $this->payplugConfig->isOneClick($storeId);
     }
 }

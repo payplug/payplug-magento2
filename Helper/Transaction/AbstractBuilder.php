@@ -69,7 +69,7 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build customer data
      */
-    public function buildCustomerData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildCustomerData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
     {
         $language = $this->payplugConfig->getConfigValue(
             'code',
@@ -183,7 +183,7 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build order data
      */
-    public function buildOrderData(OrderInterface|OrderAdapterInterface $order, Quote $quote): array
+    public function buildOrderData(OrderInterface|OrderAdapterInterface $order, CartInterface|Quote $quote): array
     {
         $currency = $order->getCurrencyCode();
         $quoteId = $quote->getId();
@@ -210,7 +210,7 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build payment data
      */
-    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
     {
         $quoteId = $quote->getId();
         $storeId = $order->getStoreId();
