@@ -17,6 +17,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderPaymentRepositoryInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\Order\Payment\Repository;
@@ -46,8 +48,8 @@ class Ipn extends AbstractPayment
         private Config $payplugConfig,
         protected OrderPaymentRepository $paymentRepository,
         protected CartRepositoryInterface $cartRepository,
-        protected OrderRepository $orderRepository,
-        protected Repository $magentoPaymentRepository,
+        protected OrderRepositoryInterface $orderRepository,
+        protected OrderPaymentRepositoryInterface $magentoPaymentRepository,
         protected FetchTransactionInformationHandler $fetchTransactionInformationHandler
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
