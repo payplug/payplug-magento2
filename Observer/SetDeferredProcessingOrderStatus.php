@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Observer;
 
-use Payplug\Payments\Gateway\Config\Standard;
-use Payplug\Payments\Helper\Config;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Sales\Model\Order;
+use Magento\Sales\Api\Data\OrderInterface;
+use Payplug\Payments\Gateway\Config\Standard;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Logger\Logger;
 
 class SetDeferredProcessingOrderStatus implements ObserverInterface
@@ -21,7 +21,7 @@ class SetDeferredProcessingOrderStatus implements ObserverInterface
 
     public function execute(Observer $observer): void
     {
-        /** @var Order $order */
+        /** @var OrderInterface $order */
         $order = $observer->getOrder();
 
         if (!$this->config->isStandardPaymentModeDeferred()

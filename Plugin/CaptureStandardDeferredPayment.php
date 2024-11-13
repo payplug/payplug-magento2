@@ -8,12 +8,13 @@ use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
-use Magento\Quote\Model\QuoteRepository;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation;
-use Magento\Sales\Model\OrderRepository;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -27,9 +28,9 @@ class CaptureStandardDeferredPayment
         protected ManagerInterface $eventManager,
         protected MessageManagerInterface $messageManager,
         protected RedirectFactory $redirectFactory,
-        protected QuoteRepository $quoteRepository,
+        protected CartRepositoryInterface $quoteRepository,
         protected OrderPaymentRepository $orderPaymentRepository,
-        protected OrderRepository $orderRepository
+        protected OrderRepositoryInterface $orderRepository
     ) {
     }
 
