@@ -133,7 +133,6 @@ class AutoCaptureDeferredPayments
             $invoice->addComment('Order automatically invoiced and captured after 6 days of authorization.');
             // Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
             $invoice->register();
-            $invoice->save();
 
             $transactionSave = $this->transaction
                 ->addObject($invoice)
