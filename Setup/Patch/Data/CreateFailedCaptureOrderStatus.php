@@ -9,6 +9,7 @@ use Exception;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
+use Magento\Sales\Api\Data\OrderInterface as MagentoOrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Status;
 use Magento\Sales\Model\Order\StatusFactory;

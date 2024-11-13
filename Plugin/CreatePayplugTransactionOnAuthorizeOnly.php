@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Plugin;
 
-use Magento\Quote\Model\QuoteRepository;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Payplug\Exception\UndefinedAttributeException;
 use Payplug\Payments\Gateway\Config\Standard;
@@ -23,7 +23,7 @@ class CreatePayplugTransactionOnAuthorizeOnly
         protected Config $config,
         protected Logger $logger,
         protected StandardBuilder $builder,
-        protected QuoteRepository $quoteRepository,
+        protected CartRepositoryInterface $quoteRepository,
         protected PaymentFactory $payplugPaymentFactory,
         protected OrderPaymentRepository $payplugOrderPaymentRepository,
         protected StandardClient $standardClient
