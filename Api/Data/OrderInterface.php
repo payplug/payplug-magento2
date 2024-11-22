@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Api\Data;
 
-use Magento\Sales\Api\Data\OrderInterface as BaseOrderInterface;
-
-interface OrderInterface extends BaseOrderInterface
+interface OrderInterface
 {
     /**
      * This status is used when a payment capture fail, before invoice creation.

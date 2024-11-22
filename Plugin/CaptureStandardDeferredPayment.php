@@ -11,7 +11,6 @@ use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation;
 use Magento\Sales\Api\OrderRepositoryInterface;

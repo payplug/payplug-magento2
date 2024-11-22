@@ -21,8 +21,6 @@ use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
-use Magento\Sales\Model\Order\Payment\Repository;
-use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
@@ -50,7 +48,8 @@ class Ipn extends AbstractPayment
         protected CartRepositoryInterface $cartRepository,
         protected OrderRepositoryInterface $orderRepository,
         protected OrderPaymentRepositoryInterface $magentoPaymentRepository,
-        protected FetchTransactionInformationHandler $fetchTransactionInformationHandler
+        protected FetchTransactionInformationHandler $fetchTransactionInformationHandler,
+        protected PaymentReturn $paymentReturn
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
@@ -194,7 +193,7 @@ class Ipn extends AbstractPayment
             // We want to process payment IPN for orders not linked to an installment plan
         }
 
-        $standardDeferredQuote = $this->isStandardDeferredPayment($order, $payment);
+        $standardDeferredQuote = $this->getStandardDeferredPayment($order, $payment);
         if (!$payment->is_paid) {
             // If we are actually reviewing a standard deferred payment not yet captured
             if ($standardDeferredQuote) {
@@ -228,7 +227,13 @@ class Ipn extends AbstractPayment
         $this->processOrder($response, $order);
     }
 
-    private function isStandardDeferredPayment(OrderInterface $order, Payment $payment): ?Quote
+    /**
+     * In case of deferred payment, the payplug object only contain the ID Quote, and not the Order informations
+     * So the order retrieved from $payment->metadata['Order']; above do not contain an increment id
+     * Therefore if the incrementId is null and there is an ID Quote, the payment object from payplug has a chance to be a deferred payment
+     * So we check wether it's one or not by retrieving the real quote object.
+     */
+    private function getStandardDeferredPayment(OrderInterface $order, Payment $payment): ?Quote
     {
         if ($order->getIncrementId() || !$payment->metadata['ID Quote']) {
             return null;
@@ -237,7 +242,7 @@ class Ipn extends AbstractPayment
         /** @var Quote $quote */
         $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
         $quotePayment = $quote->getPayment();
-        if ($quotePayment->getMethod() === StandardConfig::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
+        if ($this->paymentReturn->isAuthorizedOnlyStandardPaymentFromMethod($quotePayment->getMethod())) {
             return $quote;
         }
 

@@ -17,7 +17,6 @@ use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Helper\Config;
 
 class Standard extends AbstractPayment
 {
@@ -27,8 +26,7 @@ class Standard extends AbstractPayment
         OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        protected FormKey $formKey,
-        protected Config $config
+        protected FormKey $formKey
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }

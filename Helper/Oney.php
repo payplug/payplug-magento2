@@ -12,7 +12,6 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Locale\Resolver;
 use Magento\Quote\Model\Quote;
-use Magento\Sales\Model\Order\Item;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;

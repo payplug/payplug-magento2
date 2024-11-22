@@ -22,24 +22,22 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
-use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
 use Payplug\Exception\HttpException;
-use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\Amex;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\Bancontact;
+use Payplug\Payments\Gateway\Config\Ideal;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
+use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
-use Payplug\Payments\Gateway\Config\Ideal;
-use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Ondemand as OndemandHelper;
@@ -366,8 +364,8 @@ class Data extends AbstractHelper
             $this->updateOrderPayment($order);
             $this->updateOrderStatus($order, false);
 
-            if(!empty($data)){
-              if(!empty($data['status']) ) {
+            if (!empty($data)) {
+              if (!empty($data['status'])) {
                 $order->setStatus($data['status']);
               }
             }

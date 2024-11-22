@@ -79,7 +79,7 @@ class AutoCaptureDeferredPayments
 
         $deferredPaymentValidationDate = new DateTime();
         // Using the quotePayment additionnal info we filter on the authorization date exceeding or equal to 6 days
-        foreach($quotePayments as $quotePayment) {
+        foreach ($quotePayments as $quotePayment) {
             // Unix timestamp
             $authorizedAtTimestamp = $quotePayment->getAdditionalInformation('authorized_at');
             $deferredPaymentValidationDate->setTimestamp($authorizedAtTimestamp);
@@ -101,7 +101,7 @@ class AutoCaptureDeferredPayments
             ->create();
         $orders = $this->orderRepository->getList($searchOrderCriteria)->getItems();
 
-        foreach($orders as $order) {
+        foreach ($orders as $order) {
             $this->createInvoiceAndCapture($order);
         }
 
@@ -111,12 +111,6 @@ class AutoCaptureDeferredPayments
     public function createInvoiceAndCapture(OrderInterface $order): void
     {
         $orderId = $order->getId();
-
-        if (!$orderId) {
-            $this->logger->info(sprintf('The order id %s does no longer exist. Not capturing.', $orderId));
-
-            return;
-        }
 
         if (!$order->canInvoice()) {
             $this->logger->info(sprintf('The order id %s does not allow an invoice to be create. Not capturing.', $orderId));
@@ -184,12 +178,17 @@ class AutoCaptureDeferredPayments
     public function sendEmail(string $fromMail, string $toMail, string $subject, string $message, int $storeId): void
     {
         $variables['data']['comment'] = $message;
-        $this->transportBuilder->setTemplateIdentifier('auto_capture_email_template')->setTemplateOptions(
-            [
-                'area' => Area::AREA_FRONTEND,
-                'store' => $storeId,
-                'subject' => $subject,
-            ]
-        )->setTemplateVars($variables)->addTo($toMail)->setReplyTo($toMail)->getTransport()->sendMessage();
+        $this->transportBuilder->setTemplateIdentifier('auto_capture_email_template')
+            ->setTemplateOptions(
+                [
+                    'area' => Area::AREA_FRONTEND,
+                    'store' => $storeId,
+                    'subject' => $subject,
+                ]
+            )->setTemplateVars($variables)
+            ->addTo($toMail)
+            ->setReplyTo($toMail)
+            ->getTransport()
+            ->sendMessage();
     }
 }

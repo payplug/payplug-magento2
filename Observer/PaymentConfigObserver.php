@@ -225,16 +225,16 @@ class PaymentConfigObserver implements ObserverInterface
 
 
             $payment_value = null;
-            if(isset($fields['payment_page']['value'])){
+            if (isset($fields['payment_page']['value'])) {
               $payment_value = $fields['payment_page']['value'];
             }
 
-            if(isset($fields['payment_page']['inherit'])){
+            if (isset($fields['payment_page']['inherit'])) {
               $payment_value = $fields['payment_page']['inherit'];
             }
 
-            if ( $payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
-                if ( !isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
+            if ($payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
+                if (!isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
                     $paymentPage = $this->getConfig('payment_page');
                     if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
                         $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
@@ -414,7 +414,7 @@ class PaymentConfigObserver implements ObserverInterface
                 }
 
                 // If customer loggedin && have permissions
-                if($isActive) {
+                if ($isActive) {
                     $storeId = (int)$this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
@@ -428,7 +428,7 @@ class PaymentConfigObserver implements ObserverInterface
 
                     $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId, Config::CONFIG_PATH, 'oney_');
 
-                    if( !$this->validateThresholdValues($fields, $oney_default_thresholds) ){
+                    if (!$this->validateThresholdValues($fields, $oney_default_thresholds)) {
 
                         $this->messageManager->addErrorMessage(
                             __('The value is not within the specified range.')
@@ -436,11 +436,10 @@ class PaymentConfigObserver implements ObserverInterface
                     }
 
                     // Website scope value
-                    if(isset($groups[$oney]['fields']['oney_min_threshold']['value'])){
+                    if (isset($groups[$oney]['fields']['oney_min_threshold']['value'])) {
                       $min = $groups[$oney]['fields']['oney_min_threshold']['value'];
                       $max = $groups[$oney]['fields']['oney_max_threshold']['value'];
-                    }else{
-
+                    } else {
                       // Inherit value
                       $min = $groups[$oney]['fields']['oney_min_threshold']['inherit'];
                       $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
@@ -482,39 +481,38 @@ class PaymentConfigObserver implements ObserverInterface
 
     private function validateThresholdValues($fields, $oney_thresholds){
 
-        if(isset($fields['oney_min_threshold']["value"])){
+        if (isset($fields['oney_min_threshold']["value"])) {
           $min_threshold = intval($fields['oney_min_threshold']["value"]);
           $max_threshold = intval($fields['oney_max_threshold']["value"]);
         }
 
         // Website scope has on inherit
-        elseif(isset($fields['oney_min_threshold']["inherit"])){
+        elseif (isset($fields['oney_min_threshold']["inherit"])) {
           $min_threshold = intval($fields['oney_min_threshold']["inherit"]);
           $max_threshold = intval($fields['oney_max_threshold']["inherit"]);
 
-        }else{
+        } else {
          return false;
 
         }
 
-        if($oney_thresholds === false){
+        if ($oney_thresholds === false) {
           return false;
         }
 
-        if($min_threshold >= $max_threshold){
+        if ($min_threshold >= $max_threshold) {
             return false;
         }
 
-        if($min_threshold < ($oney_thresholds["min_amount"]/100)){
+        if ($min_threshold < ($oney_thresholds["min_amount"]/100)) {
             return false;
         }
 
-        if($max_threshold > ($oney_thresholds["max_amount"]/100)){
+        if ($max_threshold > ($oney_thresholds["max_amount"]/100)) {
             return false;
         }
 
         return true;
-
     }
 
     /**

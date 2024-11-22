@@ -12,7 +12,6 @@ use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;

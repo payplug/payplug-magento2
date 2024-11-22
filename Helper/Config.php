@@ -242,7 +242,7 @@ class Config extends AbstractHelper
             $scopeId = $this->scopeId;
         }
 
-        if($path === null){
+        if ($path === null) {
             $path = self::CONFIG_PATH;
         }
 
@@ -387,14 +387,14 @@ class Config extends AbstractHelper
         $minAmounts = [];
         $maxAmounts = [];
 
-        if($path===null){
+        if ($path===null) {
             $path=self::CONFIG_PATH;
         }
 
         $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
         $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
 
-        if(empty($minAmountsConfig) || empty($maxAmountsConfig)){
+        if (empty($minAmountsConfig) || empty($maxAmountsConfig)) {
             return false;
         }
 
