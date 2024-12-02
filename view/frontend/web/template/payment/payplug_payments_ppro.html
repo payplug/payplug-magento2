@@ -1,4 +1,4 @@
-<div class="payment-method payplug-ppro-method" data-bind="css: {'_active': (getCode() == isChecked()), 'ppro-unavailable': isPproPlaceOrderDisabled()}, attr: {'data-ppro-container': getCode()}">
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked()), 'ppro-unavailable': isPproPlaceOrderDisabled()}, attr: {'class': getCode()}">
     <div class="payment-method-title field choice">
         <input type="radio"
                name="payment[method]"

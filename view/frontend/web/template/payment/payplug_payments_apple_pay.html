@@ -4,7 +4,7 @@
  * See COPYING.txt for license details.
  */
 -->
-<div class="payment-method payplug-apple-pay-method" data-bind="css: {'_active': (getCode() == isChecked())}, visible: isVisible()">
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}, visible: isVisible(), attr: {'class': getCode()}">
     <div class="payment-method-title field choice">
         <input type="radio"
                name="payment[method]"

@@ -4,13 +4,13 @@
  * See COPYING.txt for license details.
  */
 -->
-<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}, attr: {'class': getCode()}"">
     <div class="payment-method-title field choice">
         <input type="radio"
                name="payment[method]"
                class="radio"
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()">
-        <label data-bind="attr: {'for': getCode()}" class="label"><img style="margin-right: 10px;" data-bind="attr: {src: getCardLogo()}"><span data-bind="text: getTitle()"></span></label>
+        <label data-bind="attr: {'for': getCode()}" class="label"><img data-bind="attr: {src: getCardLogo()}"><span data-bind="text: getTitle()"></span></label>
         <!-- ko if: canDisplayCardsInTitle() -->
             <ul class="payplug-payments-cards">
                 <!-- ko foreach: getCards() -->
