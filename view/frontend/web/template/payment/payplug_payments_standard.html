@@ -70,22 +70,37 @@
                             <input type="radio"
                                    name="scheme"
                                    value="visa"
-                                   data-card-type="VISA" /><span></span>
+                                   data-card-type="VISA" />
+                            <span></span>
                         </label>
                         <label class="scheme"
                                title="Mastercard">
                             <input type="radio"
                                    name="scheme"
                                    value="mastercard"
-                                   data-card-type="MASTERCARD" /><span></span>
+                                   data-card-type="MASTERCARD" />
+                            <span></span>
                         </label>
+                        <!-- ko ifnot: window.checkoutConfig.payment.payplug_payments_standard.locale_code == 'it_IT' -->
                         <label class="scheme"
                                title="CB">
                             <input type="radio"
                                    name="scheme"
                                    value="cb"
-                                   data-card-type="CARTE_BLEUE" /><span></span>
+                                   data-card-type="CARTE_BLEUE" />
+                            <span></span>
                         </label>
+                        <!-- /ko -->
+                        <!-- ko if: window.checkoutConfig.payment.payplug_payments_standard.locale_code == 'it_IT' -->
+                        <label class="scheme"
+                               title="Postepay">
+                            <input type="radio"
+                                    name="scheme"
+                                    value="postepay"
+                                    data-card-type="POSTEPAY" />
+                            <span></span>
+                        </label>
+                        <!-- /ko -->
                     </div>
                 </div>
                 <div class="pan-input-container input-container"></div>
