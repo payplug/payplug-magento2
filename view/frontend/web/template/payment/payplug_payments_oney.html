@@ -1,20 +1,42 @@
-<!--
-/**
- * Copyright © Magento, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
--->
-<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked()), 'oney-it': isOneyItalian()}, attr: {'data-oney-container': getCode(), 'class': getCode()}">
+<div class="payment-method"
+     data-bind="
+        css: {
+            '_active': (getCode() == isChecked()), 
+            'oney-it': isOneyItalian()
+        }, attr: {
+            'data-oney-container': getCode(), 
+            'class': getCode()
+        }
+        ">
     <div class="payment-method-title field choice">
         <input type="radio"
                name="payment[method]"
                class="radio"
-               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()">
-        <label data-bind="attr: {'for': getCode()}" class="label label-oney">
-            <img class="oney-logo-checkout" style="margin-right: 10px;" data-bind="attr: {src: getPaymentLogo(), alt: getTitle()}">
-            <span data-bind="i18n: 'Except prepaid cards', attr: {class: getPrepaidMentionClass()}"></span>
+               data-bind="
+                    attr: {
+                        'id': getCode()
+                    }, 
+                    value: getCode(), 
+                    checked: isChecked, 
+                    click: selectPaymentMethod, 
+                    visible: isRadioButtonVisible()
+                ">
+        <label class="label" data-bind="attr: {'for': getCode()}">
+            <img class="oney-logo-checkout"
+                 data-bind="
+                    attr: {
+                        src: getPaymentLogo(), 
+                        alt: getTitle()
+                    }
+                ">
+            <span data-bind="
+                i18n: 'Except prepaid cards', 
+                attr: {class: getPrepaidMentionClass()
+            }
+            "></span>
         </label>
     </div>
+
     <div class="payment-method-content">
         <div class="oney-checkout-error"></div>
         <div class="oneyPayment"></div>
@@ -36,10 +58,10 @@
                 <button class="action primary checkout oney-submit-button"
                         type="submit"
                         data-bind="
-                        click: placeOrder,
-                        attr: {title: $t('Place Order')},
-                        css: {disabled: isOneyPlaceOrderDisabled()},
-                        enable: (getCode() == isChecked()),
+                            click: placeOrder,
+                            attr: {title: $t('Place Order')},
+                            css: {disabled: isOneyPlaceOrderDisabled()},
+                            enable: (getCode() == isChecked()),
                         "
                         disabled>
                     <span data-bind="i18n: 'Place Order'"></span>
@@ -48,4 +70,3 @@
         </div>
     </div>
 </div>
-

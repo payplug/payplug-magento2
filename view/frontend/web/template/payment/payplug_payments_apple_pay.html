@@ -1,20 +1,32 @@
-<!--
-/**
- * Copyright © Magento, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
--->
-<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}, visible: isVisible(), attr: {'class': getCode()}">
+<div class="payment-method"
+     data-bind="
+        css: {
+            '_active': (getCode() == isChecked())
+        }, 
+        visible: isVisible(), 
+        attr: {'class': getCode()}">
     <div class="payment-method-title field choice">
         <input type="radio"
                name="payment[method]"
                class="radio"
-               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()">
-        <label data-bind="attr: {'for': getCode()}" class="label"><img data-bind="attr: {src: getCardLogo()}"><span data-bind="text: getTitle()"></span></label>
+               data-bind="
+                    attr: {
+                        'id': getCode()
+                    }, 
+                    value: getCode(), 
+                    checked: isChecked, 
+                    click: selectPaymentMethod, 
+                    visible: isRadioButtonVisible()
+                ">
+        <label class="label" data-bind="attr: {'for': getCode()}">
+            <img data-bind="attr: {src: getCardLogo()}">
+            <span data-bind="text: getTitle()"></span>
+        </label>
     </div>
     <div class="payment-method-content">
         <!-- ko if: applePayDisabledMessage() -->
-        <p class="apple-pay-checkout-error" data-bind="text: applePayDisabledMessage()"></p>
+        <p class="apple-pay-checkout-error"
+           data-bind="text: applePayDisabledMessage()"></p>
         <!-- /ko -->
 
         <!-- ko foreach: getRegion('messages') -->
@@ -32,9 +44,15 @@
         </div>
         <div class="actions-toolbar">
             <div class="primary">
-                <apple-pay-button buttonstyle="black" type="pay" data-bind="attr: {'locale': getApplePayLocale()}, afterRender: bindButtonClick()"></apple-pay-button>
+                <apple-pay-button buttonstyle="black"
+                    type="pay"
+                    data-bind="
+                        attr: {
+                            'locale': getApplePayLocale()}, 
+                            afterRender: bindButtonClick()
+                    ">
+                </apple-pay-button>
             </div>
         </div>
     </div>
 </div>
-
