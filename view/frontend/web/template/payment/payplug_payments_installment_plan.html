@@ -22,7 +22,13 @@
                 ">
         <label class="label" data-bind="attr: {'for': getCode()}">
             <span data-bind="text: getTitle()"></span>
-            <img data-bind="attr: {src: getCardLogo()}">
+            <img data-bind="
+                attr: {
+                    'src': getCardLogo()
+                }"
+                width="208"
+                height="34"
+            >
         </label>
     </div>
 
