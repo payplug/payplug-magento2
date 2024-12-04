@@ -39,21 +39,19 @@
                     display: block;
                 }
             }
+
+            .prepaid-card-mention {
+                display: none;
+        
+                &.visible {
+                    display: inline-block;
+                }
+            }
         }
     }
 
-    .bancontact-checkout-error,
-    .apple-pay-checkout-error,
-    .amex-checkout-error {
+    .payment-method-error {
         margin-bottom: 15px;
         color: @payplug-error;
-    }
-
-    .prepaid-card-mention {
-        display: none;
-
-        &.visible {
-            display: inline-block;
-        }
     }
 }
