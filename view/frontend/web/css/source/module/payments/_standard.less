@@ -12,7 +12,7 @@
     }
     
     .form-integrated {
-        width: @form-integrated-width;
+        width: @payment-integrated-form__width;
         margin: 0 auto 30px;
     
         .integrated-container.after-cards & {
@@ -85,7 +85,7 @@
         .input-container {
             position: relative;
             height: 40px;
-            width: calc(@form-integrated-width - 16px - 50px);
+            width: calc(@payment-integrated-form__width - 16px - 50px);
             padding: 0 16px 0 50px;
             border: 1px solid @oney-color6;
     
@@ -143,15 +143,15 @@
     
         .exp-cvv-container {
             display: flex;
-            gap: @form-integrated-exp-cvv-gap;
+            gap: @payment-integrated-form-cvv__gap;
             justify-content: space-between;
             margin-top: 10px;
     
             > div {
-                width: calc(@form-integrated-width / 2 - @form-integrated-exp-cvv-gap);
+                width: calc(@payment-integrated-form__width / 2 - @payment-integrated-form-cvv__gap);
     
                 .input-container {
-                    width: calc(@form-integrated-width / 2 - @form-integrated-exp-cvv-gap - 16px - 50px);
+                    width: calc(@payment-integrated-form__width / 2 - @payment-integrated-form-cvv__gap - 16px - 50px);
                 }
             }
         }
