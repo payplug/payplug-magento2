@@ -9,8 +9,8 @@
                 display: flex;
                 align-items: center;
                 width: 100%;
-                padding: 0;
-                gap: @payment-method-label__gap;
+                padding: 0 @checkout-payment-method-title-mobile__padding;
+                gap: @pp-checkout-payment-method-label__gap;
                 box-sizing: border-box;
             }
     
@@ -24,14 +24,14 @@
                 justify-content: space-between;
                 flex-wrap: wrap;
                 flex: 1;
-                padding: @payment-method-label__padding-y 0;
-                gap: @payment-method-label__gap;
+                padding: @pp-checkout-payment-method-label__padding-y 0;
+                gap: @pp-checkout-payment-method-label__gap;
     
                 img {
-                    max-height: @payment-method-logo__max-height;
+                    max-height: @pp-checkout-payment-method-logo__max-height;
                     width: auto;
-                    padding: @payment-method-logo__padding;
-                    background: @payment-method-logo__background-color;
+                    padding: @pp-checkout-payment-method-logo__padding;
+                    background: @pp-checkout-payment-method-logo__background-color;
                     box-sizing: border-box;
                 }
             }
@@ -54,6 +54,6 @@
 
     .payment-method-error {
         margin-bottom: 15px;
-        color: @payplug-error;
+        color: @pp-error__color;
     }
 }
