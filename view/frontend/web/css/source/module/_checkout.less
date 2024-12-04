@@ -3,39 +3,41 @@
 //  _____________________________________________
 
 & when (@media-common = true) {
-    [class*="payplug_payments_"] {
-        .payment-method-title {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            gap: 10px;
-            box-sizing: border-box;
-        }
-
-        input[type="radio"] {
-            margin: 0;
-        }
-
-        .label {
-            display: inline-flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            flex: 1;
-            gap: 10px;
-
-            img {
-                max-height: 36px;
-                width: auto;
-                padding: 4px;
-                background: white;
+    .payment-method {
+        &[class*="payplug_payments_"] {
+            .payment-method-title {
+                display: flex;
+                align-items: center;
+                width: 100%;
+                gap: 10px;
                 box-sizing: border-box;
             }
-        }
-
-        &._active {
-            .payment-method-content {
-                display: block;
+    
+            input[type="radio"] {
+                margin: 0;
+            }
+    
+            .label {
+                display: inline-flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                flex: 1;
+                gap: 10px;
+    
+                img {
+                    max-height: 36px;
+                    width: auto;
+                    padding: 4px;
+                    background: white;
+                    box-sizing: border-box;
+                }
+            }
+    
+            &._active {
+                .payment-method-content {
+                    display: block;
+                }
             }
         }
     }
