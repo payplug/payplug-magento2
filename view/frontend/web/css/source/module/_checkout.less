@@ -64,3 +64,17 @@
         color: @pp-error__color;
     }
 }
+
+//
+//  Desktop
+//  _____________________________________________
+
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
+    .payment-method {
+        &[class*="payplug_payments_"] {
+            .payment-method-title {
+                padding: 0;
+            }
+        }
+    }
+}
