@@ -22,6 +22,7 @@
                     visible: isRadioButtonVisible()
                 ">
         <label class="label" data-bind="attr: {'for': getCode()}">
+            <span data-bind="text: getTitle()"></span>
             <img class="oney-logo-checkout"
                  data-bind="
                     attr: {
@@ -29,7 +30,6 @@
                         alt: getTitle()
                     }
                 ">
-            <span data-bind="text: getTitle()"></span>
             <span data-bind="
                 i18n: 'Except prepaid cards', 
                 attr: {class: getPrepaidMentionClass()

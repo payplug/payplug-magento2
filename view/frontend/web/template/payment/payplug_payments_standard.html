@@ -20,8 +20,8 @@
                 visible: isRadioButtonVisible()
             ">
         <label class="label" data-bind="attr: {'for': getCode()}">
-            <img data-bind="attr: {src: getCardLogo()}">
             <span data-bind="text: getTitle()"></span>
+            <img data-bind="attr: {src: getCardLogo()}">
         </label>
         <!-- ko if: canDisplayCardsInTitle() -->
         <ul class="payplug-payments-cards">
