@@ -10,8 +10,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
-use Magento\Quote\Model\Quote;
-use Magento\Store\Model\ScopeInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Sales\Api\Data\OrderInterface;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
@@ -35,16 +35,16 @@ class StandardBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
-        $storeId = $order->getStoreId();
-        $customerCardId = $payment->getAdditionalInformation('payplug_payments_customer_card_id');
+        $storeId = (int)$order->getStoreId();
+        $customerCardId = (int)$payment->getAdditionalInformation('payplug_payments_customer_card_id');
         $payment->unsAdditionalInformation('payplug_payments_customer_card_id');
 
-        $currentCard = $this->getCustomerCardToken($customerCardId, $order->getCustomerId());
-        $paymentData['allow_save_card'] = $this->canSaveCard($storeId, $currentCard, $order->getCustomerId());
+        $currentCard = $this->getCustomerCardToken($customerCardId, (int)$order->getCustomerId());
+        $paymentData['allow_save_card'] = $this->canSaveCard($storeId, $currentCard, (int)$order->getCustomerId());
 
         if ($this->isOneClick($storeId) && $currentCard != null) {
             $paymentData['payment_method'] = $currentCard;
@@ -56,7 +56,26 @@ class StandardBuilder extends AbstractBuilder
             }
         }
 
+        // Manage the deferred paiement mode
+        if ($this->payplugConfig->isStandardPaymentModeDeferred()) {
+            $paymentData['auto_capture'] = false;
+        }
+
         return $paymentData;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
+    {
+        $amountData = parent::buildAmountData($order);
+        if ($this->payplugConfig->isStandardPaymentModeDeferred()) {
+            $amountData['authorized_amount'] = $amountData['amount'];
+            unset($amountData['amount']);
+        }
+
+        return $amountData;
     }
 
     /**
@@ -69,7 +88,7 @@ class StandardBuilder extends AbstractBuilder
      *
      * @throws PaymentException
      */
-    private function getCustomerCardToken($customerCardId, $customerId)
+    private function getCustomerCardToken(?int $customerCardId, ?int $customerId): ?string
     {
         if (empty($customerCardId)) {
             return null;
@@ -97,7 +116,7 @@ class StandardBuilder extends AbstractBuilder
      *
      * @return bool
      */
-    private function canSaveCard($storeId, $currentCard, $customerId)
+    private function canSaveCard(int $storeId, ?string $currentCard, ?int $customerId): bool
     {
         if (!$this->isOneClick($storeId)) {
             return false;
@@ -121,7 +140,7 @@ class StandardBuilder extends AbstractBuilder
      *
      * @return bool
      */
-    private function isOneClick($storeId)
+    private function isOneClick(int $storeId): bool
     {
         return $this->payplugConfig->isOneClick($storeId);
     }

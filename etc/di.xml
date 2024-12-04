@@ -1016,5 +1016,11 @@
     <type name="Magento\Sales\Model\Order">
         <plugin name="payplug_payment_sales_model_order_plugin" type="Payplug\Payments\Plugin\Order\ModelPlugin" sortOrder="1"/>
     </type>
+    <type name="Magento\Sales\Model\Order\Payment\Operations\AuthorizeOperation">
+        <plugin name="payplug_payment_create_payplug_transaction_on_authorize_only_plugin" type="Payplug\Payments\Plugin\CreatePayplugTransactionOnAuthorizeOnly" sortOrder="1"/>
+    </type>
+    <type name="Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation">
+        <plugin name="payplug_payment_capture_standard_deferred_payment" type="Payplug\Payments\Plugin\CaptureStandardDeferredPayment" sortOrder="1"/>
+    </type>
 
 </config>

@@ -30,11 +30,6 @@
                     <source_model>Payplug\Payments\Model\Config\Source\PaymentPage</source_model>
                     <comment>The Embedded Payment display is only compatible with a standardized checkout page that meets the Magento guidelines. Some checkout customizations will not allow the feature to work (changing the “Place order” button, etc.).</comment>
                 </field>
-                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Invoice on payment validation</label>
-                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
                 <field id="test_api_key"/>
                 <field id="live_api_key"/>
                 <field id="min_amounts"/>
@@ -76,11 +71,26 @@
                     <label>One-click payment</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="payment_action" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credit Card Payment Mode</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\AuthorizationType</source_model>
+                    <comment><![CDATA[<span style="color:green;">Authorization & Capture</span> mean that the order is captured automatically as soon as it is authorized.</br><span style="color:blue;">Authorization only</span> mean that the order require your approval to be captured even after authorization.]]></comment>
+                </field>
+                <field id="authorized_order_status" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Authorized order status</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Authorized</source_model>
+                    <depends>
+                        <field id="payment_action">authorize</field>
+                    </depends>
+                </field>
+                <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
+                    <depends>
+                        <field id="payment_action">authorize_capture</field>
+                    </depends>
                 </field>
-                <field id="canceled_order_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="canceled_order_status" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
