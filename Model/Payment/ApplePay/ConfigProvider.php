@@ -59,7 +59,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         return $this->method->isAvailable() ? [
             'payment' => [
                 $this->methodCode => [
-                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/apple_pay.svg'),
+                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/logos/apple_pay.svg'),
                     'locale' => str_replace(
                         '_',
                         '-',
