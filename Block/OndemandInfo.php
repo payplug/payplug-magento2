@@ -6,6 +6,7 @@ namespace Payplug\Payments\Block;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Element\Template\Context;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 
@@ -48,7 +49,7 @@ class OndemandInfo extends Info
 
         foreach ($orderPayments as $orderPayment) {
             try {
-                $payment = $orderPayment->retrieve($order->getStoreId());
+                $payment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
                 $paymentInfoDetails = $this->buildPaymentDetails($payment, $order);
 
                 $paymentInfo = [

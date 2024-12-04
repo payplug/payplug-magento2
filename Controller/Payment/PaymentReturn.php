@@ -13,6 +13,7 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
@@ -54,7 +55,7 @@ class PaymentReturn extends AbstractPayment
             $order = $this->salesOrderFactory->create();
             $order->loadByIncrementId((string)$lastIncrementId);
 
-            $payment = $this->payplugHelper->getOrderPayment((string)$lastIncrementId)->retrieve();
+            $payment = $this->payplugHelper->getOrderPayment((string)$lastIncrementId)->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
             // If this is the deferred standard paiement then return the user on the success checkout
             if (!$payment->is_paid && $this->isAuthorizedOnlyStandardPayment($order)) {

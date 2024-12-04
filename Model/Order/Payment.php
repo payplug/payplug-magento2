@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Model\Order;
 
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 
 class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
@@ -253,9 +254,9 @@ class Payment extends \Magento\Framework\Model\AbstractModel implements \Magento
      *
      * @return \Payplug\Resource\Payment
      */
-    public function retrieve($store = null)
+    public function retrieve($store = null, ?string $scope = ScopeInterface::SCOPE_STORE)
     {
-        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox(), $scope);
 
         return \Payplug\Payment::retrieve($this->getPaymentId());
     }

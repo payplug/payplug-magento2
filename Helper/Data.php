@@ -27,6 +27,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\HttpException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\Amex;
@@ -388,7 +389,7 @@ class Data extends AbstractHelper
     {
       $orderPayment = $this->getPaymentForOrder($order);
 
-      return $orderPayment->retrieve($storeId);
+      return $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
     }
 
     /**
@@ -418,7 +419,7 @@ class Data extends AbstractHelper
             if ($orderPayment === null) {
                 return;
             }
-            $payplugPayment = $orderPayment->retrieve($storeId);
+            $payplugPayment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             if ($payplugPayment->failure &&
                 $payplugPayment->failure->code &&
                 strtolower($payplugPayment->failure->code ?? '') !== 'timeout'
@@ -450,7 +451,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         if ($order->getPayment()->getMethod() === InstallmentPlan::METHOD_CODE) {
             $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
-            $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -585,7 +586,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
         if ($cancelPayment) {
-            $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -603,7 +604,7 @@ class Data extends AbstractHelper
             }
         }
         $orderInstallmentPlan->abort($storeId);
-        $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+        $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
@@ -901,7 +902,7 @@ class Data extends AbstractHelper
             $payment = $this->getOrderPayment($order->getIncrementId());
         }
         /** @var Payment|OrderInstallmentPlan $payplugPayment */
-        $payplugPayment = $payment->retrieve($order->getStoreId());
+        $payplugPayment = $payment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
         if ($payplugPayment->failure) {
             return true;

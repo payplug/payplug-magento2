@@ -14,6 +14,7 @@ use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -69,7 +70,7 @@ class CaptureStandardDeferredPayment
 
         try {
             $payplugPayment = $this->orderPaymentRepository->get($payplugPaymentId, 'payment_id');
-            $paymentCapture = $payplugPayment->retrieve();
+            $paymentCapture = $payplugPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             $paymentObject = $paymentCapture->capture();
             if ($paymentObject) {
                 $magentoPayment->setBaseAmountPaidOnline((float)$quotePayment->getAdditionalInformation('authorized_amount') / 100);

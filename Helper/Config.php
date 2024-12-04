@@ -129,9 +129,9 @@ class Config extends AbstractHelper
     /**
      * Set API secret key
      */
-    public function setPayplugApiKey(?int $storeId, bool $isSandbox): void
+    public function setPayplugApiKey(?int $storeId, bool $isSandbox, ?string $scope = ScopeInterface::SCOPE_STORE): void
     {
-        $key = $this->getApiKey($isSandbox, $storeId);
+        $key = $this->getApiKey($isSandbox, $storeId, $scope);
 
         if (!empty($key)) {
             Payplug::init(['secretKey' => $key, 'apiVersion' => '2019-08-06']);
@@ -141,14 +141,14 @@ class Config extends AbstractHelper
     /**
      * Check if account is connected
      */
-    public function isConnected(): bool
+    public function isConnected(?string $scope = '', ?int $storeId = null): bool
     {
-        $email = $this->getConfigValue('email');
+        $email = $this->getConfigValue('email', $scope, $storeId);
         if ($this->scope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
             return (bool) $email;
         }
 
-        $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT);
+        $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
 
         return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
     }
@@ -156,9 +156,9 @@ class Config extends AbstractHelper
     /**
      * Retrieve api key
      */
-    public function getApiKey(?bool $isSandbox, ?int $storeId = null): ?string
+    public function getApiKey(?bool $isSandbox, ?int $storeId = null, ?string $scope = ScopeInterface::SCOPE_STORE): ?string
     {
-        return $isSandbox ? $this->getConfigValue('test_api_key', ScopeInterface::SCOPE_STORE, $storeId) : $this->getConfigValue('live_api_key', ScopeInterface::SCOPE_STORE, $storeId);
+        return $isSandbox ? $this->getConfigValue('test_api_key', $scope, $storeId) : $this->getConfigValue('live_api_key', $scope, $storeId);
     }
 
     /**

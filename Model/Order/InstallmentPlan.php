@@ -2,6 +2,7 @@
 
 namespace Payplug\Payments\Model\Order;
 
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 
 class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
@@ -160,9 +161,9 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
      *
      * @return \Payplug\Resource\InstallmentPlan
      */
-    public function retrieve($store = null)
+    public function retrieve($store = null, ?string $scope = ScopeInterface::SCOPE_STORE)
     {
-        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox());
+        $this->payplugConfig->setPayplugApiKey((int)$store, $this->isSandbox(), $scope);
 
         return \Payplug\InstallmentPlan::retrieve($this->getInstallmentPlanId());
     }

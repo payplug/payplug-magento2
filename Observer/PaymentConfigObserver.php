@@ -418,15 +418,15 @@ class PaymentConfigObserver implements ObserverInterface
                     $storeId = (int)$this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
-                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
+                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
 
-                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
+                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
 
-                    $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId, Config::CONFIG_PATH, 'oney_');
+                    $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, null, Config::CONFIG_PATH, 'oney_');
 
                     if (!$this->validateThresholdValues($fields, $oney_default_thresholds)) {
 
