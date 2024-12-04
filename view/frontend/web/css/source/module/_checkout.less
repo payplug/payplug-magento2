@@ -9,7 +9,8 @@
                 display: flex;
                 align-items: center;
                 width: 100%;
-                gap: 10px;
+                padding: 0;
+                gap: @payment-method-label__gap;
                 box-sizing: border-box;
             }
     
@@ -23,13 +24,14 @@
                 justify-content: space-between;
                 flex-wrap: wrap;
                 flex: 1;
-                gap: 10px;
+                padding: @payment-method-label__padding-y 0;
+                gap: @payment-method-label__gap;
     
                 img {
-                    max-height: 36px;
+                    max-height: @payment-method-logo__max-height;
                     width: auto;
-                    padding: 4px;
-                    background: white;
+                    padding: @payment-method-logo__padding;
+                    background: @payment-method-logo__background-color;
                     box-sizing: border-box;
                 }
             }
