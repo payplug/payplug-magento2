@@ -8,8 +8,8 @@
             .payment-method-title {
                 display: flex;
                 align-items: center;
+                flex-wrap: wrap;
                 width: 100%;
-                padding: 0 @checkout-payment-method-title-mobile__padding;
                 gap: @pp-checkout-payment-method-label__gap;
                 box-sizing: border-box;
             }
@@ -31,7 +31,6 @@
                 justify-content: space-between;
                 flex-wrap: wrap;
                 flex: 1;
-                padding: @pp-checkout-payment-method-label__padding-y 0;
                 gap: @pp-checkout-payment-method-label__gap;
     
                 img {
@@ -59,6 +58,12 @@
         }
     }
 
+    .payment-method-content {
+        .actions-toolbar {
+            margin-top: 10px;
+        }
+    }
+
     .payment-method-error {
         margin-bottom: 15px;
         color: @pp-error__color;
@@ -74,6 +79,10 @@
         &[class*="payplug_payments_"] {
             .payment-method-title {
                 padding: 0;
+            }
+
+            .label {
+                padding: @pp-checkout-payment-method-label-desktop__padding-y 0;
             }
         }
     }

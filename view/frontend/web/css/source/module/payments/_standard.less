@@ -3,21 +3,10 @@
 //  _____________________________________________
 
 & when (@media-common = true) {
-    .payplug-payments-cards {
-        list-style: none;
-    
-        .card-last4 {
-            font-weight: bold;
-        }
-    }
-    
     .form-integrated {
         width: @pp-payment-integrated-form__width;
-        margin: 0 auto 30px;
-    
-        .integrated-container.after-cards & {
-            margin-left: 40px;
-        }
+        padding-left: @pp-payment-integrated-form__padding-left;
+        margin-bottom: @pp-payment-integrated-form__margin-bottom;
     
         .schemes-container {
             display: flex;
@@ -194,6 +183,44 @@
         }
     }
 
+    .integrated-container {
+        &.after-cards {
+            margin-top: -(@indent__base);
+
+            .form-integrated {
+                padding-left: 40px;
+            }
+        }
+    }
+
+    // Saved cards
+    .payplug-payments-cards {
+        .lib-list-reset-styles();
+        width: 100%;
+
+        > li {
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: @pp-checkout-payment-method-label__gap;
+            padding-left: @pp-payment-integrated-form__padding-left;
+            margin-bottom: @pp-checkout-saved-cards-item__margin-bottom;
+
+            label {
+                display: inline-block;
+
+                span, img {
+                    vertical-align: middle;
+                }
+            }
+        }
+
+        .card-last4 {
+            font-weight: bold;
+        }
+    }
+
     //  Rewrite margins definition
     //  to bypass rule .onestepcheckout-index-index .page-main .aw-onestep-main .payment-method-content * {margin: 0;}
     .onestepcheckout-index-index {
@@ -225,6 +252,20 @@
 
 .media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
     .form-integrated {
-        margin: 0 0 30px;
+        padding-left: 0;
+    }
+
+    .integrated-container {
+        &.after-cards {
+            margin-top: 0;
+
+            .form-integrated {
+                padding-left: @pp-payment-integrated-form__padding-left;
+            }
+        }
+    }
+
+    .payplug-payments-cards {
+        margin-top: -(@pp-checkout-payment-method-label-desktop__padding-y);
     }
 }
