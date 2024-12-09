@@ -177,7 +177,7 @@ class PaymentConfigObserver implements ObserverInterface
 
         $this->checkWebsiteScopeData($groups, $fields);
 
-        //determine which kind of config is this call
+        // Determine which kind of config is this call
         $isInit = false;
         $isLive = false;
         if (isset($fields['email']['value'])) {
@@ -225,16 +225,16 @@ class PaymentConfigObserver implements ObserverInterface
 
 
             $payment_value = null;
-            if(isset($fields['payment_page']['value'])){
+            if (isset($fields['payment_page']['value'])) {
               $payment_value = $fields['payment_page']['value'];
             }
 
-            if(isset($fields['payment_page']['inherit'])){
+            if (isset($fields['payment_page']['inherit'])) {
               $payment_value = $fields['payment_page']['inherit'];
             }
 
-            if ( $payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
-                if ( !isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
+            if ($payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
+                if (!isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
                     $paymentPage = $this->getConfig('payment_page');
                     if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
                         $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
@@ -413,41 +413,40 @@ class PaymentConfigObserver implements ObserverInterface
                     }
                 }
 
-                //if customer loggedin && have permissions
-                if($isActive) {
-                    $storeId = $this->storeManager->getStore()->getId();
+                // If customer loggedin && have permissions
+                if ($isActive) {
+                    $storeId = (int)$this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
-                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
+                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
 
-                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, $storeId, Config::CONFIG_PATH);
+                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
 
-                    $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, $storeId, Config::CONFIG_PATH, 'oney_');
+                    $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, null, Config::CONFIG_PATH, 'oney_');
 
-                    if( !$this->validateThresholdValues($fields, $oney_default_thresholds) ){
+                    if (!$this->validateThresholdValues($fields, $oney_default_thresholds)) {
 
                         $this->messageManager->addErrorMessage(
                             __('The value is not within the specified range.')
                         );
                     }
 
-                    //website scope value
-                    if(isset($groups[$oney]['fields']['oney_min_threshold']['value'])){
+                    // Website scope value
+                    if (isset($groups[$oney]['fields']['oney_min_threshold']['value'])) {
                       $min = $groups[$oney]['fields']['oney_min_threshold']['value'];
                       $max = $groups[$oney]['fields']['oney_max_threshold']['value'];
-                    }else{
-
-                      //inherit value
+                    } else {
+                      // Inherit value
                       $min = $groups[$oney]['fields']['oney_min_threshold']['inherit'];
                       $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
                     }
 
 
-                    //save thresholds on the same format as general/oney_max_amount
+                    // Save thresholds on the same format as general/oney_max_amount
                     $this->saveOneyConfig('oney_min_amounts', preg_replace(
                             "/(?<=:).*$/i",
                             $min * 100,
@@ -482,39 +481,38 @@ class PaymentConfigObserver implements ObserverInterface
 
     private function validateThresholdValues($fields, $oney_thresholds){
 
-        if(isset($fields['oney_min_threshold']["value"])){
+        if (isset($fields['oney_min_threshold']["value"])) {
           $min_threshold = intval($fields['oney_min_threshold']["value"]);
           $max_threshold = intval($fields['oney_max_threshold']["value"]);
         }
 
-        //website scope has on inherit
-        elseif(isset($fields['oney_min_threshold']["inherit"])){
+        // Website scope has on inherit
+        elseif (isset($fields['oney_min_threshold']["inherit"])) {
           $min_threshold = intval($fields['oney_min_threshold']["inherit"]);
           $max_threshold = intval($fields['oney_max_threshold']["inherit"]);
 
-        }else{
+        } else {
          return false;
 
         }
 
-        if($oney_thresholds === false){
+        if ($oney_thresholds === false) {
           return false;
         }
 
-        if($min_threshold >= $max_threshold){
+        if ($min_threshold >= $max_threshold) {
             return false;
         }
 
-        if($min_threshold < ($oney_thresholds["min_amount"]/100)){
+        if ($min_threshold < ($oney_thresholds["min_amount"]/100)) {
             return false;
         }
 
-        if($max_threshold > ($oney_thresholds["max_amount"]/100)){
+        if ($max_threshold > ($oney_thresholds["max_amount"]/100)) {
             return false;
         }
 
         return true;
-
     }
 
     /**

@@ -8,6 +8,7 @@ use Magento\Framework\Exception\PaymentException;
 use Magento\Payment\Gateway\Data\Order\OrderAdapterFactory;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Http\OndemandClient;
 use Payplug\Payments\Helper\Transaction\OndemandBuilder;
 use Payplug\Payments\Logger\Logger;
@@ -90,7 +91,7 @@ class Ondemand extends AbstractHelper
             throw new PaymentException(__('Unable to find payment linked to order %1', $order->getIncrementId()));
         }
 
-        $payplugPayment = $lastOrderPayment->retrieve($order->getStoreId());
+        $payplugPayment = $lastOrderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
         if ($payplugPayment->is_paid) {
             $exceptionMessage = 'Last payment %1 has already been paid. ' .
                 'Please wait for the automatic notification or update the payment manually.';

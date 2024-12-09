@@ -77,6 +77,16 @@
                                 background-image: url('Payplug_Payments::images/icons/cb.svg');
                             }
                         }
+
+                        &[value="postepay"] {
+                            + span {
+                                background-image: url('Payplug_Payments::images/icons/postepay-dark.svg');
+                            }
+    
+                            &:checked + span {
+                                background-image: url('Payplug_Payments::images/icons/postepay.svg');
+                            }
+                        }
                     }
                 }
             }

@@ -4,20 +4,42 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Checkout\Model\Session;
+use Magento\Framework\App\Action\Context;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
+use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Logger\Logger;
 use Payplug\Resource\Payment;
 
 class PaymentReturn extends AbstractPayment
 {
+    public function __construct(
+        Context $context,
+        Session $checkoutSession,
+        OrderFactory $salesOrderFactory,
+        Logger $logger,
+        Data $payplugHelper,
+        protected Config $config,
+        protected CartRepositoryInterface $cartRepository
+    ) {
+        parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
+    }
+
     /**
      * Handle return from PayPlug payment page
      */
-    public function execute(): Redirect|ResultInterface
+    public function execute(): Redirect|ResultInterface|Json
     {
         $resultRedirect = $this->resultRedirectFactory->create();
 
@@ -25,16 +47,20 @@ class PaymentReturn extends AbstractPayment
         $redirectUrlCart = 'checkout/cart';
         try {
             $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
-
             if (!$lastIncrementId) {
                 $this->logger->error('Could not retrieve last order id');
 
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
             $order = $this->salesOrderFactory->create();
-            $order->loadByIncrementId($lastIncrementId);
+            $order->loadByIncrementId((string)$lastIncrementId);
 
-            $payment = $this->payplugHelper->getOrderPayment($lastIncrementId)->retrieve();
+            $payment = $this->payplugHelper->getOrderPayment((string)$lastIncrementId)->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+
+            // If this is the deferred standard paiement then return the user on the success checkout
+            if (!$payment->is_paid && $this->isAuthorizedOnlyStandardPayment($order)) {
+                return $resultRedirect->setPath($redirectUrlSuccess);
+            }
 
             if (!$payment->is_paid && !$this->isOneyPending($payment)) {
                 $this->payplugHelper->cancelOrderAndInvoice($order);
@@ -101,5 +127,21 @@ class PaymentReturn extends AbstractPayment
         }
 
         return false;
+    }
+
+    /**
+     * Return true if the paiement methode was standard deferred
+     */
+    public function isAuthorizedOnlyStandardPayment(?OrderInterface $order): bool
+    {
+        return $this->isAuthorizedOnlyStandardPaymentFromMethod($order?->getPayment()?->getMethod());
+    }
+
+    /**
+     * Return true if the paiement methode was standard deferred
+     */
+    public function isAuthorizedOnlyStandardPaymentFromMethod(?string $method): bool
+    {
+        return $method === StandardConfig::METHOD_CODE && $this->config->isStandardPaymentModeDeferred();
     }
 }

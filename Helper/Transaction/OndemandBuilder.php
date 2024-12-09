@@ -10,7 +10,9 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Ondemand;
@@ -36,7 +38,7 @@ class OndemandBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
         unset($paymentData['hosted_payment']['return_url']);
@@ -95,7 +97,7 @@ class OndemandBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildTransaction(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildTransaction(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
     {
         $transaction = parent::buildTransaction($order, $payment, $quote);
 
