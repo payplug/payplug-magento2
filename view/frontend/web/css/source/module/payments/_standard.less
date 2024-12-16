@@ -3,21 +3,10 @@
 //  _____________________________________________
 
 & when (@media-common = true) {
-    .payplug-payments-cards {
-        list-style: none;
-    
-        .card-last4 {
-            font-weight: bold;
-        }
-    }
-    
     .form-integrated {
-        width: @form-integrated-width;
-        margin: 0 auto 30px;
-    
-        .integrated-container.after-cards & {
-            margin-left: 40px;
-        }
+        width: @pp-payment-integrated-form__width;
+        padding-left: @pp-payment-integrated-form__padding-left;
+        margin-bottom: @pp-payment-integrated-form__margin-bottom;
     
         .schemes-container {
             display: flex;
@@ -35,12 +24,12 @@
     
             .schemes {
                 .scheme {
-                    cursor: pointer;
+                    &:hover {
+                        cursor: pointer;
+                    }
     
-                    input {
-                        display: none;
-    
-                        + span {
+                    input {    
+                        ~ .icon {
                             display: inline-block;
                             width: 33px;
                             height: 22px;
@@ -49,32 +38,32 @@
                         }
     
                         &[value="visa"] {
-                            + span {
-                                background-image: url('Payplug_Payments::images/icons/visa-dark.svg');
+                            ~ .icon {
+                                background-image: url('Payplug_Payments::images/standard/visa-dark.svg');
                             }
     
-                            &:checked + span {
-                                background-image: url('Payplug_Payments::images/icons/visa.svg');
+                            &:checked ~ .icon {
+                                background-image: url('Payplug_Payments::images/standard/visa.svg');
                             }
                         }
     
                         &[value="mastercard"] {
-                            + span {
-                                background-image: url('Payplug_Payments::images/icons/mastercard-dark.svg');
+                            ~ .icon {
+                                background-image: url('Payplug_Payments::images/standard/mastercard-dark.svg');
                             }
     
-                            &:checked + span {
-                                background-image: url('Payplug_Payments::images/icons/mastercard.svg');
+                            &:checked ~ .icon {
+                                background-image: url('Payplug_Payments::images/standard/mastercard.svg');
                             }
                         }
     
                         &[value="cb"] {
-                            + span {
-                                background-image: url('Payplug_Payments::images/icons/cb-dark.svg');
+                            ~ .icon {
+                                background-image: url('Payplug_Payments::images/standard/cb-dark.svg');
                             }
     
-                            &:checked + span {
-                                background-image: url('Payplug_Payments::images/icons/cb.svg');
+                            &:checked ~ .icon {
+                                background-image: url('Payplug_Payments::images/standard/cb.svg');
                             }
                         }
 
@@ -95,7 +84,7 @@
         .input-container {
             position: relative;
             height: 40px;
-            width: calc(@form-integrated-width - 16px - 50px);
+            width: calc(@pp-payment-integrated-form__width - 16px - 50px);
             padding: 0 16px 0 50px;
             border: 1px solid @oney-color6;
     
@@ -153,15 +142,15 @@
     
         .exp-cvv-container {
             display: flex;
-            gap: @form-integrated-exp-cvv-gap;
+            gap: @pp-payment-integrated-form-cvv__gap;
             justify-content: space-between;
             margin-top: 10px;
     
             > div {
-                width: calc(@form-integrated-width / 2 - @form-integrated-exp-cvv-gap);
+                width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap);
     
                 .input-container {
-                    width: calc(@form-integrated-width / 2 - @form-integrated-exp-cvv-gap - 16px - 50px);
+                    width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap - 16px - 50px);
                 }
             }
         }
@@ -204,6 +193,44 @@
         }
     }
 
+    .integrated-container {
+        &.after-cards {
+            margin-top: -(@indent__base);
+
+            .form-integrated {
+                padding-left: 40px;
+            }
+        }
+    }
+
+    // Saved cards
+    .payplug-payments-cards {
+        .lib-list-reset-styles();
+        width: 100%;
+
+        > li {
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            gap: @pp-checkout-payment-method-label__gap;
+            padding-left: @pp-payment-integrated-form__padding-left;
+            margin-bottom: @pp-checkout-saved-cards-item__margin-bottom;
+
+            label {
+                display: inline-block;
+
+                span, img {
+                    vertical-align: middle;
+                }
+            }
+        }
+
+        .card-last4 {
+            font-weight: bold;
+        }
+    }
+
     //  Rewrite margins definition
     //  to bypass rule .onestepcheckout-index-index .page-main .aw-onestep-main .payment-method-content * {margin: 0;}
     .onestepcheckout-index-index {
@@ -235,6 +262,20 @@
 
 .media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
     .form-integrated {
-        margin: 0 0 30px;
+        padding-left: 0;
+    }
+
+    .integrated-container {
+        &.after-cards {
+            margin-top: 0;
+
+            .form-integrated {
+                padding-left: @pp-payment-integrated-form__padding-left;
+            }
+        }
+    }
+
+    .payplug-payments-cards {
+        margin-top: -(@pp-checkout-payment-method-label-desktop__padding-y);
     }
 }
