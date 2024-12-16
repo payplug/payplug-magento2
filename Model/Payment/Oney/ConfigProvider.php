@@ -54,8 +54,8 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         return $this->method->isAvailable() ? [
             'payment' => [
                 $this->methodCode => [
-                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x.svg'),
-                    'logo_ko' => $this->getViewFileUrl('Payplug_Payments::images/oney/3x4x-alt.svg'),
+                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/logos/oney_3x_4x.svg'),
+                    'logo_ko' => $this->getViewFileUrl('Payplug_Payments::images/logos/oney_3x_4x_alt.svg'),
                     'is_italian' => false,
                     'more_info_url' => $this->oneyHelper->isMerchandItalian() ?
                         $this->oneyHelper->getMoreInfoUrl() : null,

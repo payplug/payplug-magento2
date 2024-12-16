@@ -12,7 +12,6 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Locale\Resolver;
 use Magento\Quote\Model\Quote;
-use Magento\Sales\Model\Order\Item;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;
@@ -372,7 +371,7 @@ class Oney extends AbstractHelper
             $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
         }
 
-        return $this->payplugConfig->getAmountsByCurrency($currency, $storeId, Config::ONEY_CONFIG_PATH, 'oney_' );
+        return $this->payplugConfig->getAmountsByCurrency($currency, (int)$storeId, Config::ONEY_CONFIG_PATH, 'oney_' );
     }
 
     /**
@@ -709,8 +708,8 @@ class Oney extends AbstractHelper
     private function getSimulation($amount, $countryCode, $paymentMethod): Result
     {
         $storeId = $this->storeManager->getStore()->getId();
-        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
-        $this->payplugConfig->setPayplugApiKey($storeId, $isSandbox);
+        $isSandbox = $this->payplugConfig->getIsSandbox((int)$storeId);
+        $this->payplugConfig->setPayplugApiKey((int)$storeId, $isSandbox);
 
         $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
 

@@ -9,6 +9,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Payment;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -120,7 +121,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
                         $orderPayment->setPaymentId($paymentId);
                         $orderPayment->setIsSandbox(!$payplugInstallmentPlan->is_live);
                     }
-                    $payplugPayment = $orderPayment->retrieve($order->getStoreId());
+                    $payplugPayment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
                     if ($payplugPayment->is_paid && !$orderPayment->isInstallmentPlanPaymentProcessed()) {
                         $this->sendOrderEmail($order);

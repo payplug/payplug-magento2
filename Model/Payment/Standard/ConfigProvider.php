@@ -91,6 +91,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
                     'selected_card_id' => $this->getSelectedCardId(),
                     'display_cards_in_container' => $this->shouldDisplayCardsInContainer(),
                     'is_sandbox' => $this->payplugConfig->getIsSandbox(),
+                    'locale_code' => $this->getLocaleCode(),
                 ],
             ],
         ] : [];
@@ -103,14 +104,14 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      */
     public function getCardLogo()
     {
-        $localeCode = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);
+        $localeCode = $this->getLocaleCode();
         $filename = 'payment-cards';
 
         if ($localeCode == 'it_IT') {
             $filename .= '-it';
         }
 
-        return $this->getViewFileUrl('Payplug_Payments::images/icons/' . $filename . '.svg');
+        return $this->getViewFileUrl('Payplug_Payments::images/standard/' . $filename . '.svg');
     }
 
     /**
@@ -123,10 +124,20 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         $cards = ['mastercard', 'visa', 'other'];
         $logos = [];
         foreach ($cards as $card) {
-            $logos[$card] = $this->getViewFileUrl('Payplug_Payments::images/' . $card . '.svg');
+            $logos[$card] = $this->getViewFileUrl('Payplug_Payments::images/standard/' . $card . '.svg');
         }
 
         return $logos;
+    }
+
+    /**
+     * Get store locale
+     *
+     * @return string
+     */
+    private function getLocaleCode()
+    {
+        return $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);;
     }
 
     /**

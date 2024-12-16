@@ -46,7 +46,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         return $this->method->isAvailable() ? [
             'payment' => [
                 $this->methodCode => [
-                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/mybank.svg'),
+                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/logos/mybank.svg'),
                 ],
             ],
         ] : [];

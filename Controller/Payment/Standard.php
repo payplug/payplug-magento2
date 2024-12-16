@@ -27,15 +27,14 @@ class Standard extends AbstractPayment
         Logger $logger,
         Data $payplugHelper,
         protected FormKey $formKey
-    )
-    {
+    ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
 
     /**
      * Retrieve PayPlug Standard payment url
      */
-    public function execute(): Redirect|ResultInterface
+    public function execute(): Redirect|ResultInterface|Json
     {
         $shouldRedirect = $this->getRequest()->getParam('should_redirect', true);
 
@@ -56,7 +55,6 @@ class Standard extends AbstractPayment
             $order->getPayment()->unsAdditionalInformation('payment_url');
             $isPaid = (bool)$order->getPayment()->getAdditionalInformation('is_paid', false);
             $order->getPayment()->unsAdditionalInformation('is_paid');
-
             if ($isPaid) {
                 $response->setData([
                     'is_paid' => true,
@@ -163,6 +161,7 @@ class Standard extends AbstractPayment
         if (!$lastIncrementId) {
             throw new \Exception('Could not retrieve last order id');
         }
+        
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($lastIncrementId);
 

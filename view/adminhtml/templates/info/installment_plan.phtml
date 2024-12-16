@@ -1,0 +1,88 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\InstallmentPlanInfo as Info;
+
+/**
+ * @var Info $block
+ * @var Escaper $escaper
+ */
+$specificInfo = $block->getAdminSpecificInformation();
+?>
+<?= $escaper->escapeHtml($block->getMethod()->getTitle()) ?>
+<?php if ($specificInfo) : ?>
+    <p><?= $specificInfo['status']; ?></p>
+    <p><?= __('Installment plan id'); ?> : <?= $specificInfo['installment_plan_id']; ?></p>
+
+    <table class="data-table admin__table-primary">
+        <tr>
+            <th><?= __('Date'); ?></th>
+            <th><?= __('Amount'); ?></th>
+            <th><?= __('Status'); ?></th>
+            <th></th>
+        </tr>
+        <?php foreach ($specificInfo['payments'] as $key => $paymentInfo) : ?>
+            <tr>
+                <td><?= $paymentInfo['date']; ?></td>
+                <td><?= $paymentInfo['amount']; ?></td>
+                <td><?= $paymentInfo['status']; ?></td>
+                <td>
+                    <?php if (!empty($paymentInfo['details'])) : ?>
+                        <button type="button" class="toggle-details" data-toggle="collapse" data-target="#payment-detail-<?= $key; ?>" role="button" aria-expanded="false" aria-controls="payment-detail-<?= $key; ?>">
+                            <?= __('Details'); ?>
+                        </button>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php if (!empty($paymentInfo['details'])) : ?>
+                <tr class="collapse" id="payment-detail-<?= $key; ?>" style="display: none;">
+                    <td colspan="4">
+                        <table class="data-table admin__table-secondary">
+                            <?php foreach ($paymentInfo['details'] as $label => $value) : ?>
+                                <tr>
+                                    <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
+                                    <td>
+                                        <?= /* @noEscape */ nl2br($escaper->escapeHtml(implode("\n", $block->getValueAsArray($value, true)))) ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </table>
+                    </td>
+                </tr>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </table>
+
+    <?php if ($specificInfo['can_abort']) : ?>
+        <a class="action-default"
+           href="<?= $block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $block->getInfo()->getOrder()->getId(), 'form_key' => $block->getFormKey()]); ?>"
+           onclick="return confirmAbortInstallmentPlan()"
+        >
+            <?= __('Abort'); ?>
+        </a>
+    <?php endif; ?>
+<?php endif;?>
+
+<?= $block->getChildHtml() ?>
+
+<script type="text/javascript">
+    function confirmAbortInstallmentPlan() {
+        return confirm('<?= __('Are you sure you want to abort the installment plan?'); ?>');
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggleButtons = document.querySelectorAll('.toggle-details');
+        toggleButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const targetId = this.getAttribute('data-target');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement.style.display === 'none' || targetElement.style.display === '') {
+                    targetElement.style.display = 'table-row';
+                } else {
+                    targetElement.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>

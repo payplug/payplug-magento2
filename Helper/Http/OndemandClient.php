@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Http;
+
+use Payplug\Resource\APIResource;
 
 class OndemandClient extends StandardClient
 {
     /**
      * @inheritdoc
      */
-    protected function prepareReturnData($payplugObject, $data)
+    protected function prepareReturnData(APIResource $payplugObject, array $data): array
     {
         return array_merge(parent::prepareReturnData($payplugObject, $data), ['ondemandData' => $data['extra']]);
     }
@@ -15,11 +19,11 @@ class OndemandClient extends StandardClient
     /**
      * @inheritdoc
      */
-    protected function prepareData($data)
+    protected function prepareData(array $data): array
     {
         $data = parent::prepareData($data);
         unset($data['extra']);
-        
+
         return $data;
     }
 }

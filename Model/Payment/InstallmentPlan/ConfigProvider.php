@@ -88,6 +88,6 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
             $filename .= '_fr';
         }
 
-        return $this->getViewFileUrl('Payplug_Payments::images/' . $filename . '_@x2.png');
+        return $this->getViewFileUrl('Payplug_Payments::images/installment_plan/' . $filename . '_@x2.png');
     }
 }

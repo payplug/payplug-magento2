@@ -10,7 +10,9 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Payment\Gateway\Data\AddressAdapterInterface;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order\Address;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
@@ -34,7 +36,7 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build PayPlug payment transaction
      */
-    public function buildTransaction(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildTransaction(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
     {
         $transaction = array_merge(
             $this->buildAmountData($order),
@@ -53,10 +55,12 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build amount data
      */
-    public function buildAmountData(OrderAdapterInterface $order): array
+    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
     {
+        $unroundedAmount = $order?->getGrandTotalAmount() ?? $order?->getBaseGrandTotal() ?? 0;
+
         $paymentTab = [
-            'amount' => (int) round($order->getGrandTotalAmount() * 100),
+            'amount' => (int) round($unroundedAmount * 100),
         ];
 
         return $paymentTab;
@@ -65,7 +69,7 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build customer data
      */
-    public function buildCustomerData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildCustomerData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
     {
         $language = $this->payplugConfig->getConfigValue(
             'code',
@@ -179,7 +183,7 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build order data
      */
-    public function buildOrderData(OrderAdapterInterface $order, Quote $quote): array
+    public function buildOrderData(OrderInterface|OrderAdapterInterface $order, CartInterface|Quote $quote): array
     {
         $currency = $order->getCurrencyCode();
         $quoteId = $quote->getId();
@@ -206,12 +210,12 @@ abstract class AbstractBuilder extends AbstractHelper
     /**
      * Build payment data
      */
-    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
     {
         $quoteId = $quote->getId();
         $storeId = $order->getStoreId();
 
-        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
+        $isSandbox = $this->payplugConfig->getIsSandbox((int)$storeId);
 
         $paymentData = [];
         $paymentData['notification_url'] = $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
