@@ -56,14 +56,15 @@ class PaymentReturn extends AbstractPayment
             }
 
             $lastIncrementId = $order->getIncrementId();
-            $payment = $this->payplugHelper->getOrderPayment((string)$lastIncrementId)->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
+            $payment = $orderPaymentModel->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
             // If this is the deferred standard paiement then return the user on the success checkout
             if (!$payment->is_paid && $this->isAuthorizedOnlyStandardPayment($order)) {
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
-            if (!$payment->is_paid && !$this->isOneyPending($payment)) {
+            if (!$payment->is_paid && !$orderPaymentModel->isProcessing($payment) && !$this->isOneyPending($payment)) {
                 $this->payplugHelper->cancelOrderAndInvoice($order);
 
                 $failureMessage = $this->_request->getParam(

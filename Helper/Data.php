@@ -389,7 +389,7 @@ class Data extends AbstractHelper
     {
       $orderPayment = $this->getPaymentForOrder($order);
 
-      return $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+      return $orderPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
     }
 
     /**
@@ -419,12 +419,12 @@ class Data extends AbstractHelper
             if ($orderPayment === null) {
                 return;
             }
-            $payplugPayment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $payplugPayment = $orderPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             if ($payplugPayment->failure &&
                 $payplugPayment->failure->code &&
                 strtolower($payplugPayment->failure->code ?? '') !== 'timeout'
             ) {
-                $orderPayment->abort($storeId);
+                $orderPayment->abort((int)$storeId);
             }
         } catch (HttpException $e) {
             $this->_logger->error('Could not abort payment', [
@@ -451,7 +451,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         if ($order->getPayment()->getMethod() === InstallmentPlan::METHOD_CODE) {
             $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
-            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $installmentPlan = $orderInstallmentPlan->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -586,7 +586,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
         if ($cancelPayment) {
-            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $installmentPlan = $orderInstallmentPlan->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -596,15 +596,15 @@ class Data extends AbstractHelper
 
                     try {
                         $orderPayment = $this->getOrderPaymentByPaymentId($paymentId);
-                        $orderPayment->abort($storeId);
+                        $orderPayment->abort((int)$storeId);
                     } catch (NoSuchEntityException $e) {
                         // Payment was not found - no need to abort it
                     }
                 }
             }
         }
-        $orderInstallmentPlan->abort($storeId);
-        $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+        $orderInstallmentPlan->abort((int)$storeId);
+        $installmentPlan = $orderInstallmentPlan->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
@@ -617,7 +617,7 @@ class Data extends AbstractHelper
     public function cancelStandardPayment(Order $order): void
     {
         $orderPayment = $this->getOrderPayment($order->getIncrementId());
-        $orderPayment->abort($order->getStoreId());
+        $orderPayment->abort((int)$order->getStoreId());
     }
 
     /**
@@ -902,7 +902,7 @@ class Data extends AbstractHelper
             $payment = $this->getOrderPayment($order->getIncrementId());
         }
         /** @var Payment|OrderInstallmentPlan $payplugPayment */
-        $payplugPayment = $payment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+        $payplugPayment = $payment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
         if ($payplugPayment->failure) {
             return true;
