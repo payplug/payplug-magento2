@@ -23,6 +23,11 @@ class GetCurrentOrderIncrementId
     ) {
     }
 
+    public function getCurrentOrderIncrementId(): ?int
+    {
+        return !$this->getLastRealOrder() ? null : (int)$this->getLastRealOrder()->getIncrementId();
+    }
+
     public function getLastRealOrder(): ?OrderInterface
     {
         $order = $this->getLastRealOrderByCheckoutSession();
@@ -55,6 +60,32 @@ class GetCurrentOrderIncrementId
     }
 
     /**
+     * First way to grab the last order
+     * We use the checkout session to directly grab the last order if it exists
+     *
+     * @return OrderInterface|null
+     */
+    public function getLastRealOrderByCheckoutSession(): ?OrderInterface
+    {
+        $lastIncrementId = $this->checkoutSession->getLastRealOrder()->getIncrementId();
+
+        if (!$lastIncrementId) {
+
+            return null;
+        }
+
+        $order = $this->salesOrderFactory->create();
+        $order->loadByIncrementId($lastIncrementId);
+
+        if ($order->getId()) {
+
+            return $order;
+        }
+
+        return null;
+    }
+
+    /**
      * Second way to grab the last real order
      * Typically if we have a return, we test against the quote_id and its reserved order id
      * We grab the order with that and return it
@@ -81,32 +112,6 @@ class GetCurrentOrderIncrementId
 
                 return $order;
             }
-        }
-
-        return null;
-    }
-
-    /**
-     * First way to grab the last order
-     * We use the checkout session to directly grab the last order if it exists
-     *
-     * @return OrderInterface|null
-     */
-    public function getLastRealOrderByCheckoutSession(): ?OrderInterface
-    {
-        $lastIncrementId = $this->checkoutSession->getLastRealOrder()->getIncrementId();
-
-        if (!$lastIncrementId) {
-
-            return null;
-        }
-
-        $order = $this->salesOrderFactory->create();
-        $order->loadByIncrementId($lastIncrementId);
-
-        if ($order->getId()) {
-
-            return $order;
         }
 
         return null;

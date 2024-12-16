@@ -5,6 +5,8 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Magento\Checkout\Model\Session;
+use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Exception\AlreadyExistsException;
@@ -12,10 +14,25 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Helper\Data;
+use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetCurrentOrderIncrementId;
 
 class CheckPayment extends AbstractPayment
 {
+    public function __construct(
+        Context $context,
+        Session $checkoutSession,
+        OrderFactory $salesOrderFactory,
+        Logger $logger,
+        Data $payplugHelper,
+        protected GetCurrentOrderIncrementId $currentOrderIncrementId
+    ) {
+        parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
+    }
+
     /**
      * Retrieve PayPlug Standard payment url
      *
@@ -30,8 +47,11 @@ class CheckPayment extends AbstractPayment
     {
         $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
-        $paymentId = $this->getRequest()->getParam("payment_id");
-        $order = $this->getLastOrder();
+        $paymentId = $this->getRequest()->getParam('payment_id');
+        $order = $this->currentOrderIncrementId->getLastRealOrder();
+        if (!$order) {
+            throw new \Exception('Could not retrieve last order in CheckPayment');
+        }
         $storeId = $order->getStoreId();
 
         if (empty($paymentId)) {
@@ -57,28 +77,5 @@ class CheckPayment extends AbstractPayment
         $response->setData($data);
 
         return $response;
-    }
-
-    /**
-     * @return Order
-     *
-     * @throws \Exception
-     */
-    private function getLastOrder(): Order
-    {
-        $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
-
-        if (!$lastIncrementId) {
-            throw new \Exception('Could not retrieve last order id');
-        }
-
-        $order = $this->salesOrderFactory->create();
-        $order->loadByIncrementId($lastIncrementId);
-
-        if (!$order->getId()) {
-            throw new \Exception(sprintf('Could not retrieve order with id %s', $lastIncrementId));
-        }
-
-        return $order;
     }
 }
