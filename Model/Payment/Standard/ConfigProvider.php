@@ -111,7 +111,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
             $filename .= '-it';
         }
 
-        return $this->getViewFileUrl('Payplug_Payments::images/icons/' . $filename . '.svg');
+        return $this->getViewFileUrl('Payplug_Payments::images/standard/' . $filename . '.svg');
     }
 
     /**
@@ -124,7 +124,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         $cards = ['mastercard', 'visa', 'other'];
         $logos = [];
         foreach ($cards as $card) {
-            $logos[$card] = $this->getViewFileUrl('Payplug_Payments::images/' . $card . '.svg');
+            $logos[$card] = $this->getViewFileUrl('Payplug_Payments::images/standard/' . $card . '.svg');
         }
 
         return $logos;

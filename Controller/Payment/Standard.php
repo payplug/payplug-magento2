@@ -161,6 +161,7 @@ class Standard extends AbstractPayment
         if (!$lastIncrementId) {
             throw new \Exception('Could not retrieve last order id');
         }
+        
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($lastIncrementId);
 
