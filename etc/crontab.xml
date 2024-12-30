@@ -5,5 +5,8 @@
         <job name="payplug_payments_auto_capture_deferred_payments" instance="Payplug\Payments\Cron\AutoCaptureDeferredPayments" method="execute">
             <schedule>0 * * * *</schedule>
         </job>
+        <job name="payplug_payments_check_order_consistency" instance="Payplug\Payments\Cron\CheckOrderConsistency" method="execute">
+            <schedule>*/15 * * * *</schedule>
+        </job>
     </group>
 </config>

@@ -62,7 +62,13 @@ class Payment extends AbstractModel implements IdentityInterface
      */
     public function isProcessing(ResourcePayment $resourcePayment): bool
     {
-        return !$resourcePayment->is_paid && empty($resourcePayment->failure);
+        $isProcessing = (!$resourcePayment->is_paid && empty($resourcePayment->failure));
+
+        if ($isProcessing && $resourcePayment->getPaymentId) {
+            $this->_logger->info(sprintf('Payment payment_id %s is still processing.', $resourcePayment->getPaymentId));
+        }
+
+        return $isProcessing;
     }
 
     /**
