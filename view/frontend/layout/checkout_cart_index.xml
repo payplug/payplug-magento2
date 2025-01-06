@@ -1,10 +1,18 @@
 <?xml version="1.0"?>
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
+        <referenceBlock name="head.components">
+            <block name="apple.pay.sdk" template="Payplug_Payments::apple-pay/sdk.phtml" />
+        </referenceBlock>
+
         <referenceContainer name="checkout.cart.totals.container">
-            <block class="Magento\Framework\View\Element\Template" name="payplug-payments-product-oney-wrapper" after="checkout.cart.totals" template="Payplug_Payments::oney/simulation_wrapper_checkout.phtml">
+            <block name="payplug-payments-product-oney-wrapper" template="Payplug_Payments::oney/simulation_wrapper_checkout.phtml" after="checkout.cart.totals">
                 <block class="Payplug\Payments\Block\Oney\Simulation" name="payplug-payments-product-oney-simulation" template="Payplug_Payments::oney/simulation.phtml"/>
             </block>
+        </referenceContainer>
+        
+        <referenceContainer name="checkout.cart.methods">
+            <block name="checkout.cart.methods.apple.pay.button" template="Payplug_Payments::apple-pay/cart-button.phtml" after="checkout.cart.methods.onepage.bottom" />
         </referenceContainer>
     </body>
 </page>

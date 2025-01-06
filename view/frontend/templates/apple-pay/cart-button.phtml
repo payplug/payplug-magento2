@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+
+/**
+ * @var Escaper $escaper
+ */
+?>
+
+<?= $block->getChildHtml('apple.pay.sdk') ?>
+
+<div data-bind="scope: 'cart-button'">
+    <apple-pay-button
+        buttonstyle="black"
+        type="pay"
+        class="hidden"
+        data-bind="
+            click: handleClick,
+            attr: { 'locale': getApplePayLocale() },
+            css: { hidden: !isVisible() } ">
+    </apple-pay-button>
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Ui/js/core/app" : {
+                "components" : {
+                    "cart-button" : {
+                        "component" : "Payplug_Payments/js/view/apple-pay/cart-button"
+                    }
+                }
+            }
+        }
+    }
+</script>
