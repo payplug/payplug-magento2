@@ -50,8 +50,8 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
 
         $this->helper->initScopeData();
 
-        $connected = $this->helper->isConnected();
-        $isVerified = $this->helper->getConfigValue('verified');
+        $connected = $this->helper->isConnected(ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
+        $isVerified = $this->helper->getConfigValue('verified', ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
 
         $connexionFields = ['payplug_payments_general_email'];
 

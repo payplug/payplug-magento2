@@ -9,6 +9,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Payment\Block\Info as BaseInfo;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -49,7 +50,7 @@ class Info extends BaseInfo
         $order = $this->getInfo()->getOrder();
 
         try {
-            $payment = $orderPayment->retrieve($order->getStoreId());
+            $payment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
             return [];

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Helper\Http;
 
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -10,30 +12,17 @@ use Payplug\Resource\APIResource;
 
 abstract class AbstractClient extends AbstractHelper
 {
-    /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
-     * @param Context $context
-     * @param Config  $payplugConfig
-     */
-    public function __construct(Context $context, Config $payplugConfig)
-    {
+    public function __construct(
+        Context $context,
+        private Config $payplugConfig
+    ) {
         parent::__construct($context);
-
-        $this->payplugConfig = $payplugConfig;
     }
 
     /**
      * Place PayPlug request
-     *
-     * @param array $data
-     *
-     * @return array
      */
-    public function placeRequest($data)
+    public function placeRequest(array $data): array
     {
         $storeId = $data['store_id'];
         $payplugData = $this->prepareData($data);
@@ -44,8 +33,8 @@ abstract class AbstractClient extends AbstractHelper
             'Magento ' . $this->payplugConfig->getMagentoVersion()
         );
 
-        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
-        $this->payplugConfig->setPayplugApiKey($storeId, $isSandbox);
+        $isSandbox = $this->payplugConfig->getIsSandbox((int)$storeId);
+        $this->payplugConfig->setPayplugApiKey((int)$storeId, $isSandbox);
         $payplugObject = $this->createPayplugObject($payplugData);
 
         return $this->prepareReturnData($payplugObject, $data);
@@ -53,12 +42,8 @@ abstract class AbstractClient extends AbstractHelper
 
     /**
      * Remove unnecessary data
-     *
-     * @param array $data
-     *
-     * @return array
      */
-    protected function prepareData($data)
+    protected function prepareData(array $data): array
     {
         unset($data['store_id']);
 
@@ -67,20 +52,11 @@ abstract class AbstractClient extends AbstractHelper
 
     /**
      * Create payplug object
-     *
-     * @param array $payplugData
-     *
-     * @return APIResource
      */
-    abstract protected function createPayplugObject($payplugData);
+    abstract protected function createPayplugObject(array $payplugData): ?APIResource;
 
     /**
      * Prepare return data
-     *
-     * @param APIResource $payplugObject
-     * @param array       $data
-     *
-     * @return array
      */
-    abstract protected function prepareReturnData($payplugObject, $data);
+    abstract protected function prepareReturnData(APIResource $payplugObject, array $data): array;
 }

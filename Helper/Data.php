@@ -22,21 +22,23 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\HttpException;
-use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\Amex;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\Bancontact;
+use Payplug\Payments\Gateway\Config\Ideal;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
+use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
-use Payplug\Payments\Gateway\Config\Ideal;
-use Payplug\Payments\Gateway\Config\Mybank;
 use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Ondemand as OndemandHelper;
@@ -256,6 +258,16 @@ class Data extends AbstractHelper
     }
 
     /**
+     * Check if order's payment can be captured (in case of deferred)
+     */
+    public function canCaptureOnline(?OrderInterface $order = null, ?CartInterface $quote = null): bool
+    {
+        $payment = $order?->getPayment() ?? $quote?->getPayment();
+
+        return (bool)$payment?->getAdditionalInformation('is_authorized');
+    }
+
+    /**
      * Check if order's payment can be updated
      *
      * @param Order $order
@@ -353,8 +365,8 @@ class Data extends AbstractHelper
             $this->updateOrderPayment($order);
             $this->updateOrderStatus($order, false);
 
-            if(!empty($data)){
-              if(!empty($data['status']) ) {
+            if (!empty($data)) {
+              if (!empty($data['status'])) {
                 $order->setStatus($data['status']);
               }
             }
@@ -377,7 +389,7 @@ class Data extends AbstractHelper
     {
       $orderPayment = $this->getPaymentForOrder($order);
 
-      return $orderPayment->retrieve($storeId);
+      return $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
     }
 
     /**
@@ -407,7 +419,7 @@ class Data extends AbstractHelper
             if ($orderPayment === null) {
                 return;
             }
-            $payplugPayment = $orderPayment->retrieve($storeId);
+            $payplugPayment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             if ($payplugPayment->failure &&
                 $payplugPayment->failure->code &&
                 strtolower($payplugPayment->failure->code ?? '') !== 'timeout'
@@ -439,7 +451,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         if ($order->getPayment()->getMethod() === InstallmentPlan::METHOD_CODE) {
             $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
-            $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -574,7 +586,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
         if ($cancelPayment) {
-            $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -592,7 +604,7 @@ class Data extends AbstractHelper
             }
         }
         $orderInstallmentPlan->abort($storeId);
-        $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+        $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
@@ -864,7 +876,7 @@ class Data extends AbstractHelper
                     );
                 } else {
                     // Order amounts and status history are already handled
-                    // in \Payplug\Payments\Gateway\Response\InstallmentPlan\FetchTransactionInformationHandler::handle
+                    // In \Payplug\Payments\Gateway\Response\InstallmentPlan\FetchTransactionInformationHandler::handle
                     $invoice->setState(Order\Invoice::STATE_PAID);
                 }
             }
@@ -890,7 +902,7 @@ class Data extends AbstractHelper
             $payment = $this->getOrderPayment($order->getIncrementId());
         }
         /** @var Payment|OrderInstallmentPlan $payplugPayment */
-        $payplugPayment = $payment->retrieve($order->getStoreId());
+        $payplugPayment = $payment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
         if ($payplugPayment->failure) {
             return true;
