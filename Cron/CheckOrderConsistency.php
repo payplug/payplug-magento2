@@ -43,10 +43,14 @@ class CheckOrderConsistency
         $magentoOrdersPayments = $this->getCheckablePayplugOrderPaymentsList();
 
         $this->logger->info(
-            sprintf('%s payplug related orders are less than %s hours old and are awaiting payments, we will try to update them',
+            sprintf('%s payplug related orders are less than %s hours old and are awaiting payments.',
                 count($magentoOrdersPayments),
                 self::PAST_HOURS_TO_CHECK)
         );
+
+        if (count($magentoOrdersPayments) >= 0) {
+            $this->logger->info('We will try to update them.');
+        }
 
         // Check if the orders awaiting paiement are in the payplug processing state in the API
         foreach ($magentoOrdersPayments as $magentoOrdersPayment) {
@@ -59,7 +63,7 @@ class CheckOrderConsistency
                 // If the paiment is not processing in the API it mean that the state of the order can be updated
                 if (!$payplugOrderPayment->isProcessing($payplugPayment)) {
                     $this->logger->info(
-                        sprintf('Payplug payment_id %s is not processing in the API and will be updated in magento',
+                        sprintf('Payplug payment_id %s is not processing in the API and will be updated in magento.',
                             $paymentId)
                     );
                     $this->payplugHelper->checkPaymentFailureAndAbortPayment($magentoOrder);
@@ -67,20 +71,20 @@ class CheckOrderConsistency
                 } else {
                     // Payment is still processing (not paid and not failure on the api) we just log it
                     $this->logger->info(
-                        sprintf('Payplug payment_id %s is still processing in the API for magento order_id %s',
+                        sprintf('Payplug payment_id %s is still processing in the API for magento order_id %s.',
                             $paymentId,
                             $magentoOrder->getEntityId())
                     );
                 }
             } else {
                 // The magento order couldn't be matched to any payplug order
-                $this->logger->info(sprintf('No payplug payment found for the magento order %s',
+                $this->logger->info(sprintf('No payplug payment found for the magento order %s.',
                     $magentoOrder->getEntityId())
                 );
             }
         }
 
-        $this->logger->info('The CheckOrderConsistency cron is over');
+        $this->logger->info('The CheckOrderConsistency cron is over.');
     }
 
     public function getPayplugPaymentFromApiByIncrementId(Order $magentoOrder): ?ResourcePayment
@@ -92,7 +96,7 @@ class CheckOrderConsistency
         }
 
         if (!$payplugOrderPayment->getId()) {
-            $this->logger->error('Cannot find a PayplugOrderPayment for the magento order %s', $magentoOrder->getEntityId());
+            $this->logger->error('Cannot find a PayplugOrderPayment for the magento order %s.', $magentoOrder->getEntityId());
 
             return null;
         }
