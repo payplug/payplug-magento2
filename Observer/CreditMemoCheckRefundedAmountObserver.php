@@ -9,6 +9,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
@@ -91,7 +92,7 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
             }
 
             $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
-            $payment = $payplugPayment->retrieve($order->getStoreId());
+            $payment = $payplugPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
             if ($order->getPayment()->getMethod() === Oney::METHOD_CODE ||
                 $order->getPayment()->getMethod() === OneyWithoutFees::METHOD_CODE

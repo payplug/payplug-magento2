@@ -30,6 +30,12 @@
     <event name="payment_method_assign_data_payplug_payments_oney_without_fees">
         <observer name="payplug_payments_oney_without_fees_gateway_data_assign" instance="Payplug\Payments\Observer\OneyDataAssignObserver" />
     </event>
+    <event name="sales_order_place_after">
+        <observer name="payplug_payments_set_deferred_processing_order_status" instance="Payplug\Payments\Observer\SetDeferredProcessingOrderStatus"/>
+    </event>
+    <event name="sales_order_invoice_register">
+        <observer name="payplug_payments_set_deferred_after_invoice_order_status" instance="Payplug\Payments\Observer\SetDeferredAfterInvoiceOrderStatus"/>
+    </event>
 
     <event name="controller_action_predispatch_checkout_index_index">
         <observer name="payplug_payments_checkcout_page" instance="Payplug\Payments\Observer\PaymentReturnObserver"  />

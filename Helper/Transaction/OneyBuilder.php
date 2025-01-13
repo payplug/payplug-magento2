@@ -9,8 +9,9 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
-use Magento\Quote\Model\Quote;
-use Magento\Sales\Model\Order\Item;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderItemInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Oney;
@@ -34,7 +35,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildTransaction(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildTransaction(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
     {
         $this->validateTransaction($order, $payment, $quote);
 
@@ -44,13 +45,13 @@ class OneyBuilder extends AbstractBuilder
     /**
      * Validate Oney payment before creating PayPlug transaction
      *
-     * @param OrderAdapterInterface $order
+     * @param OrderAdapterInterface|OrderInterface $order
      * @param InfoInterface         $payment
-     * @param Quote                 $quote
+     * @param CartInterface      $quote
      *
      * @throws LocalizedException
      */
-    private function validateTransaction($order, $payment, $quote)
+    private function validateTransaction(OrderAdapterInterface|OrderInterface $order, InfoInterface $payment, CartInterface $quote)
     {
         try {
             $this->oneyHelper->oneyCheckoutValidation(
@@ -80,11 +81,11 @@ class OneyBuilder extends AbstractBuilder
     /**
      * Get order items count
      *
-     * @param array|Item[] $items
+     * @param array|OrderItemInterface[] $items
      *
      * @return int
      */
-    private function getOrderItemsCount($items)
+    private function getOrderItemsCount(?array $items): int
     {
         $count = 0;
         foreach ($items as $item) {
@@ -101,11 +102,11 @@ class OneyBuilder extends AbstractBuilder
     /**
      * Validate billing phone for Oney payment
      *
-     * @param OrderAdapterInterface $order
+     * @param OrderAdapterInterface|OrderInterface $order
      *
      * @throws \Exception
      */
-    private function validateBillingMobilePhone($order)
+    private function validateBillingMobilePhone(OrderAdapterInterface|OrderInterface $order): void
     {
         $exceptionMessage = (string)__('Please fill in a mobile phone on your billing address.');
         $address = $order->getBillingAddress();
@@ -126,11 +127,11 @@ class OneyBuilder extends AbstractBuilder
     /**
      * Get shipping method
      *
-     * @param Quote $quote
+     * @param CartInterface $quote
      *
      * @return string|null
      */
-    private function getShippingMethod($quote)
+    private function getShippingMethod(CartInterface $quote): ?string
     {
         return $quote->isVirtual() ? null : $quote->getShippingAddress()->getShippingMethod();
     }
@@ -138,14 +139,14 @@ class OneyBuilder extends AbstractBuilder
     /**
      * Build cart data
      *
-     * @param OrderAdapterInterface $order
-     * @param Quote                 $quote
+     * @param OrderInterface|OrderAdapterInterface $order
+     * @param CartInterface $quote
      *
      * @return array
      *
      * @throws LocalizedException
      */
-    private function buildCartContext($order, $quote)
+    private function buildCartContext(OrderInterface|OrderAdapterInterface $order, CartInterface $quote): array
     {
         $shippingMethod = $this->getShippingMethod($quote);
         $shippingMapping = $this->oneyHelper->getShippingMethodMapping($shippingMethod);
@@ -168,7 +169,7 @@ class OneyBuilder extends AbstractBuilder
         $deliveryType = $shippingMapping['type'];
 
         $products = [];
-        /** @var \Magento\Sales\Api\Data\OrderItemInterface|Item $item */
+        /** @var OrderItemInterface $item */
         foreach ($order->getItems() as $item) {
             if ($item->isDeleted() || $item->getHasChildren()) {
                 continue;
@@ -214,7 +215,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildCustomerData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildCustomerData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
     {
         $customerData = parent::buildCustomerData($order, $payment, $quote);
 
@@ -251,7 +252,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildAmountData(OrderAdapterInterface $order): array
+    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
     {
         $amountData = parent::buildAmountData($order);
         $amountData['authorized_amount'] = $amountData['amount'];
@@ -263,7 +264,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderAdapterInterface $order, InfoInterface $payment, Quote $quote): array
+    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
