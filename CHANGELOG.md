@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0](https://github.com/payplug/payplug-magento2/releases/tag/4.2.0) - 2025-01-13
+
+### Features
+
+- Add deferred payment feature
+- Update and optimize payment methods cards render
+- Checkout render improvements
+- A11Y improvements
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.1.0...v4.2.0)**
+
+### Added
+
+- Add deferred payment feature [#238](https://github.com/payplug/payplug-magento2/pull/238)
+- Add Oney method payment title [#240](https://github.com/payplug/payplug-magento2/pull/240)
+- Add alternative texts on payment methods logos for A11Y [#240](https://github.com/payplug/payplug-magento2/pull/240)
+
+### Changed
+
+- Move payment images to dedicated logos images folder [#240](https://github.com/payplug/payplug-magento2/pull/240)
+- Optimize and normalize payment methods styles [#240](https://github.com/payplug/payplug-magento2/pull/240)
+- Optimize and normalize payment methods logos [#240](https://github.com/payplug/payplug-magento2/pull/240)
+- Update standard payment schemes A11Y [#240](https://github.com/payplug/payplug-magento2/pull/240)
+
+### Removed
+
+- Remove useless payment logos [#240](https://github.com/payplug/payplug-magento2/pull/240)
+
 ## [4.1.0](https://github.com/payplug/payplug-magento2/releases/tag/4.1.0) - 2024-10-02
 
 ### Features
