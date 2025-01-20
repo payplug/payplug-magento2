@@ -16,7 +16,7 @@ use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Service\GetCurrentOrderIncrementId;
+use Payplug\Payments\Service\GetCurrentOrder;
 
 class Standard extends AbstractPayment
 {
@@ -27,7 +27,7 @@ class Standard extends AbstractPayment
         Logger $logger,
         Data $payplugHelper,
         protected FormKey $formKey,
-        protected GetCurrentOrderIncrementId $currentOrderIncrementId
+        protected GetCurrentOrder $getCurrentOrder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -51,7 +51,7 @@ class Standard extends AbstractPayment
         ];
 
         try {
-            $order = $this->currentOrderIncrementId->getLastRealOrder();
+            $order = $this->getCurrentOrder->execute();
             if (!$order) {
                 throw new \Exception('Could not retrieve last order in Standard');
             }

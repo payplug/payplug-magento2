@@ -18,7 +18,7 @@ use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Service\GetCurrentOrderIncrementId;
+use Payplug\Payments\Service\GetCurrentOrder;
 
 class CheckPayment extends AbstractPayment
 {
@@ -28,7 +28,7 @@ class CheckPayment extends AbstractPayment
         OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        protected GetCurrentOrderIncrementId $currentOrderIncrementId
+        protected GetCurrentOrder $getCurrentOrder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -48,7 +48,7 @@ class CheckPayment extends AbstractPayment
         $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
 
         $paymentId = $this->getRequest()->getParam('payment_id');
-        $order = $this->currentOrderIncrementId->getLastRealOrder();
+        $order = $this->getCurrentOrder->execute();
         if (!$order) {
             throw new \Exception('Could not retrieve last order in CheckPayment');
         }

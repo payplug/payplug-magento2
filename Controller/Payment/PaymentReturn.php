@@ -20,7 +20,7 @@ use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Service\GetCurrentOrderIncrementId;
+use Payplug\Payments\Service\GetCurrentOrder;
 use Payplug\Resource\Payment;
 
 class PaymentReturn extends AbstractPayment
@@ -33,7 +33,7 @@ class PaymentReturn extends AbstractPayment
         Data $payplugHelper,
         protected Config $config,
         protected CartRepositoryInterface $cartRepository,
-        protected GetCurrentOrderIncrementId $currentOrderIncrementId
+        protected GetCurrentOrder $getCurrentOrder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -48,7 +48,7 @@ class PaymentReturn extends AbstractPayment
         $redirectUrlSuccess = 'checkout/onepage/success';
         $redirectUrlCart = 'checkout/cart';
         try {
-            $order = $this->currentOrderIncrementId->getLastRealOrder();
+            $order = $this->getCurrentOrder->execute();
 
             if (!$order) {
 

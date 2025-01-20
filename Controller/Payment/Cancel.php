@@ -12,7 +12,7 @@ use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\OrderRepository;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Service\GetCurrentOrderIncrementId;
+use Payplug\Payments\Service\GetCurrentOrder;
 
 class Cancel extends AbstractPayment
 {
@@ -25,7 +25,7 @@ class Cancel extends AbstractPayment
         private OrderRepository $orderRepository,
         private Validator $formKeyValidator,
         private RequestInterface $request,
-        private GetCurrentOrderIncrementId $currentOrderIncrementId
+        private GetCurrentOrder $getCurrentOrder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -50,7 +50,7 @@ class Cancel extends AbstractPayment
         }
 
         try {
-            $order = $this->currentOrderIncrementId->getLastRealOrder();
+            $order = $this->getCurrentOrder->execute();
 
             if (!$order) {
 

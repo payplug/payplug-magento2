@@ -12,7 +12,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Logger\Logger;
 
-class GetCurrentOrderIncrementId
+class GetCurrentOrder
 {
     public function __construct(
         protected RequestInterface $request,
@@ -23,34 +23,30 @@ class GetCurrentOrderIncrementId
     ) {
     }
 
-    public function getCurrentOrderIncrementId(): ?int
+    public function execute(): ?OrderInterface
     {
-        return !$this->getLastRealOrder() ? null : (int)$this->getLastRealOrder()->getIncrementId();
+        return $this->getLastRealOrder();
     }
 
-    public function getLastRealOrder(): ?OrderInterface
+    private function getLastRealOrder(): ?OrderInterface
     {
         $order = $this->getLastRealOrderByCheckoutSession();
         if ($order) {
-
             return $order;
         }
 
         $order = $this->getLastRealOrderFromRequestQuoteId();
         if ($order) {
-
             return $order;
         }
 
         $order = $this->getLastRealOrderByCheckoutSessionLastQuoteId();
         if ($order) {
-
             return $order;
         }
 
         $order = $this->getLastRealOrderByCheckoutSessionQuoteId();
         if ($order) {
-
             return $order;
         }
 
@@ -65,12 +61,11 @@ class GetCurrentOrderIncrementId
      *
      * @return OrderInterface|null
      */
-    public function getLastRealOrderByCheckoutSession(): ?OrderInterface
+    private function getLastRealOrderByCheckoutSession(): ?OrderInterface
     {
         $lastIncrementId = $this->checkoutSession->getLastRealOrder()->getIncrementId();
 
         if (!$lastIncrementId) {
-
             return null;
         }
 
@@ -78,7 +73,6 @@ class GetCurrentOrderIncrementId
         $order->loadByIncrementId($lastIncrementId);
 
         if ($order->getId()) {
-
             return $order;
         }
 
@@ -93,12 +87,11 @@ class GetCurrentOrderIncrementId
      * @return OrderInterface|null
      * @throws NoSuchEntityException
      */
-    public function getLastRealOrderFromRequestQuoteId(): ?OrderInterface
+    private function getLastRealOrderFromRequestQuoteId(): ?OrderInterface
     {
         $quoteId = $this->request->getParam('quote_id');
 
         if (!$quoteId) {
-
             return null;
         }
 
@@ -109,7 +102,6 @@ class GetCurrentOrderIncrementId
             $order->loadByIncrementId($quote->getReservedOrderId());
 
             if ($order->getId()) {
-
                 return $order;
             }
         }
@@ -124,12 +116,11 @@ class GetCurrentOrderIncrementId
      *
      * @return OrderInterface|null
      */
-    public function getLastRealOrderByCheckoutSessionLastQuoteId(): ?OrderInterface
+    private function getLastRealOrderByCheckoutSessionLastQuoteId(): ?OrderInterface
     {
         $lastQuoteId = $this->checkoutSession->getLastQuoteId();
 
         if (!$lastQuoteId) {
-
             return null;
         }
 
@@ -140,7 +131,6 @@ class GetCurrentOrderIncrementId
             $order->loadByIncrementId($quote->getReservedOrderId());
 
             if ($order->getId()) {
-
                 return $order;
             }
         }
@@ -155,12 +145,11 @@ class GetCurrentOrderIncrementId
      *
      * @return OrderInterface|null
      */
-    public function getLastRealOrderByCheckoutSessionQuoteId(): ?OrderInterface
+    private function getLastRealOrderByCheckoutSessionQuoteId(): ?OrderInterface
     {
         $quoteId = $this->checkoutSession->getQuoteId();
 
         if (!$quoteId) {
-
             return null;
         }
 
@@ -171,7 +160,6 @@ class GetCurrentOrderIncrementId
             $order->loadByIncrementId($quote->getReservedOrderId());
 
             if ($order->getId()) {
-
                 return $order;
             }
         }
