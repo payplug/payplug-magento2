@@ -52,9 +52,6 @@ class Standard extends AbstractPayment
 
         try {
             $order = $this->getCurrentOrder->execute();
-            if (!$order) {
-                throw new \Exception('Could not retrieve last order in Standard');
-            }
             $url = $order->getPayment()->getAdditionalInformation('payment_url');
             $order->getPayment()->unsAdditionalInformation('payment_url');
             $isPaid = (bool)$order->getPayment()->getAdditionalInformation('is_paid', false);

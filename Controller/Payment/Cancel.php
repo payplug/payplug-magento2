@@ -52,11 +52,6 @@ class Cancel extends AbstractPayment
         try {
             $order = $this->getCurrentOrder->execute();
 
-            if (!$order) {
-
-                return $resultRedirect->setPath($redirectUrlCart);
-            }
-
             $this->payplugHelper->cancelOrderAndInvoice($order);
 
             $failureMessage = $this->_request->getParam(

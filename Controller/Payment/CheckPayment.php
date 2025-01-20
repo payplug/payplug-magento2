@@ -49,9 +49,6 @@ class CheckPayment extends AbstractPayment
 
         $paymentId = $this->getRequest()->getParam('payment_id');
         $order = $this->getCurrentOrder->execute();
-        if (!$order) {
-            throw new \Exception('Could not retrieve last order in CheckPayment');
-        }
         $storeId = $order->getStoreId();
 
         if (empty($paymentId)) {

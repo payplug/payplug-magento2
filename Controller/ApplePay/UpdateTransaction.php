@@ -42,9 +42,6 @@ class UpdateTransaction extends AbstractPayment
 
         try {
             $order = $this->getCurrentOrder->execute();
-            if (!$order) {
-                throw new \Exception('Could not retrieve last order in UpdateTransaction');
-            }
             $token = $this->getRequest()->getParam('token');
             if (empty($token)) {
                 throw new \Exception('Could not retrieve token');

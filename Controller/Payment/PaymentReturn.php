@@ -50,11 +50,6 @@ class PaymentReturn extends AbstractPayment
         try {
             $order = $this->getCurrentOrder->execute();
 
-            if (!$order) {
-
-                return $resultRedirect->setPath($redirectUrlSuccess);
-            }
-
             $lastIncrementId = $order->getIncrementId();
             $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
             $payment = $orderPaymentModel->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);

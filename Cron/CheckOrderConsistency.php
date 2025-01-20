@@ -8,7 +8,9 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\ScopeInterface;
@@ -28,7 +30,7 @@ class CheckOrderConsistency
         private Logger $logger,
         private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
         private OrderPaymentRepositoryInterface $paymentRepository,
-        private OrderRepository $orderRepository,
+        private OrderRepositoryInterface $orderRepository,
         private Data $payplugHelper
     ) {
     }
@@ -42,14 +44,16 @@ class CheckOrderConsistency
 
         $magentoOrdersPayments = $this->getCheckablePayplugOrderPaymentsList();
 
-        $this->logger->info(
-            sprintf('%s payplug related orders are less than %s hours old and are awaiting payments.',
-                count($magentoOrdersPayments),
-                self::PAST_HOURS_TO_CHECK)
-        );
-
         if (count($magentoOrdersPayments) >= 0) {
-            $this->logger->info('We will try to update them.');
+            $this->logger->info(
+                sprintf(
+                    '%s payplug related orders are less than %s hours old and are awaiting payments, we will try to update them.',
+                    count($magentoOrdersPayments),
+                    self::PAST_HOURS_TO_CHECK
+                )
+            );
+        } else {
+            $this->logger->info('No payplug related orders found.');
         }
 
         // Check if the orders awaiting paiement are in the payplug processing state in the API
@@ -63,31 +67,38 @@ class CheckOrderConsistency
                 // If the paiment is not processing in the API it mean that the state of the order can be updated
                 if (!$payplugOrderPayment->isProcessing($payplugPayment)) {
                     $this->logger->info(
-                        sprintf('Payplug payment_id %s is not processing in the API and will be updated in magento.',
-                            $paymentId)
+                        sprintf(
+                            'Payplug payment_id %s is not processing in the API and will be updated in magento.',
+                            $paymentId
+                        )
                     );
                     $this->payplugHelper->checkPaymentFailureAndAbortPayment($magentoOrder);
                     $this->payplugHelper->updateOrder($magentoOrder);
                 } else {
                     // Payment is still processing (not paid and not failure on the api) we just log it
                     $this->logger->info(
-                        sprintf('Payplug payment_id %s is still processing in the API for magento order_id %s.',
+                        sprintf(
+                            'Payplug payment_id %s is still processing in the API for magento order_id %s.',
                             $paymentId,
-                            $magentoOrder->getEntityId())
+                            $magentoOrder->getEntityId()
+                        )
                     );
                 }
             } else {
                 // The magento order couldn't be matched to any payplug order
-                $this->logger->info(sprintf('No payplug payment found for the magento order %s.',
-                    $magentoOrder->getEntityId())
+                $this->logger->info(
+                    sprintf(
+                        'No payplug payment found for the magento order %s.',
+                    $magentoOrder->getEntityId()
+                    )
                 );
             }
         }
 
-        $this->logger->info('The CheckOrderConsistency cron is over.');
+        $this->logger->info(sprintf('The %s cron is finished.', get_class($this)));
     }
 
-    public function getPayplugPaymentFromApiByIncrementId(Order $magentoOrder): ?ResourcePayment
+    public function getPayplugPaymentFromApiByIncrementId(OrderInterface $magentoOrder): ?ResourcePayment
     {
         try {
             $payplugOrderPayment = $this->payplugHelper->getOrderPayment($magentoOrder->getIncrementId());
@@ -111,8 +122,10 @@ class CheckOrderConsistency
             $this->logger->error($e->getMessage());
             if (str_contains($e->getMessage(), 'Forbidden error')) {
                 $this->logger->error(
-                    sprintf('The order entity id %s cannot be retrieved anymore from payplug Api.',
-                        $magentoOrder->getEntityId())
+                    sprintf(
+                        'The order entity id %s cannot be retrieved anymore from payplug Api.',
+                        $magentoOrder->getEntityId()
+                    )
                 );
             }
 
@@ -136,11 +149,10 @@ class CheckOrderConsistency
             ->addFilter('created_at', $fourHoursAgo, 'gteq')
             ->create();
         /** @var Order[] $orders */
-        $orders = $this->orderRepository->getList($searchOrderCriteria)->getItems();
+        $orderIds = $this->orderRepository->getList($searchOrderCriteria)->getAllIds();
 
-        $orderIds = [];
-        foreach ($orders as $order) {
-            $orderIds[] = $order->getId();
+        if (empty($orderIds)) {
+            return [];
         }
 
         // From the orders, get all the matching order payment that are not paid and using the payplug method (sales_order_payment table)

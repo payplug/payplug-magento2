@@ -43,9 +43,6 @@ class GetTransactionData extends AbstractPayment
 
         try {
             $order = $this->getCurrentOrder->execute();
-            if (!$order) {
-                throw new \Exception('Could not retrieve last order in GetTransactionData');
-            }
             $merchandSession = $order->getPayment()->getAdditionalInformation('merchand_session');
             $order->getPayment()->unsAdditionalInformation('merchand_session');
 

@@ -7,7 +7,8 @@ namespace Payplug\Payments\Service;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Model\QuoteRepository;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Logger\Logger;
@@ -18,7 +19,7 @@ class GetCurrentOrder
         protected RequestInterface $request,
         protected Session $checkoutSession,
         protected OrderFactory $salesOrderFactory,
-        protected QuoteRepository $quoteRepository,
+        protected CartRepositoryInterface $cartRepositoryInterface,
         protected Logger $logger
     ) {
     }
@@ -28,6 +29,9 @@ class GetCurrentOrder
         return $this->getLastRealOrder();
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getLastRealOrder(): ?OrderInterface
     {
         $order = $this->getLastRealOrderByCheckoutSession();
@@ -50,9 +54,7 @@ class GetCurrentOrder
             return $order;
         }
 
-        $this->logger->error('Could not retrieve last order id');
-
-        return null;
+        throw new \Exception('Could not retrieve last order id');
     }
 
     /**
@@ -95,7 +97,7 @@ class GetCurrentOrder
             return null;
         }
 
-        $quote = $this->quoteRepository->get($quoteId);
+        $quote = $this->cartRepositoryInterface->get($quoteId);
 
         if ($quote->getReservedOrderId()) {
             $order = $this->salesOrderFactory->create();
@@ -124,7 +126,7 @@ class GetCurrentOrder
             return null;
         }
 
-        $quote = $this->quoteRepository->get($lastQuoteId);
+        $quote = $this->cartRepositoryInterface->get($lastQuoteId);
 
         if ($quote->getReservedOrderId()) {
             $order = $this->salesOrderFactory->create();
@@ -153,7 +155,7 @@ class GetCurrentOrder
             return null;
         }
 
-        $quote = $this->quoteRepository->get($quoteId);
+        $quote = $this->cartRepositoryInterface->get($quoteId);
 
         if ($quote->getReservedOrderId()) {
             $order = $this->salesOrderFactory->create();
