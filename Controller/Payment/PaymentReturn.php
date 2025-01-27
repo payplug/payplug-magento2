@@ -40,8 +40,10 @@ class PaymentReturn extends AbstractPayment
 
     /**
      * Handle return from PayPlug payment page
+     *
+     * @return Redirect|ResultInterface|Json
      */
-    public function execute(): Redirect|ResultInterface|Json
+    public function execute()
     {
         $resultRedirect = $this->resultRedirectFactory->create();
 

@@ -34,8 +34,10 @@ class Standard extends AbstractPayment
 
     /**
      * Retrieve PayPlug Standard payment url
+     *
+     * @return Redirect|ResultInterface|Json
      */
-    public function execute(): Redirect|ResultInterface|Json
+    public function execute()
     {
         $shouldRedirect = $this->getRequest()->getParam('should_redirect', true);
 

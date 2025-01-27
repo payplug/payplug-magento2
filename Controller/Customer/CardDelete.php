@@ -29,8 +29,12 @@ class CardDelete extends Action
 
     /**
      * Check customer authentication
+     *
+     * @param RequestInterface $request
+     *
+     * @return ResponseInterface|Page|Redirect
      */
-    public function dispatch(RequestInterface $request): ResponseInterface|Page|Redirect
+    public function dispatch(RequestInterface $request)
     {
         if (!$this->customerSession->authenticate()) {
             $this->_actionFlag->set('', 'no-dispatch', true);
