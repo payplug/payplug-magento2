@@ -80,7 +80,7 @@ class Data extends AbstractHelper
      * @return Payment
      * @throws NoSuchEntityException
      */
-    public function getOrderPayment(int|string $orderId): Payment
+    public function getOrderPayment($orderId): Payment
     {
         return $this->orderPaymentRepository->get($orderId, 'order_id');
     }
@@ -91,7 +91,7 @@ class Data extends AbstractHelper
      * @return Payment
      * @throws NoSuchEntityException
      */
-    public function getOrderPaymentByPaymentId(int|string $paymentId): Payment
+    public function getOrderPaymentByPaymentId($paymentId): Payment
     {
         return $this->orderPaymentRepository->get($paymentId, 'payment_id');
     }
@@ -102,7 +102,7 @@ class Data extends AbstractHelper
      * @return OrderInstallmentPlan
      * @throws NoSuchEntityException
      */
-    public function getOrderInstallmentPlan(int|string $orderId): OrderInstallmentPlan
+    public function getOrderInstallmentPlan($orderId): OrderInstallmentPlan
     {
         return $this->orderInstallmentPlanRepository->get($orderId, 'order_id');
     }
@@ -112,7 +112,7 @@ class Data extends AbstractHelper
      *
      * @return Payment|null
      */
-    public function getOrderLastPayment(int|string $orderId): ?Payment
+    public function getOrderLastPayment($orderId): ?Payment
     {
         $orderPayments = $this->getOrderPayments($orderId);
 
@@ -124,7 +124,7 @@ class Data extends AbstractHelper
      *
      * @return array|Payment[]
      */
-    public function getOrderPayments(int|string $orderId): array
+    public function getOrderPayments($orderId): array
     {
         /** @var SearchCriteriaInterface $criteria */
         $criteria = $this->searchCriteriaInterfaceFactory->create();
@@ -828,7 +828,7 @@ class Data extends AbstractHelper
      *
      * @return void
      */
-    public function refreshSalesGrid(int|string $orderId): void
+    public function refreshSalesGrid($orderId): void
     {
         $this->salesGrid->refresh($orderId);
     }

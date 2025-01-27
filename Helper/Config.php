@@ -380,9 +380,14 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get valid range of amount for a given currency
+     * @param string $isoCode
+     * @param int|null $storeId
+     * @param string|null $path
+     * @param string|null $amountPrefix
+     *
+     * @return array|bool
      */
-    public function getAmountsByCurrency(string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
+    public function getAmountsByCurrency(string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = '')
     {
         $minAmounts = [];
         $maxAmounts = [];
