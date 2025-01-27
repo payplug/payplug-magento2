@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Cron;
 
-use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
-use Magento\Sales\Model\Order;
-use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
@@ -142,13 +139,13 @@ class CheckOrderConsistency
      */
     public function getCheckablePayplugOrderPaymentsList(): ?array
     {
-        $fourHoursAgo = (new \DateTime())->modify('-' . self::PAST_HOURS_TO_CHECK . ' hours')->format('Y-m-d H:i:s');
+        $delay = (new \DateTime())->modify('-' . self::PAST_HOURS_TO_CHECK . ' hours')->format('Y-m-d H:i:s');
 
-        // Get all the order of the past 4 hours (sales_order table)
+        // Get all the order within a said delay (sales_order table)
         $searchOrderCriteria = $this->searchCriteriaBuilderFactory->create()
-            ->addFilter('created_at', $fourHoursAgo, 'gteq')
+            ->addFilter('created_at', $delay, 'gteq')
             ->create();
-        /** @var Order[] $orders */
+
         $orderIds = $this->orderRepository->getList($searchOrderCriteria)->getAllIds();
 
         if (empty($orderIds)) {

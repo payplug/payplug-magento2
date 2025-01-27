@@ -24,148 +24,88 @@ class GetCurrentOrder
     ) {
     }
 
-    public function execute(): ?OrderInterface
-    {
-        return $this->getLastRealOrder();
-    }
-
     /**
+     * Attempt to retrieve the currently active order using multiple strategies.
+     *
+     * @return OrderInterface|null
      * @throws \Exception
      */
-    private function getLastRealOrder(): ?OrderInterface
+    public function execute(): ?OrderInterface
     {
-        $order = $this->getLastRealOrderByCheckoutSession();
+        // 1) If we have an increment ID in the "last real order" from session
+        $order = $this->tryLoadOrderByIncrementId(
+            $this->checkoutSession->getLastRealOrder()->getIncrementId()
+        );
+
         if ($order) {
             return $order;
         }
 
-        $order = $this->getLastRealOrderFromRequestQuoteId();
+        // 2) If we have a quote ID in the request, load its order
+        $order = $this->tryLoadOrderByQuoteId(
+            $this->request->getParam('quote_id')
+        );
+
         if ($order) {
             return $order;
         }
 
-        $order = $this->getLastRealOrderByCheckoutSessionLastQuoteId();
+        // 3) If we have a "last quote ID" in session, load its order
+        $order = $this->tryLoadOrderByQuoteId(
+            $this->checkoutSession->getLastQuoteId()
+        );
+
         if ($order) {
             return $order;
         }
 
-        $order = $this->getLastRealOrderByCheckoutSessionQuoteId();
+        // 4) If we have a "quote ID" in session, load its order
+        $order = $this->tryLoadOrderByQuoteId(
+            $this->checkoutSession->getQuoteId()
+        );
+
         if ($order) {
             return $order;
         }
 
+        // If all attempts failed:
         throw new \Exception('Could not retrieve last order id');
     }
 
     /**
-     * First way to grab the last order
-     * We use the checkout session to directly grab the last order if it exists
-     *
-     * @return OrderInterface|null
+     * Helper method to load an order from a given increment ID, or return null if not found.
      */
-    private function getLastRealOrderByCheckoutSession(): ?OrderInterface
+    private function tryLoadOrderByIncrementId(?string $incrementId): ?OrderInterface
     {
-        $lastIncrementId = $this->checkoutSession->getLastRealOrder()->getIncrementId();
-
-        if (!$lastIncrementId) {
+        if (!$incrementId) {
             return null;
         }
 
         $order = $this->salesOrderFactory->create();
-        $order->loadByIncrementId($lastIncrementId);
+        $order->loadByIncrementId($incrementId);
 
-        if ($order->getId()) {
-            return $order;
-        }
-
-        return null;
+        return $order->getId() ? $order : null;
     }
 
     /**
-     * Second way to grab the last real order
-     * Typically if we have a return, we test against the quote_id and its reserved order id
-     * We grab the order with that and return it
+     * Helper method to load an order from a quote's reserved order ID, or return null if not found.
      *
-     * @return OrderInterface|null
      * @throws NoSuchEntityException
      */
-    private function getLastRealOrderFromRequestQuoteId(): ?OrderInterface
+    private function tryLoadOrderByQuoteId(?int $quoteId): ?OrderInterface
     {
-        $quoteId = $this->request->getParam('quote_id');
-
         if (!$quoteId) {
             return null;
         }
 
         $quote = $this->cartRepositoryInterface->get($quoteId);
+        $reservedOrderId = $quote->getReservedOrderId();
 
-        if ($quote->getReservedOrderId()) {
-            $order = $this->salesOrderFactory->create();
-            $order->loadByIncrementId($quote->getReservedOrderId());
-
-            if ($order->getId()) {
-                return $order;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Third way to grab the last order
-     * We use the checkout session to get the last_quote_id if it exists
-     * We retrieve the quote and its reserved order id and extract the order from there
-     *
-     * @return OrderInterface|null
-     */
-    private function getLastRealOrderByCheckoutSessionLastQuoteId(): ?OrderInterface
-    {
-        $lastQuoteId = $this->checkoutSession->getLastQuoteId();
-
-        if (!$lastQuoteId) {
+        if (!$reservedOrderId) {
             return null;
         }
 
-        $quote = $this->cartRepositoryInterface->get($lastQuoteId);
-
-        if ($quote->getReservedOrderId()) {
-            $order = $this->salesOrderFactory->create();
-            $order->loadByIncrementId($quote->getReservedOrderId());
-
-            if ($order->getId()) {
-                return $order;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Fourth way to grab the last order
-     * We use the checkout session to get the quote_id if it exists
-     * We retrieve the quote and its reserved order id and extract the order from there
-     *
-     * @return OrderInterface|null
-     */
-    private function getLastRealOrderByCheckoutSessionQuoteId(): ?OrderInterface
-    {
-        $quoteId = $this->checkoutSession->getQuoteId();
-
-        if (!$quoteId) {
-            return null;
-        }
-
-        $quote = $this->cartRepositoryInterface->get($quoteId);
-
-        if ($quote->getReservedOrderId()) {
-            $order = $this->salesOrderFactory->create();
-            $order->loadByIncrementId($quote->getReservedOrderId());
-
-            if ($order->getId()) {
-                return $order;
-            }
-        }
-
-        return null;
+        // Reuse the same loading logic by increment ID
+        return $this->tryLoadOrderByIncrementId($reservedOrderId);
     }
 }
