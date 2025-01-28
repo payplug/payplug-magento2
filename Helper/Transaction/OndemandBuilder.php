@@ -38,7 +38,7 @@ class OndemandBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
+    public function buildPaymentData($order, InfoInterface $payment, CartInterface $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
         unset($paymentData['hosted_payment']['return_url']);
@@ -97,7 +97,7 @@ class OndemandBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildTransaction(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
+    public function buildTransaction($order, InfoInterface $payment, $quote): array
     {
         $transaction = parent::buildTransaction($order, $payment, $quote);
 

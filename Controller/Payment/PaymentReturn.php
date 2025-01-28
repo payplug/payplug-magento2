@@ -20,6 +20,7 @@ use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetCurrentOrder;
 use Payplug\Resource\Payment;
 
 class PaymentReturn extends AbstractPayment
@@ -31,38 +32,36 @@ class PaymentReturn extends AbstractPayment
         Logger $logger,
         Data $payplugHelper,
         protected Config $config,
-        protected CartRepositoryInterface $cartRepository
+        protected CartRepositoryInterface $cartRepository,
+        protected GetCurrentOrder $getCurrentOrder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
 
     /**
      * Handle return from PayPlug payment page
+     *
+     * @return Redirect|ResultInterface|Json
      */
-    public function execute(): Redirect|ResultInterface|Json
+    public function execute()
     {
         $resultRedirect = $this->resultRedirectFactory->create();
 
         $redirectUrlSuccess = 'checkout/onepage/success';
         $redirectUrlCart = 'checkout/cart';
         try {
-            $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
-            if (!$lastIncrementId) {
-                $this->logger->error('Could not retrieve last order id');
+            $order = $this->getCurrentOrder->execute();
 
-                return $resultRedirect->setPath($redirectUrlSuccess);
-            }
-            $order = $this->salesOrderFactory->create();
-            $order->loadByIncrementId((string)$lastIncrementId);
-
-            $payment = $this->payplugHelper->getOrderPayment((string)$lastIncrementId)->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $lastIncrementId = $order->getIncrementId();
+            $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
+            $payment = $orderPaymentModel->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
             // If this is the deferred standard paiement then return the user on the success checkout
             if (!$payment->is_paid && $this->isAuthorizedOnlyStandardPayment($order)) {
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
-            if (!$payment->is_paid && !$this->isOneyPending($payment)) {
+            if (!$payment->is_paid && !$orderPaymentModel->isProcessing($payment) && !$this->isOneyPending($payment)) {
                 $this->payplugHelper->cancelOrderAndInvoice($order);
 
                 $failureMessage = $this->_request->getParam(

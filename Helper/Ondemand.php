@@ -91,7 +91,7 @@ class Ondemand extends AbstractHelper
             throw new PaymentException(__('Unable to find payment linked to order %1', $order->getIncrementId()));
         }
 
-        $payplugPayment = $lastOrderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+        $payplugPayment = $lastOrderPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
         if ($payplugPayment->is_paid) {
             $exceptionMessage = 'Last payment %1 has already been paid. ' .
                 'Please wait for the automatic notification or update the payment manually.';
@@ -123,7 +123,7 @@ class Ondemand extends AbstractHelper
 
         $newTransaction = $this->ondemandBuilder->buildTransaction($orderAdapter, $payment, $quote);
 
-        $payplugPayment = $lastOrderPayment->abort($order->getStoreId());
+        $payplugPayment = $lastOrderPayment->abort((int)$order->getStoreId());
         if ($payplugPayment === null) {
             throw new PaymentException(__('Unable to abort payment %1', $lastOrderPayment->getPaymentId()));
         }

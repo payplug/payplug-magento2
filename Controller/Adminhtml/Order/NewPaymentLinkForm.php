@@ -61,8 +61,10 @@ class NewPaymentLinkForm extends AdminOrder
 
     /**
      * OnDemand new payment link view
+     *
+     * @return Redirect|Page
      */
-    public function execute(): Redirect|Page
+    public function execute()
     {
         $resultRedirect = $this->resultRedirectFactory->create();
 

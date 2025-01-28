@@ -35,7 +35,7 @@ class StandardBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
+    public function buildPaymentData($order, InfoInterface $payment, CartInterface $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 
@@ -67,7 +67,7 @@ class StandardBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
+    public function buildAmountData($order): array
     {
         $amountData = parent::buildAmountData($order);
         if ($this->payplugConfig->isStandardPaymentModeDeferred()) {

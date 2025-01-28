@@ -121,7 +121,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
                         $orderPayment->setPaymentId($paymentId);
                         $orderPayment->setIsSandbox(!$payplugInstallmentPlan->is_live);
                     }
-                    $payplugPayment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+                    $payplugPayment = $orderPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
 
                     if ($payplugPayment->is_paid && !$orderPayment->isInstallmentPlanPaymentProcessed()) {
                         $this->sendOrderEmail($order);
