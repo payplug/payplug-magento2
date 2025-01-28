@@ -8,7 +8,6 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Logger\Logger;
@@ -27,42 +26,25 @@ class GetCurrentOrder
     /**
      * Attempt to retrieve the currently active order using multiple strategies.
      *
-     * @return OrderInterface|null
      * @throws \Exception
      */
     public function execute(): ?OrderInterface
     {
-        // 1) If we have an increment ID in the "last real order" from session
-        $order = $this->tryLoadOrderByIncrementId(
-            $this->checkoutSession->getLastRealOrder()->getIncrementId()
+        // 1) Try to load via last real order increment ID
+        $order = $this->loadOrderByIncrementId(
+            $this->checkoutSession->getLastRealOrder()?->getIncrementId()
         );
 
         if ($order) {
             return $order;
         }
 
-        // 2) If we have a quote ID in the request, load its order
-        $order = $this->tryLoadOrderByQuoteId(
-            $this->request->getParam('quote_id')
-        );
+        // 2) Try to load via the first available quote ID
+        $quoteId = $this->request->getParam('quote_id')
+            ?? $this->checkoutSession->getLastQuoteId()
+            ?? $this->checkoutSession->getQuoteId();
 
-        if ($order) {
-            return $order;
-        }
-
-        // 3) If we have a "last quote ID" in session, load its order
-        $order = $this->tryLoadOrderByQuoteId(
-            $this->checkoutSession->getLastQuoteId()
-        );
-
-        if ($order) {
-            return $order;
-        }
-
-        // 4) If we have a "quote ID" in session, load its order
-        $order = $this->tryLoadOrderByQuoteId(
-            $this->checkoutSession->getQuoteId()
-        );
+        $order = $this->loadOrderByQuoteId($quoteId);
 
         if ($order) {
             return $order;
@@ -75,7 +57,7 @@ class GetCurrentOrder
     /**
      * Helper method to load an order from a given increment ID, or return null if not found.
      */
-    private function tryLoadOrderByIncrementId(?string $incrementId): ?OrderInterface
+    private function loadOrderByIncrementId(?string $incrementId): ?OrderInterface
     {
         if (!$incrementId) {
             return null;
@@ -92,7 +74,7 @@ class GetCurrentOrder
      *
      * @throws NoSuchEntityException
      */
-    private function tryLoadOrderByQuoteId(?int $quoteId): ?OrderInterface
+    private function loadOrderByQuoteId(?int $quoteId): ?OrderInterface
     {
         if (!$quoteId) {
             return null;
@@ -105,7 +87,6 @@ class GetCurrentOrder
             return null;
         }
 
-        // Reuse the same loading logic by increment ID
-        return $this->tryLoadOrderByIncrementId($reservedOrderId);
+        return $this->loadOrderByIncrementId($reservedOrderId);
     }
 }
