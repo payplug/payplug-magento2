@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0](https://github.com/payplug/payplug-magento2/releases/tag/4.3.0) - 2025-02-03
+
+### Features
+
+- Add a queue system feature 
+- Synchronize orders status with Payplug servers post payment 
+- Compatibility with php 8.1 and Magento 2.4.4 and above. (SMP-3032)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.2.0...release/v4.3.0)**
+
+### Added
+
+- Add queue system payment feature [#246](https://github.com/payplug/payplug-magento2/pull/246)
+
+### Changed
+
+### Removed
+
+- Removed the unions type in the base code. [#246](https://github.com/payplug/payplug-magento2/pull/246)
+
 ## [4.2.0](https://github.com/payplug/payplug-magento2/releases/tag/4.2.0) - 2025-01-13
 
 ### Features

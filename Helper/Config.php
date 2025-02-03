@@ -34,7 +34,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
-    public const MODULE_VERSION = '4.2.0';
+    public const MODULE_VERSION = '4.3.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
     private ?AdapterInterface $adapter = null;
