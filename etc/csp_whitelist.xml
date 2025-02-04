@@ -32,5 +32,10 @@
                 <value id="secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
             </values>
         </policy>
+        <policy id="script-src-elem">
+            <values>
+                <value id="payplug-api" type="host">cdn.payplug.com</value>
+            </values>
+        </policy>
     </policies>
 </csp_whitelist>
