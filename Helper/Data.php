@@ -389,7 +389,7 @@ class Data extends AbstractHelper
     {
       $orderPayment = $this->getPaymentForOrder($order);
 
-      return $orderPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+      return $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
     }
 
     /**
@@ -419,7 +419,7 @@ class Data extends AbstractHelper
             if ($orderPayment === null) {
                 return;
             }
-            $payplugPayment = $orderPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $payplugPayment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
             if ($payplugPayment->failure &&
                 $payplugPayment->failure->code &&
                 strtolower($payplugPayment->failure->code ?? '') !== 'timeout'
@@ -451,7 +451,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         if ($order->getPayment()->getMethod() === InstallmentPlan::METHOD_CODE) {
             $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
-            $installmentPlan = $orderInstallmentPlan->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -586,7 +586,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
         if ($cancelPayment) {
-            $installmentPlan = $orderInstallmentPlan->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -604,7 +604,7 @@ class Data extends AbstractHelper
             }
         }
         $orderInstallmentPlan->abort((int)$storeId);
-        $installmentPlan = $orderInstallmentPlan->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+        $installmentPlan = $orderInstallmentPlan->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
@@ -716,7 +716,7 @@ class Data extends AbstractHelper
     {
         /** @var Processing $orderProcessing */
         $orderProcessing = $this->orderProcessingFactory->create();
-        $orderProcessing->setOrderId($order->getId());
+        $orderProcessing->setOrderId($order->get());
         $date = new \DateTime();
         $orderProcessing->setCreatedAt($date->format('Y-m-d H:i:s'));
         $this->orderProcessingRepository->save($orderProcessing);
@@ -902,7 +902,7 @@ class Data extends AbstractHelper
             $payment = $this->getOrderPayment($order->getIncrementId());
         }
         /** @var Payment|OrderInstallmentPlan $payplugPayment */
-        $payplugPayment = $payment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+        $payplugPayment = $payment->retrieve($payment->getScopeId($order), $payment->getScope($order));
 
         if ($payplugPayment->failure) {
             return true;

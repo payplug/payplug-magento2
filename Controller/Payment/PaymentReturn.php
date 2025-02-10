@@ -54,7 +54,7 @@ class PaymentReturn extends AbstractPayment
 
             $lastIncrementId = $order->getIncrementId();
             $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
-            $payment = $orderPaymentModel->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $payment = $orderPaymentModel->retrieve($orderPaymentModel->getScopeId($order), $orderPaymentModel->getScope($order));
 
             // If this is the deferred standard paiement then return the user on the success checkout
             if (!$payment->is_paid && $this->isAuthorizedOnlyStandardPayment($order)) {

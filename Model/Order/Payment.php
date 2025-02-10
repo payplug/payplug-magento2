@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Model\Order;
 
+use Magento\Framework\App\ScopeInterface as ScopeInterfaceDefault;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\DataObject\IdentityInterface;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
+use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Resource\Payment as ResourcePayment;
@@ -80,17 +82,17 @@ class Payment extends AbstractModel implements IdentityInterface
     }
 
     /**
-     * Get order id
+     * Get order increment_id
      */
-    public function getOrderId(): int
+    public function getOrderId(): string
     {
-        return (int)$this->_getData(self::ORDER_ID);
+        return (string)$this->_getData(self::ORDER_ID);
     }
 
     /**
      * Set order id
      */
-    public function setOrderId(int $orderId): self
+    public function setOrderId(string $orderId): self
     {
         return $this->setData(self::ORDER_ID, $orderId);
     }
@@ -205,6 +207,30 @@ class Payment extends AbstractModel implements IdentityInterface
     public function setDescription(?string $description = null): self
     {
         return $this->setData(self::DESCRIPTION, $description);
+    }
+
+    public function getScope(Order $order): string
+    {
+        if ($order->getStoreId()) {
+            return ScopeInterface::SCOPE_STORES;
+        } elseif ($order->getStore()->getWebsiteId()) {
+            return ScopeInterface::SCOPE_WEBSITES;
+        }
+
+        return ScopeInterfaceDefault::SCOPE_DEFAULT;
+    }
+
+    public function getScopeId(Order $order): int
+    {
+        if ($order->getStoreId()) {
+            // Use store ID if non-zero
+            return (int)$order->getStoreId();
+        } elseif ($order->getStore()->getWebsiteId()) {
+            // Otherwise use website ID if store ID == 0
+            return (int)$order->getStore()->getWebsiteId();
+        }
+        // Otherwise default scope ID = 0
+        return 0;
     }
 
     /**

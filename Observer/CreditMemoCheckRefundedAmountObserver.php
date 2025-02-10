@@ -92,7 +92,7 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
             }
 
             $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
-            $payment = $payplugPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $payment = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
 
             if ($order->getPayment()->getMethod() === Oney::METHOD_CODE ||
                 $order->getPayment()->getMethod() === OneyWithoutFees::METHOD_CODE

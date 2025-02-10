@@ -49,7 +49,7 @@ class OndemandInfo extends Info
 
         foreach ($orderPayments as $orderPayment) {
             try {
-                $payment = $orderPayment->retrieve((int)$order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+                $payment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
                 $paymentInfoDetails = $this->buildPaymentDetails($payment, $order);
 
                 $paymentInfo = [
