@@ -50,7 +50,7 @@ class Info extends BaseInfo
         $order = $this->getInfo()->getOrder();
 
         try {
-            $payment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $payment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
             return [];

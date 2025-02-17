@@ -8,11 +8,11 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
-use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Sales\Model\OrderRepository;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetCurrentOrder;
 
 class Cancel extends AbstractPayment
 {
@@ -24,7 +24,8 @@ class Cancel extends AbstractPayment
         Data $payplugHelper,
         private OrderRepository $orderRepository,
         private Validator $formKeyValidator,
-        private RequestInterface $request
+        private RequestInterface $request,
+        private GetCurrentOrder $getCurrentOrder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -49,22 +50,7 @@ class Cancel extends AbstractPayment
         }
 
         try {
-            $lastIncrementId = $this->getCheckout()->getLastRealOrderId();
-
-            if (!$lastIncrementId) {
-                $this->logger->error('Could not retrieve last order id');
-
-                return $resultRedirect->setPath($redirectUrlCart);
-            }
-            $order = $this->salesOrderFactory->create();
-            /** @var $order Order */
-            $order->loadByIncrementId($lastIncrementId);
-
-            if (!$order->getId()) {
-                $this->logger->error(sprintf('Could not retrieve order with id %s', $lastIncrementId));
-
-                return $resultRedirect->setPath($redirectUrlCart);
-            }
+            $order = $this->getCurrentOrder->execute();
 
             $this->payplugHelper->cancelOrderAndInvoice($order);
 

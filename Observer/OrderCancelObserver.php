@@ -56,7 +56,7 @@ class OrderCancelObserver implements ObserverInterface
         }
 
         try {
-            $lastOrderPayment->abort($order->getStoreId());
+            $lastOrderPayment->abort((int)$order->getStoreId());
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
             throw new \Exception(__('Unable to abort payment %1', $lastOrderPayment->getPaymentId()));

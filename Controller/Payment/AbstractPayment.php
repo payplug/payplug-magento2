@@ -27,8 +27,10 @@ abstract class AbstractPayment extends Action
 
     /**
      * Get quote
+     *
+     * @return CartInterface|Quote
      */
-    protected function getQuote(): CartInterface|Quote
+    protected function getQuote()
     {
         return $this->getCheckout()->getQuote();
     }

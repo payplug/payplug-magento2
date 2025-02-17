@@ -35,8 +35,14 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build PayPlug payment transaction
+     *
+     * @param OrderInterface|OrderAdapterInterface $order
+     * @param InfoInterface $payment
+     * @param CartInterface|Quote $quote
+     *
+     * @return array
      */
-    public function buildTransaction(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
+    public function buildTransaction($order, InfoInterface $payment, $quote): array
     {
         $transaction = array_merge(
             $this->buildAmountData($order),
@@ -54,8 +60,12 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build amount data
+     *
+     * @param OrderInterface|OrderAdapterInterface $order
+     *
+     * @return int[]
      */
-    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
+    public function buildAmountData($order): array
     {
         $unroundedAmount = $order?->getGrandTotalAmount() ?? $order?->getBaseGrandTotal() ?? 0;
 
@@ -68,8 +78,14 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build customer data
+     *
+     * @param OrderInterface|OrderAdapterInterface $order
+     * @param InfoInterface $payment
+     * @param CartInterface|Quote $quote
+     *
+     * @return array
      */
-    public function buildCustomerData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
+    public function buildCustomerData($order, InfoInterface $payment, $quote): array
     {
         $language = $this->payplugConfig->getConfigValue(
             'code',
@@ -182,8 +198,13 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build order data
+     *
+     * @param OrderInterface|OrderAdapterInterface $order
+     * @param CartInterface|Quote $quote
+     *
+     * @return array
      */
-    public function buildOrderData(OrderInterface|OrderAdapterInterface $order, CartInterface|Quote $quote): array
+    public function buildOrderData($order, $quote): array
     {
         $currency = $order->getCurrencyCode();
         $quoteId = $quote->getId();
@@ -209,8 +230,14 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build payment data
+     *
+     * @param OrderInterface|OrderAdapterInterface $order
+     * @param InfoInterface $payment
+     * @param CartInterface $quote
+     *
+     * @return array
      */
-    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface|Quote $quote): array
+    public function buildPaymentData($order, InfoInterface $payment, CartInterface $quote): array
     {
         $quoteId = $quote->getId();
         $storeId = $order->getStoreId();

@@ -35,7 +35,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildTransaction(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
+    public function buildTransaction($order, InfoInterface $payment, $quote): array
     {
         $this->validateTransaction($order, $payment, $quote);
 
@@ -51,7 +51,7 @@ class OneyBuilder extends AbstractBuilder
      *
      * @throws LocalizedException
      */
-    private function validateTransaction(OrderAdapterInterface|OrderInterface $order, InfoInterface $payment, CartInterface $quote)
+    private function validateTransaction($order, InfoInterface $payment, CartInterface $quote)
     {
         try {
             $this->oneyHelper->oneyCheckoutValidation(
@@ -106,7 +106,7 @@ class OneyBuilder extends AbstractBuilder
      *
      * @throws \Exception
      */
-    private function validateBillingMobilePhone(OrderAdapterInterface|OrderInterface $order): void
+    private function validateBillingMobilePhone($order): void
     {
         $exceptionMessage = (string)__('Please fill in a mobile phone on your billing address.');
         $address = $order->getBillingAddress();
@@ -146,7 +146,7 @@ class OneyBuilder extends AbstractBuilder
      *
      * @throws LocalizedException
      */
-    private function buildCartContext(OrderInterface|OrderAdapterInterface $order, CartInterface $quote): array
+    private function buildCartContext($order, CartInterface $quote): array
     {
         $shippingMethod = $this->getShippingMethod($quote);
         $shippingMapping = $this->oneyHelper->getShippingMethodMapping($shippingMethod);
@@ -215,7 +215,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildCustomerData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
+    public function buildCustomerData($order, InfoInterface $payment, $quote): array
     {
         $customerData = parent::buildCustomerData($order, $payment, $quote);
 
@@ -252,7 +252,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildAmountData(OrderInterface|OrderAdapterInterface $order): array
+    public function buildAmountData($order): array
     {
         $amountData = parent::buildAmountData($order);
         $amountData['authorized_amount'] = $amountData['amount'];
@@ -264,7 +264,7 @@ class OneyBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function buildPaymentData(OrderInterface|OrderAdapterInterface $order, InfoInterface $payment, CartInterface $quote): array
+    public function buildPaymentData($order, InfoInterface $payment, CartInterface $quote): array
     {
         $paymentData = parent::buildPaymentData($order, $payment, $quote);
 

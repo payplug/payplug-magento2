@@ -21,7 +21,7 @@ class FetchTransactionInformation implements ClientInterface
 
         /** @var InstallmentPlan $orderInstallmentPlan */
         $orderInstallmentPlan = $data['installment_plan'];
-        $installmentPlan = $orderInstallmentPlan->retrieve($data['store_id']);
+        $installmentPlan = $orderInstallmentPlan->retrieve((int)$data['store_id']);
 
         return ['installment_plan' => $installmentPlan, 'order_installment_plan' => $orderInstallmentPlan];
     }

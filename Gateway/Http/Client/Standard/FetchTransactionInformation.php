@@ -21,7 +21,7 @@ class FetchTransactionInformation implements ClientInterface
 
         /** @var Payment $orderPayment */
         $orderPayment = $data['payment'];
-        $payment = $orderPayment->retrieve($data['store_id']);
+        $payment = $orderPayment->retrieve((int)$data['store_id']);
 
         return ['payment' => $payment];
     }

@@ -61,8 +61,10 @@ class Ipn extends AbstractPayment
      * Action called when IPN is received
      *
      * Can update order status when payment or refund notification is received
+     *
+     * @return Redirect|ResultInterface|Json
      */
-    public function execute(): Redirect|ResultInterface|Json
+    public function execute()
     {
         $this->logger->info('--- Starting IPN Action ---');
 
@@ -136,8 +138,12 @@ class Ipn extends AbstractPayment
 
     /**
      * Process debug ipn call
+     *
+     * @param Raw $response
+     *
+     * @return Raw|Json|ResultInterface
      */
-    private function processDebugCall(Raw $response): Raw|Json|ResultInterface
+    private function processDebugCall(Raw $response)
     {
         $this->logger->info('This is a debug call.');
         $cid = (int) $this->payplugConfig->getConfigValue('company_id');
