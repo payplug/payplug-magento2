@@ -52,7 +52,8 @@ class InstallmentPlanInfo extends Info
         $order = $this->getInfo()->getOrder();
 
         try {
-            $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
+            $orderPayment = $this->orderPaymentRepository->get($orderIncrementId, 'order_id');
+            $installmentPlan = $orderInstallmentPlan->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
             return [];
@@ -98,7 +99,7 @@ class InstallmentPlanInfo extends Info
 
                 try {
                     $orderPayment = $this->orderPaymentRepository->get($paymentId, 'payment_id');
-                    $payment = $orderPayment->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
+                    $payment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
                     $paymentInfo['details'] = $this->buildPaymentDetails($payment, $order);
                     $paymentInfo['status'] = $paymentInfo['details']['Status'];
                 } catch (NoSuchEntityException $e) {
