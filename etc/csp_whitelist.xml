@@ -5,8 +5,7 @@
             <values>
                 <value id="payplug-apple-pay" type="host">applepay.cdn-apple.com</value>
                 <value id="payplug-api-qa" type="host">api-qa.payplug.com</value>
-                <value id="payplug-script-cdn-qa" type="host">cdn-qa.payplug.com</value>
-                <value id="payplug-script-qa" type="host">https://cdn-qa.payplug.com</value>
+                <value id="payplug-cdn-qa" type="host">cdn-qa.payplug.com</value>
                 <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
                 <value id="payplug-cdn" type="host">cdn.payplug.com</value>
             </values>
@@ -19,7 +18,7 @@
         <policy id="frame-src">
             <values>
                 <value id="payplug-api-qa" type="host">api-qa.payplug.com</value>
-                <value id="payplug-secure" type="host">secure-qa.payplug.com</value>
+                <value id="payplug-secure-qa" type="host">secure-qa.payplug.com</value>
                 <value id="payplug-all" type="host">*.payplug.com</value>
             </values>
         </policy>
