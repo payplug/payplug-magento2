@@ -3,33 +3,38 @@
     <policies>
         <policy id="script-src">
             <values>
-                <value id="apple-pay" type="host">applepay.cdn-apple.com</value>
-                <value id="payplug-api" type="host">api-qa.payplug.com</value>
-                <value id="payplug-script-cd-qa" type="host">cdn-qa.payplug.com</value>
-                <value id="payplug-script-qa" type="host">https://cdn-qa.payplug.com</value>
-                <value id="secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
+                <value id="payplug-apple-pay" type="host">applepay.cdn-apple.com</value>
+                <value id="payplug-api-qa" type="host">api-qa.payplug.com</value>
+                <value id="payplug-cdn-qa" type="host">cdn-qa.payplug.com</value>
+                <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
+                <value id="payplug-cdn" type="host">cdn.payplug.com</value>
             </values>
         </policy>
         <policy id="style-src">
             <values>
-                <value id="secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
+                <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
             </values>
         </policy>
-         <policy id="frame-src">
+        <policy id="frame-src">
             <values>
-                <value id="api_payplug" type="host">api-qa.payplug.com</value>
-                <value id="secure_payplug" type="host">secure-qa.payplug.com</value>
-                <value id="spayplug" type="host">*.payplug.com</value>
+                <value id="payplug-api-qa" type="host">api-qa.payplug.com</value>
+                <value id="payplug-secure-qa" type="host">secure-qa.payplug.com</value>
+                <value id="payplug-all" type="host">*.payplug.com</value>
             </values>
         </policy>
         <policy id="font-src">
-          <values>
-            <value id="apple-pay" type="host">applepay.cdn-apple.com</value>
-          </values>
+            <values>
+                <value id="payplug-apple-pay" type="host">applepay.cdn-apple.com</value>
+            </values>
         </policy>
         <policy id="img-src">
             <values>
-                <value id="secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
+                <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
+            </values>
+        </policy>
+        <policy id="script-src-elem">
+            <values>
+                <value id="payplug-cdn" type="host">cdn.payplug.com</value>
             </values>
         </policy>
     </policies>
