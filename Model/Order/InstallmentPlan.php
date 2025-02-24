@@ -2,6 +2,8 @@
 
 namespace Payplug\Payments\Model\Order;
 
+use Magento\Framework\App\ScopeInterface as ScopeInterfaceDefault;
+use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 
@@ -152,6 +154,30 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
     public function setStatus($status)
     {
         return $this->setData(self::STATUS, $status);
+    }
+
+    public function getScope(Order $order): string
+    {
+        if ($order->getStoreId()) {
+            return ScopeInterface::SCOPE_STORES;
+        } elseif ($order->getStore()->getWebsiteId()) {
+            return ScopeInterface::SCOPE_WEBSITES;
+        }
+
+        return ScopeInterfaceDefault::SCOPE_DEFAULT;
+    }
+
+    public function getScopeId(Order $order): int
+    {
+        if ($order->getStoreId()) {
+            // Use store ID if non-zero
+            return (int)$order->getStoreId();
+        } elseif ($order->getStore()->getWebsiteId()) {
+            // Otherwise use website ID if store ID == 0
+            return (int)$order->getStore()->getWebsiteId();
+        }
+        // Otherwise default scope ID = 0
+        return 0;
     }
 
     /**

@@ -11,6 +11,7 @@ use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\OrderInstallmentPlanRepository;
 use Payplug\Payments\Model\OrderPaymentRepository;
 
 class InstallmentPlanInfo extends Info
@@ -22,6 +23,7 @@ class InstallmentPlanInfo extends Info
         Data $payplugHelper,
         Logger $payplugLogger,
         private OrderPaymentRepository $orderPaymentRepository,
+        private OrderInstallmentPlanRepository $orderInstallmentPaymentRepository,
         private FormKey $formKey,
         array $data = []
     ) {
@@ -52,7 +54,7 @@ class InstallmentPlanInfo extends Info
         $order = $this->getInfo()->getOrder();
 
         try {
-            $orderPayment = $this->orderPaymentRepository->get($orderIncrementId, 'order_id');
+            $orderPayment = $this->orderInstallmentPaymentRepository->get($orderIncrementId, 'order_id');
             $installmentPlan = $orderInstallmentPlan->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
