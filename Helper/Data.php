@@ -604,7 +604,7 @@ class Data extends AbstractHelper
             }
         }
         $orderInstallmentPlan->abort((int)$storeId);
-        $installmentPlan = $orderInstallmentPlan->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
+        $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
