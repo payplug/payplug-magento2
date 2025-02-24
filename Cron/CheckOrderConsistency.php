@@ -61,7 +61,7 @@ class CheckOrderConsistency
             if ($payplugPayment) {
                 $paymentId = $payplugPayment->id ?: '';
                 $payplugOrderPayment = $this->payplugHelper->getOrderPayment($magentoOrder->getIncrementId());
-                // If the paiment is not processing in the API it mean that the state of the order can be updated
+                // If the payment is not processing in the API it mean that the state of the order can be updated
                 if (!$payplugOrderPayment->isProcessing($payplugPayment)) {
                     $this->logger->info(
                         sprintf(
