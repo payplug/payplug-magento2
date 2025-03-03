@@ -44,7 +44,7 @@ class GetCurrentOrder
             ?? $this->checkoutSession->getLastQuoteId()
             ?? $this->checkoutSession->getQuoteId();
 
-        $order = $this->loadOrderByQuoteId($quoteId);
+        $order = $this->loadOrderByQuoteId((int)$quoteId);
 
         if ($order) {
             return $order;
@@ -76,7 +76,7 @@ class GetCurrentOrder
      */
     private function loadOrderByQuoteId(?int $quoteId): ?OrderInterface
     {
-        if (!$quoteId) {
+        if (!$quoteId || $quoteId == 0) {
             return null;
         }
 

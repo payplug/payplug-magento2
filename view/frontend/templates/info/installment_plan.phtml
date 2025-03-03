@@ -1,0 +1,36 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\InstallmentPlanInfo;
+
+/**
+ * @var Escaper $escaper
+ * @var InstallmentPlanInfo $block
+ */
+$specificInfo = $block->getSpecificInformation();
+$title = $escaper->escapeHtml($block->getMethod()->getTitle());
+?>
+    <dl class="payment-method">
+        <dt class="title"><?= /* @noEscape */ $title ?></dt>
+        <?php if ($specificInfo): ?>
+            <dd class="content">
+                <table class="data table">
+                    <caption class="table-caption"><?= /* @noEscape */ $title ?></caption>
+                    <?php foreach ($specificInfo as $label => $value): ?>
+                        <tr>
+                            <th scope="row"><?= $escaper->escapeHtml($label) ?></th>
+                            <td>
+                                <?php
+                                $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));
+                                ?>
+                                <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+            </dd>
+        <?php endif;?>
+    </dl>
+<?= $block->getChildHtml() ?>
