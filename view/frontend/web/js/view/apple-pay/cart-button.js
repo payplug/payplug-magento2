@@ -146,96 +146,37 @@ define([
             window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         },
 
-                    /**
-         * Handles the onvalidatemerchant event, which is triggered when the Apple Pay session requires
-         * validation of the merchant.
-         *
-         * @private
-         * @returns {void}
-         */
-        _bindMarchantValidation: function() {
-            const self = this;
-
-            this.applePaySession.onvalidatemerchant = async event => {
-                const eventData = {
-                    isTrusted: event.isTrusted,
-                    validationURL: event.validationURL,
-                    type: event.type,
-                };
-
-                const encodedEvent = btoa(JSON.stringify(eventData));
-
-                $.ajax({
-                    url: url.build(self.placeCartOrderUrl + '?event=' + encodeURIComponent(encodedEvent)),
-                    type: 'GET',
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.error) {
-                            this._cancelPayplugPayment();
-                        } else {
-                            try {
-                                self.applePaySession.completeMerchantValidation(response.merchand_data);
-                            } catch (e) {
-                                this._cancelPayplugPayment();
-                            }
-                        }
-                    },
-                    error: function () {
-                        this._cancelPayplugPayment();
-                    }
-                });
-            };
-        },
-
         /**
-         * Handles the onpaymentauthorized event, which is triggered after the user has authorized
-         * the payment with Apple Pay.
+         * Determines the Apple Pay workflow type based on the current page body class.
+         *
+         * Apple Pay workflow types are as follows:
+         * - 'product': The user is currently on a product page.
+         * - 'shopping-cart': The user is currently on the shopping cart page.
+         * - 'checkout': The user is currently on the checkout page.
+         * - '': The user is on an unknown page.
          *
          * @private
-         * @returns {void}
+         * @returns {string} The Apple Pay workflow type.
          */
-        _bindPaymentAuthorization: function() {
-            const self = this;
+        _getApplePayWorkflowType: function() {
+            const bodyClass = $('body').attr('class');
+            let workflowType;
 
-            this.applePaySession.onpaymentauthorized = event => {
-                try {
-                    $.ajax({
-                        url: url.build(self.updateTransactionDataUrl),
-                        type: 'POST',
-                        data: {token: event.payment.token}
-                    }).done(function (response) {
-                        let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
-
-                        if (response.error === true) {
-                            applePaySessionStatus = ApplePaySession.STATUS_FAILURE;
-                        }
-                        self.session.completePayment({
-                            "status": applePaySessionStatus
-                        });
-                        if (response.error === true) {
-                            self._cancelPayplugPayment();
-                        } else {
-                            window.location.replace(url.build(self.returnUrl));
-                        }
-                    }).fail(function () {
-                        self._cancelPayplugPayment();
-                    });
-                } catch (e) {
-                    self._cancelPayplugPayment();
-                }
+            switch (bodyClass) {
+                case bodyClass.includes('catalog-product-view'):
+                    workflowType = 'product';
+                    break;
+                case bodyClass.includes('checkout-cart-index'):
+                    workflowType = 'shopping-cart';
+                    break;
+                case bodyClass.includes('checkout-index-index'):
+                    workflowType = 'checkout';
+                    break;
+                default:
+                    workflowType = '';
             };
-        },
 
-        /**
-         * Binds the Apple Pay session's oncancel event to handle payment cancellation.
-         *
-         * @private
-         * @returns {void}
-         */
-        _bindPaymentCancel: function() {
-            this.applePaySession.oncancel = () => {
-                this._cancelPayplugPayment();
-            };
+            return workflowType;
         },
 
         /**
@@ -255,10 +196,14 @@ define([
                     type: event.type,
                 };
 
-                const encodedEvent = btoa(JSON.stringify(eventData));
+                const event = btoa(JSON.stringify(eventData));
+                const urlParameters = { event };
+                const workflowType = _getApplePayWorkflowType();
+                workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
-                    url: url.build(self.placeCartOrderUrl + '?event=' + encodeURIComponent(encodedEvent)),
+                    url: url.build(self.placeCartOrderUrl),
+                    data: urlParameters,
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
