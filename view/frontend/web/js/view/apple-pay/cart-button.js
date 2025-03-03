@@ -199,7 +199,7 @@ define([
                 const event = btoa(JSON.stringify(eventData));
                 const urlParameters = { event };
                 const workflowType = _getApplePayWorkflowType();
-                workflowType && (urlParameters.workflowType = workflowType);
+                workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
                     url: url.build(self.placeCartOrderUrl),
