@@ -146,7 +146,40 @@ define([
             window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         },
 
-                    /**
+        /**
+         * Determines the Apple Pay workflow type based on the current page body class.
+         *
+         * Apple Pay workflow types are as follows:
+         * - 'product': The user is currently on a product page.
+         * - 'shopping-cart': The user is currently on the shopping cart page.
+         * - 'checkout': The user is currently on the checkout page.
+         * - '': The user is on an unknown page.
+         *
+         * @private
+         * @returns {string} The Apple Pay workflow type.
+         */
+        _getApplePayWorkflowType: function() {
+            const bodyClass = $('body').attr('class');
+            let workflowType;
+
+            switch (bodyClass) {
+                case bodyClass.includes('catalog-product-view'):
+                    workflowType = 'product';
+                    break;
+                case bodyClass.includes('checkout-cart-index'):
+                    workflowType = 'shopping-cart';
+                    break;
+                case bodyClass.includes('checkout-index-index'):
+                    workflowType = 'checkout';
+                    break;
+                default:
+                    workflowType = '';
+            };
+
+            return workflowType;
+        },
+
+        /**
          * Handles the onvalidatemerchant event, which is triggered when the Apple Pay session requires
          * validation of the merchant.
          *
@@ -163,10 +196,14 @@ define([
                     type: event.type,
                 };
 
-                const encodedEvent = btoa(JSON.stringify(eventData));
+                const event = btoa(JSON.stringify(eventData));
+                const urlParameters = { event };
+                const workflowType = _getApplePayWorkflowType();
+                workflowType && (urlParameters.workflowType = workflowType);
 
                 $.ajax({
-                    url: url.build(self.placeCartOrderUrl + '?event=' + encodeURIComponent(encodedEvent)),
+                    url: url.build(self.placeCartOrderUrl),
+                    data: urlParameters,
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
