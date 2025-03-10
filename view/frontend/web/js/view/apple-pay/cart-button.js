@@ -158,17 +158,17 @@ define([
                     dataType: 'json',
                     success: function(response) {
                         if (response.error) {
-                            this._cancelPayplugPayment();
+                            self._cancelPayplugPayment();
                         } else {
                             try {
                                 self.applePaySession.completeMerchantValidation(response.merchand_data);
                             } catch (e) {
-                                this._cancelPayplugPayment();
+                                self._cancelPayplugPayment();
                             }
                         }
                     },
                     error: function () {
-                        this._cancelPayplugPayment();
+                        self._cancelPayplugPayment();
                     }
                 });
             };
