@@ -225,6 +225,16 @@ define([
             this.applePaySession.oncancel = () => {
                 this._cancelPayplugPayment();
             };
+        },
+
+        /**
+         * Redirects the user to the payment cancellation URL.
+         *
+         * @private
+         * @returns {void}
+         */
+        _cancelPayplugPayment: function() {
+            window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         }
     });
 });
