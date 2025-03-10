@@ -1,7 +1,13 @@
 //
-//  utilities
+//  Common
 //  _____________________________________________
 
-.sr-only {
-    .lib-visually-hidden();
+& when (@media-common = true) {
+    .hidden {
+        display: none;
+    }
+
+    .sr-only {
+        .lib-visually-hidden();
+    }
 }
