@@ -18,11 +18,8 @@
         </policy>
         <policy id="frame-src">
             <values>
-                <value id="payplug-api-qa" type="host">api-qa.payplug.com</value>
-                <value id="payplug-api" type="host">api.payplug.com</value>
-                <value id="payplug-secure-qa" type="host">secure-qa.payplug.com</value>
-                <value id="payplug-secure" type="host">secure.payplug.com</value>
                 <value id="payplug-all" type="host">*.payplug.com</value>
+                <value id="dalenys-all" type="host">*.dalenys.com</value>
             </values>
         </policy>
         <policy id="font-src">
