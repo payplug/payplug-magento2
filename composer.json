@@ -2,7 +2,7 @@
   "name": "payplug/payplug-magento2",
   "description": "[Release Candidate] Payplug Payments module for Magento 2",
   "type": "magento2-module",
-  "version": "4.3.0-rc",
+  "version": "4.3.0-RC",
   "license": [
     "OSL-3.0"
   ],
