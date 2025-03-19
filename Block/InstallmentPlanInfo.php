@@ -11,6 +11,7 @@ use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\OrderInstallmentPlanRepository;
 use Payplug\Payments\Model\OrderPaymentRepository;
 
 class InstallmentPlanInfo extends Info
@@ -22,6 +23,7 @@ class InstallmentPlanInfo extends Info
         Data $payplugHelper,
         Logger $payplugLogger,
         private OrderPaymentRepository $orderPaymentRepository,
+        private OrderInstallmentPlanRepository $orderInstallmentPaymentRepository,
         private FormKey $formKey,
         array $data = []
     ) {
@@ -52,7 +54,8 @@ class InstallmentPlanInfo extends Info
         $order = $this->getInfo()->getOrder();
 
         try {
-            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $orderPayment = $this->orderInstallmentPaymentRepository->get($orderIncrementId, 'order_id');
+            $installmentPlan = $orderInstallmentPlan->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
             return [];
@@ -98,7 +101,7 @@ class InstallmentPlanInfo extends Info
 
                 try {
                     $orderPayment = $this->orderPaymentRepository->get($paymentId, 'payment_id');
-                    $payment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+                    $payment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
                     $paymentInfo['details'] = $this->buildPaymentDetails($payment, $order);
                     $paymentInfo['status'] = $paymentInfo['details']['Status'];
                 } catch (NoSuchEntityException $e) {

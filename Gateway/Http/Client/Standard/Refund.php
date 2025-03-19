@@ -40,7 +40,7 @@ class Refund implements ClientInterface
             /** @var Payment $orderPayment */
             $orderPayment = $data['payment'];
             $metadata = ['reason' => "Refunded with Magento."];
-            $payment = $orderPayment->makeRefund($data['amount'], $metadata, $data['store_id']);
+            $payment = $orderPayment->makeRefund((float)$data['amount'], $metadata, (int)$data['store_id']);
 
             return ['payment' => $payment, 'order_payment' => $orderPayment];
         } catch (PayplugException $e) {

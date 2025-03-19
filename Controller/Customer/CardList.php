@@ -24,8 +24,12 @@ class CardList extends Action
 
     /**
      * Check customer authentication
+     *
+     * @param RequestInterface $request
+     *
+     * @return ResponseInterface|Page
      */
-    public function dispatch(RequestInterface $request): ResponseInterface|Page
+    public function dispatch(RequestInterface $request)
     {
         if (!$this->customerSession->authenticate()) {
             $this->_actionFlag->set('', 'no-dispatch', true);

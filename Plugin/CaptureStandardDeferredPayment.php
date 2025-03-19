@@ -70,7 +70,7 @@ class CaptureStandardDeferredPayment
 
         try {
             $payplugPayment = $this->orderPaymentRepository->get($payplugPaymentId, 'payment_id');
-            $paymentCapture = $payplugPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $paymentCapture = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
             $paymentObject = $paymentCapture->capture();
             if ($paymentObject) {
                 $magentoPayment->setBaseAmountPaidOnline((float)$quotePayment->getAdditionalInformation('authorized_amount') / 100);

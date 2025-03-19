@@ -34,7 +34,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
-    public const MODULE_VERSION = '4.2.0';
+    public const MODULE_VERSION = '4.3.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
     private ?AdapterInterface $adapter = null;
@@ -380,9 +380,14 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get valid range of amount for a given currency
+     * @param string $isoCode
+     * @param int|null $storeId
+     * @param string|null $path
+     * @param string|null $amountPrefix
+     *
+     * @return array|bool
      */
-    public function getAmountsByCurrency(string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
+    public function getAmountsByCurrency(string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = '')
     {
         $minAmounts = [];
         $maxAmounts = [];

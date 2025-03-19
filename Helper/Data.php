@@ -80,7 +80,7 @@ class Data extends AbstractHelper
      * @return Payment
      * @throws NoSuchEntityException
      */
-    public function getOrderPayment(int|string $orderId): Payment
+    public function getOrderPayment($orderId): Payment
     {
         return $this->orderPaymentRepository->get($orderId, 'order_id');
     }
@@ -91,7 +91,7 @@ class Data extends AbstractHelper
      * @return Payment
      * @throws NoSuchEntityException
      */
-    public function getOrderPaymentByPaymentId(int|string $paymentId): Payment
+    public function getOrderPaymentByPaymentId($paymentId): Payment
     {
         return $this->orderPaymentRepository->get($paymentId, 'payment_id');
     }
@@ -102,7 +102,7 @@ class Data extends AbstractHelper
      * @return OrderInstallmentPlan
      * @throws NoSuchEntityException
      */
-    public function getOrderInstallmentPlan(int|string $orderId): OrderInstallmentPlan
+    public function getOrderInstallmentPlan($orderId): OrderInstallmentPlan
     {
         return $this->orderInstallmentPlanRepository->get($orderId, 'order_id');
     }
@@ -112,7 +112,7 @@ class Data extends AbstractHelper
      *
      * @return Payment|null
      */
-    public function getOrderLastPayment(int|string $orderId): ?Payment
+    public function getOrderLastPayment($orderId): ?Payment
     {
         $orderPayments = $this->getOrderPayments($orderId);
 
@@ -124,7 +124,7 @@ class Data extends AbstractHelper
      *
      * @return array|Payment[]
      */
-    public function getOrderPayments(int|string $orderId): array
+    public function getOrderPayments($orderId): array
     {
         /** @var SearchCriteriaInterface $criteria */
         $criteria = $this->searchCriteriaInterfaceFactory->create();
@@ -389,7 +389,7 @@ class Data extends AbstractHelper
     {
       $orderPayment = $this->getPaymentForOrder($order);
 
-      return $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+      return $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
     }
 
     /**
@@ -419,12 +419,12 @@ class Data extends AbstractHelper
             if ($orderPayment === null) {
                 return;
             }
-            $payplugPayment = $orderPayment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $payplugPayment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
             if ($payplugPayment->failure &&
                 $payplugPayment->failure->code &&
                 strtolower($payplugPayment->failure->code ?? '') !== 'timeout'
             ) {
-                $orderPayment->abort($storeId);
+                $orderPayment->abort((int)$storeId);
             }
         } catch (HttpException $e) {
             $this->_logger->error('Could not abort payment', [
@@ -451,7 +451,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         if ($order->getPayment()->getMethod() === InstallmentPlan::METHOD_CODE) {
             $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
-            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -586,7 +586,7 @@ class Data extends AbstractHelper
         $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
         if ($cancelPayment) {
-            $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+            $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -596,15 +596,15 @@ class Data extends AbstractHelper
 
                     try {
                         $orderPayment = $this->getOrderPaymentByPaymentId($paymentId);
-                        $orderPayment->abort($storeId);
+                        $orderPayment->abort((int)$storeId);
                     } catch (NoSuchEntityException $e) {
                         // Payment was not found - no need to abort it
                     }
                 }
             }
         }
-        $orderInstallmentPlan->abort($storeId);
-        $installmentPlan = $orderInstallmentPlan->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+        $orderInstallmentPlan->abort((int)$storeId);
+        $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
@@ -617,7 +617,7 @@ class Data extends AbstractHelper
     public function cancelStandardPayment(Order $order): void
     {
         $orderPayment = $this->getOrderPayment($order->getIncrementId());
-        $orderPayment->abort($order->getStoreId());
+        $orderPayment->abort((int)$order->getStoreId());
     }
 
     /**
@@ -716,7 +716,7 @@ class Data extends AbstractHelper
     {
         /** @var Processing $orderProcessing */
         $orderProcessing = $this->orderProcessingFactory->create();
-        $orderProcessing->setOrderId($order->getId());
+        $orderProcessing->setOrderId($order->get());
         $date = new \DateTime();
         $orderProcessing->setCreatedAt($date->format('Y-m-d H:i:s'));
         $this->orderProcessingRepository->save($orderProcessing);
@@ -828,7 +828,7 @@ class Data extends AbstractHelper
      *
      * @return void
      */
-    public function refreshSalesGrid(int|string $orderId): void
+    public function refreshSalesGrid($orderId): void
     {
         $this->salesGrid->refresh($orderId);
     }
@@ -902,7 +902,7 @@ class Data extends AbstractHelper
             $payment = $this->getOrderPayment($order->getIncrementId());
         }
         /** @var Payment|OrderInstallmentPlan $payplugPayment */
-        $payplugPayment = $payment->retrieve($order->getStore()->getWebsiteId(), ScopeInterface::SCOPE_WEBSITES);
+        $payplugPayment = $payment->retrieve($payment->getScopeId($order), $payment->getScope($order));
 
         if ($payplugPayment->failure) {
             return true;

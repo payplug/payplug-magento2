@@ -52,7 +52,7 @@ class Refund implements ClientInterface
             $storeId = $data['store_id'];
             $amount = $data['amount'] * 100;
 
-            $installmentPlan = $orderInstallmentPlan->retrieve($storeId);
+            $installmentPlan = $orderInstallmentPlan->retrieve((int)$storeId);
 
             $schedules = $installmentPlan->schedule;
             $refunds = [];
@@ -69,7 +69,7 @@ class Refund implements ClientInterface
                         continue;
                     }
 
-                    $payment = $orderPayment->retrieve($storeId);
+                    $payment = $orderPayment->retrieve((int)$storeId);
                     $paymentAmount = $payment->amount - $payment->amount_refunded;
 
                     $amountToRefund = $amount;
@@ -90,7 +90,7 @@ class Refund implements ClientInterface
             }
 
             foreach ($refunds as $refund) {
-                $refund['orderPayment']->makeRefund($refund['amount'], $metadata, $storeId);
+                $refund['orderPayment']->makeRefund((float)$refund['amount'], $metadata, (int)$storeId);
             }
 
             return [];
