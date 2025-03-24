@@ -183,8 +183,8 @@ define([
                     type: event.type,
                 };
 
-                const event = btoa(JSON.stringify(eventData));
-                const urlParameters = { event };
+                const formatedEvent = btoa(JSON.stringify(eventData));
+                const urlParameters = { formatedEvent };
                 const workflowType = _getApplePayWorkflowType();
                 workflowType && (urlParameters.workflow_type = workflowType);
 
