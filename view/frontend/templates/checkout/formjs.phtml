@@ -3,16 +3,17 @@
 declare(strict_types=1);
 
 use Magento\Framework\Escaper;
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Payplug\Payments\Block\Formjs;
 
 /**
  * @var Escaper $escaper
  * @var Formjs $block
+ * @var SecureHtmlRenderer $secureRenderer
  */
 ?>
 <?php foreach ($block->getJsUrls() as $url): ?>
-    <script src="<?= $escaper->escapeUrl($url); ?>"></script>
+    <?= $secureRenderer->renderTag('script', ['src' => $escaper->escapeUrl($url)], '', false); ?>
 <?php endforeach; ?>
-<script>
-window.PAYPLUG_DOMAIN = '<?= $block->getPayplugSecureUrl(); ?>';
-</script>
+<?php $scriptContent = 'window.PAYPLUG_DOMAIN = \'' . $escaper->escapeUrl($block->getPayplugSecureUrl()) . '\';' ?>
+<?= $secureRenderer->renderTag('script', [], $scriptContent, false); ?>
