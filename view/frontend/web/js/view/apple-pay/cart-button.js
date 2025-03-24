@@ -11,7 +11,9 @@ define([
         applePayIsAvailable: false,
         isVisible: ko.observable(false),
         applePaySession: null,
-        placeCartOrderUrl: 'payplug_payments/applePay/placeCartOrder',
+        order_id: null,
+        createMockOrder: 'payplug_payments/applePay/createMockOrder',
+        updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
 
@@ -49,6 +51,7 @@ define([
         _afterPlaceOrder: function() {
             this._bindMarchantValidation();
             this._bindPaymentAuthorization();
+            this._bindShippingMethodSelected();
             this._bindPaymentCancel();
             this.applePaySession.begin();
         },
@@ -90,12 +93,12 @@ define([
         _getPaymentRequest: function() {
             const totalAmount = this._getTotalAmount();
 
-            const { 
-                domain, 
+            const {
+                domain,
                 locale,
                 merchand_name
             } = window.checkoutConfig.payment.payplug_payments_apple_pay;
-            
+
             return {
                 countryCode: locale.slice(-2),
                 currencyCode: quote.totals()['quote_currency_code'],
@@ -108,7 +111,60 @@ define([
                 },
                 applicationData: {
                     'apple_pay_domain': btoa(JSON.stringify(domain))
-                }
+                },
+                shippingMethods: [
+                    {
+                        "label": "Standard Shipping",
+                        "amount": "10.00",
+                        "detail": "Arrives in 5-7 days",
+                        "identifier": "standardShipping",
+                        "dateComponentsRange": {
+                            "startDateComponents": {
+                                "years": 2022,
+                                "months": 9,
+                                "days": 24,
+                                "hours": 0
+                            },
+                            "endDateComponents": {
+                                "years": 2025,
+                                "months": 9,
+                                "days": 26,
+                                "hours": 0
+                            }
+                        }
+                    },
+                    {
+                        "label": "Standard Shipping 2",
+                        "amount": "5.00",
+                        "detail": "Arrives in 99-999 days",
+                        "identifier": "standardShipping",
+                        "dateComponentsRange": {
+                            "startDateComponents": {
+                                "years": 2022,
+                                "months": 9,
+                                "days": 24,
+                                "hours": 0
+                            },
+                            "endDateComponents": {
+                                "years": 2025,
+                                "months": 9,
+                                "days": 26,
+                                "hours": 0
+                            }
+                        }
+                    },
+                ],
+                shippingType: "shipping",
+                requiredBillingContactFields: [
+                    "postalAddress",
+                    "name"
+                ],
+                requiredShippingContactFields: [
+                    "postalAddress",
+                    "name",
+                    "phone",
+                    "email"
+                ],
             };
         },
 
@@ -121,10 +177,10 @@ define([
         _getTotalAmount: function() {
             let grandTotal = quote.totals()['grand_total'] + quote.totals()['tax_amount'];
             const totalSegments = quote.totals()['total_segments'];
-            
+
             if (totalSegments) {
                 const totalSegment = totalSegments.find(segment => segment.code.includes('grand_total'));
-                
+
                 if (totalSegment) {
                     grandTotal = totalSegment.value;
                 }
@@ -183,13 +239,13 @@ define([
                     type: event.type,
                 };
 
-                const event = btoa(JSON.stringify(eventData));
-                const urlParameters = { event };
-                const workflowType = _getApplePayWorkflowType();
+                let btoaevent = btoa(JSON.stringify(eventData));
+                const urlParameters = { btoaevent };
+                const workflowType = self._getApplePayWorkflowType();
                 workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
-                    url: url.build(self.placeCartOrderUrl),
+                    url: url.build(self.createMockOrder),
                     data: urlParameters,
                     type: 'GET',
                     dataType: 'json',
@@ -198,7 +254,8 @@ define([
                             self._cancelPayplugPayment();
                         } else {
                             try {
-                                self.applePaySession.completeMerchantValidation(response.merchand_data);
+                                self.order_id = response.order_id;
+                                self.applePaySession.completeMerchantValidation(response.merchantSession);
                             } catch (e) {
                                 self._cancelPayplugPayment();
                             }
@@ -224,16 +281,23 @@ define([
             this.applePaySession.onpaymentauthorized = event => {
                 try {
                     $.ajax({
-                        url: url.build(self.updateTransactionDataUrl),
+                        url: url.build(self.updateCartOrder),
                         type: 'POST',
-                        data: {token: event.payment.token}
+                        data: {
+                            token: event.payment.token,
+                            billing: event.payment.billingContact,
+                            shipping: event.payment.shippingContact,
+                            order_id: self.order_id
+                        }
                     }).done(function (response) {
-                        const applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
+                        console.log(response);
+                        console.log('----------');
+                        let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
 
                         if (response.error === true) {
                             applePaySessionStatus = ApplePaySession.STATUS_FAILURE;
                         }
-                        self.session.completePayment({
+                        self.applePaySession.completePayment({
                             "status": applePaySessionStatus
                         });
                         if (response.error === true) {
@@ -259,6 +323,29 @@ define([
         _bindPaymentCancel: function() {
             this.applePaySession.oncancel = () => {
                 this._cancelPayplugPayment();
+            };
+        },
+
+        /**
+         * Update the new total when the shipping method is updated.
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindShippingMethodSelected: function() {
+            this.applePaySession.onshippingmethodselected = shippingEvent => {
+                let amount = shippingEvent.shippingMethod.amount;
+                let label = shippingEvent.shippingMethod.label;
+                //TODO doing so is overriding the actual price of the items in cart by the shipping method 37e become like 5 or 10e
+                //Must find a way for the amount to be the actual final price
+                const updated = {
+                    "newTotal": {
+                        "label": label,
+                        "amount": amount,
+                        "type": "final"
+                    },
+                }
+                this.applePaySession.completeShippingMethodSelection(updated);
             };
         },
 
