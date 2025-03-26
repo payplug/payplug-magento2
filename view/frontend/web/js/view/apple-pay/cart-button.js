@@ -190,6 +190,19 @@ define([
         },
 
         /**
+         * Calculates the total amount to be paid without shipping methods
+         *
+         * @private
+         * @returns {Number} The total amount to be paid without shipping methods.
+         */
+        _getTotalAmountNoShipping: function() {
+            let shippingAmount = quote.totals()['shipping_amount'];
+            let grandTotal = this._getTotalAmount();
+
+            return (parseFloat(grandTotal) - parseFloat(shippingAmount));
+        },
+
+        /**
          * Determines the Apple Pay workflow type based on the current page body class.
          *
          * Apple Pay workflow types are as follows:
@@ -333,11 +346,10 @@ define([
          * @returns {void}
          */
         _bindShippingMethodSelected: function() {
+            const self = this;
             this.applePaySession.onshippingmethodselected = shippingEvent => {
-                let amount = shippingEvent.shippingMethod.amount;
+                let amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
                 let label = shippingEvent.shippingMethod.label;
-                //TODO doing so is overriding the actual price of the items in cart by the shipping method 37e become like 5 or 10e
-                //Must find a way for the amount to be the actual final price
                 const updated = {
                     "newTotal": {
                         "label": label,

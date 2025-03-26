@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Exception\LocalizedException;
@@ -16,10 +16,9 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Payplug\Payments\Logger\Logger;
 
-class CreateMockOrder extends Action
+class CreateMockOrder implements HttpGetActionInterface
 {
     public function __construct(
-        Context $context,
         private JsonFactory $resultJsonFactory,
         private CheckoutSession $checkoutSession,
         private CartRepositoryInterface $cartRepository,
@@ -27,11 +26,15 @@ class CreateMockOrder extends Action
         private Logger $logger,
         private OrderRepositoryInterface $orderRepository
     ) {
-        parent::__construct($context);
     }
 
-    public function execute()
+    /**
+     * Create a mock order from a cart to pay with ApplePay.
+     * Callable from a GET
+     */
+    public function execute(): Json
     {
+        $this->logger->info("Creating mock order");
         /** @var Json $result */
         $result = $this->resultJsonFactory->create();
         $response = [
@@ -45,7 +48,6 @@ class CreateMockOrder extends Action
                 throw new LocalizedException(__('No active quote found.'));
             }
 
-            // Force "guest" checkout.
             $quote->setIsActive(true);
             $quote->setCheckoutMethod(QuoteManagement::METHOD_GUEST);
             if (!$quote->getCustomerEmail()) {
@@ -101,7 +103,7 @@ class CreateMockOrder extends Action
         return $result->setData($response);
     }
 
-    private function updateQuoteBillingAddress($quote, array $appleBilling): void
+    private function updateQuoteBillingAddress(CartInterface $quote, array $appleBilling): void
     {
         $billingAddress = $quote->getBillingAddress();
 
@@ -126,7 +128,7 @@ class CreateMockOrder extends Action
         }
     }
 
-    private function updateQuoteShippingAddress($quote, array $appleShipping): void
+    private function updateQuoteShippingAddress(CartInterface $quote, array $appleShipping): void
     {
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setFirstname($appleShipping['givenName'] ?? 'ApplePay')

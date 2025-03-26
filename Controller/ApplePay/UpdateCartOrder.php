@@ -4,32 +4,36 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
-use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\Action\HttpPostActionInterface;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Sales\Api\Data\OrderAddressInterface;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderAddressRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
-use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Magento\Framework\App\Action\Action;
+use Payplug\Exception\PayplugException;
 
-class UpdateCartOrder extends Action
+class UpdateCartOrder implements HttpPostActionInterface
 {
     public function __construct(
-        Context $context,
+        private RequestInterface $request,
         private JsonFactory $resultJsonFactory,
         private Logger $logger,
         private Data $payplugHelper,
-        private OrderRepositoryInterface $orderRepository
+        private OrderRepositoryInterface $orderRepository,
+        private OrderAddressRepositoryInterface $orderAddressRepository
     ) {
-        parent::__construct($context);
     }
 
     /**
-     * Update PayPlug Apple Pay transaction data from cart
+     * Update Apple Pay transaction data and addresses from order from POST resquests
      */
     public function execute(): Json
     {
+        $this->logger->info('UpdateCartOrder');
         /** @var Json $response */
         $response = $this->resultJsonFactory->create();
         $response->setData([
@@ -38,67 +42,23 @@ class UpdateCartOrder extends Action
         ]);
 
         try {
-            $params = $this->getRequest()->getParams();
-            $orderId = $params['order_id'];
+            $params = $this->request->getParams();
+            $orderId = $params['order_id'] ?? null;
+            $token = $params['token'] ?? null;
+
+            if (!$orderId || !$token) {
+                throw new \Exception('Missing order_id or token parameter.');
+            }
+
+            $applePayBilling = $params['billing'] ?? [];
+            $applePayShipping = $params['shipping'] ?? [];
+
             $order = $this->orderRepository->get($orderId);
-
-            /*
-             *
-    [billing] => Array
-        (
-            [addressLines] => Array
-                (
-                    [0] => 8 Rue Cadet
-                )
-
-            [administrativeArea] =>
-            [country] => France
-            [countryCode] => FR
-            [familyName] => Bouchier
-            [givenName] => Tristan
-            [locality] => Paris
-            [phoneticFamilyName] =>
-            [phoneticGivenName] =>
-            [postalCode] => 75009
-            [subAdministrativeArea] =>
-            [subLocality] =>
-        )
-
-    [shipping] => Array
-        (
-            [addressLines] => Array
-                (
-                    [0] => 6 Rue Stéphane Mony
-                )
-
-            [administrativeArea] =>
-            [country] => France
-            [countryCode] => FR
-            [emailAddress] => sheyne+payplugtest@dnd.fr
-            [familyName] => Bouchier
-            [givenName] => Tristan
-            [locality] => Saint-Germain-en-Laye
-            [phoneNumber] => 0640235908
-            [phoneticFamilyName] =>
-            [phoneticGivenName] =>
-            [postalCode] => 78100
-            [subAdministrativeArea] =>
-            [subLocality] =>
-        )
-
-)
-             */
-
-            if (!$orderId || !$order) {
-                throw new \Exception('Could not retrieve order');
+            if (!$order || !$order->getId()) {
+                throw new \Exception('Could not retrieve valid order.');
             }
 
-            $token = $this->getRequest()->getParam('token');
-            if (empty($token)) {
-                throw new \Exception('Could not retrieve token');
-            }
-
-            //TODO change the billing and shipping address and shipping method and also re-calculate taxes
+            $this->updateOrderAddresses($order, $applePayBilling, $applePayShipping);
 
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
             $updatedPayment = $payplugPayment->update([
@@ -107,14 +67,17 @@ class UpdateCartOrder extends Action
                 ],
             ]);
 
-            //TODO Check why it is not paid here.
             $this->logger->info(print_r($updatedPayment, true));
 
-
-            //Should probably remove it later and move it to after the apple pay has been really paid
             if ($updatedPayment->is_paid) {
                 $response->setData([
                     'error' => false,
+                    'message' => 'Apple Pay Payment is paid.',
+                ]);
+            } else {
+                $response->setData([
+                    'error' => false,
+                    'message' => 'Apple Pay Payment updated but not paid yet.',
                 ]);
             }
 
@@ -124,15 +87,61 @@ class UpdateCartOrder extends Action
                 'message' => $e->__toString(),
                 'exception' => $e,
             ]);
-
             return $response;
         } catch (\Exception $e) {
             $this->logger->error('Could not update apple pay transaction', [
                 'message' => $e->getMessage(),
                 'exception' => $e,
             ]);
-
             return $response;
+        }
+    }
+
+    /**
+     * Update the Order's billing/shipping addresses
+     */
+    private function updateOrderAddresses(OrderInterface $order, array $applePayBilling, array $applePayShipping): void
+    {
+        $billingAddress = $order->getBillingAddress();
+        if ($billingAddress) {
+            $this->fillAddressData($billingAddress, $applePayBilling);
+            $this->orderAddressRepository->save($billingAddress);
+        }
+
+        $shippingAddress = $order->getShippingAddress();
+        if ($shippingAddress) {
+            $this->fillAddressData($shippingAddress, $applePayShipping);
+            $this->orderAddressRepository->save($shippingAddress);
+        }
+
+        $this->orderRepository->save($order);
+
+        $this->logger->info('Order addresses updated successfully.');
+    }
+
+    /**
+     * Fill an address object with Apple Pay data
+     */
+    private function fillAddressData(OrderAddressInterface $address, array $applePayData): void
+    {
+        $firstname = $applePayData['givenName'] ?? 'ApplePay';
+        $lastname = $applePayData['familyName'] ?? 'Customer';
+        $street = $applePayData['addressLines'] ?? ['Apple Pay Address'];
+        $city = $applePayData['locality'] ?? 'Unknown';
+        $postcode = $applePayData['postalCode'] ?? '00000';
+        $countryId = $applePayData['countryCode'] ?? 'US';
+        $telephone = $applePayData['phoneNumber'] ?? '0000000000';
+
+        $address->setFirstname($firstname)
+            ->setLastname($lastname)
+            ->setStreet($street)
+            ->setCity($city)
+            ->setPostcode($postcode)
+            ->setCountryId($countryId)
+            ->setTelephone($telephone);
+
+        if (isset($applePayData['emailAddress']) && method_exists($address, 'setEmail')) {
+            $address->setEmail($applePayData['emailAddress']);
         }
     }
 }
