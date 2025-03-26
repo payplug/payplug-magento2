@@ -68,6 +68,22 @@ You will then need to install another library which we use to normalize the cust
 composer require giggsey/libphonenumber-for-php:^8.10
 ```
 
+### Cron Job Configuration
+
+The Payplug Payments module introduces new cron tasks that are grouped under the **`payplug`** cron group in `etc/crontab.xml`. These cron jobs **must** run for the module to function properly.
+
+- **`payplug_payments_check_order_consistency`**: Checks and updates the consistency of orders with Payplug.
+- If your orders get stuck in **`payment review`** status, it typically indicates that **`payplug_payments_check_order_consistency`** is not running. Be sure to include this cron in your system’s crontab so that it is executed regularly (every 15 min by default, but you can override it to run it more frequently).
+
+#### Verifying Crons and Logs
+
+- Ensure your Magento crontab is correctly configured to run all Magento cron groups, including the **`payplug`** group.
+- If you need to investigate any issues with these jobs, you can consult the **`var/log/payplug_payments.log`** file to see detailed logs and errors related to the Payplug Payments module’s cron executions.
+
+For more information on how to properly configure and schedule Magento 2 cron jobs, consult
+[Magento’s official documentation](https://experienceleague.adobe.com/fr/docs/commerce-operations/configuration-guide/cli/configure-cron-jobs)
+
+
 ### Update Payplug Payments Module
 
 Run the following commands in Magento root directory:
