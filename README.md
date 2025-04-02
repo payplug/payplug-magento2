@@ -78,7 +78,7 @@ The Payplug Payments module introduces new cron tasks that are grouped under the
 
 #### Verifying Crons and Logs
 
-- Ensure your Magento crontab is correctly configured to run all Magento cron groups, (the **`payplug`** group should be activated by default after a cron:install).
+- Ensure your Magento crontab is correctly configured to run all Magento cron groups, including the **`payplug`** group which should be handled by default with the **`cron:run`** native command, deployed by the other native **`cron:install`** command.
 - If you need to investigate any issues with these jobs, you can consult the **`var/log/payplug_payments.log`** file to see detailed logs and errors related to the Payplug Payments module’s cron executions.
 
 For more information on how to properly configure and schedule Magento 2 cron jobs, consult
