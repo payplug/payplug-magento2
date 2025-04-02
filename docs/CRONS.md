@@ -35,34 +35,56 @@ As of v4.3.0, Magento leverages **Magento’s cron** to periodically check the p
 If you install cron natively with the `bin/magento cron:install` command (or follow the official [Magento Cron Configuration](https://experienceleague.adobe.com/fr/docs/commerce-operations/configuration-guide/cli/configure-cron-jobs)), Magento automatically creates a single crontab entry that runs all cron groups. For example:
 
 ```bash
-#~ MAGENTO START 51b2fc7cd45d06ac8dc063832548ba75b5d4bd4a851ed144f980bc17a1caa0b6
 * * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
-#~ MAGENTO END 51b2fc7cd45d06ac8dc063832548ba75b5d4a851ed144f980bc17a1caa0b6
 ```
 
-This entry automatically processes **all** cron groups—including `payplug`—and should work flawlessly.
+This entry automatically processes **all** cron groups, including `payplug`, and should work flawlessly.
 
 ### Custom Crontab Configurations
 
 Some users customize their crontab to run specific cron groups. For example, a customized crontab might include entries like:
 
 ```bash
-#Ansible: cron-consumer
-* * * * * flock -n /tmp/cron-consumer.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=consumers --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
-#Ansible: cron-index
-* * * * * flock -n /tmp/cron-bootstrap.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=index --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
-#Ansible: cron-default
-* * * * * flock -n /tmp/default-cron.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=default --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
+* * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=default 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
 ```
 
 In such cases, **you must add the `payplug` cron group** to your crontab to ensure that the asynchronous order status updates are processed. For example:
 
 ```bash
-#Ansible: cron-payplug
-* * * * * flock -n /tmp/payplug-cron.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=payplug --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
+* * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=default 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
+* * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=payplug 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
 ```
 
 This will ensure that the Payplug cron tasks (`payplug_payments_check_order_consistency` and `payplug_payments_auto_capture_deferred_payments`) are executed according to the schedule defined in your `crontab.xml`.
+
+## Dynamic Cron Group Execution
+
+As an alternative approach, you could dynamically list all cron groups declared in your Magento 2 project and execute `bin/magento cron:run --group=<group>` for each one in a single crontab line. (Do not take it as it, it must be carefully tested on your environment.) This method allows any new cron groups added by modules to be automatically included without needing to modify the crontab manually.
+
+### Example Command
+
+```bash
+*/5 * * * * www-data bash -c 'for group in $(php /var/www/html/bin/magento cron:show | awk -F "|" "NR>2 {print \$2}" | sort -u); do php /var/www/html/bin/magento cron:run --group=$group; done' >> /var/log/magento_cron.log 2>&1
+```
+
+### Explanation
+
+- **Listing Cron Jobs:**  
+  `php /var/www/html/bin/magento cron:show` lists all cron jobs along with their groups.
+
+- **Extracting Unique Groups:**  
+  `awk -F "|" "NR>2 {print \$2}"` extracts only the group names (ignoring the header), and `sort -u` removes duplicates.
+
+- **Looping Through Groups:**  
+  The `for group in $(...); do ...; done` loop iterates over each unique group, running `php /var/www/html/bin/magento cron:run --group=$group` for each.
+
+- **Bash Execution in Crontab:**  
+  `bash -c '...'` allows the entire command to be executed by bash.
+
+- **Logging:**  
+  The output is redirected to `/var/log/magento_cron.log` for debugging purposes.
+
+> **Note:** This method could be used to automate cron execution by group name, but it should be carefully tested in your environment before being deployed in production. Adjust the user (`www-data`) and path (`/var/www/html/`) as needed for your Magento installation.
 
 ---
 
@@ -95,7 +117,6 @@ This will ensure that the Payplug cron tasks (`payplug_payments_check_order_cons
 ## Additional Resources
 
 - [Adobe Commerce / Magento Official Cron Configuration](https://experienceleague.adobe.com/fr/docs/commerce-operations/configuration-guide/cli/configure-cron-jobs)
-- For Magento Cloud users, see the handling of cron groups in [this example](https://github.com/platformsh-templates/magentoCE24/blob/main/.platform.app.yaml) (look at line 122). This configuration script automatically extracts all cron groups from `etc/cron_groups.xml` files and runs them, which can serve as a useful reference for those adding custom cron groups.
 
 ---
 
