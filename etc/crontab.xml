@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
-    <group id="default">
+    <group id="payplug">
         <job name="payplug_payments_auto_capture_deferred_payments" instance="Payplug\Payments\Cron\AutoCaptureDeferredPayments" method="execute">
             <schedule>0 * * * *</schedule>
         </job>

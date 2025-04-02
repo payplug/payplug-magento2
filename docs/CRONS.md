@@ -1,6 +1,6 @@
 # Asynchronous Order Status Updates (from v4.3.0)
 
-Starting with **version 4.3.0**, the Payplug module for Magento introduces an **asynchronous** workflow that runs **in parallel** with the standard (immediate) payment flow. This addition ensures that orders are updated automatically when confirmation is delayed by the bank or by Payplug, preventing them from getting stuck in “payment review.”
+Starting with **version 4.3.0**, the Payplug module for Magento introduces an **asynchronous** workflow that runs **in parallel** with the standard (immediate) payment flow. This addition ensures that orders are updated automatically when payment confirmations are delayed by the bank or by Payplug, preventing them from getting stuck in “payment review.”
 
 ---
 
@@ -8,9 +8,10 @@ Starting with **version 4.3.0**, the Payplug module for Magento introduces an **
 
 In production, banks sometimes take longer than a few seconds to confirm a payment. During this delay, Magento places the order in **payment review**. Prior to v4.3.0, if the confirmation arrived late, the order could remain in that status until a manual update was performed.
 
-As of v4.3.0, we leverage **Magento’s default cron** to periodically check the payment status with Payplug. Once the confirmation is received, Magento automatically updates the order status (e.g., to “processing” or “complete”).
+As of v4.3.0, Magento leverages **Magento’s cron** to periodically check the payment status with Payplug. Once the confirmation is received, Magento automatically updates the order status (e.g., to “processing” or “complete”).
 
 ### Key Highlights
+
 - **Immediate Confirmations**: If the payment is confirmed quickly, the order follows the regular workflow (no change).
 - **Delayed Confirmations**: If confirmation is delayed, a cron job runs in the background to reconcile the final payment status.
 
@@ -18,58 +19,84 @@ As of v4.3.0, we leverage **Magento’s default cron** to periodically check the
 
 ## Prerequisites
 
-1. **Magento’s Default Cron**  
-   Ensure your Magento cron jobs are properly configured and **actively running**. The Payplug cron tasks are now included in Magento’s default cron group; no separate group configuration is needed.
+1. **Magento’s Cron**  
+   Ensure your Magento cron jobs are properly configured and actively running.  
+   By default, the Payplug cron tasks are assigned to the **`payplug`** cron group.
 
 2. **Regular Scheduling**  
-   Set your cron to run at a suitable interval (e.g., every 5 minutes) so any delayed confirmations are quickly picked up.
+   Set your cron to run at a suitable interval (e.g., every minute) so any delayed confirmations are quickly processed.
 
 ---
 
-## Configuring the Default Magento Cron
+## Configuring Magento Cron
 
-Below is an example of a recommended Magento cron configuration (typically added to your system crontab):
+### Native Cron Installation
+
+If you install cron natively with the `bin/magento cron:install` command (or follow the official [Magento Cron Configuration](https://experienceleague.adobe.com/fr/docs/commerce-operations/configuration-guide/cli/configure-cron-jobs)), Magento automatically creates a single crontab entry that runs all cron groups. For example:
 
 ```bash
-*/5 * * * * php /path/to/your/site/bin/magento cron:run | grep -v "Ran jobs by schedule" >> /path/to/your/site/var/log/magento.cron.log
-*/5 * * * * php /path/to/your/site/update/cron.php >> /path/to/your/site/var/log/update.cron.log
-*/5 * * * * php /path/to/your/site/bin/magento setup:cron:run >> /path/to/your/site/var/log/setup.cron.log
+#~ MAGENTO START 51b2fc7cd45d06ac8dc063832548ba75b5d4bd4a851ed144f980bc17a1caa0b6
+* * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
+#~ MAGENTO END 51b2fc7cd45d06ac8dc063832548ba75b5d4a851ed144f980bc17a1caa0b6
 ```
 
-With this configuration in place, the Payplug cron task—`payplug_payments_check_order_consistency`—will automatically run as part of Magento’s **default cron group**.
+This entry automatically processes **all** cron groups—including `payplug`—and should work flawlessly.
 
-> **Note**: If Magento’s cron is disabled or incorrectly configured, orders stuck in “payment review” will not be updated until you manually intervene.
+### Custom Crontab Configurations
+
+Some users customize their crontab to run specific cron groups. For example, a customized crontab might include entries like:
+
+```bash
+#Ansible: cron-consumer
+* * * * * flock -n /tmp/cron-consumer.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=consumers --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
+#Ansible: cron-index
+* * * * * flock -n /tmp/cron-bootstrap.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=index --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
+#Ansible: cron-default
+* * * * * flock -n /tmp/default-cron.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=default --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
+```
+
+In such cases, **you must add the `payplug` cron group** to your crontab to ensure that the asynchronous order status updates are processed. For example:
+
+```bash
+#Ansible: cron-payplug
+* * * * * flock -n /tmp/payplug-cron.lock timeout 7200 php -dmemory_limit=2G ~/current/magento/bin/magento cron:run --group=payplug --bootstrap=standaloneProcessStarted=1 ; wait | grep -v "Ran jobs by schedule"
+```
+
+This will ensure that the Payplug cron tasks (`payplug_payments_check_order_consistency` and `payplug_payments_auto_capture_deferred_payments`) are executed according to the schedule defined in your `crontab.xml`.
 
 ---
 
 ## Verifying Cron Execution and Logs
 
 1. **Crontab Check**
-    - Confirm that the system crontab is correctly set up.
-    - Check the output in `var/log/magento.cron.log` (or your chosen cron log) to ensure the jobs run without errors.
+    - Confirm that your system crontab is correctly set up.
+    - Review the output in your designated cron log (e.g., `var/log/magento.cron.log`) to verify that the jobs are running without errors.
 
 2. **Payplug Log File**
     - For Payplug-specific logs, review:
       ```text
       var/log/payplug_payments.log
       ```
-    - Any errors or warnings related to the Payplug cron tasks will be recorded here.
+    - Any errors or warnings from the Payplug cron tasks will be recorded here.
 
 ---
 
 ## Summary
 
-- **Change in v4.3.0**: An asynchronous mechanism now reconciles delayed payment confirmations automatically via Magento’s default cron.
-- **No Impact on Standard Workflow**: Orders still follow the immediate confirmation process when payments go through quickly.
+- **Change in v4.3.0**: An asynchronous mechanism now reconciles delayed payment confirmations automatically via the `payplug` cron group.
+- **No Impact on Standard Workflow**: Orders still follow the immediate confirmation process when payments are processed quickly.
 - **Required Merchant Action**:
-    1. Ensure Magento cron jobs are configured and running on a reliable schedule.
-    2. Monitor the logs if orders remain in “payment review” longer than expected.
-- **Benefit**: This asynchronous flow helps avoid orders remaining stuck in “payment review” due to delayed confirmations.
+    1. If you use the native Magento cron installation (`bin/magento cron:install`), everything should work automatically.
+    2. If you have a custom crontab that runs specific groups, ensure that you add an entry for the **`payplug`** cron group.
+- **Benefit**: This asynchronous flow helps prevent orders from being stuck in “payment review” due to delayed confirmations.
 
 ---
 
-### Additional Resources
+## Additional Resources
 
 - [Adobe Commerce / Magento Official Cron Configuration](https://experienceleague.adobe.com/fr/docs/commerce-operations/configuration-guide/cli/configure-cron-jobs)
+- For Magento Cloud users, see the handling of cron groups in [this example](https://github.com/platformsh-templates/magentoCE24/blob/main/.platform.app.yaml) (look at line 122). This configuration script automatically extracts all cron groups from `etc/cron_groups.xml` files and runs them, which can serve as a useful reference for those adding custom cron groups.
 
-### [<- Back to Readme](../README.md)
+---
+
+### [<- Back to README](../README.md)

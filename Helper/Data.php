@@ -304,8 +304,8 @@ class Data extends AbstractHelper
     public function updateOrderStatus(Order $order, bool $save = true): void
     {
         $this->_logger->info(
-            sprintf('Updating order id: %s. Status: %s / State: %s.',
-            $order->getId(), $order->getStatus(), $order->getState())
+            sprintf('%s: Updating Order: %s. Status: %s / State: %s.',
+                __METHOD__, $order->getId(), $order->getStatus(), $order->getState())
         );
         $field = null;
 
@@ -317,7 +317,10 @@ class Data extends AbstractHelper
                     $payplugOrderPayment->getScope($order)
                 );
                 if ($payplugPayment->is_paid && empty($payplugPayment->failure)) {
-                    $this->_logger->info('Updating state to processing.');
+                    $this->_logger->info(
+                        sprintf('%s: Updating Order: %s state to Processing.',
+                        __METHOD__, $order->getId())
+                    );
                     $order->setState(Order::STATE_PROCESSING);
                 }
             } catch (\Exception $e) {
@@ -330,15 +333,21 @@ class Data extends AbstractHelper
         } elseif ($order->getState() == Order::STATE_CANCELED) {
             $field = 'canceled_order_status';
         }
-        $this->_logger->info(sprintf('Updating status to %s.', $order->getState()));
+        $this->_logger->info(sprintf('%s: Updating Order: %s status to %s.',
+            __METHOD__, $order->getId(), $order->getState())
+        );
         if ($field !== null) {
             $orderStatus = $order->getPayment()->getMethodInstance()->getConfigData($field, $order->getStoreId());
             if (!empty($orderStatus) && $orderStatus !== $order->getStatus()) {
-                $this->_logger->info(sprintf('Adding status %s to history.', $orderStatus));
+                $this->_logger->info(sprintf('%s: Adding Order: %s status %s to history.',
+                    __METHOD__, $order->getId(), $orderStatus)
+                );
                 $order->addStatusToHistory($orderStatus, (string)__('Custom Payplug Payments status'));
                 if ($save) {
                     $this->orderRepository->save($order);
-                    $this->_logger->info('Order saved with new status.');
+                    $this->_logger->info(
+                        sprintf('%s: Order %s saved with new status.', __METHOD__, $order->getId())
+                    );
                 }
             }
         }
@@ -357,7 +366,7 @@ class Data extends AbstractHelper
      */
     public function updateOrder(Order $order, array $data = []): Order
     {
-        $this->_logger->info('Updating order.');
+        $this->_logger->info(sprintf('%s: Updating Order %s.', __METHOD__, $order->getId()));
         try {
             $orderProcessing = $this->orderProcessingRepository->get($order->getId(), 'order_id');
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
@@ -393,7 +402,10 @@ class Data extends AbstractHelper
             if (!empty($data)) {
                 if (!empty($data['status'])) {
                     $order->setStatus($data['status']);
-                    $this->_logger->info(sprintf('Forcing status %s on the order %s.', $data['status'], $order->getId()));
+                    $this->_logger->info(
+                        sprintf('%s: Forcing status %s on the order %s.',
+                            __METHOD__, $data['status'], $order->getId())
+                    );
                 }
             }
 

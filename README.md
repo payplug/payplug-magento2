@@ -70,7 +70,7 @@ composer require giggsey/libphonenumber-for-php:^8.10
 
 ### Cron Job Configuration
 
-The Payplug Payments module introduces new cron tasks that are grouped under the **`default`** cron group in `etc/crontab.xml`. These cron jobs **must** run for the module to function properly.
+The Payplug Payments module introduces new cron tasks that are grouped under the **`payplug`** cron group in `etc/crontab.xml`. These cron jobs **must** run for the module to function properly.
 
 - **`payplug_payments_check_order_consistency`**: Checks and updates the consistency of orders with Payplug.
 - **`payplug_payments_auto_capture_deferred_payments`**: Capture the deferred payments after too much time elapsed.
@@ -78,7 +78,7 @@ The Payplug Payments module introduces new cron tasks that are grouped under the
 
 #### Verifying Crons and Logs
 
-- Ensure your Magento crontab is correctly configured to run all Magento cron groups, (the **`default`** group should be activated by default).
+- Ensure your Magento crontab is correctly configured to run all Magento cron groups, (the **`payplug`** group should be activated by default after a cron:install).
 - If you need to investigate any issues with these jobs, you can consult the **`var/log/payplug_payments.log`** file to see detailed logs and errors related to the Payplug Payments module’s cron executions.
 
 For more information on how to properly configure and schedule Magento 2 cron jobs, consult
