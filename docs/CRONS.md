@@ -51,7 +51,6 @@ Some users customize their crontab to run specific cron groups. For example, a c
 In such cases, **you must add the `payplug` cron group** to your crontab to ensure that the asynchronous order status updates are processed. For example:
 
 ```bash
-* * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=default 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
 * * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=payplug 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
 ```
 
