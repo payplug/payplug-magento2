@@ -44,7 +44,7 @@ class CheckOrderConsistency
         if (count($magentoOrdersPayments) >= 0) {
             $this->logger->info(
                 sprintf(
-                    '%s payplug related orders are less than %s hours old and are awaiting payments, we will try to update them.',
+                    '%s payplug related orders are less than %s hours old and are awaiting payments.',
                     count($magentoOrdersPayments),
                     self::PAST_HOURS_TO_CHECK
                 )
