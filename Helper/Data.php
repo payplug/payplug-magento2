@@ -303,7 +303,10 @@ class Data extends AbstractHelper
      */
     public function updateOrderStatus(Order $order, bool $save = true): void
     {
-        $this->_logger->info(sprintf('Updating order status: %s and state: %s', $order->getStatus(), $order->getState()));
+        $this->_logger->info(
+            sprintf('Updating order id: %s. Status: %s / State: %s.',
+            $order->getId(), $order->getStatus(), $order->getState())
+        );
         $field = null;
 
         if ($order->getState() === Order::STATE_PAYMENT_REVIEW) {
@@ -324,15 +327,14 @@ class Data extends AbstractHelper
 
         if ($order->getState() == Order::STATE_PROCESSING) {
             $field = 'processing_order_status';
-            $this->_logger->info('Updating status to processing.');
         } elseif ($order->getState() == Order::STATE_CANCELED) {
             $field = 'canceled_order_status';
-            $this->_logger->info('Updating status to canceled.');
         }
+        $this->_logger->info(sprintf('Updating status to %s.', $order->getState()));
         if ($field !== null) {
             $orderStatus = $order->getPayment()->getMethodInstance()->getConfigData($field, $order->getStoreId());
             if (!empty($orderStatus) && $orderStatus !== $order->getStatus()) {
-                $this->_logger->info(sprintf('Updating payment status to %s', $orderStatus));
+                $this->_logger->info(sprintf('Adding status %s to history.', $orderStatus));
                 $order->addStatusToHistory($orderStatus, (string)__('Custom Payplug Payments status'));
                 if ($save) {
                     $this->orderRepository->save($order);
@@ -391,7 +393,7 @@ class Data extends AbstractHelper
             if (!empty($data)) {
                 if (!empty($data['status'])) {
                     $order->setStatus($data['status']);
-                    $this->_logger->info(sprintf('Forcing status %s on the order.', $data['status']));
+                    $this->_logger->info(sprintf('Forcing status %s on the order %s.', $data['status'], $order->getId()));
                 }
             }
 
