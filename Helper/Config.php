@@ -34,7 +34,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
-    public const MODULE_VERSION = '4.3.0';
+    public const MODULE_VERSION = '4.3.2';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
     private ?AdapterInterface $adapter = null;
@@ -380,14 +380,14 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param string $isoCode
+     * @param string|null $isoCode
      * @param int|null $storeId
      * @param string|null $path
      * @param string|null $amountPrefix
      *
      * @return array|bool
      */
-    public function getAmountsByCurrency(string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = '')
+    public function getAmountsByCurrency(?string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = '')
     {
         $minAmounts = [];
         $maxAmounts = [];
@@ -399,7 +399,7 @@ class Config extends AbstractHelper
         $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
         $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
 
-        if (empty($minAmountsConfig) || empty($maxAmountsConfig)) {
+        if (empty($minAmountsConfig) || empty($maxAmountsConfig) || !$isoCode) {
             return false;
         }
 
