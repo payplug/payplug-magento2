@@ -380,14 +380,14 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param string $isoCode
+     * @param string|null $isoCode
      * @param int|null $storeId
      * @param string|null $path
      * @param string|null $amountPrefix
      *
      * @return array|bool
      */
-    public function getAmountsByCurrency(string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = '')
+    public function getAmountsByCurrency(?string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = '')
     {
         $minAmounts = [];
         $maxAmounts = [];
@@ -399,7 +399,7 @@ class Config extends AbstractHelper
         $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
         $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
 
-        if (empty($minAmountsConfig) || empty($maxAmountsConfig)) {
+        if (empty($minAmountsConfig) || empty($maxAmountsConfig) || !$isoCode) {
             return false;
         }
 
