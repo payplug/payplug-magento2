@@ -5,15 +5,21 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\ApplePay;
 
 use Magento\Framework\App\Action\HttpGetActionInterface;
-use Magento\Quote\Api\Data\CartInterface;
-use Magento\Quote\Model\QuoteManagement;
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\QuoteManagement;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Store\Model\StoreManagerInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Logger\Logger;
 
 class CreateMockOrder implements HttpGetActionInterface
@@ -24,7 +30,11 @@ class CreateMockOrder implements HttpGetActionInterface
         private CartRepositoryInterface $cartRepository,
         private CartManagementInterface $cartManagement,
         private Logger $logger,
-        private OrderRepositoryInterface $orderRepository
+        private OrderRepositoryInterface $orderRepository,
+        private QuoteFactory $quoteFactory,
+        private StoreManagerInterface $storeManager,
+        private Validator $formKeyValidator,
+        private RequestInterface $request,
     ) {
     }
 
@@ -42,18 +52,18 @@ class CreateMockOrder implements HttpGetActionInterface
             'message' => __('An error occurred while processing the order.'),
         ];
 
+        $formKeyValidation = $this->formKeyValidator->validate($this->request);
+        if (!$formKeyValidation) {
+            return $result->setData($response);
+        }
+
         try {
-            $quote = $this->checkoutSession->getQuote();
-            if (!$quote || !$quote->getId()) {
+            $sessionQuote = $this->checkoutSession->getQuote();
+            if (!$sessionQuote || !$sessionQuote->getId()) {
                 throw new LocalizedException(__('No active quote found.'));
             }
 
-            $quote->setIsActive(true);
-            $quote->setCheckoutMethod(QuoteManagement::METHOD_GUEST);
-            if (!$quote->getCustomerEmail()) {
-                $quote->setCustomerEmail('placeholder@applepay.com');
-            }
-            $quote->setCustomerIsGuest(true);
+            $quote = $this->createNewGuestQuoteFromSession($sessionQuote);
 
             $placeholderAddress = [
                 'givenName' => 'ApplePay',
@@ -61,15 +71,15 @@ class CreateMockOrder implements HttpGetActionInterface
                 'locality' => 'Placeholder City',
                 'postalCode' => '00000',
                 'administrativeArea' => 'Placeholder Region',
-                'countryCode' => 'US'
+                'countryCode' => 'US',
             ];
 
             $this->updateQuoteBillingAddress($quote, $placeholderAddress);
             $this->updateQuoteShippingAddress($quote, $placeholderAddress);
 
-            $quote->setPaymentMethod('payplug_payments_apple_pay');
+            $quote->setPaymentMethod(ApplePay::METHOD_CODE);
             $payment = $quote->getPayment();
-            $payment->setMethod('payplug_payments_apple_pay');
+            $payment->setMethod(ApplePay::METHOD_CODE);
 
             $shippingAddress = $quote->getShippingAddress();
             $shippingAddress->setShippingMethod('flatrate_flatrate');
@@ -90,6 +100,7 @@ class CreateMockOrder implements HttpGetActionInterface
             if (empty($merchantSession)) {
                 throw new \Exception('Could not retrieve merchant session');
             }
+            $this->logger->info("Creating mock order id {$orderId}");
 
             $response['error'] = false;
             $response['message'] = __('Order placed successfully.');
@@ -103,9 +114,38 @@ class CreateMockOrder implements HttpGetActionInterface
         return $result->setData($response);
     }
 
+    /**
+     * Creates a new quote as a guest from the items in the session quote.
+     * This ensures that we do not reuse any existing address IDs from the previous quote
+     * which can lead to "invalid address id" errors for guest checkouts.
+     */
+    private function createNewGuestQuoteFromSession(Quote $sessionQuote): Quote
+    {
+        /** @var Quote $newQuote */
+        $newQuote = $this->quoteFactory->create();
+
+        $storeId = $sessionQuote->getStoreId();
+        $newQuote->setStoreId($storeId);
+
+        $newQuote->setIsActive(true);
+        $newQuote->setCheckoutMethod(QuoteManagement::METHOD_GUEST);
+        $newQuote->setCustomerIsGuest(true);
+        $newQuote->setCustomerEmail('placeholder@applepay.com');
+
+        foreach ($sessionQuote->getAllVisibleItems() as $item) {
+            $product = $item->getProduct();
+            $requestQty = $item->getQty();
+
+            $newQuote->addProduct($product, $requestQty);
+        }
+
+        return $newQuote;
+    }
+
     private function updateQuoteBillingAddress(CartInterface $quote, array $appleBilling): void
     {
         $billingAddress = $quote->getBillingAddress();
+        $billingAddress->setCustomerAddressId(null);
 
         $billingAddress->setFirstname($appleBilling['givenName'] ?? 'ApplePay')
             ->setLastname($appleBilling['familyName'] ?? 'Customer')
@@ -131,6 +171,8 @@ class CreateMockOrder implements HttpGetActionInterface
     private function updateQuoteShippingAddress(CartInterface $quote, array $appleShipping): void
     {
         $shippingAddress = $quote->getShippingAddress();
+        $shippingAddress->setCustomerAddressId(null);
+
         $shippingAddress->setFirstname($appleShipping['givenName'] ?? 'ApplePay')
             ->setLastname($appleShipping['familyName'] ?? 'Customer')
             ->setCity($appleShipping['locality'] ?? 'Unknown')

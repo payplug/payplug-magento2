@@ -16,6 +16,7 @@ define([
         updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
+        amount: null,
 
         /**
          * Initializes the component.
@@ -92,6 +93,7 @@ define([
          */
         _getPaymentRequest: function() {
             const totalAmount = this._getTotalAmount();
+            this.amount = totalAmount;
 
             const {
                 domain,
@@ -258,7 +260,7 @@ define([
                 workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
-                    url: url.build(self.createMockOrder),
+                    url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
                     data: urlParameters,
                     type: 'GET',
                     dataType: 'json',
@@ -294,17 +296,17 @@ define([
             this.applePaySession.onpaymentauthorized = event => {
                 try {
                     $.ajax({
-                        url: url.build(self.updateCartOrder),
+                        url: url.build(self.updateCartOrder) + '?form_key=' + $.cookie('form_key'),
                         type: 'POST',
                         data: {
                             token: event.payment.token,
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
+                            amount: self.amount,
                             order_id: self.order_id
                         }
                     }).done(function (response) {
                         console.log(response);
-                        console.log('----------');
                         let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
 
                         if (response.error === true) {
@@ -349,6 +351,7 @@ define([
             const self = this;
             this.applePaySession.onshippingmethodselected = shippingEvent => {
                 let amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
+                self.amount = amount;
                 let label = shippingEvent.shippingMethod.label;
                 const updated = {
                     "newTotal": {
