@@ -111,9 +111,9 @@ define([
                     type: 'final',
                     amount: totalAmount
                 },
-                applicationData: {
-                    'apple_pay_domain': btoa(JSON.stringify(domain))
-                },
+                applicationData: btoa(JSON.stringify({
+                    'apple_pay_domain': domain
+                })),
                 shippingMethods: [
                     {
                         "label": "Standard Shipping",
