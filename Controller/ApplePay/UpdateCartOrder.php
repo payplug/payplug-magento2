@@ -167,6 +167,13 @@ class UpdateCartOrder implements HttpPostActionInterface
     {
         $email = $applePayShipping['emailAddress'] ?? '';
         $phone = $applePayShipping['phoneNumber'] ?? '';
+        $firstname = $applePayBilling['givenName'] ?? 'ApplePay';
+        $lastname = $applePayBilling['familyName'] ?? 'Customer';
+
+        $order->setCustomerEmail($email);
+        $order->setCustomerFirstname($firstname);
+        $order->setCustomerLastname($lastname);
+
         $shippingAddress = $order->getShippingAddress();
         if ($shippingAddress) {
             $this->fillAddressData($shippingAddress, $applePayShipping);
@@ -198,6 +205,7 @@ class UpdateCartOrder implements HttpPostActionInterface
         $postcode = $applePayData['postalCode'] ?? '00000';
         $countryId = $applePayData['countryCode'] ?? 'US';
         $telephone = $applePayData['phoneNumber'] ?? '0000000000';
+        $region = $applePayData['administrativeArea'] ?? '';
 
         $address->setFirstname($firstname)
             ->setLastname($lastname)
@@ -205,7 +213,8 @@ class UpdateCartOrder implements HttpPostActionInterface
             ->setCity($city)
             ->setPostcode($postcode)
             ->setCountryId($countryId)
-            ->setTelephone($telephone);
+            ->setTelephone($telephone)
+            ->setRegion($region);
 
         if (isset($applePayData['emailAddress']) && method_exists($address, 'setEmail')) {
             $address->setEmail($applePayData['emailAddress']);
