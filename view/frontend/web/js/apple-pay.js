@@ -14,6 +14,7 @@ define([
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
         amount: null,
+        workflowType: null,
 
         /**
          * Initializes Apple Pay session.
@@ -220,8 +221,7 @@ define([
 
                 let btoaevent = btoa(JSON.stringify(eventData));
                 const urlParameters = { btoaevent };
-                const workflowType = self._getApplePayWorkflowType();
-                workflowType && (urlParameters.workflow_type = workflowType);
+                self.workflowType = self._getApplePayWorkflowType();
 
                 $.ajax({
                     url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
@@ -267,7 +267,8 @@ define([
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
                             amount: self.amount,
-                            order_id: self.order_id
+                            order_id: self.order_id,
+                            workflowType: self.workflowType
                         }
                     }).done(function (response) {
                         console.log(response);

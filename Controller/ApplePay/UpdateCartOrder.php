@@ -56,6 +56,7 @@ class UpdateCartOrder implements HttpPostActionInterface
             $orderId = $params['order_id'] ?? null;
             $token = $params['token'] ?? null;
             $amount  = $params['amount'] ?? null;
+            $workflowType = $params['workflowType'] ?? null;
 
             $this->logger->info(print_r($params, true));
 
@@ -76,7 +77,7 @@ class UpdateCartOrder implements HttpPostActionInterface
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
             $paymentObject = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
             $metadatas = $paymentObject->metadata;
-            $metadatas['ApplepayWorkflowType'] = 'shopping-cart';//shopping-cart,” “checkout,” ou “product.
+            $metadatas['ApplepayWorkflowType'] = $workflowType;
 
             $updatedPayment = $paymentObject->update([
                 'apple_pay' => [
