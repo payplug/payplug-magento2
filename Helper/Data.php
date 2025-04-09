@@ -752,12 +752,16 @@ class Data extends AbstractHelper
      */
     private function createOrderProcessing(Order $order): Processing
     {
-        /** @var Processing $orderProcessing */
-        $orderProcessing = $this->orderProcessingFactory->create();
-        $orderProcessing->setOrderId($order->get());
-        $date = new \DateTime();
-        $orderProcessing->setCreatedAt($date->format('Y-m-d H:i:s'));
-        $this->orderProcessingRepository->save($orderProcessing);
+        try {
+            /** @var Processing $orderProcessing */
+            $orderProcessing = $this->orderProcessingFactory->create();
+            $orderProcessing->setOrderId($order->getId());
+            $date = new \DateTime();
+            $orderProcessing->setCreatedAt($date->format('Y-m-d H:i:s'));
+            $this->orderProcessingRepository->save($orderProcessing);
+        } catch (\Exception $e) {
+            $this->_logger->error($e->getMessage());
+        }
 
         return $orderProcessing;
     }
