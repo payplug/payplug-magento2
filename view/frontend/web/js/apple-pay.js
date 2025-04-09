@@ -183,23 +183,22 @@ define([
          */
         _getApplePayWorkflowType: function() {
             const bodyClass = $('body').attr('class');
-            let workflowType;
 
-            switch (bodyClass) {
-                case bodyClass.includes('catalog-product-view'):
-                    workflowType = 'product';
-                    break;
-                case bodyClass.includes('checkout-cart-index'):
-                    workflowType = 'shopping-cart';
-                    break;
-                case bodyClass.includes('checkout-index-index'):
-                    workflowType = 'checkout';
-                    break;
-                default:
-                    workflowType = '';
-            };
+            if (bodyClass.includes('catalog-product-view')) {
+                return 'product';
+            }
 
-            return workflowType;
+            else if (bodyClass.includes('checkout-cart-index')) {
+                return 'shopping-cart';
+            }
+
+            else if (bodyClass.includes('checkout-index-index')) {
+                return 'checkout';
+            }
+
+            else {
+                return '';
+            }
         },
 
         /**
