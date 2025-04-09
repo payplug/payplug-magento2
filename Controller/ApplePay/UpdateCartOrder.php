@@ -97,7 +97,7 @@ class UpdateCartOrder implements HttpPostActionInterface
                 ]);
             } else {
                 $response->setData([
-                    'error' => false,
+                    'error' => true,
                     'message' => 'Apple Pay Payment updated but not paid yet.',
                 ]);
             }
