@@ -317,6 +317,27 @@
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="show_on_cart" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show on cart page</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                </field>
+                <field id="show_on_checkout" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show on checkout</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                </field>
+                <field id="show_on_pdp" translate="label" type="select" sortOrder="4" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show on product page</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                </field>
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
@@ -342,7 +363,13 @@
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="excluded_shipping_method" translate="label comment" sortOrder="140"  type="multiselect" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Shipping methods to exclude from Apple Pay</label>
+                    <source_model>Magento\Shipping\Model\Config\Source\Allmethods</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <comment><![CDATA[By default, all shipping methods are enabled for Apple Pay. Select here only the methods you explicitly want to disable for Apple Pay.]]></comment>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>
