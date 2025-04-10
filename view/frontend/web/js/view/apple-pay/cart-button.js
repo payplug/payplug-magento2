@@ -12,6 +12,7 @@ define([
         isVisible: ko.observable(false),
         applePaySession: null,
         order_id: null,
+        allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
         createMockOrder: 'payplug_payments/applePay/createMockOrder',
         updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
         cancelUrl: 'payplug_payments/payment/cancel',
@@ -49,11 +50,12 @@ define([
          * @private
          * @returns {void}
          */
-        _afterPlaceOrder: function() {
+        _afterPlaceOrder: function () {
             this._bindMarchantValidation();
             this._bindPaymentAuthorization();
             this._bindShippingMethodSelected();
             this._bindPaymentCancel();
+            this._bindShippingContactSelected();
             this.applePaySession.begin();
         },
 
@@ -114,48 +116,6 @@ define([
                 applicationData: {
                     'apple_pay_domain': btoa(JSON.stringify(domain))
                 },
-                shippingMethods: [
-                    {
-                        "label": "Standard Shipping",
-                        "amount": "10.00",
-                        "detail": "Arrives in 5-7 days",
-                        "identifier": "standardShipping",
-                        "dateComponentsRange": {
-                            "startDateComponents": {
-                                "years": 2022,
-                                "months": 9,
-                                "days": 24,
-                                "hours": 0
-                            },
-                            "endDateComponents": {
-                                "years": 2025,
-                                "months": 9,
-                                "days": 26,
-                                "hours": 0
-                            }
-                        }
-                    },
-                    {
-                        "label": "Standard Shipping 2",
-                        "amount": "5.00",
-                        "detail": "Arrives in 99-999 days",
-                        "identifier": "standardShipping",
-                        "dateComponentsRange": {
-                            "startDateComponents": {
-                                "years": 2022,
-                                "months": 9,
-                                "days": 24,
-                                "hours": 0
-                            },
-                            "endDateComponents": {
-                                "years": 2025,
-                                "months": 9,
-                                "days": 26,
-                                "hours": 0
-                            }
-                        }
-                    },
-                ],
                 shippingType: "shipping",
                 requiredBillingContactFields: [
                     "postalAddress",
@@ -347,15 +307,17 @@ define([
          * @private
          * @returns {void}
          */
-        _bindShippingMethodSelected: function() {
+        _bindShippingMethodSelected: function () {
             const self = this;
             this.applePaySession.onshippingmethodselected = shippingEvent => {
+                if (typeof shippingEvent === 'undefined') {
+                    return;
+                }
                 let amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
                 self.amount = amount;
-                let label = shippingEvent.shippingMethod.label;
                 const updated = {
                     "newTotal": {
-                        "label": label,
+                        "label": window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name,
                         "amount": amount,
                         "type": "final"
                     },
@@ -365,12 +327,56 @@ define([
         },
 
         /**
+         * Update shipping methods list when a contact is selected
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindShippingContactSelected: function () {
+            const self = this;
+            this.applePaySession.onshippingcontactselected = async shippingContactEvent => {
+                $.ajax({
+                    url: url.build(self.allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
+                    data: shippingContactEvent.shippingContact,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.error) {
+                            self._cancelPayplugPayment();
+                        } else {
+                            try {
+                                let amount = parseFloat(self._getTotalAmountNoShipping());
+                                self.amount = amount;
+                                const updated = {
+                                    "newTotal": {
+                                        "label": window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name,
+                                        "amount": amount,
+                                        "type": "final"
+                                    },
+                                    "newShippingMethods": response.methods,
+                                };
+                                self.applePaySession.completeShippingContactSelection(updated);
+                            } catch (e) {
+                                self._cancelPayplugPayment();
+                            }
+                        }
+                    },
+                    error: function () {
+                        self._cancelPayplugPayment();
+                    }
+                });
+
+
+            };
+        },
+
+        /**
          * Redirects the user to the payment cancellation URL.
          *
          * @private
          * @returns {void}
          */
-        _cancelPayplugPayment: function() {
+        _cancelPayplugPayment: function () {
             window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         }
     });
