@@ -16,7 +16,6 @@ use Magento\Sales\Model\OrderFactory;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
-use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
@@ -52,29 +51,10 @@ class PaymentReturn extends AbstractPayment
         $redirectUrlCart = 'checkout/cart';
         try {
             $order = $this->getCurrentOrder->execute();
+
             $lastIncrementId = $order->getIncrementId();
-
-            $orderPaymentModel = null;
-            $isInstallment = false;
-            if ($order->getPayment()->getMethod() === InstallmentPlanConfig::METHOD_CODE)
-            {
-                $isInstallment = true;
-                $orderPaymentModel = $this->payplugHelper->getOrderInstallmentPlan((string)$lastIncrementId);
-            } else {
-                $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
-            }
-
+            $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
             $payment = $orderPaymentModel->retrieve($orderPaymentModel->getScopeId($order), $orderPaymentModel->getScope($order));
-
-            if ($isInstallment) {
-                if ($payment->failure) {
-                    $this->prepareErrorOnPayment($order);
-
-                    return $resultRedirect->setPath($redirectUrlCart);
-                }
-
-                return $resultRedirect->setPath($redirectUrlSuccess);
-            }
 
             // If this is the deferred standard paiement and authorized then return the user on the success checkout
             if (!$payment->is_paid
@@ -86,7 +66,18 @@ class PaymentReturn extends AbstractPayment
             }
 
             if (!$payment->is_paid && !$orderPaymentModel->isProcessing($payment) && !$this->isOneyPending($payment)) {
-                $this->prepareErrorOnPayment($order);
+                $this->payplugHelper->cancelOrderAndInvoice($order);
+
+                $failureMessage = $this->_request->getParam(
+                    'failure_message',
+                    (string)__('The transaction was aborted and your card has not been charged')
+                );
+
+                if (!empty($failureMessage)) {
+                    $this->messageManager->addErrorMessage($failureMessage);
+                }
+
+                $this->getCheckout()->restoreQuote();
 
                 return $resultRedirect->setPath($redirectUrlCart);
             }
@@ -124,22 +115,6 @@ class PaymentReturn extends AbstractPayment
 
             return $resultRedirect->setPath($redirectUrlSuccess);
         }
-    }
-
-    public function prepareErrorOnPayment(OrderInterface $order): void
-    {
-        $this->payplugHelper->cancelOrderAndInvoice($order);
-
-        $failureMessage = $this->_request->getParam(
-            'failure_message',
-            (string)__('The transaction was aborted and your card has not been charged')
-        );
-
-        if (!empty($failureMessage)) {
-            $this->messageManager->addErrorMessage($failureMessage);
-        }
-
-        $this->getCheckout()->restoreQuote();
     }
 
     /**
