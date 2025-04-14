@@ -23,7 +23,9 @@ $pricingHelper = $this->helper(Data::class);
 <?php if ($hasError): ?>
     <p class="oneyPopin_error"><?= /* @noEscape */ $message; ?></p>
 <?php else: ?>
-    <button class="oneyPopin_close"><?= $escaper->escapeHtml(__('Close')); ?></button>
+    <button type="button" class="oneyPopin_close">
+        <?= $escaper->escapeHtml(__('Close')); ?>
+    </button>
     <span class="oneyPopin_title">
         <?php if ($isOneyWithoutFees): ?>
             <?= /* @noEscape */ __(
