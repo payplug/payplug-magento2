@@ -40,8 +40,16 @@ $pricingHelper = $this->helper(Data::class);
         <?php endif; ?>
     </span>
     <ul class="oneyPopin_navigation">
-        <li data-type="3x"><button type="button"><?= $escaper->escapeHtml(__('Payment in %1', '3x')); ?></button></li>
-        <li data-type="4x"><button type="button"><?= $escaper->escapeHtml(__('Payment in %1', '4x')); ?></button></li>
+        <li data-type="3x">
+            <button type="button">
+                <?= $escaper->escapeHtml(__('Payment in %1', '3x')); ?>
+            </button>
+        </li>
+        <li data-type="4x">
+            <button type="button">
+                <?= $escaper->escapeHtml(__('Payment in %1', '4x')); ?>
+            </button>
+        </li>
     </ul>
     <?php foreach ($oneySimulation->getOptions() as $option): ?>
         <span class="oneyPopin_option" data-type="<?= /* @noEscape */ $option->getType(); ?>">
