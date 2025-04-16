@@ -434,7 +434,7 @@ class Config extends AbstractHelper
 
     public function getApplePayDisallowedShippingMethods(): array
     {
-        return explode(',', (string)$this->getConfigValue('excluded_shipping_method', ScopeInterface::SCOPE_STORE, null, self::APPLE_PAY_CONFIG_PATH));
+        return array_map('trim', explode(',', (string)$this->getConfigValue('excluded_shipping_method', ScopeInterface::SCOPE_STORE, null, self::APPLE_PAY_CONFIG_PATH)));
     }
 
     /**
