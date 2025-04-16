@@ -35,7 +35,6 @@ class GetAvailablesShippingMethods implements HttpGetActionInterface
      */
     public function execute(): Json
     {
-        $this->logger->info('GetAvailablesShippingMethods');
         /** @var Json $response */
         $response = $this->resultJsonFactory->create();
         $response->setData([
