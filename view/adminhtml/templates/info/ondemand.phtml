@@ -28,6 +28,7 @@ $specificInfo = $block->getAdminSpecificInformation();
                 <td>
                     <?php if (!empty($paymentInfo['details'])): ?>
                         <button type="button"
+                                class="toggle-details"
                                 data-toggle="collapse"
                                 data-target="#payment-detail-<?= $key; ?>"
                                 role="button"
@@ -60,6 +61,23 @@ $specificInfo = $block->getAdminSpecificInformation();
             <?php endif; ?>
         <?php endforeach; ?>
     </table>
-<?php endif;?>
+<?php endif; ?>
 
 <?= $block->getChildHtml() ?>
+
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggleButtons = document.querySelectorAll('.toggle-details');
+        toggleButtons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                const targetId = this.getAttribute('data-target');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement.style.display === 'none' || targetElement.style.display === '') {
+                    targetElement.style.display = 'table-row';
+                } else {
+                    targetElement.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
