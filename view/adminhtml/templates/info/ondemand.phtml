@@ -41,45 +41,44 @@ $title = $block->getMethod()->getTitle();
         </td>
     </tr>
     <?php if (!empty($paymentInfo['details'])): ?>
-    <tr class="collapse"
-        id="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
-        style="display: none;">
-        <td colspan="4">
-            <table class="data-table admin__table-secondary">
-                <?php foreach ($paymentInfo['details'] as $label => $value): ?>
-                <tr>
-                    <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
-                    <td>
-                        <?php
-                            $formattedValue = implode("\n", $block->getValueAsArray($value, true));
-                        ?>
-                        <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </table>
-        </td>
-    </tr>
+        <tr class="collapse"
+            id="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
+            style="display: none;">
+            <td colspan="4">
+                <table class="data-table admin__table-secondary">
+                    <?php foreach ($paymentInfo['details'] as $label => $value): ?>
+                    <tr>
+                        <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
+                        <td>
+                            <?php
+                                $formattedValue = implode("\n", $block->getValueAsArray($value, true));
+                            ?>
+                            <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </table>
+            </td>
+        </tr>
+
+        <script>
+            require([
+                'jquery',
+            ], function ($) {
+                $('.toggle-details').on('click', function() {
+                    const targetId = $(this).data('target');
+                    const targetElement = $(targetId);
+                    if (targetElement.css('display') === 'none' || targetElement.css('display') === '') {
+                        targetElement.css('display', 'table-row');
+                    } else {
+                        targetElement.css('display', 'none');
+                    }
+                });
+            });
+        </script>
     <?php endif; ?>
     <?php endforeach; ?>
 </table>
 <?php endif; ?>
 
 <?= $block->getChildHtml() ?>
-
-<script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-        const toggleButtons = document.querySelectorAll('.toggle-details');
-        toggleButtons.forEach(function(button) {
-            button.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
-                const targetElement = document.querySelector(targetId);
-                if (targetElement.style.display === 'none' || targetElement.style.display === '') {
-                    targetElement.style.display = 'table-row';
-                } else {
-                    targetElement.style.display = 'none';
-                }
-            });
-        });
-    });
-</script>
