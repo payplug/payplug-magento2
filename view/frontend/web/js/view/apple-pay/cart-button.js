@@ -1,31 +1,48 @@
 define([
     'jquery',
+    'ko',
+    'uiComponent',
     'Magento_Checkout/js/model/quote',
     'mage/url',
-], function ($, quote, url) {
+], function ($, ko, Component, quote, url) {
     'use strict';
 
-    return {
+    return Component.extend({
         applePayIsAvailable: false,
+        isVisible: ko.observable(false),
         applePaySession: null,
         order_id: null,
+        allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
         createMockOrder: 'payplug_payments/applePay/createMockOrder',
         updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
         amount: null,
-        workflowType: null,
+
+        /**
+         * Initializes the component.
+         *
+         * @returns {void}
+         */
+        initialize: function () {
+            this.merchandName = window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name;
+            this.applePayIsAvailable = this._getApplePayAvailability();
+            this.isVisible(this.applePayIsAvailable);
+        },
 
         /**
          * Initializes Apple Pay session.
          *
+         * @private
          * @returns {void}
          */
-        initApplePaySession: function() {
-            const versionNumber = 14;
-            const sessionRequest = this._getPaymentRequest();
-            this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
-            this._afterPlaceOrder();
+        _initApplePaySession: function() {
+            if (this.applePayIsAvailable) {
+                const versionNumber = 14;
+                const sessionRequest = this._getPaymentRequest();
+                this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+                this._afterPlaceOrder();
+            }
         },
 
         /**
@@ -34,20 +51,40 @@ define([
          * @private
          * @returns {void}
          */
-        _afterPlaceOrder: function() {
+        _afterPlaceOrder: function () {
             this._bindMarchantValidation();
             this._bindPaymentAuthorization();
             this._bindShippingMethodSelected();
             this._bindPaymentCancel();
+            this._bindShippingContactSelected();
             this.applePaySession.begin();
+        },
+
+        /**
+         * Handles button click event.
+         *
+         * @returns {void}
+         */
+        handleClick: function () {
+            this._initApplePaySession();
+        },
+
+        /**
+         * Retrieves the locale configuration for Apple Pay.
+         *
+         * @returns {string} The locale setting from the checkout configuration.
+         */
+        getApplePayLocale: function() {
+            return window.checkoutConfig.payment.payplug_payments_apple_pay.locale;
         },
 
         /**
          * Checks the availability of Apple Pay.
          *
+         * @private
          * @returns {boolean} True if Apple Pay is available and can make payments, false otherwise.
          */
-        getApplePayAvailability: function() {
+        _getApplePayAvailability: function() {
             return window.ApplePaySession && ApplePaySession.canMakePayments();
         },
 
@@ -77,51 +114,9 @@ define([
                     type: 'final',
                     amount: totalAmount
                 },
-                applicationData: btoa(JSON.stringify({
-                    'apple_pay_domain': domain
-                })),
-                shippingMethods: [
-                    {
-                        "label": "Standard Shipping",
-                        "amount": "10.00",
-                        "detail": "Arrives in 5-7 days",
-                        "identifier": "standardShipping",
-                        "dateComponentsRange": {
-                            "startDateComponents": {
-                                "years": 2022,
-                                "months": 9,
-                                "days": 24,
-                                "hours": 0
-                            },
-                            "endDateComponents": {
-                                "years": 2025,
-                                "months": 9,
-                                "days": 26,
-                                "hours": 0
-                            }
-                        }
-                    },
-                    {
-                        "label": "Standard Shipping 2",
-                        "amount": "5.00",
-                        "detail": "Arrives in 99-999 days",
-                        "identifier": "standardShipping",
-                        "dateComponentsRange": {
-                            "startDateComponents": {
-                                "years": 2022,
-                                "months": 9,
-                                "days": 24,
-                                "hours": 0
-                            },
-                            "endDateComponents": {
-                                "years": 2025,
-                                "months": 9,
-                                "days": 26,
-                                "hours": 0
-                            }
-                        }
-                    },
-                ],
+                applicationData: {
+                    'apple_pay_domain': btoa(JSON.stringify(domain))
+                },
                 shippingType: "shipping",
                 requiredBillingContactFields: [
                     "postalAddress",
@@ -184,22 +179,23 @@ define([
          */
         _getApplePayWorkflowType: function() {
             const bodyClass = $('body').attr('class');
+            let workflowType;
 
-            if (bodyClass.includes('catalog-product-view')) {
-                return 'product';
-            }
+            switch (bodyClass) {
+                case bodyClass.includes('catalog-product-view'):
+                    workflowType = 'product';
+                    break;
+                case bodyClass.includes('checkout-cart-index'):
+                    workflowType = 'shopping-cart';
+                    break;
+                case bodyClass.includes('checkout-index-index'):
+                    workflowType = 'checkout';
+                    break;
+                default:
+                    workflowType = '';
+            };
 
-            else if (bodyClass.includes('checkout-cart-index')) {
-                return 'shopping-cart';
-            }
-
-            else if (bodyClass.includes('checkout-index-index')) {
-                return 'checkout';
-            }
-
-            else {
-                return '';
-            }
+            return workflowType;
         },
 
         /**
@@ -221,7 +217,8 @@ define([
 
                 let btoaevent = btoa(JSON.stringify(eventData));
                 const urlParameters = { btoaevent };
-                self.workflowType = self._getApplePayWorkflowType();
+                const workflowType = self._getApplePayWorkflowType();
+                workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
                     url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
@@ -267,8 +264,7 @@ define([
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
                             amount: self.amount,
-                            order_id: self.order_id,
-                            workflowType: self.workflowType
+                            order_id: self.order_id
                         }
                     }).done(function (response) {
                         console.log(response);
@@ -312,20 +308,69 @@ define([
          * @private
          * @returns {void}
          */
-        _bindShippingMethodSelected: function() {
+        _bindShippingMethodSelected: function () {
             const self = this;
+
             this.applePaySession.onshippingmethodselected = shippingEvent => {
-                let amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
+                if (typeof shippingEvent === 'undefined') {
+                    return;
+                }
+                
+                const amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
                 self.amount = amount;
-                let label = shippingEvent.shippingMethod.label;
+
                 const updated = {
                     "newTotal": {
-                        "label": label,
+                        "label": self.merchandName,
                         "amount": amount,
                         "type": "final"
-                    },
+                    }
                 }
-                this.applePaySession.completeShippingMethodSelection(updated);
+
+                self.applePaySession.completeShippingMethodSelection(updated);
+            };
+        },
+
+        /**
+         * Update shipping methods list when a contact is selected
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindShippingContactSelected: function () {
+            const self = this;
+
+            this.applePaySession.onshippingcontactselected = async shippingContactEvent => {
+                $.ajax({
+                    url: url.build(self.allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
+                    data: shippingContactEvent.shippingContact,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.error) {
+                            self._cancelPayplugPayment();
+                        } else {
+                            try {
+                                const amount = parseFloat(self._getTotalAmountNoShipping());
+                                self.amount = amount;
+                                const updated = {
+                                    "newTotal": {
+                                        "label": self.merchandName,
+                                        "amount": amount,
+                                        "type": "final"
+                                    },
+                                    "newShippingMethods": response.methods,
+                                };
+                                self.applePaySession.completeShippingContactSelection(updated);
+                            } catch (e) {
+                                self._cancelPayplugPayment();
+                            }
+                        }
+                    },
+                    error: function () {
+                        self._cancelPayplugPayment();
+                    }
+                });
             };
         },
 
@@ -335,8 +380,8 @@ define([
          * @private
          * @returns {void}
          */
-        _cancelPayplugPayment: function() {
+        _cancelPayplugPayment: function () {
             window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         }
-    };
+    });
 });
