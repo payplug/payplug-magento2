@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.3.4](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.4) - 2025-XX-XX
 
+### Features
+
+- Add Payplug information block on the back-office ondemand orders. (MAG-440)
+- Allow to capture a deferred payment even with an order increment id in the metadata. (MAG-453)
+- Fix cropped logo in Oney popin. (MAG-424)
+- Fix the installment plan payment not redirecting to the failure page post checkout. (MAG-441)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.3...v4.3.4)**
+
+### Added
+
+- Add Payplug information block on the back-office ondemand orders. [#269](https://github.com/payplug/payplug-magento2/pull/269)
+
+### Changed
+
+- Allow to capture a deferred payment even with an order increment id in the metadata. [#270](https://github.com/payplug/payplug-magento2/pull/270)
+
+### Fixed
+
+- Fix cropped logo in Oney popin. [#266](https://github.com/payplug/payplug-magento2/pull/266)
+- Fix the installment plan payment not redirecting to the failure page post checkout. [#268](https://github.com/payplug/payplug-magento2/pull/268)
+
 ## [4.3.3](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.3) - 2025-04-09
 
 ### Features
