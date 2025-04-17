@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix an SQL crash happening in some case when updating the order. (MAG-443)
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.2...release/v4.3.3)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.2...v4.3.3)**
 
 ### Fixed
 
@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix the checkout redirecting to success page on non-authorized deferred payment. (MAG-436)
 - Fix an error on creating an order from the back-office, due to null iso code. (MAG-437)
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...release/v4.3.2)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...v4.3.2)**
 
 ### Added
 
@@ -40,7 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Prevent the manual order creation to crash if isoCode is null [#258](https://github.com/payplug/payplug-magento2/pull/258)
 - Prevent successfully redirecting to the success page if the deferred payment isn't authorized. [#259](https://github.com/payplug/payplug-magento2/pull/259)
 
-
 ## [4.3.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.0) - 2025-03-19
 
 ### Features
@@ -50,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Synchronize orders status with Payplug servers post payment 
 - Compatibility with php 8.1 and Magento 2.4.4 and above. (SMP-3032)
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.2.0...release/v4.3.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.2.0...v4.3.0)**
 
 ### Added
 
