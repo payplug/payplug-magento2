@@ -330,8 +330,6 @@ define([
                         self._cancelPayplugPayment();
                     }
                 });
-
-
             };
         },
 
