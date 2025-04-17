@@ -54,13 +54,12 @@
         </div>
         <div class="actions-toolbar">
             <div class="primary">
-                <apple-pay-button 
-                    buttonstyle="black"
+                <apple-pay-button buttonstyle="black"
                     type="pay"
                     data-bind="
                         attr: {
-                            afterRender: handleClick()
-                        }
+                            'locale': getApplePayLocale()}, 
+                            afterRender: bindButtonClick()
                     ">
                 </apple-pay-button>
             </div>

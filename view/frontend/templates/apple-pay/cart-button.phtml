@@ -9,17 +9,15 @@ use Magento\Framework\Escaper;
  */
 ?>
 
-<div data-bind="scope: 'apple-pay-button'">
+<div data-bind="scope: 'cart-button'">
     <apple-pay-button
         buttonstyle="black"
         type="pay"
         class="hidden"
         data-bind="
             click: handleClick,
-            css: {
-                hidden: !isVisible() 
-            }
-    ">
+            attr: { 'locale': getApplePayLocale() },
+            css: { hidden: !isVisible() } ">
     </apple-pay-button>
 </div>
 
@@ -28,8 +26,8 @@ use Magento\Framework\Escaper;
         "*": {
             "Magento_Ui/js/core/app" : {
                 "components" : {
-                    "apple-pay-button" : {
-                        "component" : "Payplug_Payments/js/view/cart/apple-pay"
+                    "cart-button" : {
+                        "component" : "Payplug_Payments/js/view/apple-pay/cart-button"
                     }
                 }
             }

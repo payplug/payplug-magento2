@@ -1,12 +1,15 @@
 define([
     'jquery',
+    'ko',
+    'uiComponent',
     'Magento_Checkout/js/model/quote',
     'mage/url',
-], function ($, quote, url) {
+], function ($, ko, Component, quote, url) {
     'use strict';
 
-    return {
+    return Component.extend({
         applePayIsAvailable: false,
+        isVisible: ko.observable(false),
         applePaySession: null,
         order_id: null,
         allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
@@ -15,18 +18,30 @@ define([
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
         amount: null,
-        workflowType: null,
+
+        /**
+         * Initializes the component.
+         *
+         * @returns {void}
+         */
+        initialize: function () {
+            this.applePayIsAvailable = this._getApplePayAvailability();
+            this.isVisible(this.applePayIsAvailable);
+        },
 
         /**
          * Initializes Apple Pay session.
          *
+         * @private
          * @returns {void}
          */
-        initApplePaySession: function() {
-            const versionNumber = 14;
-            const sessionRequest = this._getPaymentRequest();
-            this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
-            this._afterPlaceOrder();
+        _initApplePaySession: function() {
+            if (this.applePayIsAvailable) {
+                const versionNumber = 14;
+                const sessionRequest = this._getPaymentRequest();
+                this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+                this._afterPlaceOrder();
+            }
         },
 
         /**
@@ -45,11 +60,30 @@ define([
         },
 
         /**
+         * Handles button click event.
+         *
+         * @returns {void}
+         */
+        handleClick: function () {
+            this._initApplePaySession();
+        },
+
+        /**
+         * Retrieves the locale configuration for Apple Pay.
+         *
+         * @returns {string} The locale setting from the checkout configuration.
+         */
+        getApplePayLocale: function() {
+            return window.checkoutConfig.payment.payplug_payments_apple_pay.locale;
+        },
+
+        /**
          * Checks the availability of Apple Pay.
          *
+         * @private
          * @returns {boolean} True if Apple Pay is available and can make payments, false otherwise.
          */
-        getApplePayAvailability: function() {
+        _getApplePayAvailability: function() {
             return window.ApplePaySession && ApplePaySession.canMakePayments();
         },
 
@@ -79,9 +113,9 @@ define([
                     type: 'final',
                     amount: totalAmount
                 },
-                applicationData: btoa(JSON.stringify({
-                    'apple_pay_domain': domain
-                })),
+                applicationData: {
+                    'apple_pay_domain': btoa(JSON.stringify(domain))
+                },
                 shippingType: "shipping",
                 requiredBillingContactFields: [
                     "postalAddress",
@@ -144,22 +178,23 @@ define([
          */
         _getApplePayWorkflowType: function() {
             const bodyClass = $('body').attr('class');
+            let workflowType;
 
-            if (bodyClass.includes('catalog-product-view')) {
-                return 'product';
-            }
+            switch (bodyClass) {
+                case bodyClass.includes('catalog-product-view'):
+                    workflowType = 'product';
+                    break;
+                case bodyClass.includes('checkout-cart-index'):
+                    workflowType = 'shopping-cart';
+                    break;
+                case bodyClass.includes('checkout-index-index'):
+                    workflowType = 'checkout';
+                    break;
+                default:
+                    workflowType = '';
+            };
 
-            else if (bodyClass.includes('checkout-cart-index')) {
-                return 'shopping-cart';
-            }
-
-            else if (bodyClass.includes('checkout-index-index')) {
-                return 'checkout';
-            }
-
-            else {
-                return '';
-            }
+            return workflowType;
         },
 
         /**
@@ -181,7 +216,8 @@ define([
 
                 let btoaevent = btoa(JSON.stringify(eventData));
                 const urlParameters = { btoaevent };
-                self.workflowType = self._getApplePayWorkflowType();
+                const workflowType = self._getApplePayWorkflowType();
+                workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
                     url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
@@ -227,8 +263,7 @@ define([
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
                             amount: self.amount,
-                            order_id: self.order_id,
-                            workflowType: self.workflowType
+                            order_id: self.order_id
                         }
                     }).done(function (response) {
                         console.log(response);
@@ -342,5 +377,5 @@ define([
         _cancelPayplugPayment: function () {
             window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         }
-    };
+    });
 });
