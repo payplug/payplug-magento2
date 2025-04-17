@@ -25,6 +25,7 @@ define([
          * @returns {void}
          */
         initialize: function () {
+            this.merchandName = window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name;
             this.applePayIsAvailable = this._getApplePayAvailability();
             this.isVisible(this.applePayIsAvailable);
         },
@@ -309,20 +310,24 @@ define([
          */
         _bindShippingMethodSelected: function () {
             const self = this;
+
             this.applePaySession.onshippingmethodselected = shippingEvent => {
                 if (typeof shippingEvent === 'undefined') {
                     return;
                 }
-                let amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
+                
+                const amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
                 self.amount = amount;
+
                 const updated = {
                     "newTotal": {
-                        "label": window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name,
+                        "label": self.merchandName,
                         "amount": amount,
                         "type": "final"
-                    },
+                    }
                 }
-                this.applePaySession.completeShippingMethodSelection(updated);
+
+                self.applePaySession.completeShippingMethodSelection(updated);
             };
         },
 
@@ -334,6 +339,7 @@ define([
          */
         _bindShippingContactSelected: function () {
             const self = this;
+
             this.applePaySession.onshippingcontactselected = async shippingContactEvent => {
                 $.ajax({
                     url: url.build(self.allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
@@ -345,11 +351,11 @@ define([
                             self._cancelPayplugPayment();
                         } else {
                             try {
-                                let amount = parseFloat(self._getTotalAmountNoShipping());
+                                const amount = parseFloat(self._getTotalAmountNoShipping());
                                 self.amount = amount;
                                 const updated = {
                                     "newTotal": {
-                                        "label": window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name,
+                                        "label": self.merchandName,
                                         "amount": amount,
                                         "type": "final"
                                     },
