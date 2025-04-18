@@ -51,7 +51,7 @@ $title = $block->getMethod()->getTitle();
                         <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
                         <td>
                             <?php
-                                $formattedValue = implode("\n", $block->getValueAsArray($value, true));
+                                $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));
                             ?>
                             <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
                         </td>

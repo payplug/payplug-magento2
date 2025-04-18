@@ -14,9 +14,8 @@ $title = $block->getMethod()->getTitle();
 ?>
 <?= $escaper->escapeHtml(__($title)) ?>
 <?php if ($specificInfo) : ?>
-<p><?= $specificInfo['status']; ?></p>
-<p><?= __('Installment plan id'); ?> : <?= $specificInfo['installment_plan_id']; ?></p>
-
+<p><?= $escaper->escapeHtml($specificInfo['status']) ?></p>
+<p><?= $escaper->escapeHtml(__('Installment plan id')) ?> : <?= $escaper->escapeHtml($specificInfo['installment_plan_id']) ?></p>
 <table class="data-table admin__table-primary">
     <tr>
         <th><?= $escaper->escapeHtml(__('Date')) ?></th>
@@ -34,18 +33,18 @@ $title = $block->getMethod()->getTitle();
             <button type="button"
                     class="toggle-details"
                     data-toggle="collapse"
-                    data-target="#payment-detail-<?= $key; ?>"
+                    data-target="#payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
                     role="button"
                     aria-expanded="false"
-                    aria-controls="payment-detail-<?= $key; ?>">
-                <?= __('Details'); ?>
+                    aria-controls="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>">
+                <?= $escaper->escapeHtml(__('Details')) ?>
             </button>
             <?php endif; ?>
         </td>
     </tr>
     <?php if (!empty($paymentInfo['details'])) : ?>
         <tr class="collapse"
-            id="payment-detail-<?= $key; ?>"
+            id="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
             style="display: none;">
             <td colspan="4">
                 <table class="data-table admin__table-secondary">
@@ -82,9 +81,9 @@ $title = $block->getMethod()->getTitle();
 
 <?php if ($specificInfo['can_abort']) : ?>
 <a class="action-default"
-   href="<?= $block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $block->getInfo()->getOrder()->getId(), 'form_key' => $block->getFormKey()]); ?>"
+   href="<?= $escaper->escapeUrl($block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $block->getInfo()->getOrder()->getId(), 'form_key' => $block->getFormKey()])) ?>"
    onclick="return confirmAbortInstallmentPlan()">
-    <?= __('Abort'); ?>
+    <?= $escaper->escapeHtml(__('Abort')) ?>
 </a>
 <?php endif; ?>
 <?php endif;?>
