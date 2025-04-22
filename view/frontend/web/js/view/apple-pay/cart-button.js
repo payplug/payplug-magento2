@@ -181,18 +181,12 @@ define([
             const bodyClass = $('body').attr('class');
             let workflowType;
 
-            switch (bodyClass) {
-                case bodyClass.includes('catalog-product-view'):
-                    workflowType = 'product';
-                    break;
-                case bodyClass.includes('checkout-cart-index'):
-                    workflowType = 'shopping-cart';
-                    break;
-                case bodyClass.includes('checkout-index-index'):
-                    workflowType = 'checkout';
-                    break;
-                default:
-                    workflowType = '';
+            if (bodyClass.includes('checkout-cart-index')) {
+                workflowType = 'shopping-cart';
+            } else if (bodyClass.includes('checkout-index-index')) {
+                workflowType = 'checkout';
+            } else {
+                workflowType = '';
             };
 
             return workflowType;
