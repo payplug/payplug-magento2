@@ -346,6 +346,8 @@ class Config extends AbstractHelper
             // Payplug payment Apple Pay configuration
             'payment/payplug_payments_apple_pay/active',
             'payment/payplug_payments_apple_pay/title',
+            'payment/payplug_payments_apple_pay/show_on_cart',
+            'payment/payplug_payments_apple_pay/show_on_checkout',
             'payment/payplug_payments_apple_pay/processing_order_status',
             'payment/payplug_payments_apple_pay/canceled_order_status',
             'payment/payplug_payments_apple_pay/allowspecific',
