@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Model\Payment\ApplePay;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
@@ -10,51 +12,39 @@ use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
+use Payplug\Payments\Helper\ApplePay as ApplePayHelper;
 use Payplug\Payments\Model\Payment\PayplugConfigProvider;
 
 class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
 {
-    /**
-     * @var string
-     */
-    private $methodCode = ApplePay::METHOD_CODE;
+    private string $methodCode = ApplePay::METHOD_CODE;
+    private MethodInterface $method;
 
-    /**
-     * @var MethodInterface
-     */
-    private $method;
-
-    /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
-
-    /**
-     * @param Repository           $assetRepo
-     * @param RequestInterface     $request
-     * @param PaymentHelper        $paymentHelper
-     * @param ScopeConfigInterface $scopeConfig
-     */
     public function __construct(
         Repository $assetRepo,
         RequestInterface $request,
         PaymentHelper $paymentHelper,
-        ScopeConfigInterface $scopeConfig
+        private ScopeConfigInterface $scopeConfig,
+        private ApplePayHelper $applePayHelper
     ) {
         parent::__construct($assetRepo, $request);
+
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
-        $this->scopeConfig = $scopeConfig;
     }
 
     /**
      * Get Standard payment config
-     *
-     * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         $merchandDomain = parse_url($this->scopeConfig->getValue('web/secure/base_url', ScopeInterface::SCOPE_STORE), PHP_URL_HOST);
         $merchandName = $this->scopeConfig->getValue('general/store_information/name', ScopeInterface::SCOPE_STORE);
+
+        $allowed = $this->method->isAvailable() && $this->applePayHelper->canDisplayApplePayOncheckout();
+
+        if (!$allowed) {
+            return [];
+        }
 
         return $this->method->isAvailable() ? [
             'payment' => [
@@ -67,6 +57,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
                     ),
                     'merchand_name' => $merchandName ?: $merchandDomain,
                     'domain' => $merchandDomain,
+                    'enabled_on_checkout' => true
                 ],
             ],
         ] : [];
