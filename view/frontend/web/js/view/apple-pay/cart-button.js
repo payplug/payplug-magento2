@@ -38,7 +38,7 @@ define([
          */
         _initApplePaySession: function() {
             if (this.applePayIsAvailable) {
-                const versionNumber = 14;
+                const versionNumber = this._getApplePayVersion();
                 const sessionRequest = this._getPaymentRequest();
                 this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
                 this._afterPlaceOrder();
@@ -86,6 +86,18 @@ define([
          */
         _getApplePayAvailability: function() {
             return window.ApplePaySession && ApplePaySession.canMakePayments();
+        },
+
+        /**
+         * Retrieves the Apple Pay version number.
+         *
+         * If Apple Pay version 14 is supported, returns 14, otherwise returns 3.
+         *
+         * @private
+         * @returns {number} The Apple Pay version number.
+         */
+        _getApplePayVersion: function() {
+            return ApplePaySession.supportsVersion(14) ? 14 : 3;
         },
 
         /**
