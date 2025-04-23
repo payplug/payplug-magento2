@@ -44,7 +44,6 @@ class CreateMockOrder implements HttpGetActionInterface
      */
     public function execute(): Json
     {
-        $this->logger->info("Creating mock order");
         /** @var Json $result */
         $result = $this->resultJsonFactory->create();
         $response = [
@@ -100,7 +99,6 @@ class CreateMockOrder implements HttpGetActionInterface
             if (empty($merchantSession)) {
                 throw new \Exception('Could not retrieve merchant session');
             }
-            $this->logger->info("Creating mock order id {$orderId}");
 
             $response['error'] = false;
             $response['message'] = __('Order placed successfully.');

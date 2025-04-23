@@ -13,7 +13,6 @@ use Magento\Sales\Api\Data\OrderAddressInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderAddressRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
-use Magento\Sales\Model\Order;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Exception\PayplugException;
@@ -56,8 +55,7 @@ class UpdateCartOrder implements HttpPostActionInterface
             $orderId = $params['order_id'] ?? null;
             $token = $params['token'] ?? null;
             $amount  = $params['amount'] ?? null;
-
-            $this->logger->info(print_r($params, true));
+            $workflowType = $params['workflowType'] ?? null;
 
             if (!$orderId || !$token || !$amount) {
                 throw new \Exception('Missing order_id or token or amount parameter.');
@@ -76,7 +74,7 @@ class UpdateCartOrder implements HttpPostActionInterface
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
             $paymentObject = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
             $metadatas = $paymentObject->metadata;
-            $metadatas['ApplepayWorkflowType'] = 'shopping-cart';//shopping-cart,” “checkout,” ou “product.
+            $metadatas['ApplepayWorkflowType'] = $workflowType;
 
             $updatedPayment = $paymentObject->update([
                 'apple_pay' => [
@@ -88,8 +86,6 @@ class UpdateCartOrder implements HttpPostActionInterface
                 'metadata' => $metadatas
             ]);
 
-            $this->logger->info(print_r($updatedPayment, true));
-
             if ($updatedPayment->is_paid) {
                 $response->setData([
                     'error' => false,
@@ -97,20 +93,20 @@ class UpdateCartOrder implements HttpPostActionInterface
                 ]);
             } else {
                 $response->setData([
-                    'error' => false,
+                    'error' => true,
                     'message' => 'Apple Pay Payment updated but not paid yet.',
                 ]);
             }
 
             return $response;
         } catch (PayplugException $e) {
-            $this->logger->error('Could not update apple pay transaction', [
+            $this->logger->error('PayplugException: Could not update apple pay transaction', [
                 'message' => $e->__toString(),
                 'exception' => $e,
             ]);
             return $response;
         } catch (\Exception $e) {
-            $this->logger->error('Could not update apple pay transaction', [
+            $this->logger->error('Exception: Could not update apple pay transaction', [
                 'message' => $e->getMessage(),
                 'exception' => $e,
             ]);
@@ -166,6 +162,13 @@ class UpdateCartOrder implements HttpPostActionInterface
     {
         $email = $applePayShipping['emailAddress'] ?? '';
         $phone = $applePayShipping['phoneNumber'] ?? '';
+        $firstname = $applePayBilling['givenName'] ?? 'ApplePay';
+        $lastname = $applePayBilling['familyName'] ?? 'Customer';
+
+        $order->setCustomerEmail($email);
+        $order->setCustomerFirstname($firstname);
+        $order->setCustomerLastname($lastname);
+
         $shippingAddress = $order->getShippingAddress();
         if ($shippingAddress) {
             $this->fillAddressData($shippingAddress, $applePayShipping);
@@ -181,8 +184,6 @@ class UpdateCartOrder implements HttpPostActionInterface
         }
 
         $this->orderRepository->save($order);
-
-        $this->logger->info('Order addresses updated successfully.');
     }
 
     /**
@@ -197,6 +198,7 @@ class UpdateCartOrder implements HttpPostActionInterface
         $postcode = $applePayData['postalCode'] ?? '00000';
         $countryId = $applePayData['countryCode'] ?? 'US';
         $telephone = $applePayData['phoneNumber'] ?? '0000000000';
+        $region = $applePayData['administrativeArea'] ?? '';
 
         $address->setFirstname($firstname)
             ->setLastname($lastname)
@@ -204,7 +206,8 @@ class UpdateCartOrder implements HttpPostActionInterface
             ->setCity($city)
             ->setPostcode($postcode)
             ->setCountryId($countryId)
-            ->setTelephone($telephone);
+            ->setTelephone($telephone)
+            ->setRegion($region);
 
         if (isset($applePayData['emailAddress']) && method_exists($address, 'setEmail')) {
             $address->setEmail($applePayData['emailAddress']);
