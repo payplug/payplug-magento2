@@ -1,30 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Block\ApplePay;
 
 use Magento\Framework\View\Element\Template;
+use Magento\Framework\View\Element\Template\Context;
 use Payplug\Payments\Helper\ApplePay;
 
 class Button extends Template
 {
-    /**
-     * @var ApplePay
-     */
-    private $applePayHelper;
-
-    /**
-     * @param Template\Context $context
-     * @param ApplePay         $applePayHelper
-     * @param array            $data
-     */
     public function __construct(
-        Template\Context $context,
-        ApplePay $applePayHelper,
+        Context $context,
+        private ApplePay $applePayHelper,
         array $data = []
     ) {
         parent::__construct($context, $data);
-
-        $this->applePayHelper = $applePayHelper;
     }
 
     /**

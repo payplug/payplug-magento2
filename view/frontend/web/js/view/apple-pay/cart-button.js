@@ -126,9 +126,9 @@ define([
                     type: 'final',
                     amount: totalAmount
                 },
-                applicationData: {
-                    'apple_pay_domain': btoa(JSON.stringify(domain))
-                },
+                applicationData: btoa(JSON.stringify({
+                    'apple_pay_domain': domain
+                })),
                 shippingType: "shipping",
                 requiredBillingContactFields: [
                     "postalAddress",
@@ -223,8 +223,6 @@ define([
 
                 let btoaevent = btoa(JSON.stringify(eventData));
                 const urlParameters = { btoaevent };
-                const workflowType = self._getApplePayWorkflowType();
-                workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
                     url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
@@ -261,6 +259,7 @@ define([
             const self = this;
 
             this.applePaySession.onpaymentauthorized = event => {
+
                 try {
                     $.ajax({
                         url: url.build(self.updateCartOrder) + '?form_key=' + $.cookie('form_key'),
@@ -270,10 +269,10 @@ define([
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
                             amount: self.amount,
-                            order_id: self.order_id
+                            order_id: self.order_id,
+                            workflowType: self._getApplePayWorkflowType()
                         }
                     }).done(function (response) {
-                        console.log(response);
                         let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
 
                         if (response.error === true) {
@@ -321,7 +320,7 @@ define([
                 if (typeof shippingEvent === 'undefined') {
                     return;
                 }
-                
+
                 const amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
                 self.amount = amount;
 
