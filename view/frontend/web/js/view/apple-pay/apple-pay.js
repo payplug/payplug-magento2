@@ -1,48 +1,30 @@
 define([
     'jquery',
-    'ko',
-    'uiComponent',
     'Magento_Checkout/js/model/quote',
     'mage/url',
-], function ($, ko, Component, quote, url) {
+], function ($, quote, url) {
     'use strict';
 
-    return Component.extend({
-        applePayIsAvailable: false,
-        isVisible: ko.observable(false),
-        applePaySession: null,
-        order_id: null,
+    return {
         allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
-        createMockOrder: 'payplug_payments/applePay/createMockOrder',
-        updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
         cancelUrl: 'payplug_payments/payment/cancel',
+        createMockOrder: 'payplug_payments/applePay/createMockOrder',
+        getTransactionDataUrl: 'payplug_payments/applePay/getTransactionData',
+        isAvailableUrl: 'payplug_payments/applePay/isAvailable',
         returnUrl: 'payplug_payments/payment/paymentReturn',
-        amount: null,
-
-        /**
-         * Initializes the component.
-         *
-         * @returns {void}
-         */
-        initialize: function () {
-            this.merchandName = window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name;
-            this.applePayIsAvailable = this._getApplePayAvailability();
-            this.isVisible(this.applePayIsAvailable);
-        },
+        updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
+        updateTransactionDataUrl: 'payplug_payments/applePay/updateTransaction',
 
         /**
          * Initializes Apple Pay session.
          *
-         * @private
          * @returns {void}
          */
-        _initApplePaySession: function() {
-            if (this.applePayIsAvailable) {
-                const versionNumber = this._getApplePayVersion();
-                const sessionRequest = this._getPaymentRequest();
-                this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
-                this._afterPlaceOrder();
-            }
+        initApplePaySession: function() {
+            const versionNumber = this._getApplePayVersion();
+            const sessionRequest = this._getPaymentRequest();
+            this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+            this._afterPlaceOrder();
         },
 
         /**
@@ -61,30 +43,11 @@ define([
         },
 
         /**
-         * Handles button click event.
-         *
-         * @returns {void}
-         */
-        handleClick: function () {
-            this._initApplePaySession();
-        },
-
-        /**
-         * Retrieves the locale configuration for Apple Pay.
-         *
-         * @returns {string} The locale setting from the checkout configuration.
-         */
-        getApplePayLocale: function() {
-            return window.checkoutConfig.payment.payplug_payments_apple_pay.locale;
-        },
-
-        /**
          * Checks the availability of Apple Pay.
          *
-         * @private
          * @returns {boolean} True if Apple Pay is available and can make payments, false otherwise.
          */
-        _getApplePayAvailability: function() {
+        getApplePayAvailability: function() {
             return window.ApplePaySession && ApplePaySession.canMakePayments();
         },
 
@@ -181,7 +144,6 @@ define([
          * Determines the Apple Pay workflow type based on the current page body class.
          *
          * Apple Pay workflow types are as follows:
-         * - 'product': The user is currently on a product page.
          * - 'shopping-cart': The user is currently on the shopping cart page.
          * - 'checkout': The user is currently on the checkout page.
          * - '': The user is on an unknown page.
@@ -259,7 +221,6 @@ define([
             const self = this;
 
             this.applePaySession.onpaymentauthorized = event => {
-
                 try {
                     $.ajax({
                         url: url.build(self.updateCartOrder) + '?form_key=' + $.cookie('form_key'),
@@ -388,5 +349,5 @@ define([
         _cancelPayplugPayment: function () {
             window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         }
-    });
+    };
 });
