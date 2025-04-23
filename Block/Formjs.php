@@ -28,7 +28,7 @@ class Formjs extends Template
     {
         $urls = [];
         if ($this->_scopeConfig->getValue('payment/payplug_payments_apple_pay/active', ScopeInterface::SCOPE_STORE)) {
-            $urls[] = 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
+            $urls[] = 'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
         }
 
         return $urls;
