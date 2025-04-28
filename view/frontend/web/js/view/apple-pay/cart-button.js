@@ -70,15 +70,6 @@ define([
         },
 
         /**
-         * Retrieves the locale configuration for Apple Pay.
-         *
-         * @returns {string} The locale setting from the checkout configuration.
-         */
-        getApplePayLocale: function() {
-            return window.checkoutConfig.payment.payplug_payments_apple_pay.locale;
-        },
-
-        /**
          * Checks the availability of Apple Pay.
          *
          * @private
