@@ -116,11 +116,9 @@ define([
          * @returns {void}
          */
         handleClick: function () {
-            console.log('handleClick');
             const self = this;
             setTimeout(function() {
                 $('apple-pay-button').on('click', function() {
-                    console.log('kickzyyy');
                     if (self.applePayIsAvailable) {
                         payplugApplePay.initApplePaySession();
                     }
