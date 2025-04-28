@@ -11,3 +11,23 @@
         --apple-pay-button-box-sizing: border-box;
     }
 }
+
+/* Product view */
+.catalog-product-view {
+    apple-pay-button {
+        margin: -30px 0 30px;
+    }
+}
+
+//
+//  Desktop
+//  _____________________________________________
+
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
+    /* Product view */
+    .catalog-product-view {
+        apple-pay-button {
+            width: 49%;
+        }
+    }
+}
