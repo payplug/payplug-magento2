@@ -55,15 +55,15 @@ class CreateMockOrder implements HttpGetActionInterface
         if (!$formKeyValidation) {
             return $result->setData($response);
         }
-$this->logger->info("----1-----");
+
         try {
             $sessionQuote = $this->checkoutSession->getQuote();
             if (!$sessionQuote || !$sessionQuote->getId()) {
                 throw new LocalizedException(__('No active quote found.'));
             }
-            $this->logger->info("----2-----");
+
             $quote = $this->createNewGuestQuoteFromSession($sessionQuote);
-            $this->logger->info("----3-----");
+
             $placeholderAddress = [
                 'givenName' => 'ApplePay',
                 'familyName' => 'Customer',
@@ -75,41 +75,40 @@ $this->logger->info("----1-----");
 
             $this->updateQuoteBillingAddress($quote, $placeholderAddress);
             $this->updateQuoteShippingAddress($quote, $placeholderAddress);
-            $this->logger->info("----4-----");
+
             $quote->setPaymentMethod(ApplePay::METHOD_CODE);
             $payment = $quote->getPayment();
             $payment->setMethod(ApplePay::METHOD_CODE);
-            $this->logger->info("----5-----");
+
             $shippingAddress = $quote->getShippingAddress();
             $shippingAddress->setShippingMethod('flatrate_flatrate');
             $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
-            $this->logger->info("----6-----");
+
             $quote->collectTotals();
             $this->cartRepository->save($quote);
-            $this->logger->info("----7-----");
+
             $orderId = $this->cartManagement->placeOrder($quote->getId());
             if (!$orderId) {
                 throw new LocalizedException(__('Order could not be created.'));
             }
-            $this->logger->info("----8-----");
+
             $order = $this->orderRepository->get($orderId);
             $merchantSession = $order->getPayment()->getAdditionalInformation('merchand_session');
             $order->getPayment()->unsAdditionalInformation('merchand_session');
-            $this->logger->info("----9-----");
+
             if (empty($merchantSession)) {
                 throw new \Exception('Could not retrieve merchant session');
             }
-            $this->logger->info("----10-----");
+
             $response['error'] = false;
             $response['message'] = __('Order placed successfully.');
             $response['order_id'] = $orderId;
             $response['merchantSession'] = $merchantSession;
         } catch (\Exception $e) {
-            $this->logger->info("----11-----");
             $this->logger->info($e->getMessage());
             $response['message'] = $e->getMessage();
         }
-        $this->logger->info("----12-----");
+
         return $result->setData($response);
     }
 
