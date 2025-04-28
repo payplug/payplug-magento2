@@ -42,10 +42,6 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
 
         $allowed = $this->method->isAvailable() && $this->applePayHelper->canDisplayApplePayOncheckout();
 
-        if (!$allowed) {
-            return [];
-        }
-
         return $this->method->isAvailable() ? [
             'payment' => [
                 $this->methodCode => [
@@ -57,7 +53,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
                     ),
                     'merchand_name' => $merchandName ?: $merchandDomain,
                     'domain' => $merchandDomain,
-                    'enabled_on_checkout' => true
+                    'enabled_on_checkout' => $allowed
                 ],
             ],
         ] : [];
