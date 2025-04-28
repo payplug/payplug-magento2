@@ -35,12 +35,12 @@ class ApplePay extends AbstractHelper
      */
     private function canDisplayApplePayOnPage(string $page): bool
     {
-        $storeId = $this->storeManager->getStore()->getId();
         $applePayPaymentMethod = $this->getApplePayMethod();
-
         if ($applePayPaymentMethod === '') {
             return false;
         }
+
+        $storeId = $this->storeManager->getStore()->getId();
 
         return (bool)$this->scopeConfig->getValue(
             'payment/' . $applePayPaymentMethod . '/' . $page,
