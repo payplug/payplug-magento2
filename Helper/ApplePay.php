@@ -21,6 +21,7 @@ class ApplePay extends AbstractHelper
     public const CHECKOUT_APPLE_PAY_PAGE = 'show_on_checkout';
 
     private string $applePayMethod;
+    private string $applePayPaymentMethod;
 
     public function __construct(
         Context $context,
@@ -36,14 +37,15 @@ class ApplePay extends AbstractHelper
     private function canDisplayApplePayOnPage(string $page): bool
     {
         $storeId = $this->storeManager->getStore()->getId();
-        $applePayPaymentMethod = $this->getApplePayMethod();
 
-        if ($applePayPaymentMethod === '') {
+        if (!isset($this->applePayPaymentMethod)) {
+            $this->applePayPaymentMethod = $this->getApplePayMethod();
+
             return false;
         }
 
         return (bool)$this->scopeConfig->getValue(
-            'payment/' . $applePayPaymentMethod . '/' . $page,
+            'payment/' . $this->applePayPaymentMethod . '/' . $page,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
