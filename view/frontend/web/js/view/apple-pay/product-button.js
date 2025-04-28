@@ -8,6 +8,7 @@ define([
 
     return Component.extend({
         isVisible: ko.observable(false),
+        workflowType: '',
 
         /**
          * Initializes the component.
@@ -15,6 +16,7 @@ define([
          * @returns {void}
          */
         initialize: function () {
+            this._super();
             this.applePayIsAvailable = this._getApplePayAvailability();
             this.isVisible(this.applePayIsAvailable);
         },
