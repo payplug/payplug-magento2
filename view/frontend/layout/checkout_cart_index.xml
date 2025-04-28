@@ -12,7 +12,7 @@
         </referenceContainer>
 
         <referenceContainer name="checkout.cart.methods">
-            <block name="checkout.cart.methods.apple.pay.button" template="Payplug_Payments::apple-pay/cart-button.phtml" after="checkout.cart.methods.onepage.bottom" />
+            <block class="Payplug\Payments\Block\ApplePay\Button" name="checkout.cart.methods.apple.pay.button" template="Payplug_Payments::apple-pay/cart-button.phtml" after="checkout.cart.methods.onepage.bottom" />
         </referenceContainer>
     </body>
 </page>

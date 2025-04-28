@@ -38,7 +38,7 @@ define([
          */
         _initApplePaySession: function() {
             if (this.applePayIsAvailable) {
-                const versionNumber = 14;
+                const versionNumber = this._getApplePayVersion();
                 const sessionRequest = this._getPaymentRequest();
                 this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
                 this._afterPlaceOrder();
@@ -70,15 +70,6 @@ define([
         },
 
         /**
-         * Retrieves the locale configuration for Apple Pay.
-         *
-         * @returns {string} The locale setting from the checkout configuration.
-         */
-        getApplePayLocale: function() {
-            return window.checkoutConfig.payment.payplug_payments_apple_pay.locale;
-        },
-
-        /**
          * Checks the availability of Apple Pay.
          *
          * @private
@@ -86,6 +77,28 @@ define([
          */
         _getApplePayAvailability: function() {
             return window.ApplePaySession && ApplePaySession.canMakePayments();
+        },
+
+        /**
+         * Retrieves the Apple Pay version number.
+         *
+         * If Apple Pay version 18 is supported, returns 18, otherwise returns 14 or 3 or 1.
+         *
+         * @private
+         * @returns {number} The Apple Pay version number.
+         */
+        _getApplePayVersion: function() {
+            if (ApplePaySession.supportsVersion(18)) {
+                return 18;
+            }
+            if (ApplePaySession.supportsVersion(14)) {
+                return 14;
+            }
+            if (ApplePaySession.supportsVersion(3)) {
+                return 3;
+            }
+
+            return 1;
         },
 
         /**
@@ -108,15 +121,16 @@ define([
                 countryCode: locale.slice(-2),
                 currencyCode: quote.totals()['quote_currency_code'],
                 merchantCapabilities: ['supports3DS'],
-                supportedNetworks: ['visa', 'masterCard'],
+                supportedNetworks: ['cartesBancaires', 'visa', 'masterCard'],
+                supportedTypes: ['debit', 'credit'],
                 total: {
                     label: merchand_name,
                     type: 'final',
                     amount: totalAmount
                 },
-                applicationData: {
-                    'apple_pay_domain': btoa(JSON.stringify(domain))
-                },
+                applicationData: btoa(JSON.stringify({
+                    'apple_pay_domain': domain
+                })),
                 shippingType: "shipping",
                 requiredBillingContactFields: [
                     "postalAddress",
@@ -181,18 +195,12 @@ define([
             const bodyClass = $('body').attr('class');
             let workflowType;
 
-            switch (bodyClass) {
-                case bodyClass.includes('catalog-product-view'):
-                    workflowType = 'product';
-                    break;
-                case bodyClass.includes('checkout-cart-index'):
-                    workflowType = 'shopping-cart';
-                    break;
-                case bodyClass.includes('checkout-index-index'):
-                    workflowType = 'checkout';
-                    break;
-                default:
-                    workflowType = '';
+            if (bodyClass.includes('checkout-cart-index')) {
+                workflowType = 'shopping-cart';
+            } else if (bodyClass.includes('checkout-index-index')) {
+                workflowType = 'checkout';
+            } else {
+                workflowType = '';
             };
 
             return workflowType;
@@ -217,8 +225,6 @@ define([
 
                 let btoaevent = btoa(JSON.stringify(eventData));
                 const urlParameters = { btoaevent };
-                const workflowType = self._getApplePayWorkflowType();
-                workflowType && (urlParameters.workflow_type = workflowType);
 
                 $.ajax({
                     url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
@@ -255,6 +261,7 @@ define([
             const self = this;
 
             this.applePaySession.onpaymentauthorized = event => {
+
                 try {
                     $.ajax({
                         url: url.build(self.updateCartOrder) + '?form_key=' + $.cookie('form_key'),
@@ -264,10 +271,10 @@ define([
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
                             amount: self.amount,
-                            order_id: self.order_id
+                            order_id: self.order_id,
+                            workflowType: self._getApplePayWorkflowType()
                         }
                     }).done(function (response) {
-                        console.log(response);
                         let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
 
                         if (response.error === true) {
@@ -315,7 +322,7 @@ define([
                 if (typeof shippingEvent === 'undefined') {
                     return;
                 }
-                
+
                 const amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
                 self.amount = amount;
 

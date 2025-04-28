@@ -44,7 +44,6 @@ class CreateMockOrder implements HttpGetActionInterface
      */
     public function execute(): Json
     {
-        $this->logger->info("Creating mock order");
         /** @var Json $result */
         $result = $this->resultJsonFactory->create();
         $response = [
@@ -56,15 +55,12 @@ class CreateMockOrder implements HttpGetActionInterface
         if (!$formKeyValidation) {
             return $result->setData($response);
         }
-
         try {
             $sessionQuote = $this->checkoutSession->getQuote();
             if (!$sessionQuote || !$sessionQuote->getId()) {
                 throw new LocalizedException(__('No active quote found.'));
             }
-
             $quote = $this->createNewGuestQuoteFromSession($sessionQuote);
-
             $placeholderAddress = [
                 'givenName' => 'ApplePay',
                 'familyName' => 'Customer',
@@ -84,11 +80,21 @@ class CreateMockOrder implements HttpGetActionInterface
             $shippingAddress = $quote->getShippingAddress();
             $shippingAddress->setShippingMethod('flatrate_flatrate');
             $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
-
+            $quote->reserveOrderId();
             $quote->collectTotals();
             $this->cartRepository->save($quote);
 
-            $orderId = $this->cartManagement->placeOrder($quote->getId());
+            $orderId = null;
+            try {
+                $orderId = $this->cartManagement->placeOrder($quote->getId());
+            } catch (\Throwable $e) {
+                $this->logger->critical('placeOrder failed', [
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                $response['message'] = $e->getMessage();
+            }
+
             if (!$orderId) {
                 throw new LocalizedException(__('Order could not be created.'));
             }
@@ -100,14 +106,14 @@ class CreateMockOrder implements HttpGetActionInterface
             if (empty($merchantSession)) {
                 throw new \Exception('Could not retrieve merchant session');
             }
-            $this->logger->info("Creating mock order id {$orderId}");
 
             $response['error'] = false;
             $response['message'] = __('Order placed successfully.');
             $response['order_id'] = $orderId;
             $response['merchantSession'] = $merchantSession;
         } catch (\Exception $e) {
-            $this->logger->info($e->getMessage());
+
+            $this->logger->info(sprintf("%s %s", $e->getMessage(), $e->getTraceAsString()));
             $response['message'] = $e->getMessage();
         }
 
