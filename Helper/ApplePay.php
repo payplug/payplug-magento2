@@ -67,6 +67,7 @@ class ApplePay extends AbstractHelper
     private function getApplePayMethod(): string
     {
         if (!isset($this->applePayMethod)) {
+            $this->applePayMethod = '';
             $applePayMethod = ApplePayConfig::METHOD_CODE;
             if ($this->paymentHelper->getMethodInstance($applePayMethod)->isAvailable()) {
                 $this->applePayMethod = $applePayMethod;
