@@ -10,6 +10,7 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Message\AbstractMessage;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\CartInterface;
@@ -140,9 +141,25 @@ class CreateMockOrder implements HttpGetActionInterface
 
         foreach ($sessionQuote->getAllVisibleItems() as $item) {
             $product = $item->getProduct();
-            $requestQty = $item->getQty();
+            $buyRequest = $item->getBuyRequest();
 
-            $newQuote->addProduct($product, $requestQty);
+            if (!$buyRequest) {
+                $this->logger->critical('Missing buyRequest on item', ['sku' => $product->getSku()]);
+                continue;
+            }
+
+            $result = $newQuote->addProduct($product, $buyRequest);
+            if (is_string($result) || $result instanceof AbstractMessage) {
+                $this->logger->critical('Failed to add product to quote', [
+                    'product_id' => $product->getId(),
+                    'sku' => $product->getSku(),
+                    'message' => (string)$result
+                ]);
+            }
+        }
+
+        if (count($newQuote->getAllVisibleItems()) === 0) {
+            throw new LocalizedException(__('No items could be added to the quote.'));
         }
 
         return $newQuote;
