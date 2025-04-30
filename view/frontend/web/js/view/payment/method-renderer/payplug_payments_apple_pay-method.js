@@ -11,7 +11,8 @@ define([
 
     return Component.extend({
         defaults: {
-            template: 'Payplug_Payments/payment/payplug_payments_apple_pay'
+            template: 'Payplug_Payments/payment/payplug_payments_apple_pay',
+            applePayConfig: {}
         },
         redirectAfterPlaceOrder: false,
         isVisible: ko.observable(false),

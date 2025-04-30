@@ -86,11 +86,10 @@ define([
             const totalAmount = this._getTotalAmount();
             this.amount = totalAmount;
 
-            // @todo : dynamize values
-            const domain = '';
-            const locale = '';
-            const merchand_name = '';
-            const currencyCode = '';
+            const domain = this.applePayConfig.apple_pay_domain;
+            const locale = this.applePayConfig.locale;
+            const merchand_name = this.applePayConfig.merchand_name;
+            const currencyCode = this.applePayConfig.currency;
 
             return {
                 countryCode: locale,

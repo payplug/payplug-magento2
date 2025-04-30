@@ -3,13 +3,15 @@
 declare(strict_types=1);
 
 use Magento\Framework\Escaper;
+use Payplug\Payments\Block\ApplePay\Button;
 
 /**
  * @var Escaper $escaper
+ * @var Button $block
  */
 ?>
 
-<div class="product-action-apple-pay" 
+<div class="product-action-apple-pay"
      data-bind="scope: 'productButton'">
     <apple-pay-button
         buttonstyle="black"
@@ -28,7 +30,8 @@ use Magento\Framework\Escaper;
                 "components" : {
                     "productButton" : {
                         "component" : "Payplug_Payments/js/view/apple-pay/product-button",
-                        "workflowType": "product"
+                        "workflowType": "product",
+                        "applePayConfig": <?= $block->getConfigJson(); ?>
                     }
                 }
             }
