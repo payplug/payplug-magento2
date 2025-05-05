@@ -92,7 +92,7 @@ define([
             const currencyCode = this.applePayConfig.currency;
 
             return {
-                countryCode: locale,
+                countryCode: locale.slice(-2),
                 currencyCode: currencyCode,
                 merchantCapabilities: ['supports3DS'],
                 supportedNetworks: ['cartesBancaires', 'visa', 'masterCard'],
