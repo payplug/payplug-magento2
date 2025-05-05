@@ -9,6 +9,12 @@ define([
     return Component.extend({
         isVisible: ko.observable(false),
         workflowType: '',
+        allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
+        createMockOrder: 'payplug_payments/applePay/createMockOrder',
+        updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
+        createQuote: 'payplug_payments/applePay/CreateApplePayQuote',
+        cancelUrl: 'payplug_payments/payment/cancel',
+        returnUrl: 'payplug_payments/payment/paymentReturn',
 
         /**
          * Initializes the component.
@@ -32,16 +38,66 @@ define([
                 const versionNumber = this._getApplePayVersion();
                 const sessionRequest = this._getPaymentRequest();
                 this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+                this._afterPlaceOrder();
             }
         },
 
         /**
+         * Handles the Apple Pay session after the user clicks the "Buy with Apple Pay" button.
+         *
+         * @private
+         * @returns {void}
+         */
+        _afterPlaceOrder: function () {
+            this._bindMarchantValidation();
+            this._bindPaymentAuthorization();
+            this._bindShippingMethodSelected();
+            this._bindPaymentCancel();
+            this._bindShippingContactSelected();
+            this.applePaySession.begin();
+        },
+
+        /**
          * Handles button click event.
+         * Create a new quote from the product in the product page
+         * And then init Apple Pay Session
+         * The async is required as ApplePaySession MUST be created from a user gesture
          *
          * @returns {void}
          */
-        handleClick: function () {
-            this._initApplePaySession();
+        handleClick: async function () {
+            try {
+                const productId = $('#product_addtocart_form input[name=product]').val();
+                const qty = $('#qty').val() || 1;
+                const superAttribute = {};//TODO for the configurable
+
+                $('#product_addtocart_form select.super-attribute-select').each(function () {
+                    const attributeId = $(this).attr('name').match(/\d+/)[0];
+                    const optionId = $(this).val();
+                    if (optionId) {
+                        superAttribute[attributeId] = optionId;
+                    }
+                });
+
+                const response = await $.post(url.build(this.createQuote), {
+                    product_id: productId,
+                    qty: qty,
+                    super_attribute: superAttribute,
+                    form_key: $.cookie('form_key')
+                });
+
+                if (response.success) {
+                    const versionNumber = this._getApplePayVersion();
+                    const sessionRequest = this._getPaymentRequest();
+
+                    this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+                    this._afterPlaceOrder();
+                } else {
+                    alert(response.message || 'Could not create quote for Apple Pay');
+                }
+            } catch (err) {
+                alert('Error preparing Apple Pay quote');
+            }
         },
 
         /**
@@ -130,6 +186,193 @@ define([
             let grandTotal = 0;
 
             return grandTotal;
+        },
+
+        /**
+         * Calculates the total amount to be paid without shipping methods
+         *
+         * @private
+         * @returns {Number} The total amount to be paid without shipping methods.
+         */
+        _getTotalAmountNoShipping: function() {
+            let shippingAmount = quote.totals()['shipping_amount'];
+            let grandTotal = this._getTotalAmount();
+
+            return (parseFloat(grandTotal) - parseFloat(shippingAmount));
+        },
+
+        /**
+         * Handles the onvalidatemerchant event, which is triggered when the Apple Pay session requires
+         * validation of the merchant.
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindMarchantValidation: function() {
+            const self = this;
+
+            this.applePaySession.onvalidatemerchant = async event => {
+                const eventData = {
+                    isTrusted: event.isTrusted,
+                    validationURL: event.validationURL,
+                    type: event.type,
+                };
+
+                let btoaevent = btoa(JSON.stringify(eventData));
+                const urlParameters = { btoaevent };
+
+                $.ajax({
+                    url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
+                    data: urlParameters,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.error) {
+                            self._cancelPayplugPayment();
+                        } else {
+                            try {
+                                self.order_id = response.order_id;
+                                self.applePaySession.completeMerchantValidation(response.merchantSession);
+                            } catch (e) {
+                                self._cancelPayplugPayment();
+                            }
+                        }
+                    },
+                    error: function () {
+                        self._cancelPayplugPayment();
+                    }
+                });
+            };
+        },
+
+        /**
+         * Handles the onpaymentauthorized event, which is triggered after the user has authorized
+         * the payment with Apple Pay.
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindPaymentAuthorization: function() {
+            const self = this;
+
+            this.applePaySession.onpaymentauthorized = event => {
+                try {
+                    $.ajax({
+                        url: url.build(self.updateCartOrder) + '?form_key=' + $.cookie('form_key'),
+                        type: 'POST',
+                        data: {
+                            token: event.payment.token,
+                            billing: event.payment.billingContact,
+                            shipping: event.payment.shippingContact,
+                            amount: self.amount,
+                            order_id: self.order_id,
+                            workflowType: self.workflowType
+                        }
+                    }).done(function (response) {
+                        let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
+
+                        if (response.error === true) {
+                            applePaySessionStatus = ApplePaySession.STATUS_FAILURE;
+                        }
+                        self.applePaySession.completePayment({
+                            "status": applePaySessionStatus
+                        });
+                        if (response.error === true) {
+                            self._cancelPayplugPayment();
+                        } else {
+                            window.location.replace(url.build(self.returnUrl));
+                        }
+                    }).fail(function () {
+                        self._cancelPayplugPayment();
+                    });
+                } catch (e) {
+                    self._cancelPayplugPayment();
+                }
+            };
+        },
+
+        /**
+         * Binds the Apple Pay session's oncancel event to handle payment cancellation.
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindPaymentCancel: function() {
+            this.applePaySession.oncancel = () => {
+                this._cancelPayplugPayment();
+            };
+        },
+
+        /**
+         * Update the new total when the shipping method is updated.
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindShippingMethodSelected: function () {
+            const self = this;
+
+            this.applePaySession.onshippingmethodselected = shippingEvent => {
+                if (typeof shippingEvent === 'undefined') {
+                    return;
+                }
+
+                const amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
+                self.amount = amount;
+
+                const updated = {
+                    "newTotal": {
+                        "label": self.merchandName,
+                        "amount": amount,
+                        "type": "final"
+                    }
+                }
+
+                self.applePaySession.completeShippingMethodSelection(updated);
+            };
+        },
+
+        /**
+         * Update shipping methods list when a contact is selected
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindShippingContactSelected: function () {
+            const self = this;
+
+            this.applePaySession.onshippingcontactselected = async shippingContactEvent => {
+                $.ajax({
+                    url: url.build(self.allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
+                    data: shippingContactEvent.shippingContact,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.error) {
+                            self._cancelPayplugPayment();
+                        } else {
+                            try {
+                                const amount = parseFloat(self._getTotalAmountNoShipping());
+                                self.amount = amount;
+                                const updated = {
+                                    "newTotal": {
+                                        "label": self.merchandName,
+                                        "amount": amount,
+                                        "type": "final"
+                                    },
+                                    "newShippingMethods": response.methods,
+                                };
+                                self.applePaySession.completeShippingContactSelection(updated);
+                            } catch (e) {
+                                self._cancelPayplugPayment();
+                            }
+                        }
+                    },
+                    error: function () {
+                        self._cancelPayplugPayment();
+                    }
+                });
+            };
         },
 
         /**
