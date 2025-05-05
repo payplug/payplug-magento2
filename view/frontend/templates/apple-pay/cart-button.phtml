@@ -9,7 +9,7 @@ use Magento\Framework\Escaper;
  */
 ?>
 
-<div data-bind="scope: 'cart-button'">
+<div data-bind="scope: 'cartButton'">
     <apple-pay-button
         buttonstyle="black"
         type="pay"
@@ -25,8 +25,9 @@ use Magento\Framework\Escaper;
         "*": {
             "Magento_Ui/js/core/app" : {
                 "components" : {
-                    "cart-button" : {
-                        "component" : "Payplug_Payments/js/view/apple-pay/cart-button"
+                    "cartButton" : {
+                        "component" : "Payplug_Payments/js/view/apple-pay/cart-button",
+                        "workflowType": "shopping-cart"
                     }
                 }
             }

@@ -18,6 +18,7 @@ define([
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
         amount: null,
+        workflowType: '',
 
         /**
          * Initializes the component.
@@ -25,6 +26,7 @@ define([
          * @returns {void}
          */
         initialize: function () {
+            this._super();
             this.merchandName = window.checkoutConfig.payment.payplug_payments_apple_pay.merchand_name;
             this.applePayIsAvailable = this._getApplePayAvailability();
             this.isVisible(this.applePayIsAvailable);
@@ -180,33 +182,6 @@ define([
         },
 
         /**
-         * Determines the Apple Pay workflow type based on the current page body class.
-         *
-         * Apple Pay workflow types are as follows:
-         * - 'product': The user is currently on a product page.
-         * - 'shopping-cart': The user is currently on the shopping cart page.
-         * - 'checkout': The user is currently on the checkout page.
-         * - '': The user is on an unknown page.
-         *
-         * @private
-         * @returns {string} The Apple Pay workflow type.
-         */
-        _getApplePayWorkflowType: function() {
-            const bodyClass = $('body').attr('class');
-            let workflowType;
-
-            if (bodyClass.includes('checkout-cart-index')) {
-                workflowType = 'shopping-cart';
-            } else if (bodyClass.includes('checkout-index-index')) {
-                workflowType = 'checkout';
-            } else {
-                workflowType = '';
-            };
-
-            return workflowType;
-        },
-
-        /**
          * Handles the onvalidatemerchant event, which is triggered when the Apple Pay session requires
          * validation of the merchant.
          *
@@ -261,7 +236,6 @@ define([
             const self = this;
 
             this.applePaySession.onpaymentauthorized = event => {
-
                 try {
                     $.ajax({
                         url: url.build(self.updateCartOrder) + '?form_key=' + $.cookie('form_key'),
@@ -272,7 +246,7 @@ define([
                             shipping: event.payment.shippingContact,
                             amount: self.amount,
                             order_id: self.order_id,
-                            workflowType: self._getApplePayWorkflowType()
+                            workflowType: self.workflowType
                         }
                     }).done(function (response) {
                         let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;

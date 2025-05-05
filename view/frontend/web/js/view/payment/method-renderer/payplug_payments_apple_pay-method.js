@@ -11,9 +11,9 @@ define([
 
     return Component.extend({
         defaults: {
-            template: 'Payplug_Payments/payment/payplug_payments_apple_pay'
+            template: 'Payplug_Payments/payment/payplug_payments_apple_pay',
+            applePayConfig: {}
         },
-
         redirectAfterPlaceOrder: false,
         isVisible: ko.observable(false),
         cancelUrl: 'payplug_payments/payment/cancel',
@@ -189,7 +189,10 @@ define([
                     $.ajax({
                         url: url.build(self.updateTransactionDataUrl),
                         type: "POST",
-                        data: {token: event.payment.token}
+                        data: {
+                            token: event.payment.token,
+                            workflowType: 'checkout'
+                        }
                     }).done(function (response) {
                         let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
                         if (response.error === true) {
