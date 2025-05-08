@@ -54,8 +54,8 @@ class HidePaymentMethodForRestrictedCountries implements ObserverInterface
             );
         }
 
-        $selectedCountryId = $quote->getBillingAddress()->getCountryId()
-            ?: $quote->getShippingAddress()->getCountryId();
+        $selectedCountryId = $quote->getShippingAddress()->getCountryId()
+            ?: $quote->getBillingAddress()->getCountryId();
 
         if (!is_array($restrictedCountryIds) || !in_array($selectedCountryId, $restrictedCountryIds)) {
             $checkResult->setData('is_available', false);
