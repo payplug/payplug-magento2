@@ -18,24 +18,24 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Store\Model\StoreManagerInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetQuoteApplePayAvailableMethods;
 
 class CreateMockOrder implements HttpGetActionInterface
 {
     public function __construct(
-        private JsonFactory $resultJsonFactory,
-        private CheckoutSession $checkoutSession,
-        private CartRepositoryInterface $cartRepository,
-        private CartManagementInterface $cartManagement,
-        private Logger $logger,
-        private OrderRepositoryInterface $orderRepository,
-        private QuoteFactory $quoteFactory,
-        private StoreManagerInterface $storeManager,
-        private Validator $formKeyValidator,
-        private RequestInterface $request,
+        private readonly JsonFactory $resultJsonFactory,
+        private readonly CheckoutSession $checkoutSession,
+        private readonly CartRepositoryInterface $cartRepository,
+        private readonly CartManagementInterface $cartManagement,
+        private readonly Logger $logger,
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly QuoteFactory $quoteFactory,
+        private readonly Validator $formKeyValidator,
+        private readonly RequestInterface $request,
+        private readonly GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods
     ) {
     }
 
@@ -45,7 +45,6 @@ class CreateMockOrder implements HttpGetActionInterface
      */
     public function execute(): Json
     {
-        /** @var Json $result */
         $result = $this->resultJsonFactory->create();
         $response = [
             'error' => true,
@@ -79,10 +78,20 @@ class CreateMockOrder implements HttpGetActionInterface
             $payment->setMethod(ApplePay::METHOD_CODE);
 
             $shippingAddress = $quote->getShippingAddress();
-            $shippingAddress->setShippingMethod('flatrate_flatrate');
             $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
             $quote->reserveOrderId();
             $quote->collectTotals();
+            $this->cartRepository->save($quote);
+
+            $availableShippingMethods = $this->getCurrentQuoteAvailableMethods->execute((int)$quote->getId());
+
+            if (count($availableShippingMethods) == 0) {
+                throw new LocalizedException(__('No available shipping methods.'));
+            }
+
+            $firstAvailableShippingMethod = $availableShippingMethods[0]['identifier'];
+
+            $shippingAddress->setShippingMethod($firstAvailableShippingMethod);
             $this->cartRepository->save($quote);
 
             $orderId = null;

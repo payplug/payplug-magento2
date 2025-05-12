@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
+use Exception;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObject;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\QuoteFactory;
-use Magento\Quote\Model\QuoteManagement;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
@@ -20,17 +22,17 @@ use Payplug\Payments\Logger\Logger;
 class CreateApplePayQuote implements HttpPostActionInterface
 {
     public function __construct(
-        private JsonFactory $resultJsonFactory,
-        private QuoteFactory $quoteFactory,
-        private CheckoutSession $checkoutSession,
-        private ProductRepositoryInterface $productRepository,
-        private Validator $formKeyValidator,
-        private RequestInterface $request,
-        private Logger $logger
+        private readonly JsonFactory $resultJsonFactory,
+        private readonly QuoteFactory $quoteFactory,
+        private readonly CheckoutSession $checkoutSession,
+        private readonly ProductRepositoryInterface $productRepository,
+        private readonly Validator $formKeyValidator,
+        private readonly RequestInterface $request,
+        private readonly CartRepositoryInterface $cartRepository,
+        private readonly Logger $logger
     ) {
     }
 
-    //TODO WIP it does not create the quote yet
     public function execute(): Json
     {
         $result = $this->resultJsonFactory->create();
@@ -49,7 +51,7 @@ class CreateApplePayQuote implements HttpPostActionInterface
             $quote = $this->quoteFactory->create();
             $quote->setStoreId($product->getStoreId())
                 ->setIsActive(true)
-                ->setCheckoutMethod(QuoteManagement::METHOD_GUEST)
+                ->setCheckoutMethod(CartManagementInterface::METHOD_GUEST)
                 ->setCustomerIsGuest(true)
                 ->setCustomerEmail('applepay@guest.com');
 
@@ -60,14 +62,33 @@ class CreateApplePayQuote implements HttpPostActionInterface
                 throw new LocalizedException(__($resultAdd));
             }
 
+            $fakeGuestAddress = [
+                'firstname' => 'Guest',
+                'lastname' => 'User',
+                'street' => '123 Test Street',
+                'city' => 'Paris',
+                'postcode' => '75000',
+                'telephone' => '0000000000',
+                'country_id' => 'FR',
+                'region' => 'Ile-de-France',
+            ];
+
+            $quote->getBillingAddress()->addData($fakeGuestAddress);
+            $shippingAddress = $quote->getShippingAddress()->addData($fakeGuestAddress);
+
+            $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
+
             $quote->collectTotals();
+            $this->cartRepository->save($quote);
+
             $this->checkoutSession->replaceQuote($quote);
 
             return $result->setData([
                 'success' => true,
                 'message' => 'Quote created',
+                'base_amount' => $quote->getGrandTotal()
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $result->setData([
                 'error' => true,
                 'message' => $e->getMessage(),

@@ -15,7 +15,9 @@ define([
         createQuote: 'payplug_payments/applePay/CreateApplePayQuote',
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
-
+        base_amount: 0,
+        shipping_amount: 0,
+        shipping_method: null,
         /**
          * Initializes the component.
          *
@@ -87,6 +89,7 @@ define([
                 });
 
                 if (response.success) {
+                    this.base_amount = response.base_amount;
                     const versionNumber = this._getApplePayVersion();
                     const sessionRequest = this._getPaymentRequest();
 
@@ -139,9 +142,6 @@ define([
          * @returns {Object} The Apple Pay payment request data.
          */
         _getPaymentRequest: function() {
-            const totalAmount = this._getTotalAmount();
-            this.amount = totalAmount;
-
             const domain = this.applePayConfig.apple_pay_domain;
             const locale = this.applePayConfig.locale;
             const merchand_name = this.applePayConfig.merchand_name;
@@ -156,7 +156,7 @@ define([
                 total: {
                     label: merchand_name,
                     type: 'final',
-                    amount: totalAmount
+                    amount: this.base_amount
                 },
                 applicationData: btoa(JSON.stringify({
                     'apple_pay_domain': domain
@@ -182,23 +182,7 @@ define([
          * @returns {Number} The total amount to be paid.
          */
         _getTotalAmount: function() {
-            // @todo product amount
-            let grandTotal = 0;
-
-            return grandTotal;
-        },
-
-        /**
-         * Calculates the total amount to be paid without shipping methods
-         *
-         * @private
-         * @returns {Number} The total amount to be paid without shipping methods.
-         */
-        _getTotalAmountNoShipping: function() {
-            let shippingAmount = quote.totals()['shipping_amount'];
-            let grandTotal = this._getTotalAmount();
-
-            return (parseFloat(grandTotal) - parseFloat(shippingAmount));
+            return parseFloat(this.base_amount) + parseFloat(this.shipping_amount);
         },
 
         /**
@@ -219,7 +203,7 @@ define([
                 };
 
                 let btoaevent = btoa(JSON.stringify(eventData));
-                const urlParameters = { btoaevent };
+                const urlParameters = { btoaevent};
 
                 $.ajax({
                     url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
@@ -264,11 +248,12 @@ define([
                             token: event.payment.token,
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
-                            amount: self.amount,
+                            amount: self._getTotalAmount(),
                             order_id: self.order_id,
                             workflowType: self.workflowType
                         }
                     }).done(function (response) {
+                        console.log(response);
                         let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
 
                         if (response.error === true) {
@@ -317,13 +302,13 @@ define([
                     return;
                 }
 
-                const amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
-                self.amount = amount;
+                self.shipping_method = shippingEvent.shippingMethod.identifier;
+                self.shipping_amount = shippingEvent.shippingMethod.amount;
 
                 const updated = {
                     "newTotal": {
-                        "label": self.merchandName,
-                        "amount": amount,
+                        "label": self.applePayConfig.merchand_name,
+                        "amount": self._getTotalAmount(),
                         "type": "final"
                     }
                 }
@@ -352,12 +337,10 @@ define([
                             self._cancelPayplugPayment();
                         } else {
                             try {
-                                const amount = parseFloat(self._getTotalAmountNoShipping());
-                                self.amount = amount;
                                 const updated = {
                                     "newTotal": {
-                                        "label": self.merchandName,
-                                        "amount": amount,
+                                        "label": self.applePayConfig.merchand_name,
+                                        "amount": self._getTotalAmount(),
                                         "type": "final"
                                     },
                                     "newShippingMethods": response.methods,
@@ -382,7 +365,7 @@ define([
          * @returns {void}
          */
         _cancelPayplugPayment: function () {
-            window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
+            // window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key') + '&redirectToReferer=1');
         }
     });
 });
