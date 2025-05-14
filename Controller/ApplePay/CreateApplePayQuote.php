@@ -10,29 +10,31 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObject;
-use Magento\Quote\Api\CartManagementInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Model\QuoteFactory;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Quote\Model\ResourceModel\Quote as QuoteResourceModel;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\LocalizedException;
-use Payplug\Payments\Logger\Logger;
 
 class CreateApplePayQuote implements HttpPostActionInterface
 {
     public function __construct(
         private readonly JsonFactory $resultJsonFactory,
-        private readonly QuoteFactory $quoteFactory,
         private readonly CheckoutSession $checkoutSession,
         private readonly ProductRepositoryInterface $productRepository,
+        private readonly QuoteResourceModel $quoteResourceModel,
         private readonly Validator $formKeyValidator,
-        private readonly RequestInterface $request,
-        private readonly CartRepositoryInterface $cartRepository,
-        private readonly Logger $logger
+        private readonly RequestInterface $request
     ) {
     }
 
+    /**
+     * @throws NoSuchEntityException
+     * @throws AlreadyExistsException
+     * @throws LocalizedException
+     */
     public function execute(): Json
     {
         $result = $this->resultJsonFactory->create();
@@ -45,16 +47,20 @@ class CreateApplePayQuote implements HttpPostActionInterface
         $productId = (int)($params['product_id'] ?? 0);
         $qty = (float)($params['qty'] ?? 1);
 
+        // TODO bundle product parameters
+        // TODO grouped product parameters
+        // TODO configurable parameters ?
+        // TODO Custom options ?
+
         try {
+            $quote = $this->checkoutSession->getQuote();
+            $quote->removeAllItems();
+
+            if ($quote->isVirtual() === false) {
+                $quote->getShippingAddress()->setShippingMethod('');
+            }
+
             $product = $this->productRepository->getById($productId);
-
-            $quote = $this->quoteFactory->create();
-            $quote->setStoreId($product->getStoreId())
-                ->setIsActive(true)
-                ->setCheckoutMethod(CartManagementInterface::METHOD_GUEST)
-                ->setCustomerIsGuest(true)
-                ->setCustomerEmail('applepay@guest.com');
-
             $buyRequest = new DataObject(['qty' => $qty]);
             $resultAdd = $quote->addProduct($product, $buyRequest);
 
@@ -62,31 +68,14 @@ class CreateApplePayQuote implements HttpPostActionInterface
                 throw new LocalizedException(__($resultAdd));
             }
 
-            $fakeGuestAddress = [
-                'firstname' => 'Guest',
-                'lastname' => 'User',
-                'street' => '123 Test Street',
-                'city' => 'Paris',
-                'postcode' => '75000',
-                'telephone' => '0000000000',
-                'country_id' => 'FR',
-                'region' => 'Ile-de-France',
-            ];
-
-            $quote->getBillingAddress()->addData($fakeGuestAddress);
-            $shippingAddress = $quote->getShippingAddress()->addData($fakeGuestAddress);
-
-            $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
-
             $quote->collectTotals();
-            $this->cartRepository->save($quote);
 
-            $this->checkoutSession->replaceQuote($quote);
+            $this->quoteResourceModel->save($quote);
 
             return $result->setData([
                 'success' => true,
                 'message' => 'Quote created',
-                'base_amount' => $quote->getGrandTotal()
+                'base_amount' => (float)$quote->getGrandTotal()
             ]);
         } catch (Exception $e) {
             return $result->setData([

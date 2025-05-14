@@ -60,43 +60,44 @@ class CreateMockOrder implements HttpGetActionInterface
             if (!$sessionQuote || !$sessionQuote->getId()) {
                 throw new LocalizedException(__('No active quote found.'));
             }
-            $quote = $this->createNewGuestQuoteFromSession($sessionQuote);
+
+            $newQuote = $this->createNewGuestQuoteFromSession($sessionQuote);
+
             $placeholderAddress = [
                 'givenName' => 'ApplePay',
                 'familyName' => 'Customer',
                 'locality' => 'Placeholder City',
                 'postalCode' => '00000',
                 'administrativeArea' => 'Placeholder Region',
-                'countryCode' => 'US',
+                'countryCode' => 'FR',
             ];
 
-            $this->updateQuoteBillingAddress($quote, $placeholderAddress);
-            $this->updateQuoteShippingAddress($quote, $placeholderAddress);
+            $this->updateQuoteBillingAddress($newQuote, $placeholderAddress);
 
-            $quote->setPaymentMethod(ApplePay::METHOD_CODE);
-            $payment = $quote->getPayment();
-            $payment->setMethod(ApplePay::METHOD_CODE);
+            if ($newQuote->isVirtual() === false) {
+                $this->updateQuoteShippingAddress($newQuote, $placeholderAddress);
+                $newQuote->getShippingAddress()->setCollectShippingRates(true)->collectShippingRates();
+                $this->cartRepository->save($newQuote);
 
-            $shippingAddress = $quote->getShippingAddress();
-            $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
-            $quote->reserveOrderId();
-            $quote->collectTotals();
-            $this->cartRepository->save($quote);
-
-            $availableShippingMethods = $this->getCurrentQuoteAvailableMethods->execute((int)$quote->getId());
-
-            if (count($availableShippingMethods) == 0) {
-                throw new LocalizedException(__('No available shipping methods.'));
+                $availableShippingMethods = $this->getCurrentQuoteAvailableMethods->execute((int)$newQuote->getId());
+                $firstAvailableShippingMethod = $availableShippingMethods[0]['identifier'] ?? '';
+                $newQuote->getShippingAddress()->setShippingMethod($firstAvailableShippingMethod);
             }
 
-            $firstAvailableShippingMethod = $availableShippingMethods[0]['identifier'];
+            $newQuote->setPaymentMethod(ApplePay::METHOD_CODE);
+            $payment = $newQuote->getPayment();
+            $payment->setMethod(ApplePay::METHOD_CODE);
 
-            $shippingAddress->setShippingMethod($firstAvailableShippingMethod);
-            $this->cartRepository->save($quote);
+            $newQuote->reserveOrderId();
+            $newQuote->collectTotals();
+            $this->cartRepository->save($newQuote);
 
             $orderId = null;
             try {
-                $orderId = $this->cartManagement->placeOrder($quote->getId());
+                $orderId = $this->cartManagement->placeOrder($newQuote->getId());
+                $newQuote->setIsActive(false);
+                $this->cartRepository->save($newQuote);
+                // TODO fix active status of session quote beeing override by newQuote (active status is the same)
             } catch (\Throwable $e) {
                 $this->logger->critical('placeOrder failed', [
                     'message' => $e->getMessage(),
@@ -134,10 +135,10 @@ class CreateMockOrder implements HttpGetActionInterface
      * Creates a new quote as a guest from the items in the session quote.
      * This ensures that we do not reuse any existing address IDs from the previous quote
      * which can lead to "invalid address id" errors for guest checkouts.
+     * @throws LocalizedException
      */
     private function createNewGuestQuoteFromSession(Quote $sessionQuote): Quote
     {
-        /** @var Quote $newQuote */
         $newQuote = $this->quoteFactory->create();
 
         $storeId = $sessionQuote->getStoreId();
@@ -185,8 +186,8 @@ class CreateMockOrder implements HttpGetActionInterface
             ->setPostcode($appleBilling['postalCode'] ?? '')
             ->setRegion($appleBilling['administrativeArea'] ?? '')
             ->setCountryId($appleBilling['countryCode'] ?? 'US')
-            ->setRegion('Alabama')
-            ->setRegionId(1)
+            ->setRegion(null)
+            ->setRegionId(null)
             ->setTelephone('0000000000')
             ->setShouldIgnoreValidation(true);
 
@@ -211,8 +212,8 @@ class CreateMockOrder implements HttpGetActionInterface
             ->setPostcode($appleShipping['postalCode'] ?? '')
             ->setRegion($appleShipping['administrativeArea'] ?? '')
             ->setCountryId($appleShipping['countryCode'] ?? 'US')
-            ->setRegion('Alabama')
-            ->setRegionId(1)
+            ->setRegion(null)
+            ->setRegionId(null)
             ->setTelephone('0000000000')
             ->setShouldIgnoreValidation(true);
 

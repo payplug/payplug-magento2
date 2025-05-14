@@ -365,7 +365,7 @@ define([
          * @returns {void}
          */
         _cancelPayplugPayment: function () {
-            // window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key') + '&redirectToReferer=1');
+            window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key') + '&redirectToReferer=1&fromPdpApplePay=1');
         }
     });
 });
