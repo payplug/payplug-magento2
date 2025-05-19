@@ -139,11 +139,13 @@ class CreateMockOrder implements HttpGetActionInterface
      */
     private function createNewGuestQuoteFromSession(Quote $sessionQuote): Quote
     {
-        $newQuote = $this->quoteFactory->create();
-
         $storeId = $sessionQuote->getStoreId();
-        $newQuote->setStoreId($storeId);
 
+        /**
+         * Rebuild temporary quote to avoid interference with existing quote
+         */
+        $newQuote = $this->quoteFactory->create();
+        $newQuote->setStoreId($storeId);
         $newQuote->setIsActive(true);
         $newQuote->setCheckoutMethod(QuoteManagement::METHOD_GUEST);
         $newQuote->setCustomerIsGuest(true);
