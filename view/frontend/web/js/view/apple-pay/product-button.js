@@ -253,18 +253,13 @@ define([
                             workflowType: self.workflowType
                         }
                     }).done(function (response) {
-                        console.log(response);
-                        let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
-
-                        if (response.error === true) {
-                            applePaySessionStatus = ApplePaySession.STATUS_FAILURE;
-                        }
-                        self.applePaySession.completePayment({
-                            "status": applePaySessionStatus
-                        });
                         if (response.error === true) {
                             self._cancelPayplugPayment();
                         } else {
+                            self.applePaySession.completePayment({
+                                "status": ApplePaySession.STATUS_SUCCESS
+                            });
+
                             window.location.replace(url.build(self.returnUrl));
                         }
                     }).fail(function () {
@@ -365,7 +360,11 @@ define([
          * @returns {void}
          */
         _cancelPayplugPayment: function () {
-            window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key') + '&redirectToReferer=1&fromPdpApplePay=1');
+            $.ajax(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
+
+            this.applePaySession.completePayment({
+                "status": ApplePaySession.STATUS_FAILURE
+            });
         }
     });
 });
