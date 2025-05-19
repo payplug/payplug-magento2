@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
+use Magento\Framework\Api\DataObjectHelper;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\Quote\Address\ToOrder;
 use Magento\Sales\Api\Data\OrderAddressInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderAddressRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
+use Magento\SalesGraphQl\Model\Order\OrderAddress;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Exception\PayplugException;
@@ -21,14 +27,17 @@ use Magento\Framework\Locale\Resolver as LocaleResolver;
 class UpdateCartOrder implements HttpPostActionInterface
 {
     public function __construct(
-        private RequestInterface $request,
-        private JsonFactory $resultJsonFactory,
-        private Logger $logger,
-        private Data $payplugHelper,
-        private OrderRepositoryInterface $orderRepository,
-        private OrderAddressRepositoryInterface $orderAddressRepository,
-        private LocaleResolver $localeResolver,
-        private Validator $formKeyValidator
+        private readonly RequestInterface $request,
+        private readonly JsonFactory $resultJsonFactory,
+        private readonly Logger $logger,
+        private readonly Data $payplugHelper,
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly OrderAddressRepositoryInterface $orderAddressRepository,
+        private readonly LocaleResolver $localeResolver,
+        private readonly Validator $formKeyValidator,
+        private readonly CartRepositoryInterface $cartRepository,
+        private readonly DataObjectHelper $dataObjectHelper,
+        private readonly ToOrder $quoteAddressToOrder
     ) {
     }
 
@@ -38,7 +47,7 @@ class UpdateCartOrder implements HttpPostActionInterface
     public function execute(): Json
     {
         $this->logger->info('UpdateCartOrder');
-        /** @var Json $response */
+
         $response = $this->resultJsonFactory->create();
         $response->setData([
             'error' => true,
@@ -54,7 +63,7 @@ class UpdateCartOrder implements HttpPostActionInterface
             $params = $this->request->getParams();
             $orderId = $params['order_id'] ?? null;
             $token = $params['token'] ?? null;
-            $shippingMethod = $params['shipping_method'] ?? null;
+            $selectedShippingMethod = $params['shipping_method'] ?? null;
             $workflowType = $params['workflowType'] ?? null;
 
             if (!$orderId || !$token) {
@@ -71,10 +80,16 @@ class UpdateCartOrder implements HttpPostActionInterface
 
             $this->updateOrderAddresses($order, $applePayBilling, $applePayShipping);
 
-            // TODO order shipping udpate with $shippingMethod
+            if ($selectedShippingMethod) {
+                $this->updateOrderShippingMethod($order, $selectedShippingMethod);
+            }
 
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
-            $paymentObject = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
+            /** @var Order $order */
+            $paymentObject = $payplugPayment->retrieve(
+                $payplugPayment->getScopeId($order),
+                $payplugPayment->getScope($order)
+            );
             $metadatas = $paymentObject->metadata;
             $metadatas['ApplepayWorkflowType'] = $workflowType;
 
@@ -214,5 +229,33 @@ class UpdateCartOrder implements HttpPostActionInterface
         if (isset($applePayData['emailAddress']) && method_exists($address, 'setEmail')) {
             $address->setEmail($applePayData['emailAddress']);
         }
+    }
+
+    private function updateOrderShippingMethod(OrderInterface $order, string $selectedShippingMethod): void
+    {
+        $quoteId = $order->getQuoteId();
+
+        try {
+            $quote = $this->cartRepository->get($quoteId);
+        } catch (NoSuchEntityException) {
+            $this->logger->error('Could not retrieve quote for order');
+            return;
+        }
+
+        $quote->getShippingAddress()->setShippingMethod($selectedShippingMethod);
+        $quote->getShippingAddress()->setCollectShippingRates(true)->collectShippingRates();
+        $quote->setTotalsCollectedFlag(false);
+        $quote->collectTotals();
+
+        $this->cartRepository->save($quote);
+
+        $this->dataObjectHelper->mergeDataObjects(
+            OrderInterface::class,
+            $order,
+            $this->quoteAddressToOrder->convert($quote->getShippingAddress())
+        );
+
+        $order->setShippingMethod($selectedShippingMethod);
+        $this->orderRepository->save($order);
     }
 }
