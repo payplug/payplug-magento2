@@ -18,7 +18,6 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderAddressRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
-use Magento\SalesGraphQl\Model\Order\OrderAddress;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Exception\PayplugException;
@@ -78,11 +77,11 @@ class UpdateCartOrder implements HttpPostActionInterface
                 throw new \Exception('Could not retrieve valid order.');
             }
 
-            $this->updateOrderAddresses($order, $applePayBilling, $applePayShipping);
-
             if ($selectedShippingMethod) {
                 $this->updateOrderShippingMethod($order, $selectedShippingMethod);
             }
+
+            $this->updateOrderAddresses($order, $applePayBilling, $applePayShipping);
 
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
             /** @var Order $order */
@@ -182,10 +181,6 @@ class UpdateCartOrder implements HttpPostActionInterface
         $firstname = $applePayBilling['givenName'] ?? 'ApplePay';
         $lastname = $applePayBilling['familyName'] ?? 'Customer';
 
-        $order->setCustomerEmail($email);
-        $order->setCustomerFirstname($firstname);
-        $order->setCustomerLastname($lastname);
-
         $shippingAddress = $order->getShippingAddress();
         if ($shippingAddress) {
             $this->fillAddressData($shippingAddress, $applePayShipping);
@@ -200,6 +195,9 @@ class UpdateCartOrder implements HttpPostActionInterface
             $this->orderAddressRepository->save($billingAddress);
         }
 
+        $order->setCustomerEmail($email);
+        $order->setCustomerFirstname($firstname);
+        $order->setCustomerLastname($lastname);
         $this->orderRepository->save($order);
     }
 
