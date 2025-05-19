@@ -160,7 +160,7 @@
                 <sort_order>0</sort_order>
                 <default_country>FR</default_country>
                 <model>PayplugPaymentApplePayFacade</model>
-                <payment_action>authorize_capture</payment_action>
+                <payment_action>order</payment_action>
                 <is_gateway>1</is_gateway>
                 <order_status>pending</order_status>
                 <can_order>1</can_order>
