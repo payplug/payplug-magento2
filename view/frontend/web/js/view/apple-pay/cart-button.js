@@ -2,9 +2,9 @@ define([
     'jquery',
     'ko',
     'uiComponent',
-    'Magento_Checkout/js/model/quote',
     'mage/url',
-], function ($, ko, Component, quote, url) {
+    'Magento_Checkout/js/model/quote'
+], function ($, ko, Component, url, quote) {
     'use strict';
 
     return Component.extend({
@@ -18,6 +18,9 @@ define([
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
         amount: null,
+        base_amount: 0,
+        shipping_amount: 0,
+        shipping_method: null,
         workflowType: '',
 
         /**
@@ -68,6 +71,7 @@ define([
          * @returns {void}
          */
         handleClick: function () {
+            this.base_amount = this._getBaseAmount();
             this._initApplePaySession();
         },
 
@@ -110,9 +114,6 @@ define([
          * @returns {Object} The Apple Pay payment request data.
          */
         _getPaymentRequest: function() {
-            const totalAmount = this._getTotalAmount();
-            this.amount = totalAmount;
-
             const {
                 domain,
                 locale,
@@ -128,7 +129,7 @@ define([
                 total: {
                     label: merchand_name,
                     type: 'final',
-                    amount: totalAmount
+                    amount: this.base_amount
                 },
                 applicationData: btoa(JSON.stringify({
                     'apple_pay_domain': domain
@@ -148,12 +149,12 @@ define([
         },
 
         /**
-         * Calculates the total amount to be paid.
+         * Calculates the base amount without shipping cost
          *
          * @private
-         * @returns {Number} The total amount to be paid.
+         * @returns {Number} The base amount without shipping cost
          */
-        _getTotalAmount: function() {
+        _getBaseAmount: function () {
             let grandTotal = quote.totals()['grand_total'] + quote.totals()['tax_amount'];
             const totalSegments = quote.totals()['total_segments'];
 
@@ -165,20 +166,19 @@ define([
                 }
             }
 
-            return grandTotal;
+            let shippingAmount = quote.totals()['shipping_amount'];
+
+            return (parseFloat(grandTotal) - parseFloat(shippingAmount));
         },
 
         /**
-         * Calculates the total amount to be paid without shipping methods
+         * Calculates the total amount to be paid.
          *
          * @private
-         * @returns {Number} The total amount to be paid without shipping methods.
+         * @returns {Number} The total amount to be paid.
          */
-        _getTotalAmountNoShipping: function() {
-            let shippingAmount = quote.totals()['shipping_amount'];
-            let grandTotal = this._getTotalAmount();
-
-            return (parseFloat(grandTotal) - parseFloat(shippingAmount));
+        _getTotalAmount: function() {
+            return parseFloat(this.base_amount) + parseFloat(this.shipping_amount);
         },
 
         /**
@@ -244,22 +244,18 @@ define([
                             token: event.payment.token,
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
-                            amount: self.amount,
+                            shipping_method: self.shipping_method,
                             order_id: self.order_id,
                             workflowType: self.workflowType
                         }
                     }).done(function (response) {
-                        let applePaySessionStatus = ApplePaySession.STATUS_SUCCESS;
-
-                        if (response.error === true) {
-                            applePaySessionStatus = ApplePaySession.STATUS_FAILURE;
-                        }
-                        self.applePaySession.completePayment({
-                            "status": applePaySessionStatus
-                        });
                         if (response.error === true) {
                             self._cancelPayplugPayment();
                         } else {
+                            self.applePaySession.completePayment({
+                                "status": ApplePaySession.STATUS_SUCCESS
+                            });
+
                             window.location.replace(url.build(self.returnUrl));
                         }
                     }).fail(function () {
@@ -297,13 +293,13 @@ define([
                     return;
                 }
 
-                const amount = parseFloat(self._getTotalAmountNoShipping()) + parseFloat(shippingEvent.shippingMethod.amount);
-                self.amount = amount;
+                self.shipping_method = shippingEvent.shippingMethod.identifier;
+                self.shipping_amount = shippingEvent.shippingMethod.amount;
 
                 const updated = {
                     "newTotal": {
                         "label": self.merchandName,
-                        "amount": amount,
+                        "amount": self._getTotalAmount(),
                         "type": "final"
                     }
                 }
@@ -332,12 +328,10 @@ define([
                             self._cancelPayplugPayment();
                         } else {
                             try {
-                                const amount = parseFloat(self._getTotalAmountNoShipping());
-                                self.amount = amount;
                                 const updated = {
                                     "newTotal": {
                                         "label": self.merchandName,
-                                        "amount": amount,
+                                        "amount": self._getTotalAmount(),
                                         "type": "final"
                                     },
                                     "newShippingMethods": response.methods,
@@ -356,13 +350,17 @@ define([
         },
 
         /**
-         * Redirects the user to the payment cancellation URL.
+         * Call payment cancellation URL, then close ApplePaySession
          *
          * @private
          * @returns {void}
          */
         _cancelPayplugPayment: function () {
-            window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
+            $.ajax(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
+
+            this.applePaySession.completePayment({
+                "status": ApplePaySession.STATUS_FAILURE
+            });
         }
     });
 });

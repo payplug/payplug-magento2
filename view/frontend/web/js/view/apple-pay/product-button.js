@@ -7,17 +7,22 @@ define([
     'use strict';
 
     return Component.extend({
+        applePayIsAvailable: false,
         isVisible: ko.observable(false),
-        workflowType: '',
+        applePaySession: null,
+        order_id: null,
         allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
         createMockOrder: 'payplug_payments/applePay/createMockOrder',
         updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
         createQuote: 'payplug_payments/applePay/CreateApplePayQuote',
         cancelUrl: 'payplug_payments/payment/cancel',
         returnUrl: 'payplug_payments/payment/paymentReturn',
+        amount: null,
         base_amount: 0,
         shipping_amount: 0,
         shipping_method: null,
+        workflowType: '',
+
         /**
          * Initializes the component.
          *
@@ -25,6 +30,7 @@ define([
          */
         initialize: function () {
             this._super();
+            this.merchandName = this.applePayConfig.merchand_name;
             this.applePayIsAvailable = this._getApplePayAvailability();
             this.isVisible(this.applePayIsAvailable);
         },
@@ -89,12 +95,8 @@ define([
                 });
 
                 if (response.success) {
-                    this.base_amount = response.base_amount;
-                    const versionNumber = this._getApplePayVersion();
-                    const sessionRequest = this._getPaymentRequest();
-
-                    this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
-                    this._afterPlaceOrder();
+                    this.base_amount = parseFloat(response.base_amount);
+                    this._initApplePaySession();
                 } else {
                     alert(response.message || 'Could not create quote for Apple Pay');
                 }
@@ -203,7 +205,7 @@ define([
                 };
 
                 let btoaevent = btoa(JSON.stringify(eventData));
-                const urlParameters = { btoaevent};
+                const urlParameters = { btoaevent };
 
                 $.ajax({
                     url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
@@ -302,7 +304,7 @@ define([
 
                 const updated = {
                     "newTotal": {
-                        "label": self.applePayConfig.merchand_name,
+                        "label": self.merchandName,
                         "amount": self._getTotalAmount(),
                         "type": "final"
                     }
@@ -334,7 +336,7 @@ define([
                             try {
                                 const updated = {
                                     "newTotal": {
-                                        "label": self.applePayConfig.merchand_name,
+                                        "label": self.merchandName,
                                         "amount": self._getTotalAmount(),
                                         "type": "final"
                                     },
@@ -354,7 +356,7 @@ define([
         },
 
         /**
-         * Redirects the user to the payment cancellation URL.
+         * Call payment cancellation URL, then close ApplePaySession
          *
          * @private
          * @returns {void}
