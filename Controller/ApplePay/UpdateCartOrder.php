@@ -54,11 +54,11 @@ class UpdateCartOrder implements HttpPostActionInterface
             $params = $this->request->getParams();
             $orderId = $params['order_id'] ?? null;
             $token = $params['token'] ?? null;
-            $amount  = $params['amount'] ?? null;
+            $shippingMethod = $params['shipping_method'] ?? null;
             $workflowType = $params['workflowType'] ?? null;
 
-            if (!$orderId || !$token || !$amount) {
-                throw new \Exception('Missing order_id or token or amount parameter.');
+            if (!$orderId || !$token) {
+                throw new \Exception('Missing order_id or token parameter.');
             }
 
             $applePayBilling = $params['billing'] ?? [];
@@ -71,6 +71,8 @@ class UpdateCartOrder implements HttpPostActionInterface
 
             $this->updateOrderAddresses($order, $applePayBilling, $applePayShipping);
 
+            // TODO order shipping udpate with $shippingMethod
+
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
             $paymentObject = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
             $metadatas = $paymentObject->metadata;
@@ -81,7 +83,7 @@ class UpdateCartOrder implements HttpPostActionInterface
                     'payment_token' => $token,
                     'billing' => $this->getPayplugAddressArray($order, true),
                     'shipping' => $this->getPayplugAddressArray($order, false),
-                    'amount' => (int)($amount * 100),
+                    'amount' => (int)($order->getGrandTotal() * 100),
                 ],
                 'metadata' => $metadatas
             ]);

@@ -248,7 +248,7 @@ define([
                             token: event.payment.token,
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
-                            amount: self._getTotalAmount(),
+                            shipping_method: self.shipping_method,
                             order_id: self.order_id,
                             workflowType: self.workflowType
                         }
