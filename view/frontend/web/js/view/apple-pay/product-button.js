@@ -142,7 +142,7 @@ define([
          * @returns {Object} The Apple Pay payment request data.
          */
         _getPaymentRequest: function() {
-            const domain = this.applePayConfig.apple_pay_domain;
+            const domain = this.applePayConfig.domain;
             const locale = this.applePayConfig.locale;
             const merchand_name = this.applePayConfig.merchand_name;
             const currencyCode = this.applePayConfig.currency;
