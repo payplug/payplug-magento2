@@ -256,7 +256,7 @@ define([
                         }
                     }).done(function (response) {
                         if (response.error === true) {
-                            self._cancelPayplugPayment();
+                            self._cancelPayplugPayment(true);
                         } else {
                             self.applePaySession.completePayment({
                                 "status": ApplePaySession.STATUS_SUCCESS
@@ -265,10 +265,10 @@ define([
                             window.location.replace(url.build(self.returnUrl));
                         }
                     }).fail(function () {
-                        self._cancelPayplugPayment();
+                        self._cancelPayplugPayment(true);
                     });
                 } catch (e) {
-                    self._cancelPayplugPayment();
+                    self._cancelPayplugPayment(true);
                 }
             };
         },
@@ -361,12 +361,18 @@ define([
          * @private
          * @returns {void}
          */
-        _cancelPayplugPayment: function () {
+        _cancelPayplugPayment: function (triggerApplePayFailure = false) {
             $.ajax(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
 
-            this.applePaySession.completePayment({
-                "status": ApplePaySession.STATUS_FAILURE
-            });
+            if (triggerApplePayFailure) {
+                this.applePaySession.completePayment({
+                    "status": ApplePaySession.STATUS_FAILURE
+                });
+            } else {
+                this.applePaySession.abort();
+            }
+
+            // TODO : show message to the user
         }
     });
 });
