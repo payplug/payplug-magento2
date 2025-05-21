@@ -24,7 +24,7 @@ define([
         shipping_amount: 0,
         shipping_method: null,
         is_virtual: false,
-        workflowType: '',
+        workflowType: 'shopping-cart',
 
         /**
          * Initializes the component.
