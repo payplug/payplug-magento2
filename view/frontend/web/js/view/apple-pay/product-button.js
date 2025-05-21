@@ -94,8 +94,7 @@ define([
                 });
 
                 if (response.success) {
-                    customerData.invalidate(['cart']);
-                    customerData.reload(['cart'], true);
+                    this.invalidateMiniCart(true);
 
                     this.base_amount = parseFloat(response.base_amount);
                     this.is_virtual = response.is_virtual;
@@ -274,6 +273,8 @@ define([
                                 "status": ApplePaySession.STATUS_SUCCESS
                             });
 
+                            self.invalidateMiniCart();
+
                             window.location.replace(url.build(self.returnUrl));
                         }
                     }).fail(function () {
@@ -413,6 +414,19 @@ define([
             this.shipping_amount = 0;
             this.shipping_method = null;
             this.is_virtual = false;
+        },
+        /**
+         * Invalidate minicart
+         *
+         * @private
+         * @returns {void}
+         */
+        invalidateMiniCart(withReload = false) {
+            customerData.invalidate(['cart']);
+
+            if (withReload) {
+                customerData.reload(['cart'], true);
+            }
         }
     });
 });

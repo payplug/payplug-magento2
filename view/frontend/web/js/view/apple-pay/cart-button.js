@@ -5,8 +5,9 @@ define([
     'mage/url',
     'Magento_Ui/js/model/messageList',
     'mage/translate',
+    'Magento_Customer/js/customer-data',
     'Magento_Checkout/js/model/quote'
-], function ($, ko, Component, url, messageList, $t, quote) {
+], function ($, ko, Component, url, messageList, $t, customerData, quote) {
     'use strict';
 
     return Component.extend({
@@ -271,6 +272,8 @@ define([
                                 "status": ApplePaySession.STATUS_SUCCESS
                             });
 
+                            self.invalidateMiniCart();
+
                             window.location.replace(url.build(self.returnUrl));
                         }
                     }).fail(function () {
@@ -410,6 +413,19 @@ define([
             this.shipping_amount = 0;
             this.shipping_method = null;
             this.is_virtual = false;
+        },
+        /**
+         * Invalidate minicart
+         *
+         * @private
+         * @returns {void}
+         */
+        invalidateMiniCart(withReload = false) {
+            customerData.invalidate(['cart']);
+
+            if (withReload) {
+                customerData.reload(['cart'], true);
+            }
         }
     });
 });
