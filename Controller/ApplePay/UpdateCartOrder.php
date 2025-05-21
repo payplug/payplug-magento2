@@ -94,15 +94,24 @@ class UpdateCartOrder implements HttpPostActionInterface
             $metadatas = $paymentObject->metadata;
             $metadatas['ApplepayWorkflowType'] = $workflowType;
 
-            $updatedPayment = $paymentObject->update([
+            $payplugBillingAddress = $this->getPayplugAddressArray($order, true);
+
+            $paymentData = [
                 'apple_pay' => [
                     'payment_token' => $token,
-                    'billing' => $this->getPayplugAddressArray($order, true),
-                    'shipping' => $this->getPayplugAddressArray($order, false),
+                    'billing' => $payplugBillingAddress,
+                    'shipping' => $order->getIsVirtual() ? $payplugBillingAddress
+                        : $this->getPayplugAddressArray($order, false),
                     'amount' => (int)($order->getGrandTotal() * 100),
                 ],
                 'metadata' => $metadatas
-            ]);
+            ];
+
+            if ($order->getIsVirtual() === false) {
+                $paymentData['apple_pay']['shipping'] = $this->getPayplugAddressArray($order, false);
+            }
+
+            $updatedPayment = $paymentObject->update($paymentData);
 
             if ($updatedPayment->is_paid) {
                 $response->setData([
@@ -142,8 +151,8 @@ class UpdateCartOrder implements HttpPostActionInterface
         if (!$address) {
             throw new \RuntimeException(
                 $isBilling
-                    ? __('No billing address found for this order.') . toString()
-                    : __('No shipping address found for this order.') . toString()
+                    ? __('No billing address found for this order.').toString()
+                    : __('No shipping address found for this order.').toString()
             );
         }
 

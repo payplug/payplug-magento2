@@ -22,6 +22,7 @@ define([
         base_amount: 0,
         shipping_amount: 0,
         shipping_method: null,
+        is_virtual: false,
         workflowType: '',
 
         /**
@@ -75,6 +76,7 @@ define([
             this._clearOrderData();
 
             this.base_amount = this._getBaseAmount();
+            this.is_virtual = quote.isVirtual();
             this._initApplePaySession();
         },
 
@@ -122,10 +124,11 @@ define([
                 locale,
                 merchand_name
             } = window.checkoutConfig.payment.payplug_payments_apple_pay;
+            const currencyCode = quote.totals()['quote_currency_code'];
 
-            return {
+            let paymentRequest = {
                 countryCode: locale.slice(-2),
-                currencyCode: quote.totals()['quote_currency_code'],
+                currencyCode: currencyCode,
                 merchantCapabilities: ['supports3DS'],
                 supportedNetworks: ['cartesBancaires', 'visa', 'masterCard'],
                 supportedTypes: ['debit', 'credit'],
@@ -137,18 +140,27 @@ define([
                 applicationData: btoa(JSON.stringify({
                     'apple_pay_domain': domain
                 })),
-                shippingType: "shipping",
                 requiredBillingContactFields: [
                     "postalAddress",
                     "name"
-                ],
-                requiredShippingContactFields: [
+                ]
+            };
+
+            if (this.is_virtual === true) {
+                paymentRequest.requiredShippingContactFields = [
+                    "phone",
+                    "email"
+                ];
+            } else {
+                paymentRequest.requiredShippingContactFields = [
                     "postalAddress",
                     "name",
                     "phone",
                     "email"
-                ],
-            };
+                ];
+            }
+
+            return paymentRequest;
         },
 
         /**
@@ -397,6 +409,7 @@ define([
             this.base_amount = 0;
             this.shipping_amount = 0;
             this.shipping_method = null;
+            this.is_virtual = false;
         }
     });
 });

@@ -22,6 +22,7 @@ define([
         base_amount: 0,
         shipping_amount: 0,
         shipping_method: null,
+        is_virtual: false,
         workflowType: '',
 
         /**
@@ -93,6 +94,7 @@ define([
 
                 if (response.success) {
                     this.base_amount = parseFloat(response.base_amount);
+                    this.is_virtual = response.is_virtual;
                     this._initApplePaySession();
                 } else {
                     alert(response.message || 'Could not create quote for Apple Pay');
@@ -146,7 +148,7 @@ define([
             const merchand_name = this.applePayConfig.merchand_name;
             const currencyCode = this.applePayConfig.currency;
 
-            return {
+            let paymentRequest = {
                 countryCode: locale.slice(-2),
                 currencyCode: currencyCode,
                 merchantCapabilities: ['supports3DS'],
@@ -160,18 +162,27 @@ define([
                 applicationData: btoa(JSON.stringify({
                     'apple_pay_domain': domain
                 })),
-                shippingType: "shipping",
                 requiredBillingContactFields: [
                     "postalAddress",
                     "name"
-                ],
-                requiredShippingContactFields: [
+                ]
+            };
+
+            if (this.is_virtual === true) {
+                paymentRequest.requiredShippingContactFields = [
+                    "phone",
+                    "email"
+                ];
+            } else {
+                paymentRequest.requiredShippingContactFields = [
                     "postalAddress",
                     "name",
                     "phone",
                     "email"
-                ],
-            };
+                ];
+            }
+
+            return paymentRequest;
         },
 
         /**
@@ -397,6 +408,7 @@ define([
             this.base_amount = 0;
             this.shipping_amount = 0;
             this.shipping_method = null;
+            this.is_virtual = false;
         }
     });
 });

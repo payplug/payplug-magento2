@@ -80,7 +80,8 @@ class CreateApplePayQuote implements HttpPostActionInterface
             return $result->setData([
                 'success' => true,
                 'message' => 'Quote created',
-                'base_amount' => (float)$quote->getGrandTotal()
+                'base_amount' => (float)$quote->getGrandTotal(),
+                'is_virtual' => $quote->isVirtual()
             ]);
         } catch (Exception $e) {
             return $result->setData([
