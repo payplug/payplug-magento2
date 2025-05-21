@@ -4,8 +4,9 @@ define([
     'uiComponent',
     'mage/url',
     'Magento_Ui/js/model/messageList',
-    'mage/translate'
-], function ($, ko, Component, url, messageList, $t) {
+    'mage/translate',
+    'Magento_Customer/js/customer-data',
+], function ($, ko, Component, url, messageList, $t, customerData) {
     'use strict';
 
     return Component.extend({
@@ -93,6 +94,9 @@ define([
                 });
 
                 if (response.success) {
+                    customerData.invalidate(['cart']);
+                    customerData.reload(['cart'], true);
+
                     this.base_amount = parseFloat(response.base_amount);
                     this.is_virtual = response.is_virtual;
                     this._initApplePaySession();
