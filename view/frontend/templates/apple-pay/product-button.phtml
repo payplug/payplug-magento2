@@ -21,6 +21,10 @@ use Payplug\Payments\Block\ApplePay\Button;
             click: handleClick,
             css: { hidden: !isVisible() } ">
     </apple-pay-button>
+
+    <!-- ko foreach: getRegion('messages') -->
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <!--/ko-->
 </div>
 
 <script type="text/x-magento-init">
@@ -31,7 +35,13 @@ use Payplug\Payments\Block\ApplePay\Button;
                     "productButton" : {
                         "component" : "Payplug_Payments/js/view/apple-pay/product-button",
                         "workflowType": "product",
-                        "applePayConfig": <?= $block->getConfigJson(); ?>
+                        "applePayConfig": <?= $block->getConfigJson(); ?>,
+                        "children": {
+                            "messages": {
+                                "component": "Magento_Ui/js/view/messages",
+                                "displayArea": "messages"
+                            }
+                        }
                     }
                 }
             }

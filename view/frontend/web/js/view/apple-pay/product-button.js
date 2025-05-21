@@ -3,21 +3,22 @@ define([
     'ko',
     'uiComponent',
     'mage/url',
-], function ($, ko, Component, url) {
+    'Magento_Ui/js/model/messageList',
+    'mage/translate'
+], function ($, ko, Component, url, messageList, $t) {
     'use strict';
 
     return Component.extend({
         applePayIsAvailable: false,
         isVisible: ko.observable(false),
-        applePaySession: null,
-        order_id: null,
         allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
         createMockOrder: 'payplug_payments/applePay/createMockOrder',
         updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
         createQuote: 'payplug_payments/applePay/CreateApplePayQuote',
-        cancelUrl: 'payplug_payments/payment/cancel',
+        cancelUrl: 'payplug_payments/applePay/cancelFromButton',
         returnUrl: 'payplug_payments/payment/paymentReturn',
-        amount: null,
+        applePaySession: null,
+        order_id: null,
         base_amount: 0,
         shipping_amount: 0,
         shipping_method: null,
@@ -74,6 +75,8 @@ define([
          * @returns {void}
          */
         handleClick: async function () {
+            this._clearOrderData();
+
             try {
                 const productId = $('#product_addtocart_form input[name=product]').val();
                 const qty = $('#qty').val() || 1;
@@ -214,18 +217,18 @@ define([
                     dataType: 'json',
                     success: function(response) {
                         if (response.error) {
-                            self._cancelPayplugPayment();
+                            self._cancelPayplugPaymentWithAbort();
                         } else {
                             try {
                                 self.order_id = response.order_id;
                                 self.applePaySession.completeMerchantValidation(response.merchantSession);
                             } catch (e) {
-                                self._cancelPayplugPayment();
+                                self._cancelPayplugPaymentWithAbort();
                             }
                         }
                     },
                     error: function () {
-                        self._cancelPayplugPayment();
+                        self._cancelPayplugPaymentWithAbort();
                     }
                 });
             };
@@ -256,7 +259,7 @@ define([
                         }
                     }).done(function (response) {
                         if (response.error === true) {
-                            self._cancelPayplugPayment(true);
+                            self._cancelPayplugPaymentWithFailure();
                         } else {
                             self.applePaySession.completePayment({
                                 "status": ApplePaySession.STATUS_SUCCESS
@@ -265,10 +268,10 @@ define([
                             window.location.replace(url.build(self.returnUrl));
                         }
                     }).fail(function () {
-                        self._cancelPayplugPayment(true);
+                        self._cancelPayplugPaymentWithFailure();
                     });
                 } catch (e) {
-                    self._cancelPayplugPayment(true);
+                    self._cancelPayplugPaymentWithFailure();
                 }
             };
         },
@@ -331,7 +334,7 @@ define([
                     dataType: 'json',
                     success: function (response) {
                         if (response.error) {
-                            self._cancelPayplugPayment();
+                            self._cancelPayplugPaymentWithAbort();
                         } else {
                             try {
                                 const updated = {
@@ -344,35 +347,62 @@ define([
                                 };
                                 self.applePaySession.completeShippingContactSelection(updated);
                             } catch (e) {
-                                self._cancelPayplugPayment();
+                                self._cancelPayplugPaymentWithAbort();
                             }
                         }
                     },
                     error: function () {
-                        self._cancelPayplugPayment();
+                        self._cancelPayplugPaymentWithAbort();
                     }
                 });
             };
         },
-
+        /**
+         * Cancel the payment with abort (close Payment UI)
+         *
+         * @private
+         * @returns {void}
+         */
+        _cancelPayplugPaymentWithAbort: function () {
+            this._cancelPayplugPayment();
+            this.applePaySession.abort();
+        },
+        /**
+         * Cancel the payment with failure (close Payment UI and trigger ApplePay Session failure)
+         *
+         * @private
+         * @returns {void}
+         */
+        _cancelPayplugPaymentWithFailure: function () {
+            this._cancelPayplugPayment();
+            this.applePaySession.completePayment({
+                "status": ApplePaySession.STATUS_FAILURE
+            });
+        },
         /**
          * Call payment cancellation URL, then close ApplePaySession
          *
          * @private
          * @returns {void}
          */
-        _cancelPayplugPayment: function (triggerApplePayFailure = false) {
-            $.ajax(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
-
-            if (triggerApplePayFailure) {
-                this.applePaySession.completePayment({
-                    "status": ApplePaySession.STATUS_FAILURE
-                });
-            } else {
-                this.applePaySession.abort();
+        _cancelPayplugPayment: function () {
+            if (this.order_id) {
+                $.ajax(url.build(this.cancelUrl) + '?fromApplePayButton=1&form_key=' + $.cookie('form_key'));
             }
 
-            // TODO : show message to the user
+            messageList.addErrorMessage({ message: $t('The transaction was aborted and your card has not been charged') });
+        },
+        /**
+         * Clear order data
+         *
+         * @private
+         * @returns {void}
+         */
+        _clearOrderData: function () {
+            this.order_id = null;
+            this.base_amount = 0;
+            this.shipping_amount = 0;
+            this.shipping_method = null;
         }
     });
 });

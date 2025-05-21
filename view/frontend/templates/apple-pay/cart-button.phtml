@@ -18,6 +18,10 @@ use Magento\Framework\Escaper;
             click: handleClick,
             css: { hidden: !isVisible() } ">
     </apple-pay-button>
+
+    <!-- ko foreach: getRegion('messages') -->
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <!--/ko-->
 </div>
 
 <script type="text/x-magento-init">
@@ -27,7 +31,13 @@ use Magento\Framework\Escaper;
                 "components" : {
                     "cartButton" : {
                         "component" : "Payplug_Payments/js/view/apple-pay/cart-button",
-                        "workflowType": "shopping-cart"
+                        "workflowType": "shopping-cart",
+                        "children": {
+                            "messages": {
+                                "component": "Magento_Ui/js/view/messages",
+                                "displayArea": "messages"
+                            }
+                        }
                     }
                 }
             }
