@@ -12,7 +12,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Model\ResourceModel\Quote as QuoteResourceModel;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Data\Form\FormKey\Validator;
@@ -24,9 +24,9 @@ class CreateApplePayQuote implements HttpPostActionInterface
         private readonly JsonFactory $resultJsonFactory,
         private readonly CheckoutSession $checkoutSession,
         private readonly ProductRepositoryInterface $productRepository,
-        private readonly QuoteResourceModel $quoteResourceModel,
         private readonly Validator $formKeyValidator,
-        private readonly RequestInterface $request
+        private readonly RequestInterface $request,
+        private readonly CartRepositoryInterface $cartRepository
     ) {
     }
 
@@ -56,10 +56,6 @@ class CreateApplePayQuote implements HttpPostActionInterface
             $quote = $this->checkoutSession->getQuote();
             $quote->removeAllItems();
 
-            if ($quote->isVirtual() === false) {
-                $quote->getShippingAddress()->setShippingMethod('');
-            }
-
             $product = $this->productRepository->getById($productId);
             $buyRequest = new DataObject(['qty' => $qty]);
             $resultAdd = $quote->addProduct($product, $buyRequest);
@@ -68,9 +64,18 @@ class CreateApplePayQuote implements HttpPostActionInterface
                 throw new LocalizedException(__($resultAdd));
             }
 
+            $this->cartRepository->save($quote);
+
+            if ($quote->isVirtual() === false) {
+                $shippingAddress = $quote->getShippingAddress();
+                $shippingAddress->setShippingMethod('');
+                $shippingAddress->setCollectShippingRates(true)->collectShippingRates();
+            }
+
+            $quote->setTotalsCollectedFlag(false);
             $quote->collectTotals();
 
-            $this->quoteResourceModel->save($quote);
+            $this->cartRepository->save($quote);
 
             return $result->setData([
                 'success' => true,
