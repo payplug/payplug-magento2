@@ -14,5 +14,9 @@
         <referenceContainer name="product.info.form.content">
             <block class="Payplug\Payments\Block\ApplePay\Button" name="product.info.apple.pay.button" template="Payplug_Payments::apple-pay/product-button.phtml" after="-" />
         </referenceContainer>
+
+        <referenceContainer name="product.info.options.wrapper.bottom">
+            <block class="Payplug\Payments\Block\ApplePay\Button" name="product.info.options.wrapper.bottom.apple.pay.button" template="Payplug_Payments::apple-pay/product-button.phtml" after="-" />
+        </referenceContainer>
     </body>
 </page>
