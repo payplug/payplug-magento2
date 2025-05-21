@@ -78,11 +78,15 @@ define([
          */
         handleClick: async function () {
             this._clearOrderData();
+            const form = $('#product_addtocart_form');
+            const isValid = form.validation('isValid');
+
+            if (!isValid) {
+                return;
+            }
 
             try {
-                const form = $('#product_addtocart_form');
                 const formData = new FormData(form[0]);
-
                 const response = await $.ajax({
                     url: url.build(this.createQuote),
                     data: formData,
