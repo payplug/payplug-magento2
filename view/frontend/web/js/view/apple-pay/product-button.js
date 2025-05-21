@@ -78,23 +78,17 @@ define([
             this._clearOrderData();
 
             try {
-                const productId = $('#product_addtocart_form input[name=product]').val();
-                const qty = $('#qty').val() || 1;
-                const superAttribute = {};//TODO for the configurable
+                const form = $('#product_addtocart_form');
+                const formData = new FormData(form[0]);
 
-                $('#product_addtocart_form select.super-attribute-select').each(function () {
-                    const attributeId = $(this).attr('name').match(/\d+/)[0];
-                    const optionId = $(this).val();
-                    if (optionId) {
-                        superAttribute[attributeId] = optionId;
-                    }
-                });
-
-                const response = await $.post(url.build(this.createQuote), {
-                    product_id: productId,
-                    qty: qty,
-                    super_attribute: superAttribute,
-                    form_key: $.cookie('form_key')
+                const response = await $.ajax({
+                    url: url.build(this.createQuote),
+                    data: formData,
+                    type: 'post',
+                    dataType: 'json',
+                    cache: false,
+                    contentType: false,
+                    processData: false
                 });
 
                 if (response.success) {

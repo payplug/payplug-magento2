@@ -44,7 +44,7 @@ class CreateApplePayQuote implements HttpPostActionInterface
         }
 
         $params = $this->request->getParams();
-        $productId = (int)($params['product_id'] ?? 0);
+        $productId = (int)($params['product'] ?? 0);
         $qty = (float)($params['qty'] ?? 1);
 
         // TODO bundle product parameters
