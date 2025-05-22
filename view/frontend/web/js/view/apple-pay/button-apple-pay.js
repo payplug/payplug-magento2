@@ -1,123 +1,52 @@
 define([
     'jquery',
-    'ko',
-    'uiComponent',
     'mage/url',
     'Magento_Ui/js/model/messageList',
     'mage/translate',
     'Magento_Customer/js/customer-data',
-], function ($, ko, Component, url, messageList, $t, customerData) {
+], function ($, url, messageList, $t, customerData) {
     'use strict';
 
-    return Component.extend({
-        applePayIsAvailable: false,
-        isVisible: ko.observable(false),
-        allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
-        createMockOrder: 'payplug_payments/applePay/createMockOrder',
-        updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
-        createQuote: 'payplug_payments/applePay/CreateApplePayQuote',
-        cancelUrl: 'payplug_payments/applePay/cancelFromButton',
-        returnUrl: 'payplug_payments/payment/paymentReturn',
+    const allowedShippingMethods = 'payplug_payments/applePay/GetAvailablesShippingMethods',
+          createMockOrder = 'payplug_payments/applePay/createMockOrder',
+          updateCartOrder = 'payplug_payments/applePay/updateCartOrder',
+          cancelUrl = 'payplug_payments/applePay/cancelFromButton',
+          returnUrl = 'payplug_payments/payment/paymentReturn';
+
+    const payplugApplePay = {
         applePaySession: null,
-        order_id: null,
-        base_amount: 0,
-        shipping_amount: 0,
-        shipping_method: null,
-        is_virtual: false,
-        workflowType: 'product',
+        orderId: null,
+        baseAmount: 0,
+        merchandName: null,
+        shippingAmount: 0,
+        shippingMethod: null,
+        isVirtual: false,
+        workflowType: null,
 
         /**
-         * Initializes the component.
+         * Initializes Apple Pay session if it is available.
+         *
+         * @param {Object} config - The Apple Pay session request configuration.
          *
          * @returns {void}
          */
-        initialize: function () {
-            this._super();
-            this.merchandName = this.applePayConfig.merchand_name;
-            this.applePayIsAvailable = this._getApplePayAvailability();
-            this.isVisible(this.applePayIsAvailable);
-        },
+        initApplePaySession: function (config) {
+            const applePayIsAvailable = this.getApplePayAvailability();
 
-        /**
-         * Initializes Apple Pay session.
-         *
-         * @private
-         * @returns {void}
-         */
-        _initApplePaySession: function() {
-            if (this.applePayIsAvailable) {
+            if (applePayIsAvailable) {
                 const versionNumber = this._getApplePayVersion();
-                const sessionRequest = this._getPaymentRequest();
+                const sessionRequest = this.getPaymentRequest(config);
                 this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
                 this._afterPlaceOrder();
             }
         },
 
         /**
-         * Handles the Apple Pay session after the user clicks the "Buy with Apple Pay" button.
-         *
-         * @private
-         * @returns {void}
-         */
-        _afterPlaceOrder: function () {
-            this._bindMarchantValidation();
-            this._bindPaymentAuthorization();
-            this._bindShippingMethodSelected();
-            this._bindPaymentCancel();
-            this._bindShippingContactSelected();
-            this.applePaySession.begin();
-        },
-
-        /**
-         * Handles button click event.
-         * Create a new quote from the product in the product page
-         * And then init Apple Pay Session
-         * The async is required as ApplePaySession MUST be created from a user gesture
-         *
-         * @returns {void}
-         */
-        handleClick: async function () {
-            this._clearOrderData();
-            const form = $('#product_addtocart_form');
-            const isValid = form.validation('isValid');
-
-            if (!isValid) {
-                return;
-            }
-
-            try {
-                const formData = new FormData(form[0]);
-                const response = await $.ajax({
-                    url: url.build(this.createQuote),
-                    data: formData,
-                    type: 'post',
-                    dataType: 'json',
-                    cache: false,
-                    contentType: false,
-                    processData: false
-                });
-
-                if (response.success) {
-                    this.invalidateMiniCart(true);
-
-                    this.base_amount = parseFloat(response.base_amount);
-                    this.is_virtual = response.is_virtual;
-                    this._initApplePaySession();
-                } else {
-                    alert(response.message || 'Could not create quote for Apple Pay');
-                }
-            } catch (err) {
-                alert('Error preparing Apple Pay quote');
-            }
-        },
-
-        /**
          * Checks the availability of Apple Pay.
          *
-         * @private
          * @returns {boolean} True if Apple Pay is available and can make payments, false otherwise.
          */
-        _getApplePayAvailability: function() {
+        getApplePayAvailability: function () {
             return window.ApplePaySession && ApplePaySession.canMakePayments();
         },
 
@@ -129,7 +58,7 @@ define([
          * @private
          * @returns {number} The Apple Pay version number.
          */
-        _getApplePayVersion: function() {
+        _getApplePayVersion: function () {
             if (ApplePaySession.supportsVersion(18)) {
                 return 18;
             }
@@ -144,16 +73,24 @@ define([
         },
 
         /**
-         * Retrieves the payment request data for Apple Pay.
+         * Constructs the payment request data object for Apple Pay.
          *
-         * @private
-         * @returns {Object} The Apple Pay payment request data.
+         * @param {Object} config - Configuration object containing domain, locale, merchant name, and currency code.
+         * @param {string} config.domain - The domain for the Apple Pay session.
+         * @param {string} config.locale - The locale used to derive the country code.
+         * @param {string} config.merchand_name - The name of the merchant displayed on the payment sheet.
+         * @param {string} config.currencyCode - The currency code for the transaction.
+         * 
+         * @returns {Object} The Apple Pay payment request data, including country code, currency code,
+         * merchant capabilities, supported networks, and required contact fields.
          */
-        _getPaymentRequest: function() {
-            const domain = this.applePayConfig.domain;
-            const locale = this.applePayConfig.locale;
-            const merchand_name = this.applePayConfig.merchand_name;
-            const currencyCode = this.applePayConfig.currency;
+        getPaymentRequest: function (config) {
+            const { 
+                domain, 
+                locale, 
+                merchand_name: merchandName, 
+                currencyCode 
+            } = config;
 
             let paymentRequest = {
                 countryCode: locale.slice(-2),
@@ -162,9 +99,9 @@ define([
                 supportedNetworks: ['cartesBancaires', 'visa', 'masterCard'],
                 supportedTypes: ['debit', 'credit'],
                 total: {
-                    label: merchand_name,
+                    label: merchandName,
                     type: 'final',
-                    amount: this.base_amount
+                    amount: this.baseAmount
                 },
                 applicationData: btoa(JSON.stringify({
                     'apple_pay_domain': domain
@@ -198,8 +135,23 @@ define([
          * @private
          * @returns {Number} The total amount to be paid.
          */
-        _getTotalAmount: function() {
-            return parseFloat(this.base_amount) + parseFloat(this.shipping_amount);
+        _getTotalAmount: function () {
+            return parseFloat(this.baseAmount) + parseFloat(this.shippingAmount);
+        },
+
+        /**
+         * Handles the Apple Pay session after the user clicks the "Buy with Apple Pay" button.
+         *
+         * @private
+         * @returns {void}
+         */
+        _afterPlaceOrder: function () {
+            this._bindMarchantValidation();
+            this._bindPaymentAuthorization();
+            this._bindShippingMethodSelected();
+            this._bindShippingContactSelected();
+            this._bindPaymentCancel();
+            this.applePaySession.begin();
         },
 
         /**
@@ -209,7 +161,7 @@ define([
          * @private
          * @returns {void}
          */
-        _bindMarchantValidation: function() {
+        _bindMarchantValidation: function () {
             const self = this;
 
             this.applePaySession.onvalidatemerchant = async event => {
@@ -223,16 +175,17 @@ define([
                 const urlParameters = { btoaevent };
 
                 $.ajax({
-                    url: url.build(self.createMockOrder) + '?form_key=' + $.cookie('form_key'),
+                    url: url.build(createMockOrder) + '?form_key=' + $.cookie('form_key'),
                     data: urlParameters,
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
                         if (response.error) {
+                            console.log('response.error 1', response.error);
                             self._cancelPayplugPaymentWithAbort();
                         } else {
                             try {
-                                self.order_id = response.order_id;
+                                self.orderId = response.order_id;
                                 self.applePaySession.completeMerchantValidation(response.merchantSession);
                             } catch (e) {
                                 self._cancelPayplugPaymentWithAbort();
@@ -259,14 +212,14 @@ define([
             this.applePaySession.onpaymentauthorized = event => {
                 try {
                     $.ajax({
-                        url: url.build(self.updateCartOrder) + '?form_key=' + $.cookie('form_key'),
+                        url: url.build(updateCartOrder) + '?form_key=' + $.cookie('form_key'),
                         type: 'POST',
                         data: {
                             token: event.payment.token,
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
-                            shipping_method: self.shipping_method,
-                            order_id: self.order_id,
+                            shipping_method: self.shippingMethod,
+                            order_id: self.orderId,
                             workflowType: self.workflowType
                         }
                     }).done(function (response) {
@@ -279,7 +232,7 @@ define([
 
                             self.invalidateMiniCart();
 
-                            window.location.replace(url.build(self.returnUrl));
+                            window.location.replace(url.build(returnUrl));
                         }
                     }).fail(function () {
                         self._cancelPayplugPaymentWithFailure();
@@ -287,18 +240,6 @@ define([
                 } catch (e) {
                     self._cancelPayplugPaymentWithFailure();
                 }
-            };
-        },
-
-        /**
-         * Binds the Apple Pay session's oncancel event to handle payment cancellation.
-         *
-         * @private
-         * @returns {void}
-         */
-        _bindPaymentCancel: function() {
-            this.applePaySession.oncancel = () => {
-                this._cancelPayplugPayment();
             };
         },
 
@@ -316,8 +257,8 @@ define([
                     return;
                 }
 
-                self.shipping_method = shippingEvent.shippingMethod.identifier;
-                self.shipping_amount = shippingEvent.shippingMethod.amount;
+                self.shippingMethod = shippingEvent.shippingMethod.identifier;
+                self.shippingAmount = shippingEvent.shippingMethod.amount;
 
                 const updated = {
                     "newTotal": {
@@ -342,7 +283,7 @@ define([
 
             this.applePaySession.onshippingcontactselected = async shippingContactEvent => {
                 $.ajax({
-                    url: url.build(self.allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
+                    url: url.build(allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
                     data: shippingContactEvent.shippingContact,
                     type: 'GET',
                     dataType: 'json',
@@ -371,6 +312,85 @@ define([
                 });
             };
         },
+
+        /**
+         * Binds the Apple Pay session's oncancel event to handle payment cancellation.
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindPaymentCancel: function () {
+            this.applePaySession.oncancel = () => {
+                this._cancelPayplugPayment();
+            };
+        },
+
+        /**
+         * Sets the base amount to pay.
+         *
+         * @param {Number} amount the base amount to pay
+         * @returns {void}
+         */
+        setBaseAmount: function (amount) {
+            this.baseAmount = amount;
+        },
+
+        /**
+         * Sets whether the current order is virtual or not.
+         *
+         * @param {Boolean} isVirtual whether the current order is virtual or not
+         * @returns {void}
+         */
+        setIsVirtual: function (isVirtual) {
+            this.isVirtual = isVirtual;
+        },
+
+        /**
+         * Sets the merchant name.
+         *
+         * @param {String} merchandName - The merchant name to be set.
+         * @returns {void}
+         */
+        setMerchandName: function  (merchandName) {
+            this.merchandName = merchandName;
+        },
+
+        /**
+         * Sets the workflow type for the current process.
+         *
+         * @param {String} workflowType - The type of workflow to be set.
+         * @returns {void}
+         */
+        setWorkflowType: function (workflowType) {
+            this.workflowType = workflowType;
+        },
+
+        /**
+         * Clear order data
+         *
+         * @returns {void}
+         */
+        clearOrderData: function () {
+            this.ordeorderIdr_id = null;
+            this.baseAmount = 0;
+            this.shippingAmount = 0;
+            this.shippingMethod = null;
+            this.isVirtual = false;
+        },
+
+        /**
+         * Invalidate minicart
+         *
+         * @returns {void}
+         */
+        invalidateMiniCart: function (withReload = false) {
+            customerData.invalidate(['cart']);
+
+            if (withReload) {
+                customerData.reload(['cart'], true);
+            }
+        },
+
         /**
          * Cancel the payment with abort (close Payment UI)
          *
@@ -400,37 +420,13 @@ define([
          * @returns {void}
          */
         _cancelPayplugPayment: function () {
-            if (this.order_id) {
-                $.ajax(url.build(this.cancelUrl) + '?fromApplePayButton=1&form_key=' + $.cookie('form_key'));
+            if (this.orderId) {
+                $.ajax(url.build(cancelUrl) + '?fromApplePayButton=1&form_key=' + $.cookie('form_key'));
             }
 
             messageList.addErrorMessage({ message: $t('The transaction was aborted and your card has not been charged') });
-        },
-        /**
-         * Clear order data
-         *
-         * @private
-         * @returns {void}
-         */
-        _clearOrderData: function () {
-            this.order_id = null;
-            this.base_amount = 0;
-            this.shipping_amount = 0;
-            this.shipping_method = null;
-            this.is_virtual = false;
-        },
-        /**
-         * Invalidate minicart
-         *
-         * @private
-         * @returns {void}
-         */
-        invalidateMiniCart(withReload = false) {
-            customerData.invalidate(['cart']);
-
-            if (withReload) {
-                customerData.reload(['cart'], true);
-            }
         }
-    });
+    };
+
+    return payplugApplePay;
 });

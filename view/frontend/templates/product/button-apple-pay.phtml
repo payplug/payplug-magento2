@@ -11,8 +11,7 @@ use Payplug\Payments\Block\ApplePay\Button;
  */
 ?>
 
-<div class="product-action-apple-pay"
-     data-bind="scope: 'productButton'">
+<div data-bind="scope: 'button-apple-pay'">
     <apple-pay-button
         buttonstyle="black"
         type="pay"
@@ -32,8 +31,8 @@ use Payplug\Payments\Block\ApplePay\Button;
         "*": {
             "Magento_Ui/js/core/app" : {
                 "components" : {
-                    "productButton" : {
-                        "component" : "Payplug_Payments/js/view/apple-pay/product-button",
+                    "button-apple-pay" : {
+                        "component" : "Payplug_Payments/js/view/product/button-apple-pay",
                         "workflowType": "product",
                         "applePayConfig": <?= $block->getConfigJson(); ?>,
                         "children": {
