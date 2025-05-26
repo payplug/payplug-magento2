@@ -4,7 +4,9 @@ define([
     'uiComponent',
     'mage/url',
     'Payplug_Payments/js/view/apple-pay/button-apple-pay',
-], function ($, ko, Component, url, payplugApplePay) {
+    'mage/translate',
+    'Magento_Ui/js/model/messageList',
+], function ($, ko, Component, url, payplugApplePay, $t, messageList) {
     'use strict';
 
     return Component.extend({
@@ -70,10 +72,11 @@ define([
                     payplugApplePay.setWorkflowType(workflowType);
                     payplugApplePay.initApplePaySession(config);
                 } else {
-                    alert(response.message || 'Could not create quote for Apple Pay');
+                    const message = response.message || 'Could not create quote for Apple Pay';
+                    messageList.addErrorMessage({ message: $t(message) });
                 }
             } catch (err) {
-                alert('Error preparing Apple Pay quote');
+                messageList.addErrorMessage({ message: $t('Error preparing Apple Pay quote') });
             }
         }
     });

@@ -51,7 +51,7 @@ class Button extends Template
         return $this->jsonSerializer->serialize($this->getConfig());
     }
 
-    public function getCurrencyCode(): string
+    private function getCurrencyCode(): string
     {
         return $this->storeManager->getStore()->getCurrentCurrencyCode();
     }

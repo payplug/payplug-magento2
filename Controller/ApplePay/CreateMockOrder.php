@@ -4,26 +4,27 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
-use Magento\Framework\App\Action\HttpGetActionInterface;
+use Exception;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Message\AbstractMessage;
+use Magento\Framework\Message\MessageInterface;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\QuoteManagement;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetQuoteApplePayAvailableMethods;
+use Throwable;
 
-class CreateMockOrder implements HttpGetActionInterface
+class CreateMockOrder implements HttpPostActionInterface
 {
     public function __construct(
         private readonly JsonFactory $resultJsonFactory,
@@ -97,8 +98,7 @@ class CreateMockOrder implements HttpGetActionInterface
                 $orderId = $this->cartManagement->placeOrder($newQuote->getId());
                 $newQuote->setIsActive(false);
                 $this->cartRepository->save($newQuote);
-                // TODO fix active status of session quote beeing override by newQuote (active status is the same)
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $this->logger->critical('placeOrder failed', [
                     'message' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
@@ -115,15 +115,14 @@ class CreateMockOrder implements HttpGetActionInterface
             $order->getPayment()->unsAdditionalInformation('merchand_session');
 
             if (empty($merchantSession)) {
-                throw new \Exception('Could not retrieve merchant session');
+                throw new Exception('Could not retrieve merchant session');
             }
 
             $response['error'] = false;
             $response['message'] = __('Order placed successfully.');
             $response['order_id'] = $orderId;
             $response['merchantSession'] = $merchantSession;
-        } catch (\Exception $e) {
-
+        } catch (Exception $e) {
             $this->logger->info(sprintf("%s %s", $e->getMessage(), $e->getTraceAsString()));
             $response['message'] = $e->getMessage();
         }
@@ -147,7 +146,7 @@ class CreateMockOrder implements HttpGetActionInterface
         $newQuote = $this->quoteFactory->create();
         $newQuote->setStoreId($storeId);
         $newQuote->setIsActive(true);
-        $newQuote->setCheckoutMethod(QuoteManagement::METHOD_GUEST);
+        $newQuote->setCheckoutMethod(CartManagementInterface::METHOD_GUEST);
         $newQuote->setCustomerIsGuest(true);
         $newQuote->setCustomerEmail('placeholder@applepay.com');
 
@@ -161,7 +160,7 @@ class CreateMockOrder implements HttpGetActionInterface
             }
 
             $result = $newQuote->addProduct($product, $buyRequest);
-            if (is_string($result) || $result instanceof AbstractMessage) {
+            if (is_string($result) || $result instanceof MessageInterface) {
                 $this->logger->critical('Failed to add product to quote', [
                     'product_id' => $product->getId(),
                     'sku' => $product->getSku(),

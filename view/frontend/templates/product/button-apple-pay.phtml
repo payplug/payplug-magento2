@@ -34,7 +34,7 @@ use Payplug\Payments\Block\ApplePay\Button;
                     "button-apple-pay" : {
                         "component" : "Payplug_Payments/js/view/product/button-apple-pay",
                         "workflowType": "product",
-                        "applePayConfig": <?= $block->getConfigJson(); ?>,
+                        "applePayConfig": <?= /* @noEscape */ $block->getConfigJson(); ?>,
                         "children": {
                             "messages": {
                                 "component": "Magento_Ui/js/view/messages",

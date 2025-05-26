@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
-use Magento\Customer\Model\SessionFactory as CustomerSessionFactory;
+use Exception;
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Api\DataObjectHelper;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
@@ -12,17 +13,17 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Locale\Resolver as LocaleResolver;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote\Address\ToOrder as QuoteAddressToOrder;
 use Magento\Sales\Api\Data\OrderAddressInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderAddressRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
-use Magento\Sales\Model\Order;
+use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Exception\PayplugException;
-use Magento\Framework\Locale\Resolver as LocaleResolver;
+use RuntimeException;
 
 class UpdateCartOrder implements HttpPostActionInterface
 {
@@ -38,7 +39,7 @@ class UpdateCartOrder implements HttpPostActionInterface
         private readonly CartRepositoryInterface $cartRepository,
         private readonly DataObjectHelper $dataObjectHelper,
         private readonly QuoteAddressToOrder $quoteAddressToOrder,
-        private readonly CustomerSessionFactory $customerSessionFactory
+        private readonly CustomerSession $customerSession
     ) {
     }
 
@@ -68,7 +69,7 @@ class UpdateCartOrder implements HttpPostActionInterface
             $workflowType = $params['workflowType'] ?? null;
 
             if (!$orderId || !$token) {
-                throw new \Exception('Missing order_id or token parameter.');
+                throw new Exception('Missing order_id or token parameter.');
             }
 
             $applePayBilling = $params['billing'] ?? [];
@@ -76,7 +77,7 @@ class UpdateCartOrder implements HttpPostActionInterface
 
             $order = $this->orderRepository->get($orderId);
             if (!$order || !$order->getId()) {
-                throw new \Exception('Could not retrieve valid order.');
+                throw new Exception('Could not retrieve valid order.');
             }
 
             if ($selectedShippingMethod) {
@@ -86,7 +87,6 @@ class UpdateCartOrder implements HttpPostActionInterface
             $this->updateOrderAddresses($order, $applePayBilling, $applePayShipping);
 
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
-            /** @var Order $order */
             $paymentObject = $payplugPayment->retrieve(
                 $payplugPayment->getScopeId($order),
                 $payplugPayment->getScope($order)
@@ -132,7 +132,7 @@ class UpdateCartOrder implements HttpPostActionInterface
                 'exception' => $e,
             ]);
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Exception: Could not update apple pay transaction', [
                 'message' => $e->getMessage(),
                 'exception' => $e,
@@ -149,10 +149,10 @@ class UpdateCartOrder implements HttpPostActionInterface
         /** @var OrderAddressInterface|null $address */
         $address = $isBilling ? $order->getBillingAddress() : $order->getShippingAddress();
         if (!$address) {
-            throw new \RuntimeException(
+            throw new RuntimeException(
                 $isBilling
-                    ? __('No billing address found for this order.').toString()
-                    : __('No shipping address found for this order.').toString()
+                    ? __('No billing address found for this order.') . toString()
+                    : __('No shipping address found for this order.') . toString()
             );
         }
 
@@ -210,9 +210,8 @@ class UpdateCartOrder implements HttpPostActionInterface
         $order->setCustomerFirstname($firstname);
         $order->setCustomerLastname($lastname);
 
-        $customerSession = $this->customerSessionFactory->create();
-        if ($customerSession->isLoggedIn()) {
-            $customer = $customerSession->getCustomer();
+        if ($this->customerSession->isLoggedIn()) {
+            $customer = $this->customerSession->getCustomer();
 
             $order->setCustomerIsGuest(false);
             $order->setCustomerId($customer->getId());

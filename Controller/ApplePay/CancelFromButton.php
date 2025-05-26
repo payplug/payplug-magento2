@@ -42,9 +42,11 @@ class CancelFromButton implements HttpGetActionInterface
         }
 
         try {
-            /** @var Order $order */
             $order = $this->getCurrentOrder->execute();
-            $this->payplugHelper->cancelOrderAndInvoice($order);
+
+            if ($order instanceof Order) {
+                $this->payplugHelper->cancelOrderAndInvoice($order);
+            }
 
             return $jsonResult->setData(
                 [

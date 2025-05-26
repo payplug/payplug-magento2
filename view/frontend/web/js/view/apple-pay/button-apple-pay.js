@@ -80,16 +80,16 @@ define([
          * @param {string} config.locale - The locale used to derive the country code.
          * @param {string} config.merchand_name - The name of the merchant displayed on the payment sheet.
          * @param {string} config.currencyCode - The currency code for the transaction.
-         * 
+         *
          * @returns {Object} The Apple Pay payment request data, including country code, currency code,
          * merchant capabilities, supported networks, and required contact fields.
          */
         getPaymentRequest: function (config) {
-            const { 
-                domain, 
-                locale, 
-                merchand_name: merchandName, 
-                currencyCode 
+            const {
+                domain,
+                locale,
+                merchand_name: merchandName,
+                currencyCode
             } = config;
 
             let paymentRequest = {
@@ -112,7 +112,7 @@ define([
                 ]
             };
 
-            if (this.is_virtual === true) {
+            if (this.isVirtual === true) {
                 paymentRequest.requiredShippingContactFields = [
                     "phone",
                     "email"
@@ -172,12 +172,12 @@ define([
                 };
 
                 let btoaevent = btoa(JSON.stringify(eventData));
-                const urlParameters = { btoaevent };
+                const postData = { btoaevent };
 
                 $.ajax({
                     url: url.build(createMockOrder) + '?form_key=' + $.cookie('form_key'),
-                    data: urlParameters,
-                    type: 'GET',
+                    data: postData,
+                    type: 'POST',
                     dataType: 'json',
                     success: function(response) {
                         if (response.error) {
@@ -285,7 +285,7 @@ define([
                 $.ajax({
                     url: url.build(allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
                     data: shippingContactEvent.shippingContact,
-                    type: 'GET',
+                    type: 'POST',
                     dataType: 'json',
                     success: function (response) {
                         if (response.error) {
