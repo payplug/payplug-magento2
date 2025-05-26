@@ -151,7 +151,7 @@
             </payplug_payments_bancontact>
             <payplug_payments_apple_pay>
                 <active>0</active>
-                <show_on_checkout>0</show_on_checkout>
+                <show_on_checkout>1</show_on_checkout>
                 <show_on_cart>0</show_on_cart>
                 <title>Pay with Apple Pay</title>
                 <processing_order_status>processing</processing_order_status>
