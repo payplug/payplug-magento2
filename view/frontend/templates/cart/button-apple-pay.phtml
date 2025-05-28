@@ -9,6 +9,10 @@ use Payplug\Payments\Block\ApplePay\Button;
  * @var Escaper $escaper
  * @var Button $block
  */
+
+if ($block->quoteHasBundleProductItem()) {
+    return;
+}
 ?>
 
 <div data-bind="scope: 'button-apple-pay'">
