@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\ApplePay;
 
 use Exception;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
@@ -23,7 +24,8 @@ class CancelFromButton implements HttpGetActionInterface
         private readonly GetCurrentOrder $getCurrentOrder,
         protected Data $payplugHelper,
         protected Logger $logger,
-        private readonly JsonResultFactory $resultJsonFactory
+        private readonly JsonResultFactory $resultJsonFactory,
+        private readonly CheckoutSession $checkoutSession
     ) {
     }
 
@@ -46,6 +48,12 @@ class CancelFromButton implements HttpGetActionInterface
 
             if ($order instanceof Order) {
                 $this->payplugHelper->cancelOrderAndInvoice($order);
+
+                $this->checkoutSession->setLastQuoteId(null);
+                $this->checkoutSession->setLastSuccessQuoteId(null);
+                $this->checkoutSession->setLastOrderId(null);
+                $this->checkoutSession->setLastRealOrderId(null);
+                $this->checkoutSession->setLastOrderStatus(null);
             }
 
             return $jsonResult->setData(
