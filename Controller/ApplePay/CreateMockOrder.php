@@ -19,6 +19,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetQuoteApplePayAvailableMethods;
@@ -36,7 +37,8 @@ class CreateMockOrder implements HttpPostActionInterface
         private readonly QuoteFactory $quoteFactory,
         private readonly Validator $formKeyValidator,
         private readonly RequestInterface $request,
-        private readonly GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods
+        private readonly GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods,
+        private readonly StoreManagerInterface $storeManager
     ) {
     }
 
@@ -65,12 +67,12 @@ class CreateMockOrder implements HttpPostActionInterface
             $newQuote = $this->createNewGuestQuoteFromSession($sessionQuote);
 
             $placeholderAddress = [
-                'givenName' => 'ApplePay',
-                'familyName' => 'Customer',
-                'locality' => 'Placeholder City',
-                'postalCode' => '00000',
-                'administrativeArea' => 'Placeholder Region',
-                'countryCode' => 'FR',
+                'givenName' => $this->getApplePayConfig('placeholder_firstname'),
+                'familyName' => $this->getApplePayConfig('placeholder_lastname'),
+                'locality' => $this->getApplePayConfig('placeholder_postcode'),
+                'postalCode' => $this->getApplePayConfig('placeholder_city'),
+                'administrativeArea' => $this->getApplePayConfig('placeholder_region'),
+                'countryCode' => $this->getApplePayConfig('default_country'),
             ];
 
             $this->updateQuoteBillingAddress($newQuote, $placeholderAddress);
@@ -130,6 +132,11 @@ class CreateMockOrder implements HttpPostActionInterface
         return $result->setData($response);
     }
 
+    private function getApplePayConfig(string $field): ?string
+    {
+        return $this->storeManager->getStore()->getConfig('payment/payplug_payments_apple_pay/' . $field);
+    }
+
     /**
      * Creates a new quote as a guest from the items in the session quote.
      * This ensures that we do not reuse any existing address IDs from the previous quote
@@ -148,7 +155,7 @@ class CreateMockOrder implements HttpPostActionInterface
         $newQuote->setIsActive(true);
         $newQuote->setCheckoutMethod(CartManagementInterface::METHOD_GUEST);
         $newQuote->setCustomerIsGuest(true);
-        $newQuote->setCustomerEmail('placeholder@applepay.com');
+        $newQuote->setCustomerEmail($this->getApplePayConfig('placeholder_email'));
 
         foreach ($sessionQuote->getAllVisibleItems() as $item) {
             $product = $item->getProduct();
@@ -186,7 +193,7 @@ class CreateMockOrder implements HttpPostActionInterface
             ->setCity($appleBilling['locality'] ?? 'Unknown')
             ->setPostcode($appleBilling['postalCode'] ?? '')
             ->setRegion($appleBilling['administrativeArea'] ?? '')
-            ->setCountryId($appleBilling['countryCode'] ?? 'US')
+            ->setCountryId($appleBilling['countryCode'] ?? 'FR')
             ->setRegion(null)
             ->setRegionId(null)
             ->setTelephone('0000000000')
@@ -212,7 +219,7 @@ class CreateMockOrder implements HttpPostActionInterface
             ->setCity($appleShipping['locality'] ?? 'Unknown')
             ->setPostcode($appleShipping['postalCode'] ?? '')
             ->setRegion($appleShipping['administrativeArea'] ?? '')
-            ->setCountryId($appleShipping['countryCode'] ?? 'US')
+            ->setCountryId($appleShipping['countryCode'] ?? 'FR')
             ->setRegion(null)
             ->setRegionId(null)
             ->setTelephone('0000000000')

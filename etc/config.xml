@@ -158,6 +158,12 @@
                 <canceled_order_status>canceled</canceled_order_status>
                 <allowspecific>0</allowspecific>
                 <sort_order>0</sort_order>
+                <placeholder_email>placeholder@applepay.com</placeholder_email>
+                <placeholder_firstname>Firstname</placeholder_firstname>
+                <placeholder_lastname>Lastname</placeholder_lastname>
+                <placeholder_postcode>00000</placeholder_postcode>
+                <placeholder_city>City</placeholder_city>
+                <placeholder_region>Region</placeholder_region>
                 <default_country>FR</default_country>
                 <model>PayplugPaymentApplePayFacade</model>
                 <payment_action>order</payment_action>

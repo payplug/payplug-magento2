@@ -351,6 +351,30 @@
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
                 </field>
+                <field id="placeholder_email" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder email</label>
+                    <comment><![CDATA[The placeholder email passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_firstname" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder firstname</label>
+                    <comment><![CDATA[The placeholder firstname passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_lastname" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder lastname</label>
+                    <comment><![CDATA[The placeholder lastname passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_postcode" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder postcode</label>
+                    <comment><![CDATA[The placeholder postcode passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_region" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder region</label>
+                    <comment><![CDATA[The placeholder region passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_city" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder city</label>
+                    <comment><![CDATA[The placeholder city passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
