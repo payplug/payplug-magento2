@@ -53,15 +53,12 @@ define([
         /**
          * Retrieves the Apple Pay version number.
          *
-         * If Apple Pay version 18 is supported, returns 18, otherwise returns 14 or 3 or 1.
+         * If Apple Pay version 14 is supported, returns 14, otherwise returns 3 or 1.
          *
          * @private
          * @returns {number} The Apple Pay version number.
          */
         _getApplePayVersion: function () {
-            if (ApplePaySession.supportsVersion(18)) {
-                return 18;
-            }
             if (ApplePaySession.supportsVersion(14)) {
                 return 14;
             }
