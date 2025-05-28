@@ -279,6 +279,11 @@ define([
             const self = this;
 
             this.applePaySession.onshippingcontactselected = async shippingContactEvent => {
+                let contact = shippingContactEvent.shippingContact;
+                if (contact?.countryCode) {
+                    contact.countryCode = contact.countryCode.toUpperCase();
+                }
+
                 $.ajax({
                     url: url.build(allowedShippingMethods) + '?form_key=' + $.cookie('form_key'),
                     data: shippingContactEvent.shippingContact,
