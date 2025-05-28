@@ -294,7 +294,19 @@ define([
                             self._cancelPayplugPaymentWithAbort();
                         } else {
                             try {
+                                let errors = [];
+
+                                if (response.methods.length === 0) {
+                                    const applePayError = new ApplePayError(
+                                        'shippingContactInvalid',
+                                        'postalAddress',
+                                        $t("Delivery unavailable to this address")
+                                    );
+                                    errors.push(applePayError);
+                                }
+
                                 const updated = {
+                                    "errors": errors,
                                     "newTotal": {
                                         "label": self.merchandName,
                                         "amount": self._getTotalAmount(),
