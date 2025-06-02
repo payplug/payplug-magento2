@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\ApplePay;
 
 use Exception;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
@@ -15,9 +16,7 @@ use Magento\Framework\Message\MessageInterface;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\QuoteFactory;
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Quote\Api\Data\CartInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
@@ -34,7 +33,7 @@ class CreateMockOrder implements HttpPostActionInterface
         private readonly CartManagementInterface $cartManagement,
         private readonly Logger $logger,
         private readonly OrderRepositoryInterface $orderRepository,
-        private readonly QuoteFactory $quoteFactory,
+        private readonly CartInterfaceFactory $cartInterfaceFactory,
         private readonly Validator $formKeyValidator,
         private readonly RequestInterface $request,
         private readonly GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods,
@@ -143,14 +142,14 @@ class CreateMockOrder implements HttpPostActionInterface
      * which can lead to "invalid address id" errors for guest checkouts.
      * @throws LocalizedException
      */
-    private function createNewGuestQuoteFromSession(Quote $sessionQuote): Quote
+    private function createNewGuestQuoteFromSession(CartInterface $sessionQuote): CartInterface
     {
         $storeId = $sessionQuote->getStoreId();
 
         /**
          * Rebuild temporary quote to avoid interference with existing quote
          */
-        $newQuote = $this->quoteFactory->create();
+        $newQuote = $this->cartInterfaceFactory->create();
         $newQuote->setStoreId($storeId);
         $newQuote->setIsActive(true);
         $newQuote->setCheckoutMethod(CartManagementInterface::METHOD_GUEST);
