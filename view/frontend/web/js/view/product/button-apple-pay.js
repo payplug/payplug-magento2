@@ -2,11 +2,9 @@ define([
     'jquery',
     'ko',
     'uiComponent',
-    'mage/url',
     'Payplug_Payments/js/view/apple-pay/button-apple-pay',
-    'mage/translate',
-    'Magento_Ui/js/model/messageList',
-], function ($, ko, Component, url, payplugApplePay, $t, messageList) {
+    'Magento_Catalog/js/price-box',
+], function ($, ko, Component, payplugApplePay, priceBox) {
     'use strict';
 
     return Component.extend({
@@ -35,49 +33,65 @@ define([
          * @returns {void}
          */
         handleClick: async function () {
-            payplugApplePay.clearOrderData();
-
-            const applePayConfig = this.applePayConfig;
-            const form = $('#product_addtocart_form');
-            const isValid = form.validation('isValid');
+            const isValid = this._checkFormValidation();
 
             if (!isValid) {
                 return;
             }
 
-            try {
-                const formData = new FormData(form[0]);
-                const response = await $.ajax({
-                    url: url.build(this.createQuote),
-                    data: formData,
-                    type: 'post',
-                    dataType: 'json',
-                    cache: false,
-                    contentType: false,
-                    processData: false
-                });
+            payplugApplePay.clearOrderData();
+            this._initApplePay();
+        },
 
-                if (response.success) {
-                    const baseAmount = parseFloat(response.base_amount);
-                    const isVirtual = response.is_virtual;
-                    const workflowType = this.workflowType;
+        /**
+         * Validates the product add-to-cart form.
+         *
+         * @private
+         * @returns {boolean} True if the form is valid; otherwise, false.
+         */
+        _checkFormValidation: function() {
+            const form = $('#product_addtocart_form');
+            return form.validation('isValid');
+        },
 
-                    const { domain, locale, merchand_name: merchandName, currency: currencyCode } = applePayConfig;
-                    const config = { domain, locale, merchand_name: merchandName, currencyCode };
+        /**
+         * Returns the product price amount.
+         *
+         * @returns {Number|null} The product price amount or null if the price could not be retrieved.
+         */
+        _getAmountPrice: function() {
+            const priceBox = $('.product-info-price .price-wrapper');
+            const price = priceBox.data('price-amount') || null;
 
-                    payplugApplePay.invalidateMiniCart(true);
-                    payplugApplePay.setBaseAmount(baseAmount);
-                    payplugApplePay.setIsVirtual(isVirtual);
-                    payplugApplePay.setMerchandName(merchandName);
-                    payplugApplePay.setWorkflowType(workflowType);
-                    payplugApplePay.initApplePaySession(config);
-                } else {
-                    const message = response.message || 'Could not create quote for Apple Pay';
-                    messageList.addErrorMessage({ message: $t(message) });
-                }
-            } catch (err) {
-                messageList.addErrorMessage({ message: $t('Error preparing Apple Pay quote') });
+            if (priceBox.length && price) {
+                return priceBox.data('price-amount');
+            } else {
+                console.error('Could not get the product price');
             }
+        },
+
+        /**
+         * Initializes the Apple Pay session with the necessary configuration.
+         *
+         * @returns {void}
+         */
+        _initApplePay: function() {
+            const amountPrice = this._getAmountPrice();
+            const applePayConfig = this.applePayConfig;
+            const { domain, locale, merchand_name: merchandName, currency: currencyCode } = applePayConfig;
+            const config = { domain, locale, merchand_name: merchandName, currencyCode };
+            const workflowType = this.workflowType;
+
+            if (!amountPrice || !merchandName || !workflowType || !Object.keys(config).length ) {
+                return;
+            }
+
+            payplugApplePay.invalidateMiniCart(true);
+            payplugApplePay.setBaseAmount(amountPrice);
+            payplugApplePay.setIsVirtual(true);
+            payplugApplePay.setMerchandName(merchandName);
+            payplugApplePay.setWorkflowType(workflowType);
+            payplugApplePay.initApplePaySession(config);
         }
     });
 });

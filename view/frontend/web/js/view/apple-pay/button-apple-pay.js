@@ -143,12 +143,37 @@ define([
          * @returns {void}
          */
         _afterPlaceOrder: function () {
+            this._bindOnCompleteMethod();
             this._bindMarchantValidation();
             this._bindPaymentAuthorization();
             this._bindShippingMethodSelected();
             this._bindShippingContactSelected();
             this._bindPaymentCancel();
             this.applePaySession.begin();
+        },
+
+        /**
+         * Binds the onpaymentmethodselected event on the Apple Pay session.
+         *
+         * Called when the user selects a payment method in the Apple Pay payment sheet.
+         *
+         * @private
+         * @returns {void}
+         */
+        _bindOnCompleteMethod: function() {
+            const self = this;
+
+            this.applePaySession.onpaymentmethodselected = function () {
+                const updated = {
+                    "newTotal": {
+                        "label": self.merchandName,
+                        "amount": self.baseAmount,
+                        "type": "final"
+                    }
+                };
+
+                self.applePaySession.completePaymentMethodSelection(updated);
+            };
         },
 
         /**
@@ -178,11 +203,9 @@ define([
                     dataType: 'json',
                     success: function(response) {
                         if (response.error) {
-                            console.log('response.error 1', response.error);
                             self._cancelPayplugPaymentWithAbort();
                         } else {
                             try {
-                                self.orderId = response.order_id;
                                 self.applePaySession.completeMerchantValidation(response.merchantSession);
                             } catch (e) {
                                 self._cancelPayplugPaymentWithAbort();
@@ -261,7 +284,8 @@ define([
                     "newTotal": {
                         "label": self.merchandName,
                         "amount": self._getTotalAmount(),
-                        "type": "final"
+                        "type": "final",
+                        "paymentTiming": "immediate",
                     }
                 }
 
