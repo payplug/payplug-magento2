@@ -11,8 +11,21 @@ define([
         defaults: {
             template: 'Payplug_Payments/payment/payplug_payments_installment_plan'
         },
-
         redirectAfterPlaceOrder: false,
+
+        /**
+         * Init observable variables
+         * @return {Object}
+         */
+        initObservable: function () {
+            this._super();
+
+            this.isActive = ko.computed(function () {
+                return this.getCode() === this.isChecked() && '_active';
+            }, this);
+
+            return this;
+        },
 
         afterPlaceOrder: function () {
             fullScreenLoader.stopLoader();

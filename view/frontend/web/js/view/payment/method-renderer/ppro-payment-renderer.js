@@ -18,17 +18,6 @@ define([
         redirectAfterPlaceOrder: false,
         isLoading: false,
 
-        initObservable: function () {
-            this._super()
-                .observe({
-                    'isPproPlaceOrderDisabled': false,
-                    'pproDisabledMessage': '',
-                    'pproErrorType': '',
-                });
-
-            return this;
-        },
-
         initialize: function () {
             var self = this;
 
@@ -61,6 +50,26 @@ define([
                     self.updatePproMethod();
                 }
             });
+
+            return this;
+        },
+
+        /**
+         * Init observable variables
+         * @return {Object}
+         */
+        initObservable: function () {
+            this._super();
+
+            this.observe({
+                'isPproPlaceOrderDisabled': false,
+                'pproDisabledMessage': '',
+                'pproErrorType': '',
+            });
+
+            this.isActive = ko.computed(function () {
+                return this.getCode() === this.isChecked() && '_active';
+            }, this);
 
             return this;
         },

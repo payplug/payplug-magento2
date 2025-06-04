@@ -77,6 +77,20 @@ define([
         },
 
         /**
+         * Init observable variables
+         * @return {Object}
+         */
+        initObservable: function () {
+            this._super();
+
+            this.isActive = ko.computed(function () {
+                return this.getCode() === this.isChecked() && '_active';
+            }, this);
+
+            return this;
+        },
+
+        /**
          * After place order
          */
         afterPlaceOrder: function () {
