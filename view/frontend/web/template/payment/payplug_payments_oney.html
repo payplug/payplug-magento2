@@ -1,12 +1,11 @@
-<div class="payment-method"
-     data-bind="
+<div data-bind="
+        class: 'payment-method ' + getCode(), 
         css: {
-            '_active': (getCode() == isChecked()), 
+            '_active': isActive, 
             'oney-it': isOneyItalian()
         },
         attr: {
             'data-oney-container': getCode(), 
-            'class': 'payment-method ' + getCode()
         }
     ">
     <div class="payment-method-title field choice">
