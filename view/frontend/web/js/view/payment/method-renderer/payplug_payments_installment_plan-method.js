@@ -1,4 +1,3 @@
-/* @api */
 define([
     'Magento_Checkout/js/view/payment/default',
     'Payplug_Payments/js/action/redirect-on-success',

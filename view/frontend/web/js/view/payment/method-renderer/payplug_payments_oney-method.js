@@ -1,17 +1,26 @@
-/* @api */
 define([
-    'Payplug_Payments/js/view/payment/method-renderer/oney-payment-renderer',
-    'jquery',
-    'mage/translate'
-], function (Component, $) {
+    'mage/translate',
+    'Payplug_Payments/js/view/payment/method-renderer/oney-payment-renderer'
+], function ($t, Component) {
     'use strict';
 
     return Component.extend({
-        getConfiguration: function() {
+        /**
+         * Get the configuration of Oney payment method from the global checkout config.
+         *
+         * @returns {Object}
+         */
+        getConfiguration: function () {
             return window.checkoutConfig.payment.payplug_payments_oney;
         },
-        getPaymentTypeLabel: function() {
-            return $.mage.__('Payment in %1');
+
+        /**
+         * Returns the label associated with the given payment type.
+         *
+         * @returns {String}
+         */
+        getPaymentTypeLabel: function () {
+            return $t('Payment in %1');
         }
     });
 });

@@ -1,7 +1,6 @@
-/* @api */
 define([
-    'ko',
     'jquery',
+    'ko',
     'mage/url',
     'mage/translate',
     'Magento_Checkout/js/view/payment/default',
@@ -12,8 +11,8 @@ define([
     'Magento_Checkout/js/model/full-screen-loader',
     'payplugIntegrated'
 ], function (
-    ko,
     $,
+    ko,
     url,
     $t,
     Component,
@@ -56,19 +55,24 @@ define([
         },
 
         /**
-         * @inheritdoc
+         * Init component
+         *
+         * @return {Object}
          */
         initialize: function () {
             this._super();
             this.loadCards();
-            $('body').on('change', '[name="payment[payplug_payments_standard][customer_card_id]"]', function() {
+
+            $('body').on('change', '[name="payment[payplug_payments_standard][customer_card_id]"]', function () {
                 var customerCard = $('.payplug-payments-customer-card:checked');
+
                 if (customerCard.length > 0 && customerCard.data('card-id') === '') {
                     this.canDisplayIntegratedForm(true);
                 } else {
                     this.canDisplayIntegratedForm(false);
                 }
             }.bind(this));
+
             if (!this.getInitialSelectedCard()) {
                 this.canDisplayIntegratedForm(true);
             }
@@ -92,6 +96,9 @@ define([
 
         /**
          * After place order
+         * Triggered after a payment has been placed.
+         *
+         * @returns void
          */
         afterPlaceOrder: function () {
             const self = this;
@@ -103,6 +110,7 @@ define([
                 lightboxOnSuccessAction.execute(true);
                 return;
             }
+
             if (!this.isIntegrated()) {
                 if (window.checkoutConfig.payment.payplug_payments_standard.is_embedded) {
                     fullScreenLoader.stopLoader();
@@ -119,9 +127,9 @@ define([
 
             $.ajax({
                 url: url.build('payplug_payments/payment/standard') + '?should_redirect=0&integrated=1',
-                type: "GET",
+                type: 'GET',
                 dataType: 'json',
-                success: function(response) {
+                success: function (response) {
                     if (response.error === true) {
                         alert(response.message);
                         window.location.replace(response.url);
@@ -129,36 +137,37 @@ define([
                         if (typeof response.payment_id !== 'undefined' && response.payment_id) {
                             let selectedScheme = payplug.Scheme.AUTO;
                             let selectedCardType = $('.form-integrated [name="scheme"]:checked');
+
                             if (selectedCardType.length > 0) {
                                 selectedCardType = selectedCardType.data('card-type');
+                                
                                 if (payplug.Scheme[selectedCardType]) {
                                     selectedScheme = payplug.Scheme[selectedCardType];
                                 }
                             }
-                            let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click &&
-                                $('[name="save_card"]').is(':checked');
+
+                            let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click && $('[name="save_card"]').is(':checked');
                             self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
-                            self.integratedApi.onCompleted(function (event) {
+                            
+                            self.integratedApi.onCompleted(function () {
+                                $.ajax({
+                                    url: url.build('payplug_payments/payment/checkPayment'),
+                                    type: 'GET',
+                                    dataType: 'json',
+                                    data: { payment_id: response.payment_id },
+                                    success: function (res) {
+                                        fullScreenLoader.stopLoader();
 
-                              $.ajax({
-                                url: url.build('payplug_payments/payment/checkPayment'),
-                                type: "GET",
-                                dataType: 'json',
-                                data: {payment_id: response.payment_id},
-                                success: function (res) {
-
-                                  fullScreenLoader.stopLoader();
-
-
-                                  if(res.error === true){
-                                    window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
-                                  }else{
-                                    window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
-                                  }
-                                }
-                              });
+                                        if (res.error === true) {
+                                            window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
+                                        } else {
+                                            window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
+                                        }
+                                    }
+                                });
                             });
-                          fullScreenLoader.stopLoader();
+
+                            fullScreenLoader.stopLoader();
                         } else {
                             window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
                         }
@@ -171,7 +180,7 @@ define([
          * Get card logo
          * @returns {String}
          */
-        getCardLogo: function() {
+        getCardLogo: function () {
             return window.checkoutConfig.payment.payplug_payments_standard.logo;
         },
 
@@ -179,7 +188,7 @@ define([
          * Get cards
          * @returns {Object}
          */
-        getCards: function() {
+        getCards: function () {
             return this.cards;
         },
 
@@ -187,7 +196,7 @@ define([
          * Can display cards in title
          * @returns {Boolean}
          */
-        canDisplayCardsInTitle: function() {
+        canDisplayCardsInTitle: function () {
             return window.checkoutConfig.payment.payplug_payments_standard.display_cards_in_container === false &&
                 this.canDisplayCards();
         },
@@ -196,7 +205,7 @@ define([
          * Can display cards in container
          * @returns {Boolean}
          */
-        canDisplayCardsInContainer: function() {
+        canDisplayCardsInContainer: function () {
             return window.checkoutConfig.payment.payplug_payments_standard.display_cards_in_container === true &&
                 this.canDisplayCards();
         },
@@ -205,7 +214,7 @@ define([
          * Can display cards
          * @returns {Boolean}
          */
-        canDisplayCards: function() {
+        canDisplayCards: function () {
             return window.checkoutConfig.payment.payplug_payments_standard.is_one_click && this.cards.length > 0;
         },
 
@@ -214,11 +223,14 @@ define([
          */
         loadCards: function () {
             if (window.checkoutConfig.payment.payplug_payments_standard.is_one_click) {
-                var cacheKey = 'payplug-payments-cards';
-                var self = this;
-                customerData.reload([cacheKey], false).done(function(jqXHR) {
-                    self.cards = jqXHR[cacheKey].cards;
-                });
+                const self = this;
+                const cacheKey = 'payplug-payments-cards';
+
+                customerData
+                    .reload([cacheKey], false)
+                    .done(function (jqXHR) {
+                        self.cards = jqXHR[cacheKey].cards;
+                    });
             }
         },
 
@@ -231,8 +243,10 @@ define([
                 if (this.getSelectedMethod() === null) {
                     this.selectPaymentMethod();
                 }
+
                 return true;
             }
+
             return false;
         },
 
@@ -240,7 +254,7 @@ define([
          * Get initial selected card
          * @returns {Number}
          */
-        getInitialSelectedCard: function() {
+        getInitialSelectedCard: function () {
             if (sessionStorage.getItem(this.sessionCardId) !== null) {
                 return sessionStorage.getItem(this.sessionCardId);
             }
@@ -252,8 +266,8 @@ define([
          * Is card disabled
          * @returns {Boolean}
          */
-        isCardDisabled: function() {
-            var selectedMethod = this.getSelectedMethod();
+        isCardDisabled: function () {
+            const selectedMethod = this.getSelectedMethod();
             return selectedMethod !== null && selectedMethod !== this.getCode();
         },
 
@@ -283,7 +297,7 @@ define([
          * Select card
          * @returns {Boolean}
          */
-        selectCard: function(data) {
+        selectCard: function (data) {
             this.selectPaymentMethod();
             $('.payplug-payments-error').hide();
             sessionStorage.setItem(this.sessionCardId, data.id);
@@ -294,7 +308,7 @@ define([
          * Get selected method
          * @returns {String}
          */
-        getSelectedMethod: function() {
+        getSelectedMethod: function () {
             return quote.paymentMethod() ? quote.paymentMethod().method : null;
         },
 
@@ -302,7 +316,7 @@ define([
          * Select payment method
          * @returns {Object}
          */
-        selectPaymentMethod: function() {
+        selectPaymentMethod: function () {
             $('.payplug-payments-customer-card').prop('disabled', false);
             return this._super();
         },
@@ -341,7 +355,7 @@ define([
          * Get selected card Id
          * @returns {String}
          */
-        getSelectedCardId: function() {
+        getSelectedCardId: function () {
             var customerCard = $('.payplug-payments-customer-card:checked');
             if (customerCard.length > 0 && customerCard.data('card-id')) {
                 return customerCard.data('card-id');
@@ -354,17 +368,20 @@ define([
          * Place order
          * @returns {Object}
          */
-        placeOrder: function(data, event) {
+        placeOrder: function (data, event) {
            if (this.isIntegrated() && this.getSelectedCardId() === '') {
                this.integratedApi.validateForm();
                let original = this._super.bind(this);
+
                this.integratedApi.onValidateForm(({isFormValid}) => {
                    if (isFormValid) {
                        original(data, event);
                    }
                });
+
                return;
            }
+
            this._super(data, event);
         },
 
@@ -381,7 +398,7 @@ define([
          * Init integrated form
          * @returns {Boolean}
          */
-        initIntegratedForm: function() {
+        initIntegratedForm: function () {
             const self = this;
 
             if (!this.isIntegrated()) {
@@ -417,9 +434,10 @@ define([
             ), valid: false};
 
             $.each(this.integratedForm, function (key, data) {
-                data.element.onChange(function(result) {
+                data.element.onChange(function (result) {
                     self.integratedForm[key].valid = result.valid;
                     let inputContainer = $('.' + key + '-input-container');
+
                     if (result.valid) {
                         inputContainer.removeClass('error-invalid').removeClass('error-empty');
                     } else if (result.error) {
