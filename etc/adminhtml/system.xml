@@ -56,6 +56,26 @@
                 <field id="mybank_max_amounts"/>
                 <field id="can_use_mybank"/>
             </group>
+            <group id="oauth2" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
+                <label>PayPlug Payments - Oauth2</label>
+                <comment>Already activated our new secure authentication? Simply connect your Payplug account above to continue.</comment>
+                <field id="authorize_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1" canRestore="1">
+                    <label>Authorize</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2AuthBtn</frontend_model>
+                    <comment>Don't have a Payplug account? Create one.</comment>
+                </field>
+                <field id="client_id" translate="label" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" canRestore="1">
+                    <label>Client ID</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="client_secret" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" canRestore="1">
+                    <label>Client secret</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="access_token" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" canRestore="1">
+                    <label>Oauth2 Access Token</label>
+                </field>
+            </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
             <group id="payplug_payments_standard" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
