@@ -103,7 +103,7 @@ define([
                 applicationData: btoa(JSON.stringify({
                     'apple_pay_domain': domain
                 })),
-                requiredBillingContactFields: [
+            requiredBillingContactFields: [
                     "postalAddress",
                     "name"
                 ]
@@ -160,7 +160,7 @@ define([
          * @private
          * @returns {void}
          */
-        _bindOnCompleteMethod: function() {
+        _bindOnCompleteMethod: function () {
             const self = this;
 
             this.applePaySession.onpaymentmethodselected = function () {
@@ -193,19 +193,32 @@ define([
                     type: event.type,
                 };
 
-                let btoaevent = btoa(JSON.stringify(eventData));
-                const postData = { btoaevent };
+                let formData = new FormData();
+
+                if (this.workflowType === 'product') {
+                    const form = $('#product_addtocart_form');
+                    formData = new FormData(form[0]);
+                }
+
+                formData.set('btoaevent',  btoa(JSON.stringify(eventData)));
 
                 $.ajax({
                     url: url.build(createMockOrder) + '?form_key=' + $.cookie('form_key'),
-                    data: postData,
+                    data: formData,
                     type: 'POST',
-                    dataType: 'json',
-                    success: function(response) {
+                    contentType: false,
+                    processData: false,
+                    success: function (response) {
                         if (response.error) {
                             self._cancelPayplugPaymentWithAbort();
                         } else {
                             try {
+                                if (self.workflowType === 'product') {
+                                    self.invalidateMiniCart(true);
+                                    self.setBaseAmount(response.base_amount);
+                                }
+
+                                self.orderId = response.order_id;
                                 self.applePaySession.completeMerchantValidation(response.merchantSession);
                             } catch (e) {
                                 self._cancelPayplugPaymentWithAbort();
@@ -226,7 +239,7 @@ define([
          * @private
          * @returns {void}
          */
-        _bindPaymentAuthorization: function() {
+        _bindPaymentAuthorization: function () {
             const self = this;
 
             this.applePaySession.onpaymentauthorized = event => {
@@ -389,7 +402,7 @@ define([
          * @param {String} merchandName - The merchant name to be set.
          * @returns {void}
          */
-        setMerchandName: function  (merchandName) {
+        setMerchandName: function (merchandName) {
             this.merchandName = merchandName;
         },
 
@@ -409,7 +422,7 @@ define([
          * @returns {void}
          */
         clearOrderData: function () {
-            this.ordeorderIdr_id = null;
+            this.orderId = null;
             this.baseAmount = 0;
             this.shippingAmount = 0;
             this.shippingMethod = null;
@@ -459,7 +472,12 @@ define([
          */
         _cancelPayplugPayment: function () {
             if (this.orderId) {
-                $.ajax(url.build(cancelUrl) + '?fromApplePayButton=1&form_key=' + $.cookie('form_key'));
+                $.ajax({
+                    url: url.build(cancelUrl) + '?form_key=' + $.cookie('form_key'),
+                    type: 'GET'
+                }).always(function () {
+                    this.invalidateMiniCart(true);
+                });
             }
 
             messageList.addErrorMessage({ message: $t('The transaction was aborted and your card has not been charged') });

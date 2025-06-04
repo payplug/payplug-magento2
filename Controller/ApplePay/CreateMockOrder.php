@@ -5,13 +5,21 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\ApplePay;
 
 use Exception;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
+use Magento\Checkout\Model\Cart as CartModel;
+use Magento\Checkout\Model\Cart\RequestQuantityProcessor;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filter\LocalizedToNormalized;
+use Magento\Framework\Locale\ResolverInterface as LocaleResolverInterface;
 use Magento\Framework\Message\MessageInterface;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
@@ -37,7 +45,13 @@ class CreateMockOrder implements HttpPostActionInterface
         private readonly Validator $formKeyValidator,
         private readonly RequestInterface $request,
         private readonly GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods,
-        private readonly StoreManagerInterface $storeManager
+        private readonly StoreManagerInterface $storeManager,
+        private readonly ProductRepositoryInterface $productRepository,
+        private readonly CartModel $cartModel,
+        private readonly LocaleResolverInterface $localeResolver,
+        private readonly RequestQuantityProcessor $requestQuantityProcessor,
+        private readonly EventManagerInterface $eventManager,
+        private readonly ResponseInterface $response
     ) {
     }
 
@@ -57,8 +71,44 @@ class CreateMockOrder implements HttpPostActionInterface
         if (!$formKeyValidation) {
             return $result->setData($response);
         }
+
         try {
             $sessionQuote = $this->checkoutSession->getQuote();
+            $productId = (int)$this->request->getParam('product');
+
+            if ($productId) {
+                $storeId = $this->storeManager->getStore()->getId();
+                /** @var Product $product */
+                $product = $this->productRepository->getById($productId, false, $storeId);
+
+                $sessionQuote->removeAllItems();
+
+                $params = $this->request->getParams();
+
+                if (isset($params['qty'])) {
+                    $filter = new LocalizedToNormalized(['locale' => $this->localeResolver->getLocale()]);
+                    $params['qty'] = $this->requestQuantityProcessor->prepareQuantity($params['qty']);
+                    $params['qty'] = $filter->filter($params['qty']);
+                }
+
+                $this->cartModel->addProduct($product, $params);
+
+                if ($sessionQuote->isVirtual() === false) {
+                    $sessionQuote->getShippingAddress()->setShippingMethod('');
+                }
+
+                $this->cartModel->save();
+
+                $this->eventManager->dispatch(
+                    'checkout_cart_add_product_complete',
+                    ['product' => $product, 'request' => $this->request, 'response' => $this->response]
+                );
+
+                if ($sessionQuote->getHasError()) {
+                    throw new LocalizedException(__('Order could not be created.'));
+                }
+            }
+
             if (!$sessionQuote || !$sessionQuote->getId()) {
                 throw new LocalizedException(__('No active quote found.'));
             }
@@ -97,8 +147,6 @@ class CreateMockOrder implements HttpPostActionInterface
             $orderId = null;
             try {
                 $orderId = $this->cartManagement->placeOrder($newQuote->getId());
-                $newQuote->setIsActive(false);
-                $this->cartRepository->save($newQuote);
             } catch (Throwable $e) {
                 $this->logger->critical('placeOrder failed', [
                     'message' => $e->getMessage(),
@@ -119,9 +167,13 @@ class CreateMockOrder implements HttpPostActionInterface
                 throw new Exception('Could not retrieve merchant session');
             }
 
+            $grandTotal = (float)$order->getGrandTotal();
+            $shippingAmount = (float)$order->getShippingAmount();
+
             $response['error'] = false;
             $response['message'] = __('Order placed successfully.');
             $response['order_id'] = $orderId;
+            $response['base_amount'] = $grandTotal - $shippingAmount;
             $response['merchantSession'] = $merchantSession;
         } catch (Exception $e) {
             $this->logger->info(sprintf("%s %s", $e->getMessage(), $e->getTraceAsString()));

@@ -2,13 +2,15 @@ define([
     'jquery',
     'ko',
     'uiComponent',
-    'Payplug_Payments/js/view/apple-pay/button-apple-pay',
-    'Magento_Catalog/js/price-box',
-], function ($, ko, Component, payplugApplePay, priceBox) {
+    'Payplug_Payments/js/view/apple-pay/button-apple-pay'
+], function ($, ko, Component, payplugApplePay) {
     'use strict';
 
     return Component.extend({
-        createQuote: 'payplug_payments/applePay/CreateApplePayQuote',
+        defaults: {
+            productFinalPrice: 0,
+            productIsVirtual: false
+        },
         applePayIsAvailable: false,
         isVisible: ko.observable(false),
 
@@ -49,25 +51,9 @@ define([
          * @private
          * @returns {boolean} True if the form is valid; otherwise, false.
          */
-        _checkFormValidation: function() {
+        _checkFormValidation: function () {
             const form = $('#product_addtocart_form');
             return form.validation('isValid');
-        },
-
-        /**
-         * Returns the product price amount.
-         *
-         * @returns {Number|null} The product price amount or null if the price could not be retrieved.
-         */
-        _getAmountPrice: function() {
-            const priceBox = $('.product-info-price .price-wrapper');
-            const price = priceBox.data('price-amount') || null;
-
-            if (priceBox.length && price) {
-                return priceBox.data('price-amount');
-            } else {
-                console.error('Could not get the product price');
-            }
         },
 
         /**
@@ -75,8 +61,9 @@ define([
          *
          * @returns {void}
          */
-        _initApplePay: function() {
-            const amountPrice = this._getAmountPrice();
+        _initApplePay: function () {
+            const amountPrice = this.productFinalPrice;
+            const isVirtual = this.productIsVirtual;
             const applePayConfig = this.applePayConfig;
             const { domain, locale, merchand_name: merchandName, currency: currencyCode } = applePayConfig;
             const config = { domain, locale, merchand_name: merchandName, currencyCode };
@@ -86,9 +73,8 @@ define([
                 return;
             }
 
-            payplugApplePay.invalidateMiniCart(true);
             payplugApplePay.setBaseAmount(amountPrice);
-            payplugApplePay.setIsVirtual(true);
+            payplugApplePay.setIsVirtual(isVirtual);
             payplugApplePay.setMerchandName(merchandName);
             payplugApplePay.setWorkflowType(workflowType);
             payplugApplePay.initApplePaySession(config);
