@@ -1,38 +1,45 @@
 define([
+    'jquery',
+    'ko',
+    'mage/translate',
+    'mage/url',
     'Magento_Checkout/js/view/payment/default',
     'Payplug_Payments/js/action/redirect-on-success',
     'Magento_Checkout/js/model/full-screen-loader',
-    'jquery',
-    'Magento_Checkout/js/model/quote',
-    'mage/url',
-    'ko',
-    'mage/translate'
-], function (Component, redirectOnSuccessAction, fullScreenLoader, $, quote, urlBuilder, ko) {
+    'Magento_Checkout/js/model/quote'
+], function ($, ko, $t, url, Component, redirectOnSuccessAction, fullScreenLoader, quote) {
     'use strict';
 
     return Component.extend({
         defaults: {
             template: 'Payplug_Payments/payment/payplug_payments_ppro'
         },
-
         redirectAfterPlaceOrder: false,
         isLoading: false,
 
+        /**
+         * Init component
+         *
+         * @return {Object}
+         */
         initialize: function () {
-            var self = this;
+            const self = this;
 
             this._super();
+
             quote.paymentMethod.subscribe(function (value) {
                 self.isLoading = false;
                 if (value && value.method === self.getCode()) {
                     self.updatePproMethod();
                 }
             });
+
             quote.shippingAddress.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updatePproMethod();
                 }
             });
+
             quote.billingAddress.subscribe(function () {
                 if (quote.billingAddress() !== null) {
                     if (self.getCode() === self.isChecked()) {
@@ -40,11 +47,13 @@ define([
                     }
                 }
             });
+
             quote.totals.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updatePproMethod();
                 }
             });
+
             quote.shippingMethod.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updatePproMethod();
@@ -74,23 +83,42 @@ define([
             return this;
         },
 
+        /**
+         * Triggered after a payment has been placed.
+         *
+         * @returns void
+         */
         afterPlaceOrder: function () {
             fullScreenLoader.stopLoader();
             redirectOnSuccessAction.execute();
         },
-        getLogo: function() {
+
+        /**
+         * Retrieves the URL for the Ppro card logo.
+         * 
+         * @returns {String}
+         */
+        getLogo: function () {
             return this.getConfiguration().logo;
         },
-        updatePproMethod: function() {
-            var self = this;
-            if (self.isLoading) {
+
+        /**
+         * 
+         * @returns {Boolean} True if the request was sent successfully, false otherwise.
+         */
+        updatePproMethod: function () {
+            const self = this;
+
+            if (this.isLoading) {
                 return false;
             }
-            self.updateLoading(true);
+
+            this.updateLoading(true);
+
             try {
                 $.ajax({
-                    url: urlBuilder.build('payplug_payments/ppro/isAvailable'),
-                    type: "POST",
+                    url: url.build('payplug_payments/ppro/isAvailable'),
+                    type: 'POST',
                     data: {
                         'billingCountry': quote.billingAddress() ? quote.billingAddress().countryId : null,
                         'shippingCountry': quote.shippingAddress() ? quote.shippingAddress().countryId : null,
@@ -103,35 +131,58 @@ define([
                     } else {
                         self.processPproFailure(response.data.message, response.data.type);
                     }
+
                     self.updateLoading(false);
-                }).fail(function (response) {
-                    self.processPproFailure($.mage.__('An error occurred. Please try again.'));
+                }).fail(function () {
+                    self.processPproFailure($t('An error occurred. Please try again.'));
                     self.updateLoading(false);
                 });
 
                 return true;
             } catch (e) {
-                self.processPproFailure($.mage.__('An error occurred. Please try again.'));
+                self.processPproFailure($t('An error occurred. Please try again.'));
                 self.updateLoading(false);
+
                 return false;
             }
         },
-        updateLoading: function(isLoading) {
+
+        /**
+         * Update the loading state of the payment method.
+         *
+         * @param {Boolean} isLoading
+         * @returns void
+         */
+        updateLoading: function (isLoading) {
             this.isLoading = isLoading;
+            
             if (isLoading) {
                 fullScreenLoader.startLoader();
             } else {
                 fullScreenLoader.stopLoader();
             }
         },
-        processPproFailure: function(message, errorType) {
+
+        /**
+         * Handles a failure when checking if the Ppro payment method is available.
+         * 
+         * @param {String} message
+         * @param {String} errorType
+         * @returns void
+         */
+        processPproFailure: function (message, errorType) {
             this.isPproPlaceOrderDisabled(true);
             this.pproDisabledMessage(message);
             this.pproErrorType(typeof errorType === 'undefined' ? '' : errorType);
         },
-        // Functions to be defined by each ppro payment renderer
-        getConfiguration: function() {
+
+        /**
+         * Returns the label associated with the given payment type.
+         *
+         * @returns {String}
+         */
+        getConfiguration: function () {
             return {};
-        },
+        }
     });
 });
