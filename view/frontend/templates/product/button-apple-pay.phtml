@@ -18,7 +18,11 @@ use Payplug\Payments\Block\ApplePay\ProductButton;
         class="hidden"
         data-bind="
             click: handleClick,
-            css: { hidden: !isVisible() } ">
+            css: { 
+                'hidden': !isVisible(), 
+                'is-disabled': isDisabled 
+            }
+        ">
     </apple-pay-button>
 
     <!-- ko foreach: getRegion('messages') -->

@@ -33,12 +33,14 @@ define([
         initApplePaySession: function (config) {
             const applePayIsAvailable = this.getApplePayAvailability();
 
-            if (applePayIsAvailable) {
-                const versionNumber = this._getApplePayVersion();
-                const sessionRequest = this.getPaymentRequest(config);
-                this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
-                this._afterPlaceOrder();
+            if (!applePayIsAvailable) {
+                return null;
             }
+            
+            const versionNumber = this._getApplePayVersion();
+            const sessionRequest = this.getPaymentRequest(config);
+            this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+            this._afterPlaceOrder();
         },
 
         /**
