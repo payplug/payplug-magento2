@@ -167,7 +167,7 @@ define([
                 const updated = {
                     "newTotal": {
                         "label": self.merchandName,
-                        "amount": self.baseAmount,
+                        "amount": self._getTotalAmount(),
                         "type": "final"
                     }
                 };
