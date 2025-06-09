@@ -153,6 +153,7 @@
                 <active>0</active>
                 <show_on_checkout>1</show_on_checkout>
                 <show_on_cart>0</show_on_cart>
+                <show_on_product>0</show_on_product>
                 <title>Pay with Apple Pay</title>
                 <processing_order_status>processing</processing_order_status>
                 <canceled_order_status>canceled</canceled_order_status>

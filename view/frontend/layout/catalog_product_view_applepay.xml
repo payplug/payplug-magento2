@@ -7,12 +7,12 @@
         </referenceBlock>
 
         <referenceContainer name="product.info.form.content">
-            <block class="Payplug\Payments\Block\ApplePay\Button" name="product.info.button.apple.pay"
+            <block class="Payplug\Payments\Block\ApplePay\ProductButton" name="product.info.button.apple.pay"
                    template="Payplug_Payments::product/button-apple-pay.phtml" after="-"/>
         </referenceContainer>
 
         <referenceContainer name="product.info.options.wrapper.bottom">
-            <block class="Payplug\Payments\Block\ApplePay\Button" name="product.info.button.apple.pay.options.wrapper"
+            <block class="Payplug\Payments\Block\ApplePay\ProductButton" name="product.info.button.apple.pay.options.wrapper"
                    template="Payplug_Payments::product/button-apple-pay.phtml" after="-"/>
         </referenceContainer>
     </body>
