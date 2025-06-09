@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\ApplePay;
 
 use Exception;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Api\DataObjectHelper;
 use Magento\Framework\App\Action\HttpPostActionInterface;
@@ -39,7 +40,8 @@ class UpdateCartOrder implements HttpPostActionInterface
         private readonly CartRepositoryInterface $cartRepository,
         private readonly DataObjectHelper $dataObjectHelper,
         private readonly QuoteAddressToOrder $quoteAddressToOrder,
-        private readonly CustomerSession $customerSession
+        private readonly CustomerSession $customerSession,
+        private readonly CheckoutSession $checkoutSession
     ) {
     }
 
@@ -114,6 +116,10 @@ class UpdateCartOrder implements HttpPostActionInterface
             $updatedPayment = $paymentObject->update($paymentData);
 
             if ($updatedPayment->is_paid) {
+                $sessionQuote = $this->checkoutSession->getQuote();
+                $sessionQuote->setIsActive(false);
+                $this->cartRepository->save($sessionQuote);
+
                 $response->setData([
                     'error' => false,
                     'message' => 'Apple Pay Payment is paid.',
