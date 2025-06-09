@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Payplug\Payments\Block\ApplePay;
 
 use Magento\Bundle\Model\Product\Type as BundleProductType;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Registry;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
@@ -22,10 +22,10 @@ abstract class AbstractButton extends Template
     public function __construct(
         private readonly ConfigProvider $configProvider,
         private readonly Json $jsonSerializer,
-        private readonly StoreManagerInterface $storeManager,
+        protected readonly StoreManagerInterface $storeManager,
         private readonly CheckoutSession $checkoutSession,
         protected readonly ApplePay $applePayHelper,
-        protected readonly Registry $registry,
+        protected readonly ProductRepositoryInterface $productRepository,
         Context $context,
         array $data = []
     ) {

@@ -35,8 +35,8 @@ use Payplug\Payments\Block\ApplePay\ProductButton;
                         "component" : "Payplug_Payments/js/view/product/button-apple-pay",
                         "workflowType": "product",
                         "applePayConfig": <?= /* @noEscape */ $block->getConfigJson(); ?>,
-                        "productFinalPrice": <?= $block->getProduct()->getFinalPrice(); ?>,
-                        "productIsVirtual": <?= $block->getProduct()->isVirtual() ? 'true' : 'false'; ?>,
+                        "productFinalPrice": <?= $block->getCurrentProduct()->getFinalPrice(); ?>,
+                        "productIsVirtual": <?= $block->getCurrentProduct()->isVirtual() ? 'true' : 'false'; ?>,
                         "children": {
                             "messages": {
                                 "component": "Magento_Ui/js/view/messages",
