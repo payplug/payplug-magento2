@@ -67,6 +67,7 @@ define([
 
         /**
          * Init observable variables
+         * 
          * @return {Object}
          */
         initObservable: function () {

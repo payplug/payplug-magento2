@@ -1,12 +1,12 @@
-/* @api */
 define([
+    'jquery',
+    'ko',
+    'mage/url',
+    'mage/translate',
     'Magento_Checkout/js/view/payment/default',
     'Magento_Checkout/js/model/full-screen-loader',
-    'jquery',
     'Magento_Checkout/js/model/quote',
-    'mage/url',
-    'ko'
-], function (Component, fullScreenLoader, $, quote, url, ko) {
+], function ($, ko, url, $t, Component, fullScreenLoader, quote) {
     'use strict';
 
     return Component.extend({
@@ -25,22 +25,32 @@ define([
         isLoading: false,
         applePayDisabledMessage: ko.observable(''),
 
+        /**
+         * Init component
+         *
+         * @return {Object}
+         */
         initialize: function () {
             this._super();
 
-            let self = this;
+            const self = this;
+
             this.isVisible(window.ApplePaySession && ApplePaySession.canMakePayments());
+
             quote.paymentMethod.subscribe(function (value) {
                 self.isLoading = false;
+
                 if (value && value.method === self.getCode()) {
                     self.updateApplePayAvailability();
                 }
             });
+
             quote.shippingAddress.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updateApplePayAvailability();
                 }
             });
+
             quote.billingAddress.subscribe(function () {
                 if (quote.billingAddress() !== null) {
                     if (self.getCode() === self.isChecked()) {
@@ -48,11 +58,13 @@ define([
                     }
                 }
             });
+
             quote.totals.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updateApplePayAvailability();
                 }
             });
+
             quote.shippingMethod.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updateApplePayAvailability();
@@ -76,18 +88,26 @@ define([
             return this;
         },
 
-        updateApplePayAvailability: function() {
-            var self = this;
+        /**
+         * Updates the availability of the Apple Pay button.
+         * 
+         * @returns {boolean}
+         */
+        updateApplePayAvailability: function () {
+            const self = this;
+
             if (self.isLoading) {
                 return false;
             }
+
             self.updateLoading(true);
             this.unbindButtonClick();
             this.applePayDisabledMessage('');
+
             try {
                 $.ajax({
                     url: url.build(this.isAvailableUrl),
-                    type: "POST",
+                    type: 'POST',
                     data: {}
                 }).done(function (response) {
                     if (response.success) {
@@ -97,7 +117,7 @@ define([
                     }
                     self.updateLoading(false);
                 }).fail(function (response) {
-                    self.applePayDisabledMessage($.mage.__('An error occurred while getting Apple Pay details. Please try again.'));
+                    self.applePayDisabledMessage($t('An error occurred while getting Apple Pay details. Please try again.'));
                     self.updateLoading(false);
                 });
 
@@ -107,28 +127,58 @@ define([
                 return false;
             }
         },
-        updateLoading: function(isLoading) {
+
+        /**
+         * Updates the loading state of the payment method.
+         * 
+         * @param {Boolean} isLoading
+         * @returns void
+         */
+        updateLoading: function (isLoading) {
             this.isLoading = isLoading;
+
             if (isLoading) {
                 fullScreenLoader.startLoader();
             } else {
                 fullScreenLoader.stopLoader();
             }
         },
-        bindButtonClick: function() {
-            setTimeout(function() {
+
+        /**
+         * Binds the click event to the Apple Pay button.
+         * 
+         * @return {void}
+         */
+        bindButtonClick: function () {
+            setTimeout(function () {
                 $('apple-pay-button').click(function(data, event) {
                     this.placeOrder(data, event);
                 }.bind(this));
             }.bind(this), 1);
         },
-        unbindButtonClick: function() {
+        
+        /**
+         * Unbinds the click event from the Apple Pay button.
+         * 
+         * @return {void}
+         */
+        unbindButtonClick: function () {
             $('apple-pay-button').off('click');
         },
+
+        /**
+         * Handle the place order action.
+         * 
+         * @param {Object} data 
+         * @param {Object} event 
+         * @returns {boolean}
+         */
         placeOrder: function (data, event) {
             if (this.isPlaceOrderActionAllowed() === true) {
                 this.unbindButtonClick();
+
                 let grandTotal = quote.totals()['grand_total'] + quote.totals()['tax_amount'];
+
                 if (quote.totals()['total_segments']) {
                     let totalSegment = quote.totals()['total_segments'].filter(function (segment) {
                         return segment.code.indexOf('grand_total') !== -1;
@@ -137,6 +187,7 @@ define([
                         grandTotal = totalSegment[0].value;
                     }
                 }
+
                 let request = {
                     "countryCode": quote.billingAddress() ? quote.billingAddress().countryId : '',
                     "currencyCode": quote.totals()['quote_currency_code'],
@@ -155,6 +206,7 @@ define([
                         'apple_pay_domain': window.checkoutConfig.payment.payplug_payments_apple_pay.domain
                     }))
                 };
+                
                 this.session = new ApplePaySession(3, request);
 
                 let placeOrderResult = this._super(data, event);
@@ -165,23 +217,49 @@ define([
 
             return false;
         },
+
+        /**
+         * Triggered after a payment has been placed.
+         *
+         * @returns void
+         */
         afterPlaceOrder: function () {
             this.unbindButtonClick();
             fullScreenLoader.stopLoader();
             this.onApplePayButtonClicked();
         },
-        getCardLogo: function() {
+        
+        /**
+         * Get the URL for the Apple Pay card logo.
+         * 
+         * @returns {String}
+         */
+        getCardLogo: function () {
             return window.checkoutConfig.payment.payplug_payments_apple_pay.logo;
         },
-        getApplePayLocale: function() {
+        
+        /**
+         * Gets the locale for the Apple Pay session.
+         * 
+         * @returns {String}
+         */
+        getApplePayLocale: function () {
             return window.checkoutConfig.payment.payplug_payments_apple_pay.locale;
         },
-        onApplePayButtonClicked: function() {
-            let self = this;
+
+        /**
+         * Triggered when the user clicks the Apple Pay button.
+         *
+         * @private
+         * @returns {void}
+         */
+        onApplePayButtonClicked: function () {
+            const self = this;
+
             this.session.onvalidatemerchant = async event => {
                 $.ajax({
                     url: url.build(this.getTransactionDataUrl),
-                    type: "GET",
+                    type: 'GET',
                     dataType: 'json',
                     success: function(response) {
                         if (response.error === true) {
@@ -199,11 +277,12 @@ define([
                     }
                 });
             };
+
             this.session.onpaymentauthorized = event => {
                 try {
                     $.ajax({
                         url: url.build(self.updateTransactionDataUrl),
-                        type: "POST",
+                        type: 'POST',
                         data: {
                             token: event.payment.token,
                             workflowType: 'checkout'
@@ -233,7 +312,14 @@ define([
             };
             this.session.begin();
         },
-        cancelPayplugPayment: function() {
+
+        /**
+         * Call payment cancellation URL, then close ApplePaySession
+         *
+         * @private
+         * @returns {void}
+         */
+        cancelPayplugPayment: function () {
             window.location.replace(url.build(this.cancelUrl) + '?form_key=' + $.cookie('form_key'));
         }
     });

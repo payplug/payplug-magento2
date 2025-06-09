@@ -452,6 +452,7 @@ define([
             this._cancelPayplugPayment();
             this.applePaySession.abort();
         },
+        
         /**
          * Cancel the payment with failure (close Payment UI and trigger ApplePay Session failure)
          *
@@ -464,6 +465,7 @@ define([
                 "status": ApplePaySession.STATUS_FAILURE
             });
         },
+
         /**
          * Call payment cancellation URL, then close ApplePaySession
          *
