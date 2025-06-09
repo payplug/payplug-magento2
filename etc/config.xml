@@ -151,16 +151,23 @@
             </payplug_payments_bancontact>
             <payplug_payments_apple_pay>
                 <active>0</active>
-                <show_on_checkout>0</show_on_checkout>
+                <show_on_checkout>1</show_on_checkout>
                 <show_on_cart>0</show_on_cart>
+                <show_on_product>0</show_on_product>
                 <title>Pay with Apple Pay</title>
                 <processing_order_status>processing</processing_order_status>
                 <canceled_order_status>canceled</canceled_order_status>
                 <allowspecific>0</allowspecific>
                 <sort_order>0</sort_order>
+                <placeholder_email>placeholder@applepay.com</placeholder_email>
+                <placeholder_firstname>Firstname</placeholder_firstname>
+                <placeholder_lastname>Lastname</placeholder_lastname>
+                <placeholder_postcode>00000</placeholder_postcode>
+                <placeholder_city>City</placeholder_city>
+                <placeholder_region>Region</placeholder_region>
                 <default_country>FR</default_country>
                 <model>PayplugPaymentApplePayFacade</model>
-                <payment_action>authorize_capture</payment_action>
+                <payment_action>order</payment_action>
                 <is_gateway>1</is_gateway>
                 <order_status>pending</order_status>
                 <can_order>1</can_order>

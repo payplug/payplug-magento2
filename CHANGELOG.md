@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.4.0) - 2025-06-XX
+
+### Features
+
+- Add Apple Pay button to product view page
+- Add Apple Pay button to cart page
+- Add Chrome and Firefox Apple button support
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...release/v4.4.0)**
+
+### Added
+
+- Add Apple Pay conditionnal render from configuration [#263](https://github.com/payplug/payplug-magento2/pull/263)
+- Add Apple Pay button to product view page [#275](https://github.com/payplug/payplug-magento2/pull/275)
+- Add Apple Pay button to cart page [#275](https://github.com/payplug/payplug-magento2/pull/275) [#252](https://github.com/payplug/payplug-magento2/pull/252) [#251](https://github.com/payplug/payplug-magento2/pull/251)
+- Add Apple Pay workflowType parameter to place order fetch [#250](https://github.com/payplug/payplug-magento2/pull/250)
+- Add Chrome and Firefox Apple button support [#272](https://github.com/payplug/payplug-magento2/pull/272)
+
+### Changed
+
+- Upgrade Apple Pay JS SDK version [#272](https://github.com/payplug/payplug-magento2/pull/272)
+- Enable CB by default and expose brand selector in Apple Pay [#272](https://github.com/payplug/payplug-magento2/pull/272)
+
+### Fixed
+
+- Fix apple pay payments on cart page when having configurable products in cart [#275](https://github.com/payplug/payplug-magento2/pull/275)
+
 ## [4.3.4](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.4) - 2025-04-28
 
 ### Features

@@ -6,7 +6,7 @@ namespace Payplug\Payments\Controller\ApplePay;
 
 use Exception;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
@@ -16,18 +16,19 @@ use Magento\Quote\Model\Quote\AddressFactory;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetQuoteApplePayAvailableMethods;
 
-class GetAvailablesShippingMethods implements HttpGetActionInterface
+class GetAvailablesShippingMethods implements HttpPostActionInterface
 {
     public function __construct(
-        private RequestInterface $request,
-        private JsonFactory $resultJsonFactory,
-        private Logger $logger,
-        private Validator $formKeyValidator,
-        private AddressFactory $addressFactory,
-        private CheckoutSession $checkoutSession,
-        private CartRepositoryInterface $cartRepository,
-        private GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods
-    ) {}
+        private readonly RequestInterface $request,
+        private readonly JsonFactory $resultJsonFactory,
+        private readonly Logger $logger,
+        private readonly Validator $formKeyValidator,
+        private readonly AddressFactory $addressFactory,
+        private readonly CheckoutSession $checkoutSession,
+        private readonly CartRepositoryInterface $cartRepository,
+        private readonly GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods
+    ) {
+    }
 
     /**
      * Give Available shipping methods datas for Given ApplePayPaymentContact address data
@@ -35,7 +36,6 @@ class GetAvailablesShippingMethods implements HttpGetActionInterface
      */
     public function execute(): Json
     {
-        /** @var Json $response */
         $response = $this->resultJsonFactory->create();
         $response->setData([
             'error' => true,
@@ -47,8 +47,9 @@ class GetAvailablesShippingMethods implements HttpGetActionInterface
             return $response;
         }
 
+        $applePayData = $this->request->getParams();
+
         try {
-            $applePayData = $this->request->getParams();
             $firstname = !empty($applePayData['givenName']) ? $applePayData['givenName'] : 'PlaceHolder first name';
             $lastname = !empty($applePayData['familyName']) ? $applePayData['familyName'] : 'PlaceHolder last name';
             $city = !empty($applePayData['locality']) ? $applePayData['locality'] : '';
@@ -65,7 +66,8 @@ class GetAvailablesShippingMethods implements HttpGetActionInterface
             $quote = $this->checkoutSession->getQuote()->setShippingAddress($address);
             $this->cartRepository->save($quote);
 
-            $response->setData([
+            $response->setData(
+                [
                     'error' => false,
                     'methods' => $this->getCurrentQuoteAvailableMethods->execute((int)$quote->getId())
                 ]
@@ -77,6 +79,7 @@ class GetAvailablesShippingMethods implements HttpGetActionInterface
                 'datas' => $applePayData
             ]);
         }
+
         return $response;
     }
 }
