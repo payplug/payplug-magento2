@@ -473,12 +473,14 @@ define([
          * @returns {void}
          */
         _cancelPayplugPayment: function () {
+            const self = this;
+
             if (this.orderId) {
                 $.ajax({
                     url: url.build(cancelUrl) + '?form_key=' + $.cookie('form_key'),
                     type: 'GET'
                 }).always(function () {
-                    this.invalidateMiniCart(true);
+                    self.invalidateMiniCart(true);
                 });
             }
 
