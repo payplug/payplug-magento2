@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper;
 
+use Exception;
 use Magento\Config\App\Config\Type\System;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
@@ -23,6 +24,7 @@ class Config extends AbstractHelper
      * The constant to access the configurations
      */
     public const CONFIG_PATH = 'payplug_payments/general/';
+    public const APPLE_PAY_CONFIG_PATH = 'payment/payplug_payments_apple_pay/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
@@ -344,6 +346,8 @@ class Config extends AbstractHelper
             // Payplug payment Apple Pay configuration
             'payment/payplug_payments_apple_pay/active',
             'payment/payplug_payments_apple_pay/title',
+            'payment/payplug_payments_apple_pay/show_on_cart',
+            'payment/payplug_payments_apple_pay/show_on_checkout',
             'payment/payplug_payments_apple_pay/processing_order_status',
             'payment/payplug_payments_apple_pay/canceled_order_status',
             'payment/payplug_payments_apple_pay/allowspecific',
@@ -428,6 +432,11 @@ class Config extends AbstractHelper
         }
 
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
+    }
+
+    public function getApplePayDisallowedShippingMethods(): array
+    {
+        return array_map('trim', explode(',', (string)$this->getConfigValue('excluded_shipping_method', ScopeInterface::SCOPE_STORE, null, self::APPLE_PAY_CONFIG_PATH)));
     }
 
     /**
