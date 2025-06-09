@@ -61,6 +61,21 @@ define([
 
             return this;
         },
+
+        /**
+         * Init observable variables
+         * @return {Object}
+         */
+        initObservable: function () {
+            this._super();
+
+            this.isActive = ko.computed(function () {
+                return this.getCode() === this.isChecked() && '_active';
+            }, this);
+
+            return this;
+        },
+
         updateApplePayAvailability: function() {
             var self = this;
             if (self.isLoading) {
