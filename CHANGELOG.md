@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Apple Pay button to cart page
 - Add Chrome and Firefox Apple button support
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...release/v4.4.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...v4.4.0)**
 
 ### Added
 
@@ -23,10 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Apple Pay workflowType parameter to place order fetch [#250](https://github.com/payplug/payplug-magento2/pull/250)
 - Add Chrome and Firefox Apple button support [#272](https://github.com/payplug/payplug-magento2/pull/272)
 
+
 ### Changed
 
 - Upgrade Apple Pay JS SDK version [#272](https://github.com/payplug/payplug-magento2/pull/272)
 - Enable CB by default and expose brand selector in Apple Pay [#272](https://github.com/payplug/payplug-magento2/pull/272)
+- Prevent invoice auto-generation on Apple Pay [#275](https://github.com/payplug/payplug-magento2/pull/275)
 
 ### Fixed
 
