@@ -11,7 +11,10 @@ class ProductButton extends AbstractButton
 
     public function _toHtml(): string
     {
-        if ($this->applePayHelper->canDisplayApplePay()
+        $this->setCurrentProduct();
+
+        if ($this->getRequest()->getFullActionName() === 'catalog_product_view'
+            && $this->applePayHelper->canDisplayApplePay()
             && $this->applePayHelper->canDisplayApplePayOnProduct()
             && $this->getCurrentProduct()
         ) {
@@ -21,25 +24,21 @@ class ProductButton extends AbstractButton
         return '';
     }
 
-    public function getCurrentProduct(): ?ProductInterface
+    private function setCurrentProduct(): void
     {
-        if ($this->getRequest()->getFullActionName() !== 'catalog_product_view') {
-            return null;
-        }
+        $productId = $this->getRequest()->getParam('id');
 
-        if ($this->currentProduct === null) {
-            $productId = $this->getRequest()->getParam('id');
-
+        if ($productId) {
             try {
                 $storeId = $this->storeManager->getStore()->getId();
-                $product = $this->productRepository->getById($productId, false, $storeId);
+                $this->currentProduct = $this->productRepository->getById($productId, false, $storeId);
             } catch (NoSuchEntityException) {
-                $product = null;
             }
-
-            $this->currentProduct = $product;
         }
+    }
 
+    public function getCurrentProduct(): ?ProductInterface
+    {
         return $this->currentProduct;
     }
 }
