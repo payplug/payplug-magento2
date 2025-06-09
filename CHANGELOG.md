@@ -5,6 +5,90 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.4.0) - 2025-06-XX
+
+### Features
+
+- Add Apple Pay button to product view page
+- Add Apple Pay button to cart page
+- Add Chrome and Firefox Apple button support
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...release/v4.4.0)**
+
+### Added
+
+- Add Apple Pay conditionnal render from configuration [#263](https://github.com/payplug/payplug-magento2/pull/263)
+- Add Apple Pay button to product view page [#275](https://github.com/payplug/payplug-magento2/pull/275)
+- Add Apple Pay button to cart page [#275](https://github.com/payplug/payplug-magento2/pull/275) [#252](https://github.com/payplug/payplug-magento2/pull/252) [#251](https://github.com/payplug/payplug-magento2/pull/251)
+- Add Apple Pay workflowType parameter to place order fetch [#250](https://github.com/payplug/payplug-magento2/pull/250)
+- Add Chrome and Firefox Apple button support [#272](https://github.com/payplug/payplug-magento2/pull/272)
+
+### Changed
+
+- Upgrade Apple Pay JS SDK version [#272](https://github.com/payplug/payplug-magento2/pull/272)
+- Enable CB by default and expose brand selector in Apple Pay [#272](https://github.com/payplug/payplug-magento2/pull/272)
+
+### Fixed
+
+- Fix apple pay payments on cart page when having configurable products in cart [#275](https://github.com/payplug/payplug-magento2/pull/275)
+
+## [4.3.4](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.4) - 2025-04-28
+
+### Features
+
+- Add Payplug information block on the back-office ondemand orders. (MAG-440)
+- Allow to capture a deferred payment even with an order increment id in the metadata. (MAG-453)
+- Fix cropped logo in Oney popin. (MAG-424)
+- Fix the installment plan payment not redirecting to the failure page post checkout. (MAG-441)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.3...v4.3.4)**
+
+### Added
+
+- Add Payplug information block on the back-office ondemand orders. [#269](https://github.com/payplug/payplug-magento2/pull/269)
+
+### Changed
+
+- Allow to capture a deferred payment even with an order increment id in the metadata. [#270](https://github.com/payplug/payplug-magento2/pull/270)
+
+### Fixed
+
+- Fix cropped logo in Oney popin. [#266](https://github.com/payplug/payplug-magento2/pull/266)
+- Fix the installment plan payment not redirecting to the failure page post checkout. [#268](https://github.com/payplug/payplug-magento2/pull/268)
+
+## [4.3.3](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.3) - 2025-04-09
+
+### Features
+
+- Fix an SQL crash happening in some case when updating the order. (MAG-443)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.2...v4.3.3)**
+
+### Fixed
+
+- Fix an SQL crash happening in some case when updating the order. (MAG-443). [#262](https://github.com/payplug/payplug-magento2/pull/262)
+
+## [4.3.2](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.2) - 2025-04-02
+
+### Features
+
+- Add a documentation about the crons usage in 4.3.0 and above. (MAG-433)
+- Fix a case were the crons didn't unstucks payments from payment_review state. (SMP-3116)
+- Fix the checkout redirecting to success page on non-authorized deferred payment. (MAG-436)
+- Fix an error on creating an order from the back-office, due to null iso code. (MAG-437)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...v4.3.2)**
+
+### Added
+
+- Add a documentation about the crons usage in 4.3.0 and above. [#257](https://github.com/payplug/payplug-magento2/pull/257)
+
+### Fixed
+
+- Fix a case were the crons didn't unstucks payments from payment_review state in production. [#257](https://github.com/payplug/payplug-magento2/pull/257)
+- Prevent the manual order creation to crash if isoCode is null [#258](https://github.com/payplug/payplug-magento2/pull/258)
+- Prevent successfully redirecting to the success page if the deferred payment isn't authorized. [#259](https://github.com/payplug/payplug-magento2/pull/259)
+
 ## [4.3.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.3.0) - 2025-03-19
 
 ### Features
@@ -14,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Synchronize orders status with Payplug servers post payment 
 - Compatibility with php 8.1 and Magento 2.4.4 and above. (SMP-3032)
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.2.0...release/v4.3.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.2.0...v4.3.0)**
 
 ### Added
 

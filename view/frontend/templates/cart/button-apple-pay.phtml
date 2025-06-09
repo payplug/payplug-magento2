@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\ApplePay\CartButton;
+
+/**
+ * @var Escaper $escaper
+ * @var CartButton $block
+ */
+
+if ($block->quoteHasBundleProductItem()) {
+    return;
+}
+?>
+
+<div data-bind="scope: 'button-apple-pay'">
+    <apple-pay-button
+        buttonstyle="black"
+        type="pay"
+        class="hidden"
+        data-bind="
+            click: handleClick,
+            css: { hidden: !isVisible() } ">
+    </apple-pay-button>
+
+    <!-- ko foreach: getRegion('messages') -->
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <!--/ko-->
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Ui/js/core/app" : {
+                "components" : {
+                    "button-apple-pay" : {
+                        "component" : "Payplug_Payments/js/view/cart/button-apple-pay",
+                        "workflowType": "shopping-cart",
+                        "children": {
+                            "messages": {
+                                "component": "Magento_Ui/js/view/messages",
+                                "displayArea": "messages"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+</script>

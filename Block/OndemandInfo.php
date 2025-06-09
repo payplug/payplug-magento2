@@ -12,6 +12,8 @@ use Payplug\Payments\Logger\Logger;
 
 class OndemandInfo extends Info
 {
+    protected $_template = 'Payplug_Payments::info/ondemand.phtml';
+
     public function __construct(
         Context $context,
         Data $payplugHelper,

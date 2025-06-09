@@ -17,6 +17,7 @@ class ApplePay extends AbstractHelper
      * Constants to display Apple Pay on several pages
      */
     public const ACTIVE_APPLE_PAY_PAGE = 'active';
+    public const CART_APPLE_PAY_PRODUCT = 'show_on_product';
     public const CART_APPLE_PAY_PAGE = 'show_on_cart';
     public const CHECKOUT_APPLE_PAY_PAGE = 'show_on_checkout';
 
@@ -52,6 +53,11 @@ class ApplePay extends AbstractHelper
     public function canDisplayApplePay(): bool
     {
         return $this->canDisplayApplePayOnPage(ApplePay::ACTIVE_APPLE_PAY_PAGE);
+    }
+
+    public function canDisplayApplePayOnProduct(): bool
+    {
+        return $this->canDisplayApplePayOnPage(ApplePay::CART_APPLE_PAY_PRODUCT);
     }
 
     public function canDisplayApplePayOnCart(): bool

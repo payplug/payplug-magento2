@@ -10,8 +10,9 @@ use Payplug\Payments\Block\Info;
  * @var Escaper $escaper
  */
 $specificInfo = $block->getAdminSpecificInformation();
+$title = $block->getMethod()->getTitle();
 ?>
-<?= $escaper->escapeHtml($block->getMethod()->getTitle()); ?>
+<?= $escaper->escapeHtml(__($title)) ?>
 <?php if ($specificInfo): ?>
     <table class="data-table admin__table-secondary">
         <?php foreach ($specificInfo as $label => $value): ?>
