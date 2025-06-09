@@ -50,8 +50,8 @@ class GetAvailablesShippingMethods implements HttpPostActionInterface
         $applePayData = $this->request->getParams();
 
         try {
-            $firstname = !empty($applePayData['givenName']) ? $applePayData['givenName'] : 'PlaceHolder first name';
-            $lastname = !empty($applePayData['familyName']) ? $applePayData['familyName'] : 'PlaceHolder last name';
+            $firstname = !empty($applePayData['givenName']) ? $applePayData['givenName'] : '';
+            $lastname = !empty($applePayData['familyName']) ? $applePayData['familyName'] : '';
             $city = !empty($applePayData['locality']) ? $applePayData['locality'] : '';
             $postcode = !empty($applePayData['postalCode']) ? $applePayData['postalCode'] : '';
             $countryId = !empty($applePayData['countryCode']) ? $applePayData['countryCode'] : '';
