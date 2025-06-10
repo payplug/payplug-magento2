@@ -13,6 +13,7 @@ define([
         },
         applePayIsAvailable: false,
         isVisible: ko.observable(false),
+        isDisabled: ko.observable(false),
 
         /**
          * Initializes the component.
@@ -73,11 +74,17 @@ define([
                 return;
             }
 
+            this.isDisabled(true);
+
             payplugApplePay.setBaseAmount(amountPrice);
             payplugApplePay.setIsVirtual(isVirtual);
             payplugApplePay.setMerchandName(merchandName);
             payplugApplePay.setWorkflowType(workflowType);
             payplugApplePay.initApplePaySession(config);
+
+            payplugApplePay.applePaySession.oncancel = () => {
+                this.isDisabled(false);
+            };
         }
     });
 });

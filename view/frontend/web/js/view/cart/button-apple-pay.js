@@ -9,6 +9,7 @@ define([
     return Component.extend({
         applePayIsAvailable: false,
         isVisible: ko.observable(false),
+        isDisabled: ko.observable(false),
 
         /**
          * Initializes the component.
@@ -34,6 +35,8 @@ define([
             const workflowType = this.workflowType;
             const currencyCode = quote.totals()['quote_currency_code'];
             const config = Object.assign(window.checkoutConfig.payment.payplug_payments_apple_pay, { currencyCode });
+            
+            this.isDisabled(true);
 
             payplugApplePay.clearOrderData();
             payplugApplePay.setBaseAmount(baseAmount);
@@ -41,6 +44,10 @@ define([
             payplugApplePay.setMerchandName(merchandName);
             payplugApplePay.setWorkflowType(workflowType);
             payplugApplePay.initApplePaySession(config);
+
+            payplugApplePay.applePaySession.oncancel = () => {
+                this.isDisabled(false);
+            };
         },
 
         /**

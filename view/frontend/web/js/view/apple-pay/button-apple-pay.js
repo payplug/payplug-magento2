@@ -33,12 +33,14 @@ define([
         initApplePaySession: function (config) {
             const applePayIsAvailable = this.getApplePayAvailability();
 
-            if (applePayIsAvailable) {
-                const versionNumber = this._getApplePayVersion();
-                const sessionRequest = this.getPaymentRequest(config);
-                this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
-                this._afterPlaceOrder();
+            if (!applePayIsAvailable) {
+                return null;
             }
+            
+            const versionNumber = this._getApplePayVersion();
+            const sessionRequest = this.getPaymentRequest(config);
+            this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+            this._afterPlaceOrder();
         },
 
         /**
@@ -473,12 +475,14 @@ define([
          * @returns {void}
          */
         _cancelPayplugPayment: function () {
+            const self = this;
+
             if (this.orderId) {
                 $.ajax({
                     url: url.build(cancelUrl) + '?form_key=' + $.cookie('form_key'),
                     type: 'GET'
                 }).always(function () {
-                    this.invalidateMiniCart(true);
+                    self.invalidateMiniCart(true);
                 });
             }
 
