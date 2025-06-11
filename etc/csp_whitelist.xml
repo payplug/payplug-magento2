@@ -20,6 +20,7 @@
             <values>
                 <value id="payplug-all" type="host">*.payplug.com</value>
                 <value id="dalenys-all" type="host">*.dalenys.com</value>
+                <value id="payplug-apple-pay" type="host">https://applepay.cdn-apple.com</value>
             </values>
         </policy>
         <policy id="font-src">
