@@ -59,7 +59,7 @@
             <group id="oauth2" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
                 <label>PayPlug Payments - Oauth2</label>
                 <comment>Already activated our new secure authentication? Simply connect your Payplug account above to continue.</comment>
-                <field id="authorize_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1" canRestore="1">
+                <field id="authorize_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
                     <label>Authorize</label>
                     <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2AuthBtn</frontend_model>
                     <comment>Don't have a Payplug account? Create one.</comment>

@@ -16,7 +16,7 @@ class Oauth2AuthBtn extends Field
         $buttonBlock = $this->getForm()->getLayout()->createBlock(Button::class);
         $data = [
             'label' => __('Login'),
-            'onclick' => "setLocation('" . $this->getUrl('payplug_payments_admin/config/oauth2Auth') . "')",
+            'onclick' => "setLocation('" . $this->getUrl('payplug_payments_admin/config/oauth2Login') . "')",
         ];
 
         return $buttonBlock->setData($data)->toHtml();
