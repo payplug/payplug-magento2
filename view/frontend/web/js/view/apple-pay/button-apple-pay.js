@@ -105,7 +105,7 @@ define([
                 applicationData: btoa(JSON.stringify({
                     'apple_pay_domain': domain
                 })),
-            requiredBillingContactFields: [
+                requiredBillingContactFields: [
                     "postalAddress",
                     "name"
                 ]
