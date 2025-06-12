@@ -6,7 +6,6 @@ namespace Payplug\Payments\Controller\ApplePay;
 
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Catalog\Model\Product;
 use Magento\Checkout\Model\Cart as CartModel;
 use Magento\Checkout\Model\Cart\RequestQuantityProcessor;
 use Magento\Checkout\Model\Session as CheckoutSession;
@@ -78,7 +77,6 @@ class CreateMockOrder implements HttpPostActionInterface
 
             if ($productId) {
                 $storeId = $this->storeManager->getStore()->getId();
-                /** @var Product $product */
                 $product = $this->productRepository->getById($productId, false, $storeId);
 
                 $sessionQuote->removeAllItems();
