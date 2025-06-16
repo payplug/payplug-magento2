@@ -32,26 +32,39 @@ class Oauth2LogoutBtn extends Field
 
         $data = [
             'label' => __('Logout'),
-            'onclick' => "setLocation('$url')",
+            'onclick' => "setLocation('$url')"
         ];
 
-        return $buttonBlock->setData($data)->toHtml();
+        $statusLabel = __('Your are currently logged-in with email : <strong>%1</strong>', $this->getEmailValue());
+        $info = <<<HTML
+<div class="message message-success">{$statusLabel}</div><br>
+HTML;
+
+        return $info . $buttonBlock->setData($data)->toHtml();
     }
 
     public function render(AbstractElement $element): string
     {
-        $websiteId = $this->getRequest()->getParam('website');
-
-        $email = $this->scopeConfig->getValue(
-            'payplug_payments/oauth2/email',
-            $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            $websiteId ?: 0
-        );
-
-        if (!$email) {
+        if (!$this->getEmailValue()) {
             return '';
         }
 
         return parent::render($element);
+    }
+
+    protected function _isInheritCheckboxRequired($element)
+    {
+        return false;
+    }
+
+    private function getEmailValue(): ?string
+    {
+        $websiteId = $this->getRequest()->getParam('website');
+
+        return $this->scopeConfig->getValue(
+            'payplug_payments/oauth2/email',
+            $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            $websiteId ?: 0
+        );
     }
 }

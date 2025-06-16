@@ -60,30 +60,21 @@
                 <label>PayPlug Payments - Oauth2</label>
                 <comment>Already activated our new secure authentication? Simply connect your Payplug account above to continue.</comment>
                 <field id="login_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
-                    <label>Login</label>
+                    <label>Connection</label>
                     <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2LoginBtn</frontend_model>
                     <comment>Don't have a Payplug account? Create one.</comment>
                 </field>
-                <field id="logout_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
-                    <label>Logout</label>
+                <field id="logout_btn" translate="label comment" type="button" sortOrder="30" showInDefault="1" showInWebsite="1">
+                    <label>Connection</label>
                     <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2LogoutBtn</frontend_model>
                 </field>
-                <field id="email" translate="label" type="text" sortOrder="10" showInDefault="20" showInWebsite="1">
-                    <label>Email</label>
-                    <validate>validate-email</validate>
-                    <backend_model>Magento\Config\Model\Config\Backend\Email\Address</backend_model>
-                </field>
-                <field id="environmentmode" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1">
+                <field id="environmentmode" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1">
                     <label>Mode</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Mode</source_model>
                 </field>
-                <field id="auth_data" translate="label" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="1">
-                    <label>Oauth2 Auth Data</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-                <field id="token_data" translate="label" type="textarea" sortOrder="50" showInDefault="1" showInWebsite="1">
-                    <label>Oauth2 Token Data</label>
-                </field>
+                <field id="email"/>
+                <field id="client_data"/>
+                <field id="access_token_data"/>
             </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">

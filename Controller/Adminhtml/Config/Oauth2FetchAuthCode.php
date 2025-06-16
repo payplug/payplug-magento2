@@ -16,7 +16,6 @@ use Payplug\Payments\Logger\Logger;
 class Oauth2FetchAuthCode implements HttpGetActionInterface
 {
     public function __construct(
-        private readonly PayplugAuthentication $payplugAuthentication,
         private readonly RequestInterface $request,
         private readonly UrlInterface $urlBuilder,
         private readonly MessageManagerInterface $messageManager,
@@ -32,13 +31,13 @@ class Oauth2FetchAuthCode implements HttpGetActionInterface
         $companyId = $this->request->getParam('company_id');
         $websiteId = $this->request->getParam('website');
         $callbackUrl = $this->urlBuilder->getUrl(
-            'payplug_payments_admin/config/oauth2FetchCredentials',
+            'payplug_payments_admin/config/oauth2FetchClientData',
             ['website' => $websiteId]
         );
 
         $codeVerifier = bin2hex(openssl_random_pseudo_bytes(50));
 
-        $this->adminAuthSession->setData('payplug_oauth2_params', [
+        $this->adminAuthSession->setData(Oauth2FetchClientData::PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA, [
             'client_id' => $clientId,
             'company_id' => $companyId,
             'code_verifier' => $codeVerifier,
@@ -46,7 +45,7 @@ class Oauth2FetchAuthCode implements HttpGetActionInterface
         ]);
 
         try {
-            $this->payplugAuthentication->initiateOAuth($clientId, $callbackUrl, $codeVerifier);
+            PayplugAuthentication::initiateOAuth($clientId, $callbackUrl, $codeVerifier);
             exit;
         } catch (ConfigurationException $e) {
             $this->logger->error($e->getMessage());

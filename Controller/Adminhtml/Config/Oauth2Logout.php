@@ -4,8 +4,7 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
 use Magento\Framework\App\Action\HttpGetActionInterface;
-use Magento\Framework\App\Cache\Type\Config;
-use Magento\Framework\App\Cache\TypeListInterface as CacheTypeListInterface;
+use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface as ConfigWriterInterface;
 use Magento\Framework\App\RequestInterface;
@@ -21,7 +20,7 @@ class Oauth2Logout implements HttpGetActionInterface
         private readonly RequestInterface $request,
         private readonly MessageManagerInterface $messageManager,
         private readonly ConfigWriterInterface $configWriter,
-        private readonly CacheTypeListInterface $cacheTypeList
+        private readonly ReinitableConfigInterface $scopeConfig
     ) {
     }
 
@@ -30,10 +29,10 @@ class Oauth2Logout implements HttpGetActionInterface
         $this->messageManager->addSuccessMessage(__('You have been logged out successfully'));
 
         $this->deleteConfig('payplug_payments/oauth2/email');
-        $this->deleteConfig('payplug_payments/oauth2/auth_data');
-        $this->deleteConfig('payplug_payments/oauth2/token_data');
+        $this->deleteConfig('payplug_payments/oauth2/client_data');
+        $this->deleteConfig('payplug_payments/oauth2/access_token_data');
 
-        $this->cacheTypeList->cleanType(Config::TYPE_IDENTIFIER);
+        $this->scopeConfig->reinit();
 
         return $this->redirectFactory->create()->setPath(
             'adminhtml/system_config/edit',

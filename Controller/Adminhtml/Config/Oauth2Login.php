@@ -14,7 +14,6 @@ class Oauth2Login implements HttpGetActionInterface
 {
     public function __construct(
         private readonly RedirectFactory $redirectFactory,
-        private readonly PayplugAuthentication $payplugAuthentication,
         private readonly UrlInterface $urlBuilder,
         private readonly RequestInterface $request
     ) {
@@ -28,13 +27,12 @@ class Oauth2Login implements HttpGetActionInterface
             ['website' => $websiteId]
         );
         $oauthCallbackUrl = $this->urlBuilder->getUrl(
-            'payplug_payments_admin/config/oauth2FetchCredentials',
+            'payplug_payments_admin/config/oauth2FetchClientData',
             ['website' => $websiteId]
         );
 
-        $url = $this->payplugAuthentication::getRegisterUrl($callbackUrl, $oauthCallbackUrl);
-        // TODO use lib php instead of this hack
-        $url = str_replace('retail.service.payplug.com', 'retail.service-qa.payplug.com', $url);
+        /** @var string $url */
+        $url = PayplugAuthentication::getRegisterUrl($callbackUrl, $oauthCallbackUrl);
 
         return $this->redirectFactory->create()->setUrl($url);
     }

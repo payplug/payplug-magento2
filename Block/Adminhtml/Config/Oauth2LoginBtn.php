@@ -31,8 +31,9 @@ class Oauth2LoginBtn extends Field
         $url = $this->getUrl('payplug_payments_admin/config/oauth2Login', ['website' => $websiteId]);
 
         $data = [
-            'label' => __('Login'),
+            'label' => __('Login to Payplug portal'),
             'onclick' => "setLocation('$url')",
+            'class' => 'action-primary'
         ];
 
         return $buttonBlock->setData($data)->toHtml();
@@ -53,5 +54,10 @@ class Oauth2LoginBtn extends Field
         }
 
         return parent::render($element);
+    }
+
+    protected function _isInheritCheckboxRequired($element)
+    {
+        return false;
     }
 }
