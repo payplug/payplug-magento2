@@ -29,13 +29,21 @@ class Oauth2FetchAuthCode implements HttpGetActionInterface
     public function execute()
     {
         $clientId = $this->request->getParam('client_id');
-        $callbackUrl = $this->urlBuilder->getUrl('payplug_payments_admin/config/oauth2FetchCredentials');
+        $companyId = $this->request->getParam('company_id');
+        $websiteId = $this->request->getParam('website');
+        $callbackUrl = $this->urlBuilder->getUrl(
+            'payplug_payments_admin/config/oauth2FetchCredentials',
+            ['website' => $websiteId]
+        );
 
         $codeVerifier = bin2hex(openssl_random_pseudo_bytes(50));
 
-        $this->adminAuthSession->setData('client_id', $clientId);
-        $this->adminAuthSession->setData('code_verifier', $codeVerifier);
-        $this->adminAuthSession->setData('callback_url', $callbackUrl);
+        $this->adminAuthSession->setData('payplug_oauth2_params', [
+            'client_id' => $clientId,
+            'company_id' => $companyId,
+            'code_verifier' => $codeVerifier,
+            'callback_url' => $callbackUrl,
+        ]);
 
         try {
             $this->payplugAuthentication->initiateOAuth($clientId, $callbackUrl, $codeVerifier);
