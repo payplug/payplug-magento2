@@ -18,7 +18,7 @@ use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
 use Payplug\Payments\Helper\Config as ConfigHelper;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Service\RenewOauth2AccessToken;
+use Payplug\Payments\Service\GetOauth2AccessToken;
 use Payplug\Payplug;
 
 class Oauth2FetchClientData implements HttpGetActionInterface
@@ -34,7 +34,7 @@ class Oauth2FetchClientData implements HttpGetActionInterface
         private readonly ConfigWriterInterface $configWriter,
         private readonly SerializerInterface $serializer,
         private readonly ReinitableConfigInterface $scopeConfig,
-        private readonly RenewOauth2AccessToken $renewOauth2AccessToken,
+        private readonly GetOauth2AccessToken $getOauth2AccessToken,
         private readonly ConfigHelper $configHelper
     ) {
     }
@@ -112,7 +112,7 @@ class Oauth2FetchClientData implements HttpGetActionInterface
                 : $liveClientDataResult;
             $clientId = $clientDataResult['httpResponse']['client_id'];
             $clientSecret = $clientDataResult['httpResponse']['client_secret'];
-            $this->renewOauth2AccessToken->execute($this->getWebsiteId(), true, $clientId, $clientSecret);
+            $this->getOauth2AccessToken->execute($this->getWebsiteId(), true, $clientId, $clientSecret);
 
             /**
              * Cleanup legacy auth config

@@ -12,9 +12,8 @@ use Magento\Framework\Serialize\JsonValidator;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
-use Payplug\Exception\PayplugException;
 
-class RenewOauth2AccessToken
+class GetOauth2AccessToken
 {
     public function __construct(
         private readonly ReinitableConfigInterface $scopeConfig,
@@ -29,13 +28,25 @@ class RenewOauth2AccessToken
      */
     public function execute(
         ?int $websiteId,
-        bool $force = false,
+        bool $forceNenewal = false,
         ?string $clientId = null,
         ?string $clientSecret = null
-    ): void {
-        if ($force === false) {
-            $willExpired = false; // TODO check current token validity
-            return;
+    ): ?string {
+        if ($forceNenewal === false) {
+            $serializedAccessTokenData = $this->getConfigValue('payplug_payments/oauth2/access_token_data', $websiteId);
+            if ($this->jsonValidator->isValid($serializedAccessTokenData) === false) {
+                throw new LocalizedException(__('Access token data is not valid.'));
+            }
+
+            $accessTokenData = $this->serializer->unserialize($serializedAccessTokenData);
+
+            $expiredAt = $accessTokenData['access_token'];
+            $now = time();
+            $tresholdBeforeExpiration = 10;
+
+            if ($expiredAt > $now + $tresholdBeforeExpiration) {
+                return (string)$accessTokenData['access_token'];
+            }
         }
 
         if (!$clientId || !$clientSecret) {
@@ -43,7 +54,7 @@ class RenewOauth2AccessToken
             $serializedClientData = $this->getConfigValue('payplug_payments/oauth2/client_data', $websiteId);
 
             if ($this->jsonValidator->isValid($serializedClientData) === false) {
-                return;
+                throw new LocalizedException(__('Client data is not valid.'));
             }
 
             $clientData = $this->serializer->unserialize($serializedClientData);
@@ -71,6 +82,8 @@ class RenewOauth2AccessToken
         );
 
         $this->scopeConfig->reinit();
+
+        return $jwtResult['httpResponse']['access_token'];
     }
 
     private function getConfigValue(string $path, ?int $websiteId)
