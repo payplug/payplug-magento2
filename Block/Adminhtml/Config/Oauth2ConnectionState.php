@@ -6,15 +6,17 @@ namespace Payplug\Payments\Block\Adminhtml\Config;
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
+use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as ConfigDataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 
-class Oauth2LogoutBtn extends Field
+class Oauth2ConnectionState extends Field
 {
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
+        private readonly ConfigDataCollectionFactory $configDatacollection,
         Context $context,
         array $data = [],
         ?SecureHtmlRenderer $secureRenderer = null
@@ -35,12 +37,20 @@ class Oauth2LogoutBtn extends Field
             'onclick' => "setLocation('$url')"
         ];
 
-        $statusLabel = __('Your are currently logged-in with email : <strong>%1</strong>', $this->getEmailValue());
+        $statusLabel = __(
+            'Your are currently authenticated with email <strong>%1</strong> (%2)',
+            $this->getEmailValue(),
+            $websiteId && $this->isEmailSetForCurrentScope() ? __('Website') : __('Default')
+        );
         $info = <<<HTML
-<div class="message message-success">{$statusLabel}</div><br>
+<div class="message message-success">{$statusLabel}</div>
 HTML;
 
-        return $info . $buttonBlock->setData($data)->toHtml();
+        if (!$this->isEmailSetForCurrentScope()) {
+            return $info;
+        }
+
+        return $info . '<br>' . $buttonBlock->setData($data)->toHtml();
     }
 
     public function render(AbstractElement $element): string
@@ -55,6 +65,21 @@ HTML;
     protected function _isInheritCheckboxRequired($element)
     {
         return false;
+    }
+
+    public function isEmailSetForCurrentScope(): bool
+    {
+        $websiteId = $this->getRequest()->getParam('website');
+
+        $scope = $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+        $scopeId = $websiteId ?: 0;
+
+        $collection = $this->configDatacollection->create();
+        $collection->addFieldToFilter('path', 'payplug_payments/oauth2/email')
+            ->addFieldToFilter('scope', $scope)
+            ->addFieldToFilter('scope_id', $scopeId);
+
+        return (bool)$collection->getSize();
     }
 
     private function getEmailValue(): ?string

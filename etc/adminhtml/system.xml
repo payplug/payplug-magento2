@@ -59,18 +59,15 @@
             <group id="oauth2" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
                 <label>PayPlug Payments - Oauth2</label>
                 <comment>Already activated our new secure authentication? Simply connect your Payplug account above to continue.</comment>
-                <field id="login_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
-                    <label>Connection</label>
+                <field id="connection_state" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
+                    <label>Connection state</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2ConnectionState</frontend_model>
+                    <comment>Need to use old login / password authentication mode ? Please disconnect Oauth2 connection</comment>
+                </field>
+                <field id="login_btn" translate="label comment" type="button" sortOrder="20" showInDefault="1" showInWebsite="1">
+                    <label>Login</label>
                     <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2LoginBtn</frontend_model>
                     <comment>Don't have a Payplug account? Create one.</comment>
-                </field>
-                <field id="logout_btn" translate="label comment" type="button" sortOrder="30" showInDefault="1" showInWebsite="1">
-                    <label>Connection</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2LogoutBtn</frontend_model>
-                </field>
-                <field id="environmentmode" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1">
-                    <label>Mode</label>
-                    <source_model>Payplug\Payments\Model\Config\Source\Mode</source_model>
                 </field>
                 <field id="email"/>
                 <field id="client_data"/>

@@ -23,6 +23,7 @@ class Config extends AbstractHelper
      * The constant to access the configurations
      */
     public const CONFIG_PATH = 'payplug_payments/general/';
+    public const OAUTH_CONFIG_PATH = 'payplug_payments/oauth2/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
@@ -144,6 +145,18 @@ class Config extends AbstractHelper
     public function isConnected(?string $scope = '', ?int $storeId = null): bool
     {
         $email = $this->getConfigValue('email', $scope, $storeId);
+        if ($this->scope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+            return (bool) $email;
+        }
+
+        $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
+
+        return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
+    }
+
+    public function isOauthConnected(?string $scope = '', ?int $storeId = null): bool
+    {
+        $email = $this->getConfigValue('email', $scope, $storeId, self::OAUTH_CONFIG_PATH);
         if ($this->scope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
             return (bool) $email;
         }
@@ -280,6 +293,10 @@ class Config extends AbstractHelper
             'payplug_payments/general/merchand_country',
             'payplug_payments/general/payment_page_backup',
             'payplug_payments/general/can_use_integrated_payments',
+            // OAUTH 2 configuration
+            'payplug_payments/oauth2/email',
+            'payplug_payments/oauth2/client_data',
+            'payplug_payments/oauth2/access_token_data',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
@@ -376,6 +393,38 @@ class Config extends AbstractHelper
         foreach ($keys as $key) {
             $this->configWriter->delete($key, $this->scope, $this->scopeId);
         }
+        $this->systemConfigType->clean();
+    }
+
+    public function clearLegacyAuthConfig(): void
+    {
+        $keys = [
+            'payplug_payments/general/test_api_key',
+            'payplug_payments/general/live_api_key',
+            'payplug_payments/general/connected',
+            'payplug_payments/general/verified',
+            'payplug_payments/general/email',
+            'payplug_payments/general/pwd',
+            'payplug_payments/general/environmentmode',
+            'payplug_payments/general/payment_page',
+            'payplug_payments/general/invoice_on_payment',
+            'payplug_payments/general/oney_countries',
+            'payplug_payments/general/oney_min_amounts',
+            'payplug_payments/general/oney_max_amounts',
+            'payplug_payments/general/use_live_mode',
+            'payplug_payments/general/can_save_cards',
+            'payplug_payments/general/can_create_installment_plan',
+            'payplug_payments/general/can_create_deferred_payment',
+            'payplug_payments/general/can_use_oney',
+            'payplug_payments/general/merchand_country',
+            'payplug_payments/general/payment_page_backup',
+            'payplug_payments/general/can_use_integrated_payments',
+        ];
+
+        foreach ($keys as $key) {
+            $this->configWriter->delete($key, $this->scope, $this->scopeId);
+        }
+
         $this->systemConfigType->clean();
     }
 

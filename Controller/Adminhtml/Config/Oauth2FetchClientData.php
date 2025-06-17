@@ -34,7 +34,8 @@ class Oauth2FetchClientData implements HttpGetActionInterface
         private readonly ConfigWriterInterface $configWriter,
         private readonly SerializerInterface $serializer,
         private readonly ReinitableConfigInterface $scopeConfig,
-        private readonly RenewOauth2AccessToken $renewOauth2AccessToken
+        private readonly RenewOauth2AccessToken $renewOauth2AccessToken,
+        private readonly ConfigHelper $configHelper
     ) {
     }
 
@@ -42,6 +43,7 @@ class Oauth2FetchClientData implements HttpGetActionInterface
     {
         $code = $this->request->getParam('code');
         $oauth2Params = $this->adminAuthSession->getData(self::PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA);
+        $this->adminAuthSession->setData(self::PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA, null);
 
         try {
             /**
@@ -113,9 +115,10 @@ class Oauth2FetchClientData implements HttpGetActionInterface
             $this->renewOauth2AccessToken->execute($this->getWebsiteId(), true, $clientId, $clientSecret);
 
             /**
-             * Unset payplug oauth onshot params for initiate oauth only
+             * Cleanup legacy auth config
              */
-            $this->adminAuthSession->setData(self::PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA, null);
+            $this->configHelper->initScopeData();
+            $this->configHelper->clearLegacyAuthConfig();
 
             $this->messageManager->addSuccessMessage(__('Oauth2 authentication successful'));
         } catch (Exception $e) {

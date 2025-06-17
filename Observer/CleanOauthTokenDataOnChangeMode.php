@@ -20,7 +20,7 @@ class CleanOauthTokenDataOnChangeMode implements ObserverInterface
 
         $websiteId = $websiteId ? (int)$websiteId : null;
 
-        if (in_array('payplug_payments/oauth2/environmentmode', $changedPaths)) {
+        if (in_array('payplug_payments/general/environmentmode', $changedPaths)) {
             $this->renewOauth2AccessToken->execute($websiteId, true);
         }
     }

@@ -34,7 +34,7 @@ class RenewOauth2AccessToken
         }
 
         if (!$clientId || !$clientSecret) {
-            $currentEnvMode = $this->getConfigValue('payplug_payments/oauth2/environmentmode', $websiteId);
+            $currentEnvMode = $this->getConfigValue('payplug_payments/general/environmentmode', $websiteId);
             $serializedClientData = $this->getConfigValue('payplug_payments/oauth2/client_data', $websiteId);
 
             if ($this->jsonValidator->isValid($serializedClientData) === false) {

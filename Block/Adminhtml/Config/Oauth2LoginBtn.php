@@ -6,6 +6,7 @@ namespace Payplug\Payments\Block\Adminhtml\Config;
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
+use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as ConfigDataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
@@ -14,7 +15,7 @@ use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 class Oauth2LoginBtn extends Field
 {
     public function __construct(
-        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly ConfigDataCollectionFactory $configDatacollection,
         Context $context,
         array $data = [],
         ?SecureHtmlRenderer $secureRenderer = null
@@ -25,13 +26,13 @@ class Oauth2LoginBtn extends Field
     /** @noinspection PhpMissingParentCallCommonInspection */
     protected function _getElementHtml(AbstractElement $element): string
     {
-        /** @var Button $buttonBlock  */
+        /** @var Button $buttonBlock */
         $buttonBlock = $this->getForm()->getLayout()->createBlock(Button::class);
         $websiteId = $this->getRequest()->getParam('website');
         $url = $this->getUrl('payplug_payments_admin/config/oauth2Login', ['website' => $websiteId]);
 
         $data = [
-            'label' => __('Login to Payplug portal'),
+            'label' => $websiteId ? __('Connect to Payplug for this website') : __('Connect to Payplug'),
             'onclick' => "setLocation('$url')",
             'class' => 'action-primary'
         ];
@@ -41,15 +42,7 @@ class Oauth2LoginBtn extends Field
 
     public function render(AbstractElement $element): string
     {
-        $websiteId = $this->getRequest()->getParam('website');
-
-        $email = $this->scopeConfig->getValue(
-            'payplug_payments/oauth2/email',
-            $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-            $websiteId ?: 0
-        );
-
-        if ($email) {
+        if ($this->isEmailSetForCurrentScope()) {
             return '';
         }
 
@@ -59,5 +52,20 @@ class Oauth2LoginBtn extends Field
     protected function _isInheritCheckboxRequired($element)
     {
         return false;
+    }
+
+    public function isEmailSetForCurrentScope(): bool
+    {
+        $websiteId = $this->getRequest()->getParam('website');
+
+        $scope = $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+        $scopeId = $websiteId ?: 0;
+
+        $collection = $this->configDatacollection->create();
+        $collection->addFieldToFilter('path', 'payplug_payments/oauth2/email')
+            ->addFieldToFilter('scope', $scope)
+            ->addFieldToFilter('scope_id', $scopeId);
+
+        return (bool)$collection->getSize();
     }
 }
