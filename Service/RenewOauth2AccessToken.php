@@ -7,10 +7,12 @@ namespace Payplug\Payments\Service;
 use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface as ConfigWriterInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\JsonValidator;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
+use Payplug\Exception\PayplugException;
 
 class RenewOauth2AccessToken
 {
@@ -22,6 +24,9 @@ class RenewOauth2AccessToken
     ) {
     }
 
+    /**
+     * @throws LocalizedException
+     */
     public function execute(
         ?int $websiteId,
         bool $force = false,
@@ -48,6 +53,15 @@ class RenewOauth2AccessToken
         }
 
         $jwtResult = PayplugAuthentication::generateJWT($clientId, $clientSecret);
+
+        if (!$jwtResult || empty($jwtResult['httpResponse'])) {
+            throw new LocalizedException(__('The JWT is invalid.'));
+        }
+
+        $now = time();
+        $validityPeriod = (int)$jwtResult['httpResponse']['expires_in'];
+        $jwtResult['httpResponse']['created_at'] = $now;
+        $jwtResult['httpResponse']['expired_at'] = $now + $validityPeriod;
 
         $this->configWriter->save(
             'payplug_payments/oauth2/access_token_data',
