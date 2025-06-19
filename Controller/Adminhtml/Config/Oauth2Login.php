@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
@@ -23,11 +24,11 @@ class Oauth2Login implements HttpGetActionInterface
     {
         $websiteId = $this->request->getParam('website');
         $callbackUrl = $this->urlBuilder->getUrl(
-            'payplug_payments_admin/config/oauth2FetchAuthCode',
+            Oauth2FetchAuthCode::OAUTH_CONFIG_FETCH_AUTH,
             ['website' => $websiteId]
         );
         $oauthCallbackUrl = $this->urlBuilder->getUrl(
-            'payplug_payments_admin/config/oauth2FetchClientData',
+            Oauth2FetchAuthCode::OAUTH_CONFIG_FETCH_DATA,
             ['website' => $websiteId]
         );
 

@@ -12,6 +12,7 @@ use Magento\Framework\Serialize\JsonValidator;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
+use Payplug\Payments\Helper\Config;
 
 class GetOauth2AccessToken
 {
@@ -19,7 +20,7 @@ class GetOauth2AccessToken
         private readonly ReinitableConfigInterface $scopeConfig,
         private readonly JsonValidator $jsonValidator,
         private readonly SerializerInterface $serializer,
-        private readonly ConfigWriterInterface $configWriter
+        private readonly ConfigWriterInterface $configWriter,
     ) {
     }
 
@@ -33,7 +34,7 @@ class GetOauth2AccessToken
         ?string $clientSecret = null
     ): ?string {
         if ($forceNenewal === false) {
-            $serializedAccessTokenData = $this->getConfigValue('payplug_payments/oauth2/access_token_data', $websiteId);
+            $serializedAccessTokenData = $this->getConfigValue(Config::OAUTH_CONFIG_PATH . Config::OAUTH_ACCESS_TOKEN_DATA, $websiteId);
             if ($this->jsonValidator->isValid($serializedAccessTokenData) === false) {
                 throw new LocalizedException(__('Access token data is not valid.'));
             }
@@ -50,8 +51,8 @@ class GetOauth2AccessToken
         }
 
         if (!$clientId || !$clientSecret) {
-            $currentEnvMode = $this->getConfigValue('payplug_payments/general/environmentmode', $websiteId);
-            $serializedClientData = $this->getConfigValue('payplug_payments/oauth2/client_data', $websiteId);
+            $currentEnvMode = $this->getConfigValue(Config::CONFIG_PATH . Config::OAUTH_ENVIRONMENT_MODE, $websiteId);
+            $serializedClientData = $this->getConfigValue(Config::OAUTH_CONFIG_PATH . Config::OAUTH_CLIENT_DATA, $websiteId);
 
             if ($this->jsonValidator->isValid($serializedClientData) === false) {
                 throw new LocalizedException(__('Client data is not valid.'));
@@ -75,7 +76,7 @@ class GetOauth2AccessToken
         $jwtResult['httpResponse']['expired_at'] = $now + $validityPeriod;
 
         $this->configWriter->save(
-            'payplug_payments/oauth2/access_token_data',
+            Config::OAUTH_CONFIG_PATH . Config::OAUTH_ACCESS_TOKEN_DATA,
             $this->serializer->serialize($jwtResult['httpResponse']),
             $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $websiteId ?: 0
@@ -83,10 +84,10 @@ class GetOauth2AccessToken
 
         $this->scopeConfig->reinit();
 
-        return $jwtResult['httpResponse']['access_token'];
+        return (string)$jwtResult['httpResponse']['access_token'];
     }
 
-    private function getConfigValue(string $path, ?int $websiteId)
+    public function getConfigValue(string $path, ?int $websiteId)
     {
         return $this->scopeConfig->getValue(
             $path,

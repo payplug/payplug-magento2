@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
@@ -12,6 +13,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface as ConfigWriterInterfac
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
+use Magento\Framework\Event\ManagerInterface as EventManager;
 use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
@@ -24,6 +26,8 @@ use Payplug\Payplug;
 class Oauth2FetchClientData implements HttpGetActionInterface
 {
     public const PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA = 'payplug_oauth2_params';
+    public const PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE = 'test';
+    public const PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE = 'integrated';
 
     public function __construct(
         private readonly RequestInterface $request,
@@ -35,7 +39,8 @@ class Oauth2FetchClientData implements HttpGetActionInterface
         private readonly SerializerInterface $serializer,
         private readonly ReinitableConfigInterface $scopeConfig,
         private readonly GetOauth2AccessToken $getOauth2AccessToken,
-        private readonly ConfigHelper $configHelper
+        private readonly ConfigHelper $configHelper,
+        private readonly EventManager $eventManager,
     ) {
     }
 
@@ -84,8 +89,8 @@ class Oauth2FetchClientData implements HttpGetActionInterface
             /**
              * Store data into config
              */
-            $this->saveConfig('payplug_payments/oauth2/email', $payloadDecode['email']);
-            $this->saveConfig('payplug_payments/oauth2/client_data', $this->serializer->serialize([
+            $this->saveConfig(ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_EMAIL, $payloadDecode['email']);
+            $this->saveConfig(ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_CLIENT_DATA, $this->serializer->serialize([
                 ConfigHelper::ENVIRONMENT_TEST => [
                     'client_id' => $testClientDataResult['httpResponse']['client_id'],
                     'client_secret' => $testClientDataResult['httpResponse']['client_secret']
@@ -103,7 +108,7 @@ class Oauth2FetchClientData implements HttpGetActionInterface
              */
             $websiteId = $this->getWebsiteId();
             $currentMode = $this->scopeConfig->getValue(
-                'payplug_payments/oauth2/mode',
+                ConfigHelper::OAUTH_CONFIG_PATH . 'mode',
                 $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                 $websiteId ?: 0
             );
@@ -119,6 +124,13 @@ class Oauth2FetchClientData implements HttpGetActionInterface
              */
             $this->configHelper->initScopeData();
             $this->configHelper->clearLegacyAuthConfig();
+
+            $this->request->setPostValue($this->getBasePostParams($websiteId ?: 0));
+
+            $this->eventManager->dispatch(
+                'controller_action_predispatch_adminhtml_system_config_save',
+                ['request' => $this->request]
+            );
 
             $this->messageManager->addSuccessMessage(__('Oauth2 authentication successful'));
         } catch (Exception $e) {
@@ -147,5 +159,44 @@ class Oauth2FetchClientData implements HttpGetActionInterface
     private function getWebsiteId(): int
     {
         return (int)$this->request->getParam('website');
+    }
+
+    /**
+     * We need to simulate an admin save after the Oauth2 first connexion
+     * If nothing is Setup on the default store, then we do not inherit but Setup the basic configurations
+     */
+    private function getBasePostParams(int $websiteId): array
+    {
+        $environmentMode = ['value' => Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE];
+        if ($this->getOauth2AccessToken->getConfigValue(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_ENVIRONMENT_MODE, null)) {
+            $environmentMode = ['inherit' => 1];
+        }
+
+        $paymentPage = ['value' => Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE];
+        if ($this->getOauth2AccessToken->getConfigValue(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_PAYMENT_PAGE, null)) {
+            $paymentPage = ['inherit' => 1];
+        }
+
+        $post = [
+            'form_key' => $this->request->getParam('form_key'),
+            'config_state' => [
+                'payplug_payments_general' => 1,
+                'payplug_payments_oauth2' => 1,
+            ],
+            'groups' => [
+                'general' => [
+                    'fields' => [
+                        'environmentmode' => $environmentMode,
+                        'payment_page' => $paymentPage,
+                    ],
+                ],
+            ],
+            'payplug_payments_is_connected' => 0,
+            'payplug_payments_is_verified' => 0,
+            'payplug_payments_can_override_default' => 1,
+            'website' => $websiteId
+        ];
+
+        return $post;
     }
 }

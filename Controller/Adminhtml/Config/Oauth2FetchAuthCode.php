@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
@@ -15,6 +16,9 @@ use Payplug\Payments\Logger\Logger;
 
 class Oauth2FetchAuthCode implements HttpGetActionInterface
 {
+    public const OAUTH_CONFIG_FETCH_DATA = 'payplug_payments_admin/config/oauth2FetchClientData';
+    public const OAUTH_CONFIG_FETCH_AUTH = 'payplug_payments_admin/config/oauth2FetchAuthCode';
+
     public function __construct(
         private readonly RequestInterface $request,
         private readonly UrlInterface $urlBuilder,
@@ -31,7 +35,7 @@ class Oauth2FetchAuthCode implements HttpGetActionInterface
         $companyId = $this->request->getParam('company_id');
         $websiteId = $this->request->getParam('website');
         $callbackUrl = $this->urlBuilder->getUrl(
-            'payplug_payments_admin/config/oauth2FetchClientData',
+            Oauth2FetchAuthCode::OAUTH_CONFIG_FETCH_DATA,
             ['website' => $websiteId]
         );
 
