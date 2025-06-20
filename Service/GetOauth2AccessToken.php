@@ -40,8 +40,14 @@ class GetOauth2AccessToken
             }
 
             $accessTokenData = $this->serializer->unserialize($serializedAccessTokenData);
+            $currentEnvMode = $this->getConfigValue(Config::CONFIG_PATH . Config::OAUTH_ENVIRONMENT_MODE, $websiteId);
+            $tokenEnvMode = $accessTokenData['scope'];
 
-            $expiredAt = $accessTokenData['access_token'];
+            if ($currentEnvMode !== $tokenEnvMode) {
+                throw new LocalizedException(__('Access token is not on the proper scope.'));
+            }
+
+            $expiredAt = $accessTokenData['expired_at'];
             $now = time();
             $tresholdBeforeExpiration = 10;
 

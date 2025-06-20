@@ -162,42 +162,46 @@ class PaymentConfigObserver implements ObserverInterface
             $this->messageManager->addErrorMessage(__('You are able to perform only TEST transactions.'));
         }
 
-        if ($this->payplugConfigConnected) {
-            $apiKey = $this->testApiKey ?? $this->getConfig('test_api_key');
-        }
-        // Get live permissions only if account is verified and environment is switched to live
-        if ($this->payplugConfigVerified && $isLive) {
-            $apiKey = $this->liveApiKey ?? $this->getConfig('live_api_key');
-        }
-        if (!empty($apiKey)) {
-            $permissions = $this->getAccountPermissions($apiKey);
-
-            $paymentValue = null;
-            if (isset($fields['payment_page']['value'])) {
-                $paymentValue = $fields['payment_page']['value'];
-            }
-
-            if (isset($fields['payment_page']['inherit'])) {
-                $paymentValue = $fields['payment_page']['inherit'];
-            }
-
-            if ($paymentValue !== null && $paymentValue == Config::PAYMENT_PAGE_INTEGRATED) {
-                if (!isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
-                    $paymentPage = $this->getConfig('payment_page');
-                    if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
-                        $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
-                    }
-                    $groups['general']['fields']['payment_page']['value'] = $paymentPage;
-                    $this->messageManager->addErrorMessage(__(
-                        'You do not have access to this feature yet. ' .
-                        'To activate it, please fill in the following form: ' .
-                        'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
-                    ));
-                }
-            }
-        }
+        $groups = $this->enforceIntegratedPaymentPermissions($groups, $fields);
 
         $this->request->setPostValue('groups', $groups);
+    }
+
+    private function enforceIntegratedPaymentPermissions(array $groups, array $fields): array
+    {
+        $apiKey = $this->getCurrentApiKey();
+
+        if (!$apiKey && $this->payplugConfigConnected) {
+            $apiKey = $this->testApiKey ?: $this->getConfig('test_api_key');
+        }
+
+        if (!$apiKey) {
+            return $groups;
+        }
+
+        $permissions = $this->getAccountPermissions($apiKey);
+        $paymentValue = $fields['payment_page']['value']
+            ?? $fields['payment_page']['inherit']
+            ?? null;
+
+        if ($paymentValue === Config::PAYMENT_PAGE_INTEGRATED && empty($permissions['can_use_integrated_payments'])) {
+
+            $paymentPage = $this->getConfig('payment_page');
+            if (!$paymentPage || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
+                $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
+            }
+            $groups['general']['fields']['payment_page']['value'] = $paymentPage;
+
+            $this->messageManager->addErrorMessage(
+                __(
+                    'You do not have access to this feature yet. ' .
+                    'To activate it, please fill in the following form: ' .
+                    'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
+                )
+            );
+        }
+
+        return $groups;
     }
 
     /**
@@ -222,31 +226,7 @@ class PaymentConfigObserver implements ObserverInterface
         $this->payplugConfigConnected = $this->helper->isOauthConnected();
         $this->payplugConfigVerified = true;
 
-        $apiKey = $this->getCurrentApiKey();
-        if ($apiKey) {
-            $permissions = $this->getAccountPermissions($apiKey);
-
-            $paymentValue = $fields['payment_page']['value']
-                ?? $fields['payment_page']['inherit']
-                ?? null;
-
-            if ($paymentValue === Config::PAYMENT_PAGE_INTEGRATED
-                && empty($permissions['can_use_integrated_payments'])) {
-
-                // Roll back selection & notify merchant
-                $paymentPage = $this->getConfig('payment_page');
-                if (!$paymentPage || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
-                    $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
-                }
-                $groups['general']['fields']['payment_page']['value'] = $paymentPage;
-
-                $this->messageManager->addErrorMessage(__(
-                    'You do not have access to this feature yet. ' .
-                    'To activate it, please fill in the following form: ' .
-                    'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
-                ));
-            }
-        }
+        $groups = $this->enforceIntegratedPaymentPermissions($groups, $fields);
 
         $this->request->setPostValue('groups', $groups);
     }
