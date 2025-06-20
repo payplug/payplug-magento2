@@ -48,7 +48,7 @@ class StandardAvailabilityObserver implements ObserverInterface
             return;
         }
 
-        $storeId = $quote->getStoreId();
+        $storeId = (int)$quote->getStoreId();
         if (!$adapter->getConfigData('active', $storeId)) {
             $checkResult->setData('is_available', false);
             return;
