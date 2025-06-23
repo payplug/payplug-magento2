@@ -164,7 +164,7 @@ class PaymentConfigObserver implements ObserverInterface
 
         $groups = $this->enforceIntegratedPaymentPermissions($groups, $fields);
 
-        $this->request->setPostValue('groups', $groups);
+        $this->setPostAndParamGroups($groups);
     }
 
     private function enforceIntegratedPaymentPermissions(array $groups, array $fields): array
@@ -228,7 +228,15 @@ class PaymentConfigObserver implements ObserverInterface
 
         $groups = $this->enforceIntegratedPaymentPermissions($groups, $fields);
 
+        $this->setPostAndParamGroups($groups);
+    }
+
+    public function setPostAndParamGroups(array $groups): void
+    {
+        //Old method for 2.3 and older
         $this->request->setPostValue('groups', $groups);
+        //New method for 2.4+
+        $this->request->setParam('groups', $groups);
     }
 
     /**
@@ -265,7 +273,7 @@ class PaymentConfigObserver implements ObserverInterface
             }
         }
 
-        $this->request->setPostValue('groups', $groups);
+        $this->setPostAndParamGroups($groups);
     }
 
     /**
@@ -314,7 +322,7 @@ class PaymentConfigObserver implements ObserverInterface
             }
         }
 
-        $this->request->setPostValue('groups', $groups);
+        $this->setPostAndParamGroups($groups);
     }
 
     /**
@@ -327,7 +335,7 @@ class PaymentConfigObserver implements ObserverInterface
         $this->helper->initScopeData();
         $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_ondemand');
 
-        $this->request->setPostValue('groups', $groups);
+        $this->setPostAndParamGroups($groups);
     }
 
     /**
@@ -407,19 +415,18 @@ class PaymentConfigObserver implements ObserverInterface
                         $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
                     }
 
-
                     // Save thresholds on the same format as general/oney_max_amount
                     $this->saveOneyConfig('oney_min_amounts', preg_replace(
                             "/(?<=:).*$/i",
-                            (string)($min * 100),
-                            $minAmountsConfig
+                            (string)((int)$min * 100),
+                            (string)$minAmountsConfig
                         )
                     );
 
                     $this->saveOneyConfig('oney_max_amounts', preg_replace(
                         "/(?<=:).*$/i",
-                        (string)($max * 100),
-                        $maxAmountsConfig
+                        (string)((int)$max * 100),
+                        (string)$maxAmountsConfig
                     ));
                 }
 
@@ -438,7 +445,7 @@ class PaymentConfigObserver implements ObserverInterface
             }
         }
 
-        $this->request->setPostValue('groups', $groups);
+        $this->setPostAndParamGroups($groups);
     }
 
     private function validateThresholdValues(array $fields, bool|array $oneyThresholds): bool
@@ -536,7 +543,7 @@ class PaymentConfigObserver implements ObserverInterface
             }
         }
 
-        $this->request->setPostValue('groups', $groups);
+        $this->setPostAndParamGroups($groups);
     }
 
     /**
@@ -629,6 +636,8 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processLiveOnlyMethod(array $groups, string $method, Phrase|string $liveModeNoPermissionMessage, Phrase|string $testModeMessage): void
     {
+        //TODO check the processLiveOnlyMethod to see why it doesn't save the "active" values properly
+        //Ex in TEST mode, set bancontact to yes, it should force it to no, but it still appear as yes in back office
         $groupCode = 'payplug_payments_' . $method;
         $fields = $groups[$groupCode]['fields'];
 
@@ -636,7 +645,7 @@ class PaymentConfigObserver implements ObserverInterface
         $groups = $this->validatePayplugConnection($fields, $groups, $groupCode);
 
         if (empty($fields['active']['value'])) {
-            $this->request->setPostValue('groups', $groups);
+            $this->setPostAndParamGroups($groups);
             return;
         }
 
@@ -644,7 +653,7 @@ class PaymentConfigObserver implements ObserverInterface
         if ($environmentMode !== Config::ENVIRONMENT_LIVE) {
             $groups[$groupCode]['fields']['active']['value'] = 0;
             $this->messageManager->addErrorMessage($testModeMessage);
-            $this->request->setPostValue('groups', $groups);
+            $this->setPostAndParamGroups($groups);
             return;
         }
 
@@ -657,7 +666,7 @@ class PaymentConfigObserver implements ObserverInterface
                 )
             );
             $groups[$groupCode]['fields']['active']['value'] = 0;
-            $this->request->setPostValue('groups', $groups);
+            $this->setPostAndParamGroups($groups);
             return;
         }
 
@@ -667,7 +676,7 @@ class PaymentConfigObserver implements ObserverInterface
             $this->messageManager->addErrorMessage($liveModeNoPermissionMessage);
         }
 
-        $this->request->setPostValue('groups', $groups);
+        $this->setPostAndParamGroups($groups);
     }
 
     /**
