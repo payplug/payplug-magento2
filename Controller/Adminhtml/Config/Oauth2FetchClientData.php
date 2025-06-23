@@ -7,6 +7,7 @@ namespace Payplug\Payments\Controller\Adminhtml\Config;
 use Exception;
 use Magento\Backend\Model\Auth\Session as AdminAuthSession;
 use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface as ConfigWriterInterface;
@@ -41,6 +42,7 @@ class Oauth2FetchClientData implements HttpGetActionInterface
         private readonly GetOauth2AccessToken $getOauth2AccessToken,
         private readonly ConfigHelper $configHelper,
         private readonly EventManager $eventManager,
+        private readonly TypeListInterface $typeList
     ) {
     }
 
@@ -125,12 +127,23 @@ class Oauth2FetchClientData implements HttpGetActionInterface
             $this->configHelper->initScopeData();
             $this->configHelper->clearLegacyAuthConfig();
 
+            /**
+             * Add back the default legacy general config
+             */
+            $this->saveConfig(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_PAYMENT_PAGE, Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE);
+            $this->saveConfig(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_ENVIRONMENT_MODE, Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE);
+
             $this->request->setPostValue($this->getBasePostParams($websiteId ?: 0));
 
+            /**
+             * Dispatch the after save to create the default payment config
+             */
             $this->eventManager->dispatch(
                 'controller_action_predispatch_adminhtml_system_config_save',
                 ['request' => $this->request]
             );
+
+            $this->typeList->cleanType('config');
 
             $this->messageManager->addSuccessMessage(__('Oauth2 authentication successful'));
         } catch (Exception $e) {
@@ -163,20 +176,9 @@ class Oauth2FetchClientData implements HttpGetActionInterface
 
     /**
      * We need to simulate an admin save after the Oauth2 first connexion
-     * If nothing is Setup on the default store, then we do not inherit but Setup the basic configurations
      */
     private function getBasePostParams(int $websiteId): array
     {
-        $environmentMode = ['value' => Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE];
-        if ($this->getOauth2AccessToken->getConfigValue(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_ENVIRONMENT_MODE, null)) {
-            $environmentMode = ['inherit' => 1];
-        }
-
-        $paymentPage = ['value' => Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE];
-        if ($this->getOauth2AccessToken->getConfigValue(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_PAYMENT_PAGE, null)) {
-            $paymentPage = ['inherit' => 1];
-        }
-
         $post = [
             'form_key' => $this->request->getParam('form_key'),
             'config_state' => [
@@ -186,8 +188,12 @@ class Oauth2FetchClientData implements HttpGetActionInterface
             'groups' => [
                 'general' => [
                     'fields' => [
-                        'environmentmode' => $environmentMode,
-                        'payment_page' => $paymentPage,
+                        'environmentmode' => [
+                            'value' => Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE
+                        ],
+                        'payment_page' => [
+                            'value' => Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE
+                        ],
                     ],
                 ],
             ],
