@@ -83,7 +83,7 @@ class Config extends AbstractHelper
     /**
      * Get payment mode (authorization / authorization_capture)
      */
-    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, int $websiteId = null): ?string
+    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, ?int $websiteId = null): ?string
     {
         return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_ACTION_CONFIG_PATH);
     }
