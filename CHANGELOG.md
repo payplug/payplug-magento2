@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Apple Pay button to product view page
 - Add Apple Pay button to cart page
 - Add Chrome and Firefox Apple button support
+- Limit the module to PHP >=8.1 and <8.4
 
 **[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...v4.4.0)**
 
