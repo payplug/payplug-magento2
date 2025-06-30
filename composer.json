@@ -19,7 +19,8 @@
     "magento/module-checkout": "100.3.*|100.4.*",
     "magento/module-sales": "102.0.*|103.0.*",
     "payplug/payplug-php": "^3.7.0",
-    "giggsey/libphonenumber-for-php": "^8.10"
+    "giggsey/libphonenumber-for-php": "^8.10",
+    "ext-openssl": "*"
   },
   "autoload": {
     "files": [ "registration.php" ],
