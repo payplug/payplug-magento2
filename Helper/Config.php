@@ -433,21 +433,7 @@ class Config extends AbstractHelper
             'payplug_payments/general/connected',
             'payplug_payments/general/verified',
             'payplug_payments/general/email',
-            'payplug_payments/general/pwd',
-            'payplug_payments/general/environmentmode',
-            'payplug_payments/general/payment_page',
-            'payplug_payments/general/invoice_on_payment',
-            'payplug_payments/general/oney_countries',
-            'payplug_payments/general/oney_min_amounts',
-            'payplug_payments/general/oney_max_amounts',
-            'payplug_payments/general/use_live_mode',
-            'payplug_payments/general/can_save_cards',
-            'payplug_payments/general/can_create_installment_plan',
-            'payplug_payments/general/can_create_deferred_payment',
-            'payplug_payments/general/can_use_oney',
-            'payplug_payments/general/merchand_country',
-            'payplug_payments/general/payment_page_backup',
-            'payplug_payments/general/can_use_integrated_payments',
+            'payplug_payments/general/pwd'
         ];
 
         foreach ($keys as $key) {
