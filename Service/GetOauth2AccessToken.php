@@ -7,6 +7,7 @@ namespace Payplug\Payments\Service;
 use Magento\Framework\App\Config\ReinitableConfigInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface as ConfigWriterInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\JsonValidator;
 use Magento\Framework\Serialize\SerializerInterface;
@@ -21,6 +22,7 @@ class GetOauth2AccessToken
         private readonly JsonValidator $jsonValidator,
         private readonly SerializerInterface $serializer,
         private readonly ConfigWriterInterface $configWriter,
+        private readonly EncryptorInterface $encryptor
     ) {
     }
 
@@ -28,13 +30,17 @@ class GetOauth2AccessToken
      * @throws LocalizedException
      */
     public function execute(
-        ?int $websiteId,
-        bool $forceNenewal = false,
-        ?string $clientId = null,
-        ?string $clientSecret = null
+        ?int $websiteId = null,
+        bool $forceNenewal = false
     ): ?string {
         if ($forceNenewal === false) {
-            $serializedAccessTokenData = $this->getConfigValue(Config::OAUTH_CONFIG_PATH . Config::OAUTH_ACCESS_TOKEN_DATA, $websiteId);
+            $encryptedAccessTokenData = $this->getConfigValue(
+                Config::OAUTH_CONFIG_PATH . Config::OAUTH_ACCESS_TOKEN_DATA,
+                $websiteId
+            );
+
+            $serializedAccessTokenData = $this->encryptor->decrypt($encryptedAccessTokenData);
+
             if ($this->jsonValidator->isValid($serializedAccessTokenData) === false) {
                 throw new LocalizedException(__('Access token data is not valid.'));
             }
@@ -56,19 +62,21 @@ class GetOauth2AccessToken
             }
         }
 
-        if (!$clientId || !$clientSecret) {
-            $currentEnvMode = $this->getConfigValue(Config::CONFIG_PATH . Config::OAUTH_ENVIRONMENT_MODE, $websiteId);
-            $serializedClientData = $this->getConfigValue(Config::OAUTH_CONFIG_PATH . Config::OAUTH_CLIENT_DATA, $websiteId);
+        $currentEnvMode = $this->getConfigValue(Config::CONFIG_PATH . Config::OAUTH_ENVIRONMENT_MODE, $websiteId);
+        $encryptedClientDataValue = $this->getConfigValue(
+            Config::OAUTH_CONFIG_PATH . Config::OAUTH_CLIENT_DATA,
+            $websiteId
+        );
 
-            if ($this->jsonValidator->isValid($serializedClientData) === false) {
-                throw new LocalizedException(__('Client data is not valid.'));
-            }
+        $serializedClientDataValue = $this->encryptor->decrypt($encryptedClientDataValue);
 
-            $clientData = $this->serializer->unserialize($serializedClientData);
-
-            $clientId = $clientData[$currentEnvMode]['client_id'];
-            $clientSecret = $clientData[$currentEnvMode]['client_secret'];
+        if ($this->jsonValidator->isValid($serializedClientDataValue) === false) {
+            throw new LocalizedException(__('Client data is not valid.'));
         }
+
+        $clientData = $this->serializer->unserialize($serializedClientDataValue);
+        $clientId = $clientData[$currentEnvMode]['client_id'];
+        $clientSecret = $clientData[$currentEnvMode]['client_secret'];
 
         $jwtResult = PayplugAuthentication::generateJWT($clientId, $clientSecret);
 
@@ -81,9 +89,12 @@ class GetOauth2AccessToken
         $jwtResult['httpResponse']['created_at'] = $now;
         $jwtResult['httpResponse']['expired_at'] = $now + $validityPeriod;
 
+        $value = $this->serializer->serialize($jwtResult['httpResponse']);
+        $encryptedValue = $this->encryptor->encrypt($value);
+
         $this->configWriter->save(
             Config::OAUTH_CONFIG_PATH . Config::OAUTH_ACCESS_TOKEN_DATA,
-            $this->serializer->serialize($jwtResult['httpResponse']),
+            $encryptedValue,
             $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $websiteId ?: 0
         );
@@ -93,7 +104,7 @@ class GetOauth2AccessToken
         return (string)$jwtResult['httpResponse']['access_token'];
     }
 
-    public function getConfigValue(string $path, ?int $websiteId)
+    public function getConfigValue(string $path, ?int $websiteId = null)
     {
         return $this->scopeConfig->getValue(
             $path,

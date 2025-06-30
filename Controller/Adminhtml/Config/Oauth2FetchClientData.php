@@ -14,6 +14,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface as ConfigWriterInterfac
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Event\ManagerInterface as EventManager;
 use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Framework\Serialize\SerializerInterface;
@@ -42,7 +43,8 @@ class Oauth2FetchClientData implements HttpGetActionInterface
         private readonly GetOauth2AccessToken $getOauth2AccessToken,
         private readonly ConfigHelper $configHelper,
         private readonly EventManager $eventManager,
-        private readonly TypeListInterface $typeList
+        private readonly TypeListInterface $typeList,
+        private readonly EncryptorInterface $encryptor
     ) {
     }
 
@@ -89,10 +91,9 @@ class Oauth2FetchClientData implements HttpGetActionInterface
             );
 
             /**
-             * Store data into config
+             * Store client data and merchant email into config
              */
-            $this->saveConfig(ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_EMAIL, $payloadDecode['email']);
-            $this->saveConfig(ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_CLIENT_DATA, $this->serializer->serialize([
+            $clientDataValue = $this->serializer->serialize([
                 ConfigHelper::ENVIRONMENT_TEST => [
                     'client_id' => $testClientDataResult['httpResponse']['client_id'],
                     'client_secret' => $testClientDataResult['httpResponse']['client_secret']
@@ -101,7 +102,12 @@ class Oauth2FetchClientData implements HttpGetActionInterface
                     'client_id' => $liveClientDataResult['httpResponse']['client_id'],
                     'client_secret' => $liveClientDataResult['httpResponse']['client_secret']
                 ]
-            ]));
+            ]);
+
+            $this->saveConfig(
+                ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_CLIENT_DATA,
+                $this->encryptor->encrypt($clientDataValue)
+            );
 
             $this->scopeConfig->reinit();
 
@@ -109,17 +115,12 @@ class Oauth2FetchClientData implements HttpGetActionInterface
              * Create first JWT for selected env mode
              */
             $websiteId = $this->getWebsiteId();
-            $currentMode = $this->scopeConfig->getValue(
-                ConfigHelper::OAUTH_CONFIG_PATH . 'mode',
-                $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                $websiteId ?: 0
-            );
+            $this->getOauth2AccessToken->execute($this->getWebsiteId(), true);
 
-            $clientDataResult = ($currentMode === ConfigHelper::ENVIRONMENT_TEST) ? $testClientDataResult
-                : $liveClientDataResult;
-            $clientId = $clientDataResult['httpResponse']['client_id'];
-            $clientSecret = $clientDataResult['httpResponse']['client_secret'];
-            $this->getOauth2AccessToken->execute($this->getWebsiteId(), true, $clientId, $clientSecret);
+            /**
+             * Store merchant email into config
+             */
+            $this->saveConfig(ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_EMAIL, $payloadDecode['email']);
 
             /**
              * Cleanup legacy auth config
@@ -130,8 +131,14 @@ class Oauth2FetchClientData implements HttpGetActionInterface
             /**
              * Add back the default legacy general config
              */
-            $this->saveConfig(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_PAYMENT_PAGE, Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE);
-            $this->saveConfig(ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_ENVIRONMENT_MODE, Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE);
+            $this->saveConfig(
+                ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_PAYMENT_PAGE,
+                Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE
+            );
+            $this->saveConfig(
+                ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_ENVIRONMENT_MODE,
+                Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE
+            );
 
             $this->request->setPostValue($this->getBasePostParams($websiteId ?: 0));
 
