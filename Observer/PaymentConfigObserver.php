@@ -8,8 +8,8 @@ use Laminas\Stdlib\Parameters;
 use Laminas\Validator\EmailAddress;
 use Laminas\Validator\NotEmpty;
 use Magento\Framework\App\Request\Http;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
+use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
 use Magento\Store\Model\ScopeInterface;
@@ -51,49 +51,68 @@ class PaymentConfigObserver implements ObserverInterface
             return;
         }
 
-        $isLegacy = !$this->helper->isOauthConnected(ScopeInterface::SCOPE_WEBSITE, (int)$this->request->getParam('website'));
-        $sections = $postParams['config_state'];
-        if (isset($sections['payplug_payments_general']) && isset($postParams['groups']['general']['fields'])) {
-            if ($isLegacy) {
-                $this->processGeneralConfig($postParams['groups']);
+        $groups = $postParams['groups'];
 
-                return;
+        $sections = $postParams['config_state'];
+
+        if (isset($sections['payplug_payments_general']) && isset($groups['general']['fields'])) {
+            $isLegacy = !$this->helper->isOauthConnected(
+                ScopeInterface::SCOPE_WEBSITE,
+                (int)$this->request->getParam('website')
+            );
+
+            if ($isLegacy) {
+                $this->processGeneralConfig($groups);
             } else {
-                $this->processOauthGeneralConfig($postParams['groups']);
+                $this->processOauthGeneralConfig($groups);
             }
+
+            return;
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_standard')) {
-            $this->processStandardConfig($postParams['groups']);
+            $this->processStandardConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_installment_plan')) {
-            $this->processInstallmentPlanConfig($postParams['groups']);
+            $this->processInstallmentPlanConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_ondemand')) {
-            $this->processOndemandConfig($postParams['groups']);
+            $this->processOndemandConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_oney') ||
             $this->canProcessSection($postParams, 'payplug_payments_oney_without_fees')
         ) {
             $this->processOneyConfig($postParams['groups']);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_bancontact')) {
-            $this->processBancontactConfig($postParams['groups']);
+            $this->processBancontactConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_apple_pay')) {
-            $this->processApplePayConfig($postParams['groups']);
+            $this->processApplePayConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_amex')) {
-            $this->processAmexConfig($postParams['groups']);
+            $this->processAmexConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_satispay')) {
-            $this->processSatispayConfig($postParams['groups']);
+            $this->processSatispayConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_ideal')) {
-            $this->processIdealConfig($postParams['groups']);
+            $this->processIdealConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_mybank')) {
-            $this->processMybankConfig($postParams['groups']);
+            $this->processMybankConfig($groups);
         }
+
+        $this->setPostAndParamGroups($groups);
     }
 
     /**
@@ -116,7 +135,7 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Handle General configuration
      */
-    private function processGeneralConfig(array $groups): void
+    private function processGeneralConfig(array &$groups): void
     {
         $fields = $groups['general']['fields'];
 
@@ -162,12 +181,10 @@ class PaymentConfigObserver implements ObserverInterface
             $this->messageManager->addErrorMessage(__('You are able to perform only TEST transactions.'));
         }
 
-        $groups = $this->enforceIntegratedPaymentPermissions($groups, $fields);
-
-        $this->setPostAndParamGroups($groups);
+        $this->enforceIntegratedPaymentPermissions($groups, $fields);
     }
 
-    private function enforceIntegratedPaymentPermissions(array $groups, array $fields): array
+    private function enforceIntegratedPaymentPermissions(array &$groups, array $fields): void
     {
         $apiKey = $this->getCurrentApiKey();
 
@@ -176,7 +193,7 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         if (!$apiKey) {
-            return $groups;
+            return;
         }
 
         $permissions = $this->getAccountPermissions($apiKey);
@@ -200,8 +217,6 @@ class PaymentConfigObserver implements ObserverInterface
                 )
             );
         }
-
-        return $groups;
     }
 
     /**
@@ -218,7 +233,7 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Same idea as legacy processGeneralConfig() but without e-mail/pwd logic.
      */
-    private function processOauthGeneralConfig(array $groups): void
+    private function processOauthGeneralConfig(array &$groups): void
     {
         $fields = $groups['general']['fields'] ?? [];
 
@@ -226,9 +241,7 @@ class PaymentConfigObserver implements ObserverInterface
         $this->payplugConfigConnected = $this->helper->isOauthConnected();
         $this->payplugConfigVerified = true;
 
-        $groups = $this->enforceIntegratedPaymentPermissions($groups, $fields);
-
-        $this->setPostAndParamGroups($groups);
+        $this->enforceIntegratedPaymentPermissions($groups, $fields);
     }
 
     public function setPostAndParamGroups(array $groups): void
@@ -242,12 +255,12 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Handle Standard configuration
      */
-    private function processStandardConfig(array $groups): void
+    private function processStandardConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_standard']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_standard');
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_standard');
 
         if (!empty($fields['one_click']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -272,19 +285,17 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             }
         }
-
-        $this->setPostAndParamGroups($groups);
     }
 
     /**
      * Handle InstallmentPlan configuration
      */
-    private function processInstallmentPlanConfig(array $groups): void
+    private function processInstallmentPlanConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_installment_plan']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_installment_plan');
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_installment_plan');
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -321,27 +332,23 @@ class PaymentConfigObserver implements ObserverInterface
                 $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 20000;
             }
         }
-
-        $this->setPostAndParamGroups($groups);
     }
 
     /**
      * Handle Ondemand configuration
      */
-    private function processOndemandConfig(array $groups): void
+    private function processOndemandConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_ondemand']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_ondemand');
-
-        $this->setPostAndParamGroups($groups);
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_ondemand');
     }
 
     /**
      * Handle Oney configuration
      */
-    private function processOneyConfig(array $groups): void
+    private function processOneyConfig(array &$groups): void
     {
         $oneyGroups = [
             'payplug_payments_oney' => [],
@@ -353,7 +360,7 @@ class PaymentConfigObserver implements ObserverInterface
             $fields = $groups[$oney]['fields'];
 
             $this->helper->initScopeData();
-            $groups = $this->validatePayplugConnection($fields, $groups, $oney);
+            $this->validatePayplugConnection($fields, $groups, $oney);
 
             $oneyGroups[$oney]['current'] = $this->getConfig('active', sprintf('payment/%s/', $oney));
 
@@ -388,15 +395,22 @@ class PaymentConfigObserver implements ObserverInterface
                     $storeId = (int)$this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
-                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
+                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE,
+                        null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::CONFIG_PATH);
 
-                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
+                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE,
+                        null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::CONFIG_PATH);
 
-                    $oneyDefaultThresholds = $this->helper->getAmountsByCurrency($currency, null, Config::CONFIG_PATH, 'oney_');
+                    $oneyDefaultThresholds = $this->helper->getAmountsByCurrency($currency, null, Config::CONFIG_PATH,
+                        'oney_');
 
                     if (!$this->validateThresholdValues($fields, $oneyDefaultThresholds)) {
 
@@ -416,7 +430,9 @@ class PaymentConfigObserver implements ObserverInterface
                     }
 
                     // Save thresholds on the same format as general/oney_max_amount
-                    $this->saveOneyConfig('oney_min_amounts', preg_replace(
+                    $this->saveOneyConfig(
+                        'oney_min_amounts',
+                        preg_replace(
                             "/(?<=:).*$/i",
                             (string)((int)$min * 100),
                             (string)$minAmountsConfig
@@ -444,8 +460,6 @@ class PaymentConfigObserver implements ObserverInterface
                 $groups[$oney]['fields']['active']['value'] = $data['current'];
             }
         }
-
-        $this->setPostAndParamGroups($groups);
     }
 
     private function validateThresholdValues(array $fields, bool|array $oneyThresholds): bool
@@ -483,7 +497,7 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Handle Bancontact configuration
      */
-    private function processBancontactConfig(array $groups): void
+    private function processBancontactConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -504,12 +518,12 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Handle Bancontact configuration
      */
-    private function processApplePayConfig(array $groups): void
+    private function processApplePayConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_apple_pay']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_apple_pay');
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_apple_pay');
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -542,14 +556,12 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             }
         }
-
-        $this->setPostAndParamGroups($groups);
     }
 
     /**
      * Handle Amex configuration
      */
-    private function processAmexConfig(array $groups): void
+    private function processAmexConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -569,7 +581,7 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Handle Satispay configuration
      */
-    private function processSatispayConfig(array $groups): void
+    private function processSatispayConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -589,7 +601,7 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Handle Ideal configuration
      */
-    private function processIdealConfig(array $groups): void
+    private function processIdealConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -609,7 +621,7 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Handle Mybank configuration
      */
-    private function processMybankConfig(array $groups): void
+    private function processMybankConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -634,26 +646,27 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Process method available only in LIVE mode
      */
-    private function processLiveOnlyMethod(array $groups, string $method, Phrase|string $liveModeNoPermissionMessage, Phrase|string $testModeMessage): void
-    {
-        //TODO check the processLiveOnlyMethod to see why it doesn't save the "active" values properly
-        //Ex in TEST mode, set bancontact to yes, it should force it to no, but it still appear as yes in back office
+    private function processLiveOnlyMethod(
+        array &$groups,
+        string $method,
+        Phrase|string $liveModeNoPermissionMessage,
+        Phrase|string $testModeMessage
+    ): void {
         $groupCode = 'payplug_payments_' . $method;
         $fields = $groups[$groupCode]['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, $groupCode);
+        $this->validatePayplugConnection($fields, $groups, $groupCode);
 
         if (empty($fields['active']['value'])) {
-            $this->setPostAndParamGroups($groups);
             return;
         }
 
         $environmentMode = $this->getConfig('environmentmode');
         if ($environmentMode !== Config::ENVIRONMENT_LIVE) {
             $groups[$groupCode]['fields']['active']['value'] = 0;
+            $groups[$groupCode]['fields']['title']['value'] = 'Pay with Bancontact UPDATED';
             $this->messageManager->addErrorMessage($testModeMessage);
-            $this->setPostAndParamGroups($groups);
             return;
         }
 
@@ -666,7 +679,6 @@ class PaymentConfigObserver implements ObserverInterface
                 )
             );
             $groups[$groupCode]['fields']['active']['value'] = 0;
-            $this->setPostAndParamGroups($groups);
             return;
         }
 
@@ -675,14 +687,12 @@ class PaymentConfigObserver implements ObserverInterface
             $groups[$groupCode]['fields']['active']['value'] = 0;
             $this->messageManager->addErrorMessage($liveModeNoPermissionMessage);
         }
-
-        $this->setPostAndParamGroups($groups);
     }
 
     /**
      * Check if PayPlug account is connected before enabling PayPlug payment method
      */
-    private function validatePayplugConnection(array $fields, array $groups, string $fieldGroup): array
+    private function validatePayplugConnection(array $fields, array &$groups, string $fieldGroup): void
     {
         if (!empty($fields['active']['value']) && !$this->isPayplugConnected()) {
             $this->messageManager->addErrorMessage(
@@ -692,8 +702,6 @@ class PaymentConfigObserver implements ObserverInterface
 
             $groups[$fieldGroup]['fields']['active']['value'] = 0;
         }
-
-        return $groups;
     }
 
     /**
@@ -802,12 +810,14 @@ class PaymentConfigObserver implements ObserverInterface
 
     private function saveOneyConfig(string $field, mixed $value): void
     {
-        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH);
+        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null,
+            Config::ONEY_CONFIG_PATH);
     }
 
     private function saveOneyWithoutFeesConfig(string $field, mixed $value): void
     {
-        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null, Config::ONEY_WITHOUT_FEES_CONFIG_PATH);
+        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null,
+            Config::ONEY_WITHOUT_FEES_CONFIG_PATH);
     }
 
     /**
