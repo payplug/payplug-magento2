@@ -9,15 +9,22 @@ use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as ConfigDataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\State;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
+use Payplug\Payments\Service\GetOauth2AccessTokenData;
 
 class Oauth2ConnectionState extends Field
 {
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly ConfigDataCollectionFactory $configDatacollection,
+        private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
+        private readonly TimezoneInterface $timezone,
+        private readonly State $appState,
         Context $context,
         array $data = [],
         ?SecureHtmlRenderer $secureRenderer = null
@@ -43,12 +50,25 @@ class Oauth2ConnectionState extends Field
             $this->getEmailValue(),
             $websiteId && $this->isEmailSetForCurrentScope() ? __('Website') : __('Default')
         );
+
         $info = <<<HTML
 <div class="message message-success">{$statusLabel}</div>
 HTML;
 
         if (!$this->isEmailSetForCurrentScope()) {
             return $info;
+        }
+
+        if ($this->isDeveloperMode()) {
+            $accessTokenData = $this->getAccessTokenData();
+            $expirationDate = $this->timezone->date($accessTokenData['expires_date'])->format('Y-m-d H:i:s');
+            $expirationLabel = __('Current access token expiration date');
+            $tokenValueLabel = __('Current access token value');
+
+            $info .= <<<HTML
+<div class="message info">{$expirationLabel} : {$expirationDate}</div>
+<div class="message info">{$tokenValueLabel} : <code style="overflow-wrap: anywhere;">{$accessTokenData['access_token']}</code></div>
+HTML;
         }
 
         return $info . '<br>' . $buttonBlock->setData($data)->toHtml();
@@ -70,7 +90,7 @@ HTML;
 
     public function isEmailSetForCurrentScope(): bool
     {
-        $websiteId = $this->getRequest()->getParam('website');
+        $websiteId = $this->getCurrentWebsite();
 
         $scope = $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
         $scopeId = $websiteId ?: 0;
@@ -85,12 +105,32 @@ HTML;
 
     private function getEmailValue(): ?string
     {
-        $websiteId = $this->getRequest()->getParam('website');
+
+        $websiteId = $this->getCurrentWebsite();
 
         return $this->scopeConfig->getValue(
             'payplug_payments/oauth2/email',
             $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $websiteId ?: 0
         );
+    }
+
+    private function getAccessTokenData(): ?array
+    {
+        try {
+            return $this->getOauth2AccessTokenData->execute($this->getCurrentWebsite());
+        } catch (LocalizedException) {
+            return null;
+        }
+    }
+
+    private function getCurrentWebsite(): ?int
+    {
+        return $this->getRequest()->getParam('website') ?: null;
+    }
+
+    public function isDeveloperMode(): bool
+    {
+        return $this->appState->getMode() === State::MODE_DEVELOPER;
     }
 }

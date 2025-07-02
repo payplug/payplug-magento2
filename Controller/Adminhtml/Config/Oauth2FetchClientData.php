@@ -22,7 +22,7 @@ use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
 use Payplug\Payments\Helper\Config as ConfigHelper;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Service\GetOauth2AccessToken;
+use Payplug\Payments\Service\GetOauth2AccessTokenData;
 use Payplug\Payplug;
 
 class Oauth2FetchClientData implements HttpGetActionInterface
@@ -40,7 +40,7 @@ class Oauth2FetchClientData implements HttpGetActionInterface
         private readonly ConfigWriterInterface $configWriter,
         private readonly SerializerInterface $serializer,
         private readonly ReinitableConfigInterface $scopeConfig,
-        private readonly GetOauth2AccessToken $getOauth2AccessToken,
+        private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
         private readonly ConfigHelper $configHelper,
         private readonly EventManager $eventManager,
         private readonly TypeListInterface $typeList,
@@ -115,7 +115,7 @@ class Oauth2FetchClientData implements HttpGetActionInterface
              * Create first JWT for selected env mode
              */
             $websiteId = $this->getWebsiteId();
-            $this->getOauth2AccessToken->execute($this->getWebsiteId(), true);
+            $this->getOauth2AccessTokenData->execute($this->getWebsiteId(), true);
 
             /**
              * Store merchant email into config

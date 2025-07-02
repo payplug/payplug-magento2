@@ -17,7 +17,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Model\Api\Login;
-use Payplug\Payments\Service\GetOauth2AccessToken;
+use Payplug\Payments\Service\GetOauth2AccessTokenData;
 use Payplug\Payplug;
 
 class Config extends AbstractHelper
@@ -57,7 +57,7 @@ class Config extends AbstractHelper
         protected ResourceConnection $resourceConnection,
         protected Login $login,
         protected StoreManagerInterface $storeManager,
-        protected GetOauth2AccessToken $getOauth2AccessToken
+        protected GetOauth2AccessTokenData $getOauth2AccessTokenData
     ) {
         parent::__construct($context);
     }
@@ -194,11 +194,13 @@ class Config extends AbstractHelper
             }
 
             try {
-                return $this->getOauth2AccessToken->execute((int)$websiteId);
-            } catch(LocalizedException $exception) {
-                return $this->getOauth2AccessToken->execute((int)$websiteId, true);
+                $accessTokenData = $this->getOauth2AccessTokenData->execute((int)$websiteId);
+                return $accessTokenData['access_token'];
+            } catch (LocalizedException) {
+                $accessTokenData = $this->getOauth2AccessTokenData->execute((int)$websiteId, true);
+                return $accessTokenData['access_token'];
             }
-        };
+        }
 
         return $isSandbox ? $this->getConfigValue('test_api_key', $scope, $scopeId) : $this->getConfigValue('live_api_key', $scope, $scopeId);
     }
@@ -288,7 +290,7 @@ class Config extends AbstractHelper
             $path = self::CONFIG_PATH;
         }
 
-        $this->configWriter->save( $path . $field, $value, $scope, $scopeId);
+        $this->configWriter->save($path . $field, $value, $scope, $scopeId);
     }
 
     /**
