@@ -129,22 +129,9 @@ class Oauth2FetchClientData implements HttpGetActionInterface
             $this->configHelper->clearLegacyAuthConfig();
 
             /**
-             * Add back the default legacy general config
+             * Simulate and dispatch the after save to create the default payment config
              */
-            $this->saveConfig(
-                ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_PAYMENT_PAGE,
-                Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE
-            );
-            $this->saveConfig(
-                ConfigHelper::CONFIG_PATH . ConfigHelper::OAUTH_ENVIRONMENT_MODE,
-                Oauth2FetchClientData::PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE
-            );
-
             $this->request->setPostValue($this->getBasePostParams($websiteId ?: 0));
-
-            /**
-             * Dispatch the after save to create the default payment config
-             */
             $this->eventManager->dispatch(
                 'controller_action_predispatch_adminhtml_system_config_save',
                 ['request' => $this->request]
