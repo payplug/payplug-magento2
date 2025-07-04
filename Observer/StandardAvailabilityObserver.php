@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Observer;
 
 use Magento\Framework\DataObject;
@@ -8,7 +10,6 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Payment\Model\Method\Adapter;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\StoreManager;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
@@ -20,58 +21,16 @@ use Payplug\Payments\Model\Api\Login;
 
 class StandardAvailabilityObserver implements ObserverInterface
 {
-    /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
-     * @var Data
-     */
-    private $payplugHelper;
-
-    /**
-     * @var Login
-     */
-    private $login;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @var StoreManager
-     */
-    private $storeManager;
-
-    /**
-     * @param Config       $payplugConfig
-     * @param Data         $payplugHelper
-     * @param Login        $login
-     * @param Logger       $logger
-     * @param StoreManager $storeManager
-     */
     public function __construct(
-        Config $payplugConfig,
-        Data $payplugHelper,
-        Login $login,
-        Logger $logger,
-        StoreManager $storeManager
+        private Config $payplugConfig,
+        private Data $payplugHelper,
+        private Login $login,
+        private Logger $logger
     ) {
-        $this->payplugConfig = $payplugConfig;
-        $this->payplugHelper = $payplugHelper;
-        $this->login = $login;
-        $this->logger = $logger;
-        $this->storeManager = $storeManager;
     }
 
     /**
      * Check if PayPlug payment can be used on quote
-     *
-     * @param Observer $observer
-     *
-     * @return void
      */
     public function execute(Observer $observer)
     {
@@ -89,36 +48,24 @@ class StandardAvailabilityObserver implements ObserverInterface
             return;
         }
 
-        $storeId = $quote->getStoreId();
-
+        $storeId = (int)$quote->getStoreId();
         if (!$adapter->getConfigData('active', $storeId)) {
             $checkResult->setData('is_available', false);
             return;
         }
-
-        $testApiKey = $this->payplugConfig->getConfigValue(
-            'test_api_key',
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-        $liveApiKey = $this->payplugConfig->getConfigValue(
-            'live_api_key',
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-        if (empty($testApiKey) && empty($liveApiKey)) {
-            $checkResult->setData('is_available', false);
-            return;
-        }
-
-        $apiKey = $liveApiKey;
         $environmentMode = $this->payplugConfig->getConfigValue(
-            'environmentmode',
+            Config::OAUTH_ENVIRONMENT_MODE,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
-        if ($environmentMode == Config::ENVIRONMENT_TEST) {
-            $apiKey = $testApiKey;
+        $isSandbox = ($environmentMode === Config::ENVIRONMENT_TEST);
+
+        // Helper hands back either legacy test/live key or OAuth2 token
+        $apiKey = $this->payplugConfig->getApiKey($isSandbox, $storeId);
+        if (empty($apiKey)) {
+            $checkResult->setData('is_available', false);
+
+            return;
         }
 
         $prefix = '';

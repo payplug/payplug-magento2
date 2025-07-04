@@ -2,6 +2,10 @@
 
 ## Installation 
 
+### Pre-requirements
+
+PHP >=8.1 and openssl php extension are required
+
 ### Installation via Magento Back Office
 
 You can follow Magento’s instruction provided at
