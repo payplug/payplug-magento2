@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\Auth\Session as AdminAuthSession;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\RedirectFactory;
-use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Framework\UrlInterface;
 use Payplug\Authentication as PayplugAuthentication;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Payments\Logger\Logger;
 
-class Oauth2FetchAuthCode implements HttpGetActionInterface
+class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
 {
     public const OAUTH_CONFIG_FETCH_DATA = 'payplug_payments_admin/config/oauth2FetchClientData';
     public const OAUTH_CONFIG_FETCH_AUTH = 'payplug_payments_admin/config/oauth2FetchAuthCode';
@@ -22,11 +23,12 @@ class Oauth2FetchAuthCode implements HttpGetActionInterface
     public function __construct(
         private readonly RequestInterface $request,
         private readonly UrlInterface $urlBuilder,
-        private readonly MessageManagerInterface $messageManager,
         private readonly RedirectFactory $redirectFactory,
         private readonly Logger $logger,
         private readonly AdminAuthSession $adminAuthSession,
+        Context $context
     ) {
+        parent::__construct($context);
     }
 
     public function execute()

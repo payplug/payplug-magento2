@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
 use Exception;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\Auth\Session as AdminAuthSession;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\Cache\TypeListInterface;
@@ -16,7 +18,6 @@ use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Event\ManagerInterface as EventManager;
-use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
@@ -25,7 +26,7 @@ use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetOauth2AccessTokenData;
 use Payplug\Payplug;
 
-class Oauth2FetchClientData implements HttpGetActionInterface
+class Oauth2FetchClientData extends Action implements HttpGetActionInterface
 {
     public const PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA = 'payplug_oauth2_params';
     public const PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE = 'test';
@@ -33,7 +34,6 @@ class Oauth2FetchClientData implements HttpGetActionInterface
 
     public function __construct(
         private readonly RequestInterface $request,
-        private readonly MessageManagerInterface $messageManager,
         private readonly RedirectFactory $redirectFactory,
         private readonly Logger $logger,
         private readonly AdminAuthSession $adminAuthSession,
@@ -44,8 +44,10 @@ class Oauth2FetchClientData implements HttpGetActionInterface
         private readonly ConfigHelper $configHelper,
         private readonly EventManager $eventManager,
         private readonly TypeListInterface $typeList,
-        private readonly EncryptorInterface $encryptor
+        private readonly EncryptorInterface $encryptor,
+        Context $context
     ) {
+        parent::__construct($context);
     }
 
     public function execute(): Redirect

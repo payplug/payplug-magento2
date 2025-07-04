@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\RedirectFactory;
@@ -11,13 +13,15 @@ use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\UrlInterface;
 use Payplug\Authentication as PayplugAuthentication;
 
-class Oauth2Login implements HttpGetActionInterface
+class Oauth2Login extends Action implements HttpGetActionInterface
 {
     public function __construct(
         private readonly RedirectFactory $redirectFactory,
         private readonly UrlInterface $urlBuilder,
-        private readonly RequestInterface $request
+        private readonly RequestInterface $request,
+        Context $context
     ) {
+        parent::__construct($context);
     }
 
     public function execute(): ResultInterface

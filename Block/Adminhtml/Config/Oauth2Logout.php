@@ -6,7 +6,6 @@ namespace Payplug\Payments\Block\Adminhtml\Config;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
-use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as ConfigDataCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\State;
@@ -17,19 +16,24 @@ use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Payments\Service\GetOauth2AccessTokenData;
 
-class Oauth2ConnectionState extends Field
+class Oauth2Logout extends AbstractOauth2
 {
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
-        private readonly ConfigDataCollectionFactory $configDatacollection,
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
-        private readonly TimezoneInterface $timezone,
         private readonly State $appState,
+        private readonly TimezoneInterface $timezone,
+        ConfigDataCollectionFactory $configDatacollection,
         Context $context,
         array $data = [],
         ?SecureHtmlRenderer $secureRenderer = null
     ) {
-        parent::__construct($context, $data, $secureRenderer);
+        parent::__construct(
+            $configDatacollection,
+            $context,
+            $data,
+            $secureRenderer
+        );
     }
 
     /** @noinspection PhpMissingParentCallCommonInspection */
@@ -83,26 +87,6 @@ HTML;
         return parent::render($element);
     }
 
-    protected function _isInheritCheckboxRequired($element)
-    {
-        return false;
-    }
-
-    public function isEmailSetForCurrentScope(): bool
-    {
-        $websiteId = $this->getCurrentWebsite();
-
-        $scope = $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
-        $scopeId = $websiteId ?: 0;
-
-        $collection = $this->configDatacollection->create();
-        $collection->addFieldToFilter('path', 'payplug_payments/oauth2/email')
-            ->addFieldToFilter('scope', $scope)
-            ->addFieldToFilter('scope_id', $scopeId);
-
-        return (bool)$collection->getSize();
-    }
-
     private function getEmailValue(): ?string
     {
 
@@ -129,7 +113,7 @@ HTML;
         return $this->getRequest()->getParam('website') ?: null;
     }
 
-    public function isDeveloperMode(): bool
+    private function isDeveloperMode(): bool
     {
         return $this->appState->getMode() === State::MODE_DEVELOPER;
     }

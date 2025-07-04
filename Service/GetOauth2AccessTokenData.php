@@ -62,7 +62,7 @@ class GetOauth2AccessTokenData
     /**
      * @throws LocalizedException
      */
-    public function regenerate(?int $websiteId = null): array
+    private function regenerate(?int $websiteId = null): array
     {
         $currentEnvMode = $this->getCurrentEnvMode($websiteId);
         $encryptedClientDataValue = $this->getConfigValue(

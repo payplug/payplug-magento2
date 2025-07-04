@@ -4,21 +4,23 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Controller\ResultInterface;
-use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Payplug\Payments\Helper\Config as ConfigHelper;
 
-class Oauth2Logout implements HttpGetActionInterface
+class Oauth2Logout extends Action implements HttpGetActionInterface
 {
     public function __construct(
         private readonly RedirectFactory $redirectFactory,
         private readonly RequestInterface $request,
-        private readonly MessageManagerInterface $messageManager,
-        private readonly ConfigHelper $configHelper
+        private readonly ConfigHelper $configHelper,
+        Context $context
     ) {
+        parent::__construct($context);
     }
 
     public function execute(): ResultInterface
