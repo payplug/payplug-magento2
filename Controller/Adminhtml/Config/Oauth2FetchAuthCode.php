@@ -52,6 +52,7 @@ class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
 
         try {
             PayplugAuthentication::initiateOAuth($clientId, $callbackUrl, $codeVerifier);
+            // phpcs:ignore Magento2.Security.LanguageConstruct.ExitUsage
             exit;
         } catch (ConfigurationException $e) {
             $this->logger->error($e->getMessage());
