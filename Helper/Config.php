@@ -284,6 +284,7 @@ class Config extends AbstractHelper
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
             'payment/payplug_payments_standard/one_click',
+            'payment/payplug_payments_standard/invoice_on_payment',
             'payment/payplug_payments_standard/processing_order_status',
             'payment/payplug_payments_standard/canceled_order_status',
             'payment/payplug_payments_standard/allowspecific',
