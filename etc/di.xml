@@ -1022,13 +1022,5 @@
     <type name="Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation">
         <plugin name="payplug_payment_capture_standard_deferred_payment" type="Payplug\Payments\Plugin\CaptureStandardDeferredPayment" sortOrder="1"/>
     </type>
-    <type name="Magento\Sales\Model\Order\StatusLabel">
-        <arguments>
-            <argument name="maskStatusesMapping" xsi:type="array">
-                <item name="frontend" xsi:type="array">
-                    <item name="payment_review" xsi:type="const">Magento\Sales\Model\Order::STATE_PAYMENT_REVIEW</item>
-                </item>
-            </argument>
-        </arguments>
-    </type>
+
 </config>

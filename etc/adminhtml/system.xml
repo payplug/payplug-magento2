@@ -71,16 +71,16 @@
                     <label>One-click payment</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="authorization_only" translate="label comment" type="select" sortOrder="75" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Authorization only</label>
-                    <comment><![CDATA["Authorization only" means that the order require your approval to be captured even after authorization.]]></comment>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                <field id="payment_action" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Credit Card Payment Mode</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\AuthorizationType</source_model>
+                    <comment><![CDATA[<span style="color:green;">Authorization & Capture</span> mean that the order is captured automatically as soon as it is authorized.</br><span style="color:blue;">Authorization only</span> mean that the order require your approval to be captured even after authorization.]]></comment>
                 </field>
                 <field id="authorized_order_status" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Authorized order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Authorized</source_model>
                     <depends>
-                        <field id="authorized_only">1</field>
+                        <field id="payment_action">authorize</field>
                     </depends>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">

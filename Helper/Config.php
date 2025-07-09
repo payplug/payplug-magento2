@@ -25,7 +25,7 @@ class Config extends AbstractHelper
     public const CONFIG_PATH = 'payplug_payments/general/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
-    public const PAYPLUG_PAYMENT_AUTHORIZATION_ONLY_CONFIG_PATH = 'payment/payplug_payments_standard/authorization_only';
+    public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
     public const PAYPLUG_PAYMENT_AUTHORIZED_STATUS_CONFIG_PATH = 'payment/payplug_payments_standard/authorized_order_status';
     public const EMAIL_WEBSITE_OWNER_CONFIG_PATH = 'trans_email/ident_general/email';
     public const ENVIRONMENT_TEST = 'test';
@@ -35,6 +35,7 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
 
     public const MODULE_VERSION = '4.3.4';
+    public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
     private ?AdapterInterface $adapter = null;
     private ?string $scope = null;
@@ -78,13 +79,21 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get payment mode (authorization / authorization_capture)
+     */
+    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, int $websiteId = null): ?string
+    {
+        return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_ACTION_CONFIG_PATH);
+    }
+
+    /**
      * Return true if the standard payment is on Authorization only
      */
     public function isStandardPaymentModeDeferred(): bool
     {
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
 
-        return (bool)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, (int)$websiteId, self::PAYPLUG_PAYMENT_AUTHORIZATION_ONLY_CONFIG_PATH);
+        return $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, (int)$websiteId) === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
     }
 
     public function getStandardAuthorizedStatus(): ?string
@@ -259,6 +268,7 @@ class Config extends AbstractHelper
             'payplug_payments/general/pwd',
             'payplug_payments/general/environmentmode',
             'payplug_payments/general/payment_page',
+            'payplug_payments/general/invoice_on_payment',
             'payplug_payments/general/oney_countries',
             'payplug_payments/general/oney_min_amounts',
             'payplug_payments/general/oney_max_amounts',

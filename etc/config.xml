@@ -12,13 +12,12 @@
                 <sort_order>0</sort_order>
                 <default_country>FR</default_country>
                 <model>PayplugPaymentStandardFacade</model>
-                <payment_action>order</payment_action>
+                <payment_action>authorize_capture</payment_action>
                 <is_gateway>1</is_gateway>
                 <order_status>pending</order_status>
                 <can_order>1</can_order>
-                <can_authorize>1</can_authorize>
+                <can_authorize>0</can_authorize>
                 <can_capture>1</can_capture>
-                <can_review_payment>1</can_review_payment>
                 <can_fetch_transaction_information>1</can_fetch_transaction_information>
                 <can_capture_partial>0</can_capture_partial>
                 <can_void>0</can_void>
