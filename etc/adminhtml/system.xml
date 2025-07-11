@@ -341,14 +341,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
-                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
-                </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Payment from Specific Countries</label>
-                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
-                    <can_be_empty>1</can_be_empty>
+                    <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
@@ -360,6 +355,7 @@
                     <frontend_class>validate-number</frontend_class>
                 </field>
                 <field id="model"/>
+                <field id="specificcountry"/>
             </group>
             <group id="payplug_payments_apple_pay" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Apple Pay</label>
@@ -496,7 +492,7 @@
                 </field>
                 <field id="model"/>
             </group>
-            <group id="payplug_payments_satispay" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_satispay" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Satispay</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -518,10 +514,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
-                    <comment>Satispay is only available for payers with billing addresses in Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia.</comment>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
@@ -535,7 +530,7 @@
                 <field id="model"/>
                 <field id="specificcountry"/>
             </group>
-            <group id="payplug_payments_ideal" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_ideal" translate="label" type="text" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - iDEAL</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -557,10 +552,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
-                    <comment>iDEAL is only available for payers with billing addresses in the Netherlands.</comment>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
@@ -574,7 +568,7 @@
                 <field id="model"/>
                 <field id="specificcountry"/>
             </group>
-            <group id="payplug_payments_mybank" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_mybank" translate="label" type="text" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - MyBank</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -596,10 +590,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
-                    <comment>MyBank is only available for payers with billing addresses in Italy.</comment>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>

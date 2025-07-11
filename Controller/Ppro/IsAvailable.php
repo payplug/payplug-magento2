@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Ppro;
 
+use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Framework\Phrase;
-use Payplug\Payments\Gateway\Config\Ideal;
-use Payplug\Payments\Gateway\Config\Mybank;
-use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
 
 class IsAvailable extends Action
 {
     public function __construct(
         Context $context,
-        private JsonFactory $resultJsonFactory,
-        private Config $configHelper
+        private readonly JsonFactory $resultJsonFactory,
+        private readonly Config $configHelper,
+        private readonly GetAllowedCountriesPerPaymentMethod $allowedCountriesPerPaymentMethod,
+        private readonly Logger $logger
     ) {
         parent::__construct($context);
     }
@@ -45,20 +46,24 @@ class IsAvailable extends Action
                 ]);
             } else {
                 $params = $this->getRequest()->getParams();
-                $country = $params['billingCountry'] ?: $params['shippingCountry'];
-                $method = str_replace('payplug_payments_', '', $params['paymentMethod']);
-                $countries = json_decode(
-                    $this->configHelper->getConfigValue($method . '_countries'),
-                    true
-                );
-                if (!is_array($countries) || !in_array($country, $countries)) {
+                $allowedCountryIds = $this->allowedCountriesPerPaymentMethod->execute($params['paymentMethod']);
+                $selectedCountryIds = [
+                    $params['billingCountry'],
+                    $params['shippingCountry']
+                ];
+
+                if ($allowedCountryIds && !array_intersect($allowedCountryIds, $selectedCountryIds)) {
                     $result->setData([
                         'success' => false,
-                        'data' => ['message' => $this->getCountryErrorMessage($params['paymentMethod'])],
+                        'data' => [
+                            'message' => __('Billing or shipping address is not eligible with this payment method.')
+                        ],
                     ]);
                 }
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            $this->logger->error($e->getMessage());
+
             $result->setData([
                 'success' => false,
                 'data' => ['message' => __('An error occurred. Please try again.')]
@@ -66,33 +71,5 @@ class IsAvailable extends Action
         }
 
         return $result;
-    }
-
-    /**
-     * Retrieve error message for given payment method
-     *
-     * @throws \Exception
-     */
-    private function getCountryErrorMessage(string $method): Phrase
-    {
-        if ($method === Satispay::METHOD_CODE) {
-            return __(
-                'To pay with Satispay, your billing address needs to be in one of the following countries: ' .
-                'Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, ' .
-                'Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia.'
-            );
-        }
-        if ($method === Ideal::METHOD_CODE) {
-            return __(
-                'To pay with iDEAL, your billing address needs to be in the Netherlands.'
-            );
-        }
-        if ($method === Mybank::METHOD_CODE) {
-            return __(
-                'To pay with MyBank, your billing address needs to be in Italy.'
-            );
-        }
-
-        throw new \Exception('Invalid PPRO method.');
     }
 }
