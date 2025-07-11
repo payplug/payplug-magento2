@@ -13,6 +13,8 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Payments\Helper\Config;
 use Payplug\Resource\Payment as ResourcePayment;
 use Payplug\Resource\Refund;
@@ -270,6 +272,8 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Update a payment
+     * @throws ConfigurationNotSetException
+     * @throws ConfigurationException
      */
     public function update(array $data, ?int $store = null): ResourcePayment
     {

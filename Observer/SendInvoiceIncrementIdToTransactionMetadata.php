@@ -9,6 +9,8 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Payments\Helper\Data as PayplugDataHelper;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
 
@@ -43,8 +45,12 @@ class SendInvoiceIncrementIdToTransactionMetadata implements ObserverInterface
         $currentMetadata = $resourcePayment->metadata;
         $currentMetadata['Invoice'] = $invoice->getIncrementId();
 
-        $payplugPayment->update([
-            'metadata' => $currentMetadata
-        ], (int)$order->getStoreId());
+        try {
+            $payplugPayment->update([
+                'metadata' => $currentMetadata
+            ], (int)$order->getStoreId());
+        } catch (ConfigurationNotSetException|ConfigurationException $e) {
+            $this->payplugLogger->error($e->getMessage());
+        }
     }
 }
