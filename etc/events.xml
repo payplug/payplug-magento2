@@ -37,6 +37,11 @@
         <observer name="payplug_payments_set_deferred_after_invoice_order_status" instance="Payplug\Payments\Observer\SetDeferredAfterInvoiceOrderStatus"/>
     </event>
 
+    <event name="sales_order_invoice_save_after">
+        <observer name="payplug_payments_send_invoice_increment_id_to_payplug_transaction"
+                  instance="Payplug\Payments\Observer\SendInvoiceIncrementIdToTransactionMetadata"/>
+    </event>
+
     <event name="controller_action_predispatch_checkout_index_index">
         <observer name="payplug_payments_checkcout_page" instance="Payplug\Payments\Observer\PaymentReturnObserver"  />
     </event>

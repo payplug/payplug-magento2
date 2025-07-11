@@ -14,6 +14,7 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Payplug\Exception\ConfigurationException;
 use Payplug\Payments\Model\Api\Login;
 use Payplug\Payplug;
 
@@ -128,6 +129,7 @@ class Config extends AbstractHelper
 
     /**
      * Set API secret key
+     * @throws ConfigurationException
      */
     public function setPayplugApiKey(?int $storeId, bool $isSandbox, ?string $scope = ScopeInterface::SCOPE_STORE): void
     {
@@ -284,6 +286,7 @@ class Config extends AbstractHelper
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
             'payment/payplug_payments_standard/one_click',
+            'payment/payplug_payments_standard/invoice_on_payment',
             'payment/payplug_payments_standard/processing_order_status',
             'payment/payplug_payments_standard/canceled_order_status',
             'payment/payplug_payments_standard/allowspecific',
