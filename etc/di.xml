@@ -761,6 +761,7 @@
                 <item name="order" xsi:type="string">PayplugPaymentSatispayCaptureCommand</item>
                 <item name="capture" xsi:type="string">PayplugPaymentSatispayCaptureCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+                <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
             </argument>
         </arguments>
     </virtualType>
@@ -840,6 +841,7 @@
                 <item name="order" xsi:type="string">PayplugPaymentIdealCaptureCommand</item>
                 <item name="capture" xsi:type="string">PayplugPaymentIdealCaptureCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+                <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
             </argument>
         </arguments>
     </virtualType>
@@ -920,6 +922,7 @@
                 <item name="order" xsi:type="string">PayplugPaymentMybankCaptureCommand</item>
                 <item name="capture" xsi:type="string">PayplugPaymentMybankCaptureCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
+                <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
             </argument>
         </arguments>
     </virtualType>

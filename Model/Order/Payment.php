@@ -247,6 +247,7 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Attempt to refund partially or totally a payment
+     * @throws ConfigurationNotSetException
      */
     public function makeRefund(float $amount, ?array $metadata, ?int $store = null): Refund
     {
