@@ -208,6 +208,7 @@
 "This card does not exist or has been deleted.","Cette carte n'existe pas ou a été supprimée."
 "This card does not exist.","Cette carte n'existe pas."
 "This order is subjected to an installment plan, whose status is <strong>%s</strong>","Cette commande fait l'objet d'un paiement en plusieurs fois en cours, dont le statut est <strong>%s</strong>"
+"This payment will be manually refunded.","Remboursement enregistré. Il sera traité manuellement par nos équipes. Pour plus d’informations, consultez notre centre d'assistance."
 "Title","Titre"
 "To pay with MyBank, your billing address needs to be in Italy.","Pour payer avec MyBank, votre adresse de facturation doit être en Italie."
 "To pay with Oney, the total amount of your cart must be between %1 and %2.","Le montant total de votre panier doit être compris entre %1 et %2 pour payer avec Oney."

@@ -13,6 +13,7 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Payments\Helper\Config;
 use Payplug\Resource\Payment as ResourcePayment;
 use Payplug\Resource\Refund;
@@ -245,6 +246,7 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Attempt to refund partially or totally a payment
+     * @throws ConfigurationNotSetException
      */
     public function makeRefund(float $amount, ?array $metadata, ?int $store = null): Refund
     {

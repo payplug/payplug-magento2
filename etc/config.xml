@@ -217,7 +217,7 @@
                 <can_void>0</can_void>
                 <can_cancel>1</can_cancel>
                 <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
-                <can_refund>0</can_refund>
+                <can_refund>1</can_refund>
                 <can_use_checkout>1</can_use_checkout>
                 <can_use_internal>0</can_use_internal>
             </payplug_payments_satispay>
@@ -241,7 +241,7 @@
                 <can_void>0</can_void>
                 <can_cancel>1</can_cancel>
                 <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
-                <can_refund>0</can_refund>
+                <can_refund>1</can_refund>
                 <can_use_checkout>1</can_use_checkout>
                 <can_use_internal>0</can_use_internal>
             </payplug_payments_ideal>
@@ -265,7 +265,7 @@
                 <can_void>0</can_void>
                 <can_cancel>1</can_cancel>
                 <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
-                <can_refund>0</can_refund>
+                <can_refund>1</can_refund>
                 <can_use_checkout>1</can_use_checkout>
                 <can_use_internal>0</can_use_internal>
             </payplug_payments_mybank>
