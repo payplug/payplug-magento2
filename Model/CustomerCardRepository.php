@@ -132,6 +132,9 @@ class CustomerCardRepository
         if ($sortOrders) {
             /** @var SortOrder $sortOrder */
             foreach ($sortOrders as $sortOrder) {
+                if (!is_object($sortOrder)) {
+                    continue;
+                }
                 $collection->addOrder(
                     $sortOrder->getField(),
                     ($sortOrder->getDirection() == SortOrder::SORT_ASC) ? 'ASC' : 'DESC'
