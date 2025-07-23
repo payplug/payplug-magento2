@@ -8,6 +8,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Payment\Model\Method\Adapter as MethodAdapter;
 use Magento\Quote\Api\Data\CartInterface;
 use Payplug\Payments\Gateway\Config\Bancontact as BancontactConfig;
+use Payplug\Payments\Helper\Config as ConfigHelper;
 use Payplug\Payments\Helper\Data as PayplugDataHelper;
 use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
 
@@ -15,7 +16,8 @@ class HidePaymentMethodForRestrictedCountries implements ObserverInterface
 {
     public function __construct(
         private readonly PayplugDataHelper $payplugDataHelper,
-        private readonly GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod
+        private readonly GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod,
+        private readonly ConfigHelper $configHelper
     ) {
     }
 
@@ -40,13 +42,17 @@ class HidePaymentMethodForRestrictedCountries implements ObserverInterface
             return;
         }
 
+        if (!$this->configHelper->isShippingApmFilteringMode()) {
+            return;
+        }
+
         $allowedCountryIds = $this->getAllowedCountriesPerPaymentMethod->execute($paymentMethod);
         $selectedCountryIds = [
             $quote->getShippingAddress()->getCountryId(),
             $quote->getBillingAddress()->getCountryId(),
         ];
 
-        if ($allowedCountryIds && !array_intersect($allowedCountryIds, $selectedCountryIds)) {
+        if (!array_intersect($allowedCountryIds, $selectedCountryIds)) {
             $checkResult->setData('is_available', false);
         }
     }

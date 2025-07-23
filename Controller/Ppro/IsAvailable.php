@@ -56,7 +56,7 @@ class IsAvailable extends Action
                     $result->setData([
                         'success' => false,
                         'data' => [
-                            'message' => __('Billing or shipping address is not eligible with this payment method.')
+                            'message' => __('Billing address is not eligible with this payment method.') // TODO inject allowrd countries
                         ],
                     ]);
                 }
