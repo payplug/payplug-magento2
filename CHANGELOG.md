@@ -24,7 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add Apple Pay button to product view page
 - Add Apple Pay button to cart page
 - Add Chrome and Firefox Apple button support
-- Limit the module to PHP >=8.1 and <8.4
+- Limit the module to PHP >=8.1 and <8.5
+- Update payplug/payplug-php dependency version for PHP 8.4 compatibility
 
 **[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.0...v4.4.0)**
 
@@ -42,6 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgrade Apple Pay JS SDK version [#272](https://github.com/payplug/payplug-magento2/pull/272)
 - Enable CB by default and expose brand selector in Apple Pay [#272](https://github.com/payplug/payplug-magento2/pull/272)
 - Prevent invoice auto-generation on Apple Pay [#275](https://github.com/payplug/payplug-magento2/pull/275)
+- Change payplug/payplug-php dependency version
 
 ### Fixed
 
