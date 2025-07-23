@@ -56,6 +56,23 @@
                 <field id="mybank_max_amounts"/>
                 <field id="can_use_mybank"/>
             </group>
+            <group id="oauth2" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
+                <label>PayPlug Payments - Oauth2</label>
+                <comment>Already activated our new secure authentication? Simply connect your Payplug account above to continue.</comment>
+                <field id="login_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
+                    <label>Login</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2Login</frontend_model>
+                    <comment>Don't have a Payplug account? Create one.</comment>
+                </field>
+                <field id="logout_btn" translate="label comment" type="button" sortOrder="20" showInDefault="1" showInWebsite="1">
+                    <label>Connection state</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2Logout</frontend_model>
+                    <comment>Need to use old login / password authentication mode ? Please disconnect Oauth2 connection</comment>
+                </field>
+                <field id="email"/>
+                <field id="client_data"/>
+                <field id="access_token_data"/>
+            </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
             <group id="payplug_payments_standard" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -350,6 +367,27 @@
                     <label>Enabled</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="show_on_product" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show on product page</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                </field>
+                <field id="show_on_cart" translate="label" type="select" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show on cart page</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                </field>
+                <field id="show_on_checkout" translate="label" type="select" sortOrder="3" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Show on checkout</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                </field>
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
@@ -375,12 +413,42 @@
                     <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                     <can_be_empty>1</can_be_empty>
                 </field>
+                <field id="placeholder_email" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder email</label>
+                    <comment><![CDATA[The placeholder email passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_firstname" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder firstname</label>
+                    <comment><![CDATA[The placeholder firstname passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_lastname" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder lastname</label>
+                    <comment><![CDATA[The placeholder lastname passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_postcode" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder postcode</label>
+                    <comment><![CDATA[The placeholder postcode passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_region" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder region</label>
+                    <comment><![CDATA[The placeholder region passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
+                <field id="placeholder_city" translate="label comment" type="text" sortOrder="130" showInDefault="1">
+                    <label>Placeholder city</label>
+                    <comment><![CDATA[The placeholder city passed in the payment request before a billing address is selected by user]]></comment>
+                </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
                 </field>
-                <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="excluded_shipping_method" translate="label comment" sortOrder="140"  type="multiselect" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Shipping methods to exclude from Apple Pay</label>
+                    <source_model>Magento\Shipping\Model\Config\Source\Allmethods</source_model>
+                    <can_be_empty>1</can_be_empty>
+                    <comment><![CDATA[By default, all shipping methods are enabled for Apple Pay. Select here only the methods you explicitly want to disable for Apple Pay.]]></comment>
+                </field>
+                <field id="sort_order" translate="label" type="text" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
                 </field>

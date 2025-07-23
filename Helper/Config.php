@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper;
 
+use Laminas\Stdlib\Parameters;
 use Magento\Config\App\Config\Type\System;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
@@ -12,10 +13,12 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Payments\Model\Api\Login;
+use Payplug\Payments\Service\GetOauth2AccessTokenData;
 use Payplug\Payplug;
 
 class Config extends AbstractHelper
@@ -24,6 +27,8 @@ class Config extends AbstractHelper
      * The constant to access the configurations
      */
     public const CONFIG_PATH = 'payplug_payments/general/';
+    public const OAUTH_CONFIG_PATH = 'payplug_payments/oauth2/';
+    public const APPLE_PAY_CONFIG_PATH = 'payment/payplug_payments_apple_pay/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
@@ -34,8 +39,12 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
-
-    public const MODULE_VERSION = '4.3.4';
+    public const OAUTH_ACCESS_TOKEN_DATA = 'access_token_data';
+    public const OAUTH_ENVIRONMENT_MODE = 'environmentmode';
+    public const OAUTH_PAYMENT_PAGE = 'payment_page';
+    public const OAUTH_CLIENT_DATA = 'client_data';
+    public const OAUTH_EMAIL = 'email';
+    public const MODULE_VERSION = '4.5.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
     private ?AdapterInterface $adapter = null;
@@ -49,7 +58,8 @@ class Config extends AbstractHelper
         protected ProductMetadataInterface $productMetadata,
         protected ResourceConnection $resourceConnection,
         protected Login $login,
-        protected StoreManagerInterface $storeManager
+        protected StoreManagerInterface $storeManager,
+        protected GetOauth2AccessTokenData $getOauth2AccessTokenData
     ) {
         parent::__construct($context);
     }
@@ -59,19 +69,19 @@ class Config extends AbstractHelper
      */
     public function initScopeData(): void
     {
-        $scope    = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
+        $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
         $scopeId = 0;
 
         $website = $this->_request->getParam('website');
         $store = $this->_request->getParam('store');
 
         if ($website) {
-            $scope    = ScopeInterface::SCOPE_WEBSITES;
+            $scope = ScopeInterface::SCOPE_WEBSITES;
             $scopeId = $website;
         }
 
         if ($store) {
-            $scope    = ScopeInterface::SCOPE_STORES;
+            $scope = ScopeInterface::SCOPE_STORES;
             $scopeId = $store;
         }
 
@@ -82,7 +92,7 @@ class Config extends AbstractHelper
     /**
      * Get payment mode (authorization / authorization_capture)
      */
-    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, int $websiteId = null): ?string
+    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, ?int $websiteId = null): ?string
     {
         return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_ACTION_CONFIG_PATH);
     }
@@ -147,7 +157,19 @@ class Config extends AbstractHelper
     {
         $email = $this->getConfigValue('email', $scope, $storeId);
         if ($this->scope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
-            return (bool) $email;
+            return (bool)$email;
+        }
+
+        $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
+
+        return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
+    }
+
+    public function isOauthConnected(?string $scope = '', ?int $storeId = null): bool
+    {
+        $email = $this->getConfigValue('email', $scope, $storeId, self::OAUTH_CONFIG_PATH);
+        if ($this->scope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+            return (bool)$email;
         }
 
         $defaultEmail = $this->getConfigValue('email', ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
@@ -158,9 +180,32 @@ class Config extends AbstractHelper
     /**
      * Retrieve api key
      */
-    public function getApiKey(?bool $isSandbox, ?int $storeId = null, ?string $scope = ScopeInterface::SCOPE_STORE): ?string
+    public function getApiKey(?bool $isSandbox, ?int $scopeId = null, ?string $scope = ScopeInterface::SCOPE_STORE): ?string
     {
-        return $isSandbox ? $this->getConfigValue('test_api_key', $scope, $storeId) : $this->getConfigValue('live_api_key', $scope, $storeId);
+        if ($scopeId === null && $this->scopeId !== null) {
+            $scope = $this->scope;
+            $scopeId = $this->scopeId;
+        }
+
+        if ($this->isOauthConnected($scope, $scopeId)) {
+            $websiteId = $scopeId;
+            if ($scope === ScopeInterface::SCOPE_STORE) {
+                $websiteId = $this->storeManager->getStore($scopeId)->getWebsiteId();
+            }
+            if ($scope === ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
+                $websiteId = 0;
+            }
+
+            try {
+                $accessTokenData = $this->getOauth2AccessTokenData->execute((int)$websiteId);
+                return $accessTokenData['access_token'];
+            } catch (LocalizedException) {
+                $accessTokenData = $this->getOauth2AccessTokenData->execute((int)$websiteId, true);
+                return $accessTokenData['access_token'];
+            }
+        }
+
+        return $isSandbox ? $this->getConfigValue('test_api_key', $scope, $scopeId) : $this->getConfigValue('live_api_key', $scope, $scopeId);
     }
 
     /**
@@ -248,7 +293,7 @@ class Config extends AbstractHelper
             $path = self::CONFIG_PATH;
         }
 
-        $this->configWriter->save( $path . $field, $value, $scope, $scopeId);
+        $this->configWriter->save($path . $field, $value, $scope, $scopeId);
     }
 
     /**
@@ -282,6 +327,10 @@ class Config extends AbstractHelper
             'payplug_payments/general/merchand_country',
             'payplug_payments/general/payment_page_backup',
             'payplug_payments/general/can_use_integrated_payments',
+            // OAUTH 2 configuration
+            'payplug_payments/oauth2/email',
+            'payplug_payments/oauth2/client_data',
+            'payplug_payments/oauth2/access_token_data',
             // Payplug payment Standard configuration
             'payment/payplug_payments_standard/active',
             'payment/payplug_payments_standard/title',
@@ -347,6 +396,8 @@ class Config extends AbstractHelper
             // Payplug payment Apple Pay configuration
             'payment/payplug_payments_apple_pay/active',
             'payment/payplug_payments_apple_pay/title',
+            'payment/payplug_payments_apple_pay/show_on_cart',
+            'payment/payplug_payments_apple_pay/show_on_checkout',
             'payment/payplug_payments_apple_pay/processing_order_status',
             'payment/payplug_payments_apple_pay/canceled_order_status',
             'payment/payplug_payments_apple_pay/allowspecific',
@@ -379,6 +430,24 @@ class Config extends AbstractHelper
         foreach ($keys as $key) {
             $this->configWriter->delete($key, $this->scope, $this->scopeId);
         }
+        $this->systemConfigType->clean();
+    }
+
+    public function clearLegacyAuthConfig(): void
+    {
+        $keys = [
+            'payplug_payments/general/test_api_key',
+            'payplug_payments/general/live_api_key',
+            'payplug_payments/general/connected',
+            'payplug_payments/general/verified',
+            'payplug_payments/general/email',
+            'payplug_payments/general/pwd'
+        ];
+
+        foreach ($keys as $key) {
+            $this->configWriter->delete($key, $this->scope, $this->scopeId);
+        }
+
         $this->systemConfigType->clean();
     }
 
@@ -433,6 +502,11 @@ class Config extends AbstractHelper
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
     }
 
+    public function getApplePayDisallowedShippingMethods(): array
+    {
+        return array_map('trim', explode(',', (string)$this->getConfigValue('excluded_shipping_method', ScopeInterface::SCOPE_STORE, null, self::APPLE_PAY_CONFIG_PATH)));
+    }
+
     /**
      * Get config value from database directly
      * Avoids cache issues
@@ -452,5 +526,22 @@ class Config extends AbstractHelper
             ->where('main_table.path = ?', self::CONFIG_PATH . $path);
 
         return $this->adapter->fetchOne($select);
+    }
+
+    /**
+     * Return true if the save of the admin configuration contain the key pwd
+     * that mean that the field exist therefore we are not doing an Oauth2
+     */
+    public function isUsingLegacyConnexion(array|Parameters $data): bool
+    {
+        if ($data instanceof Parameters) {
+            $data = $data->toArray();
+        }
+
+        $fields = $data['groups']['general']['fields']
+            ?? $data['general']['fields']
+            ?? null;
+
+        return is_array($fields) && array_key_exists('pwd', $fields);
     }
 }
