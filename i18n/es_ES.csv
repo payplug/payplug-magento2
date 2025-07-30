@@ -177,6 +177,8 @@
 "This card does not exist or has been deleted.","This card does not exist or has been deleted."
 "This card does not exist.","This card does not exist."
 "This order is subjected to an installment plan, whose status is <strong>%s</strong>","This order is subjected to an installment plan, whose status is <strong>%s</strong>"
+"This payment method is available for payers with billing or shipping addresses in all countries.","This payment method is available for payers with billing or shipping addresses in all countries."
+"This payment method is only available for payers with billing or shipping addresses in %1.","This payment method is only available for payers with billing or shipping addresses in %1."
 "This payment will be manually refunded.","Refund recorded. It will be processed manually by our team. For more information, please visit our help center."
 "Title","Título"
 "To pay with Oney, the total amount of your cart must be between %1 and %2.","To pay with Oney, the total amount of your cart must be between %1 and %2."

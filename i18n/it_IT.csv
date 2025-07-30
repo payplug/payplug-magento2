@@ -215,6 +215,8 @@
 "This card does not exist or has been deleted.","La carta non esiste o è stata soppressa"
 "This card does not exist.","Carta di credito inesistente."
 "This order is subjected to an installment plan, whose status is <strong>%s</strong>","Questo ordine ha un pagamento frazionato in corso, di cui lo stato è <strong>%s</strong>"
+"This payment method is available for payers with billing or shipping addresses in all countries.","Questo metodo di pagamento è disponibile per i clienti con indirizzo di fatturazione o di spedizione in tutti i paesi."
+"This payment method is only available for payers with billing or shipping addresses in %1.","Questo metodo di pagamento è disponibile solo per i clienti con un indirizzo di fatturazione o di spedizione in %1."
 "This payment will be manually refunded.","Rimborso registrato. Verrà elaborato manualmente dal nostro team. Per maggiori informazioni, consulta il nostro centro assistenza."
 "Title","Titolo"
 "To pay with Oney, the total amount of your cart must be between %1 and %2.","L’importo totale del tuo carrello deve essere compreso tra %1 e %2 per poter pagare con Oney."
