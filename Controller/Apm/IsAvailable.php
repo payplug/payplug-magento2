@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Payplug\Payments\Controller\Ppro;
+namespace Payplug\Payments\Controller\Apm;
 
 use Exception;
+use Magento\Directory\Model\ResourceModel\Country\CollectionFactory as CountryCollectionFactory;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
@@ -20,6 +21,7 @@ class IsAvailable extends Action
         private readonly JsonFactory $resultJsonFactory,
         private readonly Config $configHelper,
         private readonly GetAllowedCountriesPerPaymentMethod $allowedCountriesPerPaymentMethod,
+        private readonly CountryCollectionFactory $countryCollectionFactory,
         private readonly Logger $logger
     ) {
         parent::__construct($context);
@@ -44,19 +46,38 @@ class IsAvailable extends Action
                         'type' => 'mode-test',
                     ],
                 ]);
-            } else {
+            } elseif ($this->configHelper->isShippingApmFilteringMode() === false) {
                 $params = $this->getRequest()->getParams();
                 $allowedCountryIds = $this->allowedCountriesPerPaymentMethod->execute($params['paymentMethod']);
-                $selectedCountryIds = [
-                    $params['billingCountry'],
-                    $params['shippingCountry']
-                ];
 
-                if ($allowedCountryIds && !array_intersect($allowedCountryIds, $selectedCountryIds)) {
+                if (!in_array($params['billingCountry'], $allowedCountryIds)) {
+                    $countryCollection = $this->countryCollectionFactory->create();
+                    $countryCollection->addFieldToFilter('country_id', ['in' => $allowedCountryIds]);
+                    $countryCollection->loadData();
+
+                    $countryNames = [];
+
+                    foreach ($countryCollection as $country) {
+                        $countryNames[] = $country->getName();
+                    }
+
+                    if (count($countryNames) === 1) {
+                        $message = __(
+                            'Billing address is not eligible with this payment method. Allowed country : %1',
+                            implode(',', $countryNames)
+                        );
+                    } else {
+                        $message = __(
+                            'Billing address is not eligible with this payment method. Allowed countries : %1',
+                            implode(',', $countryNames)
+                        );
+                    }
+
+
                     $result->setData([
                         'success' => false,
                         'data' => [
-                            'message' => __('Billing address is not eligible with this payment method.') // TODO inject allowrd countries
+                            'message' => $message
                         ],
                     ]);
                 }

@@ -26,6 +26,8 @@
 "Authorization only","Sólo autorización"
 "Authorized","Authorized"
 "Bancontact is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","Bancontact is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it."
+"Billing address is not eligible with this payment method. Allowed countries : %1","Billing address is not eligible with this payment method. Allowed countries : %1"
+"Billing address is not eligible with this payment method. Allowed country : %1","Billing address is not eligible with this payment method. Allowed country : %1"
 "Brand","Marca"
 "By activating this option, only validated payments will create invoices.","By activating this option, only validated payments will create invoices."
 "CB","CB"

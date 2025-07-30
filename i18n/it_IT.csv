@@ -33,6 +33,8 @@
 "Authorized","Autorizzato"
 "Back","Indietro"
 "Bancontact is unavailable in TEST mode. Please switch your Payplug plugin to LIVE mode to activate it.","Bancontact non è disponibile in modalità TEST. Per attivarlo, è necessario mettere il modulo Payplug in modalità LIVE."
+"Billing address is not eligible with this payment method. Allowed countries : %1","L’indirizzo di fatturazione non è idoneo per questo metodo di pagamento. Paesi consentiti: %1"
+"Billing address is not eligible with this payment method. Allowed country : %1","L’indirizzo di fatturazione non è idoneo per questo metodo di pagamento. Paese consentito: %1"
 "Brand","Tipo di carta"
 "By activating this option, only validated payments will create invoices.","Attivando questa opzione, solo le fatture relative ai pagamenti approvati saranno create."
 "By default, all shipping methods are enabled for Apple Pay. Select here only the methods you explicitly want to disable for Apple Pay.","Per impostazione predefinita, tutti i metodi di spedizione sono abilitati per Apple Pay. Seleziona qui solo i metodi che desideri esplicitamente disabilitare per Apple Pay."
