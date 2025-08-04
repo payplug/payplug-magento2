@@ -9,7 +9,9 @@ use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\Auth\Session as AdminAuthSession;
 use Magento\Framework\App\Action\HttpGetActionInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\Result\RawFactory;
 use Magento\Framework\Controller\Result\RedirectFactory;
+use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\UrlInterface;
 use Payplug\Authentication as PayplugAuthentication;
 use Payplug\Exception\ConfigurationException;
@@ -24,6 +26,7 @@ class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
         private readonly RequestInterface $request,
         private readonly UrlInterface $urlBuilder,
         private readonly RedirectFactory $redirectFactory,
+        private readonly RawFactory $rawFactory,
         private readonly Logger $logger,
         private readonly AdminAuthSession $adminAuthSession,
         Context $context
@@ -31,7 +34,7 @@ class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
         parent::__construct($context);
     }
 
-    public function execute()
+    public function execute(): ResultInterface
     {
         $clientId = $this->request->getParam('client_id');
         $companyId = $this->request->getParam('company_id');
@@ -52,8 +55,8 @@ class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
 
         try {
             PayplugAuthentication::initiateOAuth($clientId, $callbackUrl, $codeVerifier);
-            // phpcs:ignore Magento2.Security.LanguageConstruct.ExitUsage
-            exit;
+
+            return $this->rawFactory->create();
         } catch (ConfigurationException $e) {
             $this->logger->error($e->getMessage());
             $this->messageManager->addErrorMessage(__('Could not retrieve Auth Code from Payplug Portal'));
