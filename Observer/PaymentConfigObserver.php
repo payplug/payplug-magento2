@@ -665,7 +665,6 @@ class PaymentConfigObserver implements ObserverInterface
         $environmentMode = $this->getConfig('environmentmode');
         if ($environmentMode !== Config::ENVIRONMENT_LIVE) {
             $groups[$groupCode]['fields']['active']['value'] = 0;
-            $groups[$groupCode]['fields']['title']['value'] = 'Pay with Bancontact UPDATED';
             $this->messageManager->addErrorMessage($testModeMessage);
             return;
         }
