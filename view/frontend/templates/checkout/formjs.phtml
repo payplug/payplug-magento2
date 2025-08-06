@@ -13,7 +13,7 @@ use Payplug\Payments\Block\Formjs;
  */
 ?>
 <?php foreach ($block->getJsUrls() as $url): ?>
-    <?= $secureRenderer->renderTag('script', ['src' => $escaper->escapeUrl($url)], '', false); ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', ['src' => $escaper->escapeUrl($url)], '', false); ?>
 <?php endforeach; ?>
 <?php $scriptContent = 'window.PAYPLUG_DOMAIN = \'' . $escaper->escapeUrl($block->getPayplugSecureUrl()) . '\';' ?>
-<?= $secureRenderer->renderTag('script', [], $scriptContent, false); ?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptContent, false); ?>
