@@ -21,7 +21,7 @@ class CheckoutSuccessViewModel implements ArgumentInterface
 
         $payment = $order->getPayment();
 
-        if ($payment && $this->payplugDataHelper->isCodePayplugPayment($payment->getMethod()) === true) {
+        if ($payment && $this->payplugDataHelper->isCodePayplugPaymentWithRedirect($payment->getMethod()) === true) {
             return true;
         }
 

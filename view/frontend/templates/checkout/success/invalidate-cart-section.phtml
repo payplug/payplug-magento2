@@ -17,7 +17,9 @@ if ($checkoutSuccessViewModel->needToInvalidateCustomerCartSection($orderIncreme
     require([
             'Magento_Customer/js/customer-data'
         ], function (customerData) {
+            customerData.initStorage();
             customerData.invalidate(['cart']);
+            customerData.reload(['cart'], true);
         }
     )
 </script>

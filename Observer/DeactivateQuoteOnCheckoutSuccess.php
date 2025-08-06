@@ -21,19 +21,17 @@ class DeactivateQuoteOnCheckoutSuccess implements ObserverInterface
     {
         /** @var OrderInterface $order */
         $order = $observer->getEvent()->getData('order');
-        $paymentMethod = $order->getPayment()->getMethod();
+        $payment = $order->getPayment();
 
-        if (!$paymentMethod || $this->payplugDataHelper->isCodePayplugPayment($paymentMethod) === false) {
-            return;
-        }
+        if ($payment && $this->payplugDataHelper->isCodePayplugPaymentWithRedirect($payment->getMethod()) === true) {
+            try {
+                $quote = $this->cartRepository->getActive($order->getQuoteId());
+                $quote->setIsActive(false);
 
-        try {
-            $quote = $this->cartRepository->getActive($order->getQuoteId());
-            $quote->setIsActive(false);
-
-            $this->cartRepository->save($quote);
-        } catch (NoSuchEntityException) {
-            // No active quote, nothing to do
+                $this->cartRepository->save($quote);
+            } catch (NoSuchEntityException) {
+                // No active quote, nothing to do
+            }
         }
     }
 }

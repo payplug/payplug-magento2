@@ -20,8 +20,8 @@ class KeepQuoteActiveOnPlaceOrder implements ObserverInterface
         $quote = $observer->getEvent()->getData('quote');
         $paymentMethod = $quote->getPayment()->getMethod();
 
-        if ($paymentMethod && $this->payplugDataHelper->isCodePayplugPayment($paymentMethod) === true) {
-            // Keep quote active, will be desactivate
+        if ($paymentMethod && $this->payplugDataHelper->isCodePayplugPaymentWithRedirect($paymentMethod) === true) {
+            // Keep quote active, will be desactivate on success page only
             $quote->setIsActive(true);
         }
     }
