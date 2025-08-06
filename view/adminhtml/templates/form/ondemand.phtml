@@ -72,7 +72,7 @@ $language = $block->getAdditionalData('language');
                       name="payment[description]"
                       title="<?= $escaper->escapeHtmlAttr(__('Description')) ?>"
                       class="admin__control-text"
-                      maxlength="<?= OndemandHelper::DESCRIPTION_MAX_LENGTH ?>"
+                      maxlength="<?= /* @noEscape */ OndemandHelper::DESCRIPTION_MAX_LENGTH ?>"
             ><?= /* @noEscape */ $block->getAdditionalData('description') ?></textarea>
         </div>
     </div>

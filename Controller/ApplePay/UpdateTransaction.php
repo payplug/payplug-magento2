@@ -48,10 +48,16 @@ class UpdateTransaction extends AbstractPayment
             }
 
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
+            $paymentObject = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
+            $metadatas = $paymentObject->metadata;
+            $metadatas['ApplepayWorkflowType'] = 'checkout';
+
+            $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
             $updatedPayment = $payplugPayment->update([
                 'apple_pay' => [
                     'payment_token' => $token,
                 ],
+                'metadata' => $metadatas
             ]);
 
             if ($updatedPayment->is_paid) {

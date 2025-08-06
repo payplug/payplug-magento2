@@ -1,0 +1,55 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\ApplePay\ProductButton;
+
+/**
+ * @var Escaper $escaper
+ * @var ProductButton $block
+ */
+?>
+
+<div data-bind="scope: 'button-apple-pay'">
+    <apple-pay-button
+        buttonstyle="black"
+        type="pay"
+        class="hidden"
+        data-bind="
+            click: handleClick,
+            css: {
+                'hidden': !isVisible(),
+                'is-disabled': isDisabled
+            }
+        ">
+    </apple-pay-button>
+
+    <!-- ko foreach: getRegion('messages') -->
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <!--/ko-->
+</div>
+
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Magento_Ui/js/core/app" : {
+                "components" : {
+                    "button-apple-pay" : {
+                        "component" : "Payplug_Payments/js/view/product/button-apple-pay",
+                        "workflowType": "product",
+                        "applePayConfig": <?= /* @noEscape */ $block->getConfigJson(); ?>,
+                        "productFinalPrice": <?= /* @noEscape */ $block->getCurrentProduct()->getFinalPrice(); ?>,
+                        "productIsVirtual": <?= $block->getCurrentProduct()->isVirtual() ? 'true' : 'false'; ?>,
+                        "children": {
+                            "messages": {
+                                "component": "Magento_Ui/js/view/messages",
+                                "displayArea": "messages"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+</script>

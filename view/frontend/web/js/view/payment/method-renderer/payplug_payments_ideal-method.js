@@ -1,4 +1,3 @@
-/* @api */
 define([
     'Payplug_Payments/js/view/payment/method-renderer/ppro-payment-renderer',
     'jquery',

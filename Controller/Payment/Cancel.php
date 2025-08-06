@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Sales\Model\OrderFactory;
-use Magento\Sales\Model\OrderRepository;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
@@ -17,36 +18,27 @@ use Payplug\Payments\Service\GetCurrentOrder;
 class Cancel extends AbstractPayment
 {
     public function __construct(
+        private readonly Validator $formKeyValidator,
+        private readonly RequestInterface $request,
+        private readonly GetCurrentOrder $getCurrentOrder,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
         Logger $logger,
-        Data $payplugHelper,
-        private OrderRepository $orderRepository,
-        private Validator $formKeyValidator,
-        private RequestInterface $request,
-        private GetCurrentOrder $getCurrentOrder
+        Data $payplugHelper
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
 
-    /**
-     * Cancel PayPlug payment
-     *
-     * @return mixed
-     */
-    public function execute()
+    public function execute(): Redirect
     {
-        $resultRedirect = $this->resultRedirectFactory->create();
-        $redirectUrlCart = 'checkout/cart';
-
         $formKeyValidation = $this->formKeyValidator->validate($this->request);
         if (!$formKeyValidation) {
             $this->messageManager->addErrorMessage(
                 __('Your session has expired')
             );
 
-            return $resultRedirect->setPath($redirectUrlCart);
+            return $this->getResultRedirect();
         }
 
         try {
@@ -64,12 +56,25 @@ class Cancel extends AbstractPayment
 
             $this->getCheckout()->restoreQuote();
 
-            return $resultRedirect->setPath($redirectUrlCart);
-        } catch (\Exception $e) {
+            return $this->getResultRedirect();
+        } catch (Exception $e) {
             $this->logger->error($e->getMessage());
 
-            return $resultRedirect->setPath($redirectUrlCart);
+            return $this->getResultRedirect();
         }
+    }
+
+    private function getResultRedirect(): Redirect
+    {
+        $resultRedirect = $this->resultRedirectFactory->create();
+
+        if ($this->request->getParam('redirectToReferer') == 1) {
+            $resultRedirect->setRefererUrl();
+        } else {
+            $resultRedirect->setPath('checkout/cart');
+        }
+
+        return $resultRedirect;
     }
 
 }

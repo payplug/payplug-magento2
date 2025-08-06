@@ -1,40 +1,47 @@
 define([
+    'jquery',
+    'ko',
+    'mage/url',
+    'mage/translate',
     'Magento_Checkout/js/view/payment/default',
     'Payplug_Payments/js/action/redirect-on-success',
     'Magento_Checkout/js/model/full-screen-loader',
-    'jquery',
-    'Magento_Checkout/js/model/quote',
-    'mage/url',
-    'ko',
-    'mage/translate'
-], function (Component, redirectOnSuccessAction, fullScreenLoader, $, quote, urlBuilder, ko) {
+    'Magento_Checkout/js/model/quote'
+], function ($, ko, url, $t, Component, redirectOnSuccessAction, fullScreenLoader, quote) {
     'use strict';
 
     return Component.extend({
         defaults: {
             template: 'Payplug_Payments/payment/payplug_payments_amex'
         },
-
         redirectAfterPlaceOrder: false,
         isLoading: false,
         isAmexPlaceOrderDisabled: ko.observable(false),
         amexDisabledMessage: ko.observable(''),
 
+        /**
+         * Init component
+         *
+         * @return {Object}
+         */
         initialize: function () {
-            var self = this;
+            const self = this;
 
             this._super();
+
             quote.paymentMethod.subscribe(function (value) {
                 self.isLoading = false;
                 if (value && value.method === self.getCode()) {
                     self.updateAmex();
                 }
             });
+
             quote.shippingAddress.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updateAmex();
                 }
             });
+
             quote.billingAddress.subscribe(function () {
                 if (quote.billingAddress() !== null) {
                     if (self.getCode() === self.isChecked()) {
@@ -42,11 +49,13 @@ define([
                     }
                 }
             });
+
             quote.totals.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updateAmex();
                 }
             });
+
             quote.shippingMethod.subscribe(function () {
                 if (self.getCode() === self.isChecked()) {
                     self.updateAmex();
@@ -56,23 +65,58 @@ define([
             return this;
         },
 
+        /**
+         * Init observable variables
+         * 
+         * @return {Object}
+         */
+        initObservable: function () {
+            this._super();
+
+            this.isActive = ko.computed(function () {
+                return this.getCode() === this.isChecked() && '_active';
+            }, this);
+
+            return this;
+        },
+
+        /**
+         * Triggered after a payment has been placed.
+         *
+         * @returns void
+         */
         afterPlaceOrder: function () {
             fullScreenLoader.stopLoader();
             redirectOnSuccessAction.execute();
         },
-        getCardLogo: function() {
+
+        /**
+         * Retrieves the URL for the Amex card logo.
+         * 
+         * @returns {String}
+         */
+        getCardLogo: function () {
             return window.checkoutConfig.payment.payplug_payments_amex.logo;
         },
-        updateAmex: function() {
-            var self = this;
-            if (self.isLoading) {
+
+        /**
+         * Retrieves the Amex information and update the button state.
+         * 
+         * @returns {Boolean}
+         */
+        updateAmex: function () {
+            const self = this;
+
+            if (this.isLoading) {
                 return false;
             }
-            self.updateLoading(true);
+
+            this.updateLoading(true);
+
             try {
                 $.ajax({
-                    url: urlBuilder.build('payplug_payments/amex/isAvailable'),
-                    type: "POST",
+                    url: url.build('payplug_payments/amex/isAvailable'),
+                    type: 'POST',
                     data: {}
                 }).done(function (response) {
                     if (response.success) {
@@ -82,10 +126,11 @@ define([
                         self.isAmexPlaceOrderDisabled(true);
                         self.amexDisabledMessage(response.data.message);
                     }
+
                     self.updateLoading(false);
-                }).fail(function (response) {
+                }).fail(function () {
                     self.isAmexPlaceOrderDisabled(true);
-                    self.amexDisabledMessage($.mage.__('An error occurred while getting Amex details. Please try again.'));
+                    self.amexDisabledMessage($t('An error occurred while getting Amex details. Please try again.'));
                     self.updateLoading(false);
                 });
 
@@ -97,13 +142,21 @@ define([
                 return false;
             }
         },
+        
+        /**
+         * Update the loading state of the payment method.
+         *
+         * @param {Boolean} isLoading
+         * @returns void
+         */
         updateLoading: function(isLoading) {
             this.isLoading = isLoading;
+
             if (isLoading) {
                 fullScreenLoader.startLoader();
             } else {
                 fullScreenLoader.stopLoader();
             }
-        },
+        }
     });
 });

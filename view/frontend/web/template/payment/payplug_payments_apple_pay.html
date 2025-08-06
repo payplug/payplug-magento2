@@ -1,12 +1,6 @@
-<div class="payment-method"
-     data-bind="
-        css: {
-            '_active': (getCode() == isChecked())
-        },
-        attr: {
-            'class': 'payment-method ' + getCode()
-        },
-        visible: isVisible()
+<div data-bind="
+        class: 'payment-method ' + getCode(),
+        css: { '_active': isActive }
     ">
     <div class="payment-method-title field choice">
         <input type="radio"
