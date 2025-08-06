@@ -4,6 +4,7 @@ define([
     'use strict';
 
     return function () {
+        customerData.initStorage();
         customerData.invalidate(['cart']);
         customerData.reload(['cart'], true);
     };
