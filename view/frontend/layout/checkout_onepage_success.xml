@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="order.success.additional.info">
+            <block class="Magento\Checkout\Block\Onepage\Success" name="checkout.success.invalidate-cart-section"
+                   template="Payplug_Payments::checkout/success/invalidate-cart-section.phtml" cacheable="false">
+                <arguments>
+                    <argument name="checkoutSuccessViewModel" xsi:type="object">Payplug\Payments\ViewModel\CheckoutSuccessViewModel</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>
