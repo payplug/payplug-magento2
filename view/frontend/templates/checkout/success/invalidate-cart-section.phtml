@@ -1,9 +1,11 @@
 <?php
 
 use Magento\Checkout\Block\Onepage\Success;
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Payplug\Payments\ViewModel\CheckoutSuccessViewModel;
 
 /** @var Success $block * */
+/** @var SecureHtmlRenderer $secureRenderer */
 /** @var CheckoutSuccessViewModel $checkoutSuccessViewModel */
 $checkoutSuccessViewModel = $block->getData('checkoutSuccessViewModel');
 $orderIncrementId = (string)$block->getData('order_id');
@@ -12,14 +14,10 @@ if ($checkoutSuccessViewModel->needToInvalidateCustomerCartSection($orderIncreme
     return;
 }
 ?>
-
-<script>
-    require([
-            'Magento_Customer/js/customer-data'
-        ], function (customerData) {
-            customerData.initStorage();
-            customerData.invalidate(['cart']);
-            customerData.reload(['cart'], true);
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Payplug_Payments/js/checkout/success/invalidate-cart-section": {}
         }
-    )
+    }
 </script>
