@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
-use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Sales\Api\Data\OrderInterface;
 
-class MybankBuilder extends AbstractBuilder
+class MybankBuilder extends ApmBuilder
 {
     /**
      * @inheritdoc

@@ -91,16 +91,16 @@ define([
 
         /**
          * Retrieves the URL for the Bancontact card logo.
-         * 
+         *
          * @returns {String}
          */
         getCardLogo: function () {
             return window.checkoutConfig.payment.payplug_payments_bancontact.logo;
         },
-        
+
         /**
          * Retrieves the Bancontact information and update the button state.
-         * 
+         *
          * @returns {Boolean}
          */
         updateBancontact: function () {
@@ -113,12 +113,16 @@ define([
             this.updateLoading(true);
             this.isBancontactPlaceOrderDisabled(true);
             this.bancontactDisabledMessage('');
-            
+
             try {
                 $.ajax({
-                    url: url.build('payplug_payments/bancontact/isAvailable'),
+                    url: url.build('payplug_payments/apm/isAvailable'),
                     type: 'POST',
-                    data: {}
+                    data: {
+                        'billingCountry': quote.billingAddress() ? quote.billingAddress().countryId : null,
+                        'shippingCountry': quote.shippingAddress() ? quote.shippingAddress().countryId : null,
+                        'paymentMethod': self.getCode(),
+                    }
                 }).done(function (response) {
                     if (response.success) {
                         self.isBancontactPlaceOrderDisabled(false);
@@ -138,7 +142,7 @@ define([
                 return false;
             }
         },
-        
+
         /**
          * Update the loading state of the payment method.
          *
