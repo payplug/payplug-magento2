@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Service;
 
 use Magento\Framework\Serialize\SerializerInterface;

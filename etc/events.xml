@@ -14,7 +14,6 @@
     </event>
     <event name="payment_method_is_active">
         <observer name="payplug_payments_standard_is_available" instance="Payplug\Payments\Observer\StandardAvailabilityObserver" />
-        <observer name="payplug_restrict_payment_method_by_country" instance="Payplug\Payments\Observer\HidePaymentMethodForRestrictedCountries"  />
     </event>
     <event name="payment_method_assign_data_payplug_payments_ondemand">
         <observer name="payplug_payments_ondemand_gateway_data_assign" instance="Payplug\Payments\Observer\OndemandPaymentDataAssignObserver" />
