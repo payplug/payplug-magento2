@@ -74,6 +74,7 @@ define([
                 return;
             }
 
+            // Disable button to avoid multiple clicks
             this.isDisabled(true);
 
             payplugApplePay.setBaseAmount(amountPrice);
@@ -82,9 +83,7 @@ define([
             payplugApplePay.setWorkflowType(workflowType);
             payplugApplePay.initApplePaySession(config);
 
-            payplugApplePay.applePaySession.oncancel = () => {
-                this.isDisabled(false);
-            };
+            this.isDisabled(false);
         }
     });
 });
