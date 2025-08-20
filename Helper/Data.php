@@ -27,7 +27,6 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
-use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\HttpException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\Amex;
@@ -214,38 +213,49 @@ class Data extends AbstractHelper
 
         $allowedStates = [
             Standard::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             InstallmentPlan::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW,
                 Order::STATE_PROCESSING,
                 Order::STATE_COMPLETE
             ],
             Ondemand::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Oney::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             OneyWithoutFees::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Bancontact::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             ApplePay::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Amex::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Satispay::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Ideal::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Mybank::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
         ];
@@ -284,7 +294,7 @@ class Data extends AbstractHelper
             return false;
         }
 
-        if ($order->getState() != Order::STATE_PAYMENT_REVIEW) {
+        if (!in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
             return false;
         }
 
@@ -309,7 +319,7 @@ class Data extends AbstractHelper
         );
         $field = null;
 
-        if ($order->getState() === Order::STATE_PAYMENT_REVIEW) {
+        if (in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
             try {
                 $payplugOrderPayment = $this->getOrderPayment($order->getIncrementId());
                 $payplugPayment = $payplugOrderPayment->retrieve(
@@ -448,7 +458,7 @@ class Data extends AbstractHelper
             ) {
                 return;
             }
-            if ($order->getState() !== Order::STATE_PAYMENT_REVIEW) {
+            if (in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
                 return;
             }
 
@@ -674,7 +684,7 @@ class Data extends AbstractHelper
         // If Oney payment is still being reviewed, order is validated but still in Payment Review state
         if (($order->getPayment()->getMethod() == Oney::METHOD_CODE ||
             $order->getPayment()->getMethod() == OneyWithoutFees::METHOD_CODE) &&
-            $order->getState() == Order::STATE_PAYMENT_REVIEW
+            in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])
         ) {
             return true;
         }
@@ -965,7 +975,7 @@ class Data extends AbstractHelper
      */
     public function cancelOrderAndInvoice(Order $order, bool $checkPaymentStatus = true): void
     {
-        if ($order->getState() != Order::STATE_PAYMENT_REVIEW) {
+        if (!in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
             return;
         }
 

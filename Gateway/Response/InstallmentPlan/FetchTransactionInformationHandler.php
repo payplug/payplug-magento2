@@ -138,7 +138,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
 
                         $order->setTotalPaid($totalPaid);
                         $order->setBaseTotalPaid($baseTotalPaid);
-                        if ($order->getState() == Order::STATE_PAYMENT_REVIEW) {
+                        if (in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
                             $order->setState(Order::STATE_PROCESSING);
                         }
 
