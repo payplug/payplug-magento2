@@ -62,6 +62,7 @@
         <arguments>
             <argument name="commands" xsi:type="array">
                 <item name="order" xsi:type="string">PayplugPaymentStandardCaptureCommand</item>
+                <item name="authorize" xsi:type="string">PayplugPaymentStandardCaptureCommand</item>
                 <item name="capture" xsi:type="string">PayplugPaymentStandardCaptureCommand</item>
                 <item name="fetch_transaction_information" xsi:type="string">PayplugPaymentStandardFetchTransactionInfoCommand</item>
                 <item name="refund" xsi:type="string">PayplugPaymentStandardRefundCommand</item>
