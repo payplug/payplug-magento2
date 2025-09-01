@@ -1,16 +1,13 @@
 <?php
 
 use Magento\Checkout\Block\Onepage\Success;
-use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Payplug\Payments\ViewModel\CheckoutSuccessViewModel;
 
-/** @var Success $block * */
-/** @var SecureHtmlRenderer $secureRenderer */
+/** @var Success $block */
 /** @var CheckoutSuccessViewModel $checkoutSuccessViewModel */
 $checkoutSuccessViewModel = $block->getData('checkoutSuccessViewModel');
-$orderIncrementId = (string)$block->getData('order_id');
 
-if ($checkoutSuccessViewModel->needToInvalidateCustomerCartSection($orderIncrementId) === false) {
+if ($checkoutSuccessViewModel->needToInvalidateCustomerCartSection() === false) {
     return;
 }
 ?>
