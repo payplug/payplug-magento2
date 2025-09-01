@@ -332,6 +332,21 @@ class Data extends AbstractHelper
                         __METHOD__, $order->getId())
                     );
                     $order->setState(Order::STATE_PROCESSING);
+                } elseif (!empty($payplugPayment->authorization->authorized_at) && empty($payment->failure)) {
+                    $this->_logger->info(
+                        sprintf(
+                            '%s: Updating Order: %s state to Payment Review.',
+                            __METHOD__,
+                            $order->getId()
+                        )
+                    );
+
+                    $order->setStatus(Order::STATE_PAYMENT_REVIEW);
+                    $order->setState(Order::STATE_PAYMENT_REVIEW);
+                    $order->addCommentToStatusHistory(__('Transaction authorized but not yet captured.'))
+                        ->setIsCustomerNotified(false);
+
+                    $order->getPayment()->setRew(true);
                 }
             } catch (\Exception $e) {
                 $this->_logger->info($e->getMessage());

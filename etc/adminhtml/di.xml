@@ -6,4 +6,9 @@
     <type name="Magento\Sales\Block\Adminhtml\Order\Invoice\View">
         <plugin name="add_update_payplug_payment_button_sales_invoice_view" type="Payplug\Payments\Plugin\Adminhtml\Widget\SalesInvoiceViewContext" sortOrder="1"/>
     </type>
+
+    <type name="Magento\Sales\Model\Order">
+        <plugin name="payplug_payments_allow_invoice_on_payment_review"
+                type="Payplug\Payments\Plugin\AllowInvoiceOnPaymentReview"/>
+    </type>
 </config>
