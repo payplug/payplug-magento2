@@ -342,7 +342,7 @@ class Data extends AbstractHelper
                     );
 
                     $order->setStatus(Order::STATE_PAYMENT_REVIEW);
-                    $order->setState(Order::STATE_PAYMENT_REVIEW);
+                    $order->setState(Order::STATE_PROCESSING);
                     $order->addCommentToStatusHistory(__('Transaction authorized but not yet captured.'))
                         ->setIsCustomerNotified(false);
 
@@ -353,7 +353,7 @@ class Data extends AbstractHelper
             }
         }
 
-        if ($order->getState() == Order::STATE_PROCESSING) {
+        if ($order->getState() == Order::STATE_PROCESSING && $order->getStatus() !== Order::STATE_PAYMENT_REVIEW) {
             $field = 'processing_order_status';
         } elseif ($order->getState() == Order::STATE_CANCELED) {
             $field = 'canceled_order_status';
