@@ -294,7 +294,7 @@ class Data extends AbstractHelper
             return false;
         }
 
-        if (!in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
+        if (!$this->isOrderPending($order)) {
             return false;
         }
 
@@ -319,7 +319,7 @@ class Data extends AbstractHelper
         );
         $field = null;
 
-        if (in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
+        if ($this->isOrderPending($order)) {
             try {
                 $payplugOrderPayment = $this->getOrderPayment($order->getIncrementId());
                 $payplugPayment = $payplugOrderPayment->retrieve(
@@ -473,7 +473,7 @@ class Data extends AbstractHelper
             ) {
                 return;
             }
-            if (in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
+            if ($this->isOrderPending($order)) {
                 return;
             }
 
@@ -699,7 +699,7 @@ class Data extends AbstractHelper
         // If Oney payment is still being reviewed, order is validated but still in Payment Review state
         if (($order->getPayment()->getMethod() == Oney::METHOD_CODE ||
             $order->getPayment()->getMethod() == OneyWithoutFees::METHOD_CODE) &&
-            in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])
+            $this->isOrderPending($order)
         ) {
             return true;
         }
@@ -990,7 +990,7 @@ class Data extends AbstractHelper
      */
     public function cancelOrderAndInvoice(Order $order, bool $checkPaymentStatus = true): void
     {
-        if (!in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW])) {
+        if (!$this->isOrderPending($order)) {
             return;
         }
 
@@ -1014,5 +1014,10 @@ class Data extends AbstractHelper
         $order->registerCancellation('Payplug payment was not successfull.', false);
         $this->updateOrderStatus($order, false);
         $this->orderRepository->save($order);
+    }
+
+    public function isOrderPending(OrderInterface $order): bool
+    {
+        return in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW]);
     }
 }

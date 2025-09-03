@@ -26,8 +26,8 @@ class SetOrderStateToPendingPayment implements ObserverInterface
         /** @var PaymentInterface $payment */
         $payment = $observer->getData('payment');
 
-        if ($this->payplugDataHelper->isCodePayplugPayment($payment->getMethod()) === false
-            || $payment instanceof OrderPayment === false
+        if ($payment instanceof OrderPayment === false
+            || $this->payplugDataHelper->isCodePayplugPayment($payment->getMethod()) === false
         ) {
             return;
         }
