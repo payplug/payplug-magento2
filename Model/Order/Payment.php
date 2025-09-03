@@ -44,8 +44,8 @@ class Payment extends AbstractModel implements IdentityInterface
         Context $context,
         Registry $registry,
         private Config $payplugConfig,
-        AbstractResource $resource = null,
-        AbstractDb $resourceCollection = null,
+        ?AbstractResource $resource = null,
+        ?AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
