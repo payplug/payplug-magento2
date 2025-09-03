@@ -40,10 +40,10 @@ use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Standard;
+use Payplug\Payments\Helper\Config as PayplugConfig;
 use Payplug\Payments\Helper\Ondemand as OndemandHelper;
 use Payplug\Payments\Model\Order\InstallmentPlan as OrderInstallmentPlan;
 use Payplug\Payments\Model\Order\Payment;
-use Payplug\Payments\Model\Order\PaymentFactory;
 use Payplug\Payments\Model\Order\Processing;
 use Payplug\Payments\Model\Order\ProcessingFactory as PayplugOrderProcessingFactory;
 use Payplug\Payments\Model\OrderInstallmentPlanRepository;
@@ -57,18 +57,18 @@ class Data extends AbstractHelper
 {
     public function __construct(
         Context $context,
-        private PaymentFactory $paymentFactory,
-        private OrderPaymentRepository $orderPaymentRepository,
-        private OrderRepository $orderRepository,
-        private PayplugOrderProcessingFactory $orderProcessingFactory,
-        private OrderProcessingRepository $orderProcessingRepository,
-        private OrderInstallmentPlanRepository $orderInstallmentPlanRepository,
-        private GridInterface $salesGrid,
-        private SearchCriteriaInterfaceFactory $searchCriteriaInterfaceFactory,
-        private FilterBuilderFactory $filterBuilderFactory,
-        private FilterGroupBuilderFactory $filterGroupBuilderFactory,
-        private SortOrderBuilderFactory $sortOrderBuilderFactory,
-        private OndemandHelper $ondemandHelper
+        private readonly OrderPaymentRepository $orderPaymentRepository,
+        private readonly OrderRepository $orderRepository,
+        private readonly PayplugOrderProcessingFactory $orderProcessingFactory,
+        private readonly OrderProcessingRepository $orderProcessingRepository,
+        private readonly OrderInstallmentPlanRepository $orderInstallmentPlanRepository,
+        private readonly GridInterface $salesGrid,
+        private readonly SearchCriteriaInterfaceFactory $searchCriteriaInterfaceFactory,
+        private readonly FilterBuilderFactory $filterBuilderFactory,
+        private readonly FilterGroupBuilderFactory $filterGroupBuilderFactory,
+        private readonly SortOrderBuilderFactory $sortOrderBuilderFactory,
+        private readonly OndemandHelper $ondemandHelper,
+        private readonly PayplugConfig $payplugConfig
     ) {
         parent::__construct($context);
     }
@@ -314,8 +314,13 @@ class Data extends AbstractHelper
     public function updateOrderStatus(Order $order, bool $save = true): void
     {
         $this->_logger->info(
-            sprintf('%s: Updating Order: %s. Status: %s / State: %s.',
-                __METHOD__, $order->getId(), $order->getStatus(), $order->getState())
+            sprintf(
+                '%s: Updating Order: %s. Status: %s / State: %s.',
+                __METHOD__,
+                $order->getId(),
+                $order->getStatus(),
+                $order->getState()
+            )
         );
         $field = null;
 
@@ -328,8 +333,11 @@ class Data extends AbstractHelper
                 );
                 if ($payplugPayment->is_paid && empty($payplugPayment->failure)) {
                     $this->_logger->info(
-                        sprintf('%s: Updating Order: %s state to Processing.',
-                        __METHOD__, $order->getId())
+                        sprintf(
+                            '%s: Updating Order: %s state to Processing.',
+                            __METHOD__,
+                            $order->getId()
+                        )
                     );
                     $order->setState(Order::STATE_PROCESSING);
                 } elseif (!empty($payplugPayment->authorization->authorized_at) && empty($payment->failure)) {
@@ -358,14 +366,24 @@ class Data extends AbstractHelper
         } elseif ($order->getState() == Order::STATE_CANCELED) {
             $field = 'canceled_order_status';
         }
-        $this->_logger->info(sprintf('%s: Updating Order: %s status to %s.',
-            __METHOD__, $order->getId(), $order->getState())
+        $this->_logger->info(
+            sprintf(
+                '%s: Updating Order: %s status to %s.',
+                __METHOD__,
+                $order->getId(),
+                $order->getState()
+            )
         );
         if ($field !== null) {
             $orderStatus = $order->getPayment()->getMethodInstance()->getConfigData($field, $order->getStoreId());
             if (!empty($orderStatus) && $orderStatus !== $order->getStatus()) {
-                $this->_logger->info(sprintf('%s: Adding Order: %s status %s to history.',
-                    __METHOD__, $order->getId(), $orderStatus)
+                $this->_logger->info(
+                    sprintf(
+                        '%s: Adding Order: %s status %s to history.',
+                        __METHOD__,
+                        $order->getId(),
+                        $orderStatus
+                    )
                 );
                 $order->addStatusToHistory($orderStatus, (string)__('Custom Payplug Payments status'));
                 if ($save) {
@@ -428,8 +446,12 @@ class Data extends AbstractHelper
                 if (!empty($data['status'])) {
                     $order->setStatus($data['status']);
                     $this->_logger->info(
-                        sprintf('%s: Forcing status %s on the order %s.',
-                            __METHOD__, $data['status'], $order->getId())
+                        sprintf(
+                            '%s: Forcing status %s on the order %s.',
+                            __METHOD__,
+                            $data['status'],
+                            $order->getId()
+                        )
                     );
                 }
             }
@@ -443,16 +465,16 @@ class Data extends AbstractHelper
         return $order;
     }
 
-  /**
-   * @param $order
-   * @param $storeId
-   * @return ResourcePayment
-   */
+    /**
+     * @param $order
+     * @param $storeId
+     * @return ResourcePayment
+     */
     public function getPayment($order, $storeId): ResourcePayment
     {
-      $orderPayment = $this->getPaymentForOrder($order);
+        $orderPayment = $this->getPaymentForOrder($order);
 
-      return $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
+        return $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
     }
 
     /**
@@ -552,7 +574,8 @@ class Data extends AbstractHelper
     {
         $method = $order->getPayment()->getMethod();
         if (!$this->isCodePayplugPayment($method) ||
-            ($method !== Standard::METHOD_CODE &&
+            (
+                $method !== Standard::METHOD_CODE &&
                 $method !== InstallmentPlan::METHOD_CODE &&
                 $method !== Ondemand::METHOD_CODE
             )
@@ -864,6 +887,27 @@ class Data extends AbstractHelper
             Ideal::METHOD_CODE,
             Mybank::METHOD_CODE,
         ]);
+    }
+
+    public function isCodePayplugPaymentWithRedirect(string $code): bool
+    {
+        $isCodePayplugPayment = $this->isCodePayplugPayment($code);
+
+        if (!$isCodePayplugPayment) {
+            return false;
+        }
+
+        if ($code === ApplePay::METHOD_CODE) {
+            return false;
+        }
+
+        if ($code === Standard::METHOD_CODE
+            && ($this->payplugConfig->isEmbedded() === true || $this->payplugConfig->isIntegrated() === true)
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
