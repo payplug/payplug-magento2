@@ -1,0 +1,20 @@
+<?php
+
+use Magento\Checkout\Block\Onepage\Success;
+use Payplug\Payments\ViewModel\CheckoutSuccessViewModel;
+
+/** @var Success $block */
+/** @var CheckoutSuccessViewModel $checkoutSuccessViewModel */
+$checkoutSuccessViewModel = $block->getData('checkoutSuccessViewModel');
+
+if ($checkoutSuccessViewModel->needToInvalidateCustomerCartSection() === false) {
+    return;
+}
+?>
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "Payplug_Payments/js/checkout/success/invalidate-cart-section": {}
+        }
+    }
+</script>
