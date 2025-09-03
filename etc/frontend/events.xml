@@ -3,5 +3,8 @@
     <event name="payment_method_is_active">
         <observer name="payplug_restrict_payment_method_by_country"
                   instance="Payplug\Payments\Observer\HidePaymentMethodForRestrictedCountries"  />
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="payplug_payments_disable_quote_on_checkout_success"
+                  instance="Payplug\Payments\Observer\DeactivateQuoteOnCheckoutSuccess"/>
     </event>
 </config>

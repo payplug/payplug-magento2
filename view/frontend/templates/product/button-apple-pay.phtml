@@ -18,9 +18,9 @@ use Payplug\Payments\Block\ApplePay\ProductButton;
         class="hidden"
         data-bind="
             click: handleClick,
-            css: { 
-                'hidden': !isVisible(), 
-                'is-disabled': isDisabled 
+            css: {
+                'hidden': !isVisible(),
+                'is-disabled': isDisabled
             }
         ">
     </apple-pay-button>
@@ -39,7 +39,7 @@ use Payplug\Payments\Block\ApplePay\ProductButton;
                         "component" : "Payplug_Payments/js/view/product/button-apple-pay",
                         "workflowType": "product",
                         "applePayConfig": <?= /* @noEscape */ $block->getConfigJson(); ?>,
-                        "productFinalPrice": <?= $block->getCurrentProduct()->getFinalPrice(); ?>,
+                        "productFinalPrice": <?= /* @noEscape */ $block->getCurrentProduct()->getFinalPrice(); ?>,
                         "productIsVirtual": <?= $block->getCurrentProduct()->isVirtual() ? 'true' : 'false'; ?>,
                         "children": {
                             "messages": {

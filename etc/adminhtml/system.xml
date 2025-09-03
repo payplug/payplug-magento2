@@ -106,13 +106,6 @@
                         <field id="payment_action">authorize_capture</field>
                     </depends>
                 </field>
-                <field id="authorized_order_status" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Authorized order status</label>
-                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Authorized</source_model>
-                    <depends>
-                        <field id="payment_action">authorize</field>
-                    </depends>
-                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
