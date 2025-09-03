@@ -95,7 +95,7 @@ define([
 
         /**
          * Retrieves the URL for the Ppro card logo.
-         * 
+         *
          * @returns {String}
          */
         getLogo: function () {
@@ -103,7 +103,7 @@ define([
         },
 
         /**
-         * 
+         *
          * @returns {Boolean} True if the request was sent successfully, false otherwise.
          */
         updatePproMethod: function () {
@@ -117,7 +117,7 @@ define([
 
             try {
                 $.ajax({
-                    url: url.build('payplug_payments/ppro/isAvailable'),
+                    url: url.build('payplug_payments/apm/isAvailable'),
                     type: 'POST',
                     data: {
                         'billingCountry': quote.billingAddress() ? quote.billingAddress().countryId : null,
@@ -155,7 +155,7 @@ define([
          */
         updateLoading: function (isLoading) {
             this.isLoading = isLoading;
-            
+
             if (isLoading) {
                 fullScreenLoader.startLoader();
             } else {
@@ -165,7 +165,7 @@ define([
 
         /**
          * Handles a failure when checking if the Ppro payment method is available.
-         * 
+         *
          * @param {String} message
          * @param {String} errorType
          * @returns void

@@ -43,6 +43,8 @@ class Config extends AbstractHelper
     public const OAUTH_PAYMENT_PAGE = 'payment_page';
     public const OAUTH_CLIENT_DATA = 'client_data';
     public const OAUTH_EMAIL = 'email';
+    public const APM_FILTERING_MODE_SHIPPING_ADDRESS = 'shipping_address';
+    public const APM_FILTERING_MODE_BILLING_ADDRESS = 'billing_address';
     public const MODULE_VERSION = '4.5.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
@@ -214,6 +216,14 @@ class Config extends AbstractHelper
     public function isEmbedded(): bool
     {
         return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_EMBEDDED;
+    }
+
+    /**
+     * Get is embedded config
+     */
+    public function isShippingApmFilteringMode(): bool
+    {
+        return (string)$this->getConfigValue('apm_filtering_mode') === self::APM_FILTERING_MODE_SHIPPING_ADDRESS;
     }
 
     /**
