@@ -32,7 +32,6 @@ class Config extends AbstractHelper
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
-    public const PAYPLUG_PAYMENT_AUTHORIZED_STATUS_CONFIG_PATH = 'payment/payplug_payments_standard/authorized_order_status';
     public const EMAIL_WEBSITE_OWNER_CONFIG_PATH = 'trans_email/ident_general/email';
     public const ENVIRONMENT_TEST = 'test';
     public const ENVIRONMENT_LIVE = 'live';
@@ -44,6 +43,8 @@ class Config extends AbstractHelper
     public const OAUTH_PAYMENT_PAGE = 'payment_page';
     public const OAUTH_CLIENT_DATA = 'client_data';
     public const OAUTH_EMAIL = 'email';
+    public const APM_FILTERING_MODE_SHIPPING_ADDRESS = 'shipping_address';
+    public const APM_FILTERING_MODE_BILLING_ADDRESS = 'billing_address';
     public const MODULE_VERSION = '4.6.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
@@ -105,13 +106,6 @@ class Config extends AbstractHelper
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
 
         return $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, (int)$websiteId) === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
-    }
-
-    public function getStandardAuthorizedStatus(): ?string
-    {
-        $websiteId = $this->storeManager->getStore()->getWebsiteId();
-
-        return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, (int)$websiteId, self::PAYPLUG_PAYMENT_AUTHORIZED_STATUS_CONFIG_PATH);
     }
 
     public function getWebsiteOwnerEmail(): ?string
@@ -222,6 +216,14 @@ class Config extends AbstractHelper
     public function isEmbedded(): bool
     {
         return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_EMBEDDED;
+    }
+
+    /**
+     * Get is embedded config
+     */
+    public function isShippingApmFilteringMode(): bool
+    {
+        return (string)$this->getConfigValue('apm_filtering_mode') === self::APM_FILTERING_MODE_SHIPPING_ADDRESS;
     }
 
     /**

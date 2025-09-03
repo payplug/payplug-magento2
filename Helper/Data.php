@@ -213,38 +213,49 @@ class Data extends AbstractHelper
 
         $allowedStates = [
             Standard::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             InstallmentPlan::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW,
                 Order::STATE_PROCESSING,
                 Order::STATE_COMPLETE
             ],
             Ondemand::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Oney::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             OneyWithoutFees::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Bancontact::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             ApplePay::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Amex::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Satispay::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Ideal::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
             Mybank::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
         ];
@@ -283,7 +294,7 @@ class Data extends AbstractHelper
             return false;
         }
 
-        if ($order->getState() != Order::STATE_PAYMENT_REVIEW) {
+        if (!$this->isOrderPending($order)) {
             return false;
         }
 
@@ -313,7 +324,7 @@ class Data extends AbstractHelper
         );
         $field = null;
 
-        if ($order->getState() === Order::STATE_PAYMENT_REVIEW) {
+        if ($this->isOrderPending($order)) {
             try {
                 $payplugOrderPayment = $this->getOrderPayment($order->getIncrementId());
                 $payplugPayment = $payplugOrderPayment->retrieve(
@@ -329,13 +340,28 @@ class Data extends AbstractHelper
                         )
                     );
                     $order->setState(Order::STATE_PROCESSING);
+                } elseif (!empty($payplugPayment->authorization->authorized_at) && empty($payment->failure)) {
+                    $this->_logger->info(
+                        sprintf(
+                            '%s: Updating Order: %s state to Payment Review.',
+                            __METHOD__,
+                            $order->getId()
+                        )
+                    );
+
+                    $order->setStatus(Order::STATE_PAYMENT_REVIEW);
+                    $order->setState(Order::STATE_PROCESSING);
+                    $order->addCommentToStatusHistory(__('Transaction authorized but not yet captured.'))
+                        ->setIsCustomerNotified(false);
+
+                    $order->getPayment()->setRew(true);
                 }
             } catch (\Exception $e) {
                 $this->_logger->info($e->getMessage());
             }
         }
 
-        if ($order->getState() == Order::STATE_PROCESSING) {
+        if ($order->getState() == Order::STATE_PROCESSING && $order->getStatus() !== Order::STATE_PAYMENT_REVIEW) {
             $field = 'processing_order_status';
         } elseif ($order->getState() == Order::STATE_CANCELED) {
             $field = 'canceled_order_status';
@@ -469,7 +495,7 @@ class Data extends AbstractHelper
             ) {
                 return;
             }
-            if ($order->getState() !== Order::STATE_PAYMENT_REVIEW) {
+            if ($this->isOrderPending($order)) {
                 return;
             }
 
@@ -696,7 +722,7 @@ class Data extends AbstractHelper
         // If Oney payment is still being reviewed, order is validated but still in Payment Review state
         if (($order->getPayment()->getMethod() == Oney::METHOD_CODE ||
             $order->getPayment()->getMethod() == OneyWithoutFees::METHOD_CODE) &&
-            $order->getState() == Order::STATE_PAYMENT_REVIEW
+            $this->isOrderPending($order)
         ) {
             return true;
         }
@@ -1008,7 +1034,7 @@ class Data extends AbstractHelper
      */
     public function cancelOrderAndInvoice(Order $order, bool $checkPaymentStatus = true): void
     {
-        if ($order->getState() != Order::STATE_PAYMENT_REVIEW) {
+        if (!$this->isOrderPending($order)) {
             return;
         }
 
@@ -1032,5 +1058,10 @@ class Data extends AbstractHelper
         $order->registerCancellation('Payplug payment was not successfull.', false);
         $this->updateOrderStatus($order, false);
         $this->orderRepository->save($order);
+    }
+
+    public function isOrderPending(OrderInterface $order): bool
+    {
+        return in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW]);
     }
 }
