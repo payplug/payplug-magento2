@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.5.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.5.0) - 2025-07-04
+## [4.5.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.5.0) - 2025-09-03
 
 ### Features
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sign every API request with the JWT token
 - Support both legacy authentication and OAuth2 (dual mode)
 
-**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.3.4...v4.5.0)**
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.4.0...v4.5.0)**
 
 ## [4.4.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.4.0) - 2025-06-24
 
