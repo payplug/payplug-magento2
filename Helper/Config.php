@@ -44,7 +44,7 @@ class Config extends AbstractHelper
     public const OAUTH_PAYMENT_PAGE = 'payment_page';
     public const OAUTH_CLIENT_DATA = 'client_data';
     public const OAUTH_EMAIL = 'email';
-    public const MODULE_VERSION = '4.5.0';
+    public const MODULE_VERSION = '4.6.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
     private ?AdapterInterface $adapter = null;
