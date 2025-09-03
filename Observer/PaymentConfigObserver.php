@@ -383,7 +383,7 @@ class PaymentConfigObserver implements ObserverInterface
                         $errorMessage = 'You don\'t have access to this feature yet. ' .
                             'To activate the Oney guaranteed split payment, go to your PayPlug portal: %1.';
                         $this->messageManager->addErrorMessage(
-                            __($errorMessage, 'https://portal-qa.payplug.com/#/configuration/oney')
+                            __($errorMessage, 'https://portal.payplug.com/#/configuration/oney')
                         );
                     } else {
                         $isActive = true;
