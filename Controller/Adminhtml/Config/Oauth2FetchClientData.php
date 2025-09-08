@@ -18,6 +18,7 @@ use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Event\ManagerInterface as EventManager;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
@@ -92,6 +93,10 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
                 ConfigHelper::ENVIRONMENT_LIVE
             );
 
+            if (empty($testClientDataResult['httpResponse'])) {
+                throw new LocalizedException(__('Could not retrieve TEST credentials from Payplug Portal'));
+            }
+
             /**
              * Store client data and merchant email into config
              */
@@ -105,7 +110,7 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
             if (empty($liveClientDataResult['httpResponse'])) {
                 $this->saveConfig(ConfigHelper::CONFIG_PATH . 'environmentmode', ConfigHelper::ENVIRONMENT_TEST);
                 $this->messageManager->addWarningMessage(
-                    __('Only TEST mode is available. Please complete your subscription on Payplug Portal.')
+                    __('You are able to perform only TEST transactions.')
                 );
             } else {
                 $clientData[ConfigHelper::ENVIRONMENT_LIVE] = [

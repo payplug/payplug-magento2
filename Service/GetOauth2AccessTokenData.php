@@ -25,7 +25,8 @@ class GetOauth2AccessTokenData
         private readonly JsonValidator $jsonValidator,
         private readonly SerializerInterface $serializer,
         private readonly EncryptorInterface $encryptor,
-        private readonly CacheInterface $cache
+        private readonly CacheInterface $cache,
+        private readonly GetOauth2ClientData $getOauth2ClientData
     ) {
     }
 
@@ -65,20 +66,14 @@ class GetOauth2AccessTokenData
     private function regenerate(?int $websiteId = null): array
     {
         $currentEnvMode = $this->getCurrentEnvMode($websiteId);
-        $encryptedClientDataValue = $this->getConfigValue(
-            ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_CLIENT_DATA,
-            $websiteId
-        );
+        $clientData = $this->getOauth2ClientData->execute($currentEnvMode, $websiteId);
 
-        $serializedClientDataValue = $this->encryptor->decrypt($encryptedClientDataValue);
-
-        if ($this->jsonValidator->isValid($serializedClientDataValue) === false) {
+        if (!$clientData) {
             throw new LocalizedException(__('Client data is not valid.'));
         }
 
-        $clientData = $this->serializer->unserialize($serializedClientDataValue);
-        $clientId = $clientData[$currentEnvMode]['client_id'];
-        $clientSecret = $clientData[$currentEnvMode]['client_secret'];
+        $clientId = $clientData['client_id'];
+        $clientSecret = $clientData['client_secret'];
 
         $jwtResult = PayplugAuthentication::generateJWT($clientId, $clientSecret);
 
