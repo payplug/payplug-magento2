@@ -95,16 +95,26 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
             /**
              * Store client data and merchant email into config
              */
-            $clientDataValue = $this->serializer->serialize([
+            $clientData = [
                 ConfigHelper::ENVIRONMENT_TEST => [
                     'client_id' => $testClientDataResult['httpResponse']['client_id'],
                     'client_secret' => $testClientDataResult['httpResponse']['client_secret']
-                ],
-                ConfigHelper::ENVIRONMENT_LIVE => [
+                ]
+            ];
+
+            if (empty($liveClientDataResult['httpResponse'])) {
+                $this->saveConfig(ConfigHelper::CONFIG_PATH . 'environmentmode', ConfigHelper::ENVIRONMENT_TEST);
+                $this->messageManager->addWarningMessage(
+                    __('Only TEST mode is available. Please complete your subscription on Payplug Portal.')
+                );
+            } else {
+                $clientData[ConfigHelper::ENVIRONMENT_LIVE] = [
                     'client_id' => $liveClientDataResult['httpResponse']['client_id'],
                     'client_secret' => $liveClientDataResult['httpResponse']['client_secret']
-                ]
-            ]);
+                ];
+            }
+
+            $clientDataValue = $this->serializer->serialize($clientData);
 
             $this->saveConfig(
                 ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_CLIENT_DATA,

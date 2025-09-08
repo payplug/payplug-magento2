@@ -17,8 +17,8 @@ use Payplug\Payments\Helper\Config as ConfigHelper;
 
 class GetOauth2AccessTokenData
 {
-    private const CACHE_KEY = 'payplug_oauth2_access_token_data';
-    private const EXPIRATION_THRESHOLD = 10;
+    private const string CACHE_KEY = 'payplug_oauth2_access_token_data';
+    private const int EXPIRATION_THRESHOLD = 10;
 
     public function __construct(
         private readonly ReinitableConfigInterface $scopeConfig,

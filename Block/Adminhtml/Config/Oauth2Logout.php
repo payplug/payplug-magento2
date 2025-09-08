@@ -15,6 +15,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Payments\Service\GetOauth2AccessTokenData;
+use Payplug\Payments\Service\GetOauth2ClientData;
 
 class Oauth2Logout extends AbstractOauth2
 {
@@ -23,6 +24,7 @@ class Oauth2Logout extends AbstractOauth2
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
         private readonly State $appState,
         private readonly TimezoneInterface $timezone,
+        private readonly GetOauth2ClientData $getOauth2ClientData,
         ConfigDataCollectionFactory $configDatacollection,
         Context $context,
         array $data = [],
@@ -50,13 +52,13 @@ class Oauth2Logout extends AbstractOauth2
         ];
 
         $statusLabel = __(
-            'Your are currently authenticated with email <strong>%1</strong> (%2)',
+            'You are currently authenticated with email <strong>%1</strong> (%2)',
             $this->getEmailValue(),
             $websiteId && $this->isEmailSetForCurrentScope() ? __('Website') : __('Default')
         );
 
         $info = <<<HTML
-<div class="message message-success">{$statusLabel}</div>
+<div class="message message-success">$statusLabel</div>
 HTML;
 
         if (!$this->isEmailSetForCurrentScope()) {
@@ -64,14 +66,26 @@ HTML;
         }
 
         if ($this->isDeveloperMode()) {
+            $testClientData = $this->getOauth2ClientData->execute('test', (int)$websiteId);
+            $liveClientData = $this->getOauth2ClientData->execute('live', (int)$websiteId);
             $accessTokenData = $this->getAccessTokenData();
-            $expirationDate = $this->timezone->date($accessTokenData['expires_date'])->format('Y-m-d H:i:s');
             $expirationLabel = __('Current access token expiration date');
-            $tokenValueLabel = __('Current access token value');
+            $testClientValueLabel = __('TEST client credentials available');
+            $liveClientValueLabel = __('LIVE client credentials available');
+
+            if (!empty($accessTokenData['expires_date'])) {
+                $expirationDate = $this->timezone->date($accessTokenData['expires_date'])->format('Y-m-d H:i:s');
+            } else {
+                $expirationDate = __('N/A');
+            }
+
+            $testClientCredentials = $testClientData ? __('Yes') : __('No');
+            $liveClientCredentials = $liveClientData ? __('Yes') : __('No');
 
             $info .= <<<HTML
-<div class="message info">{$expirationLabel} : {$expirationDate}</div>
-<div class="message info">{$tokenValueLabel} : <code style="overflow-wrap: anywhere;">{$accessTokenData['access_token']}</code></div>
+<div class="message info">$testClientValueLabel : $testClientCredentials</code></div>
+<div class="message info">$liveClientValueLabel : $liveClientCredentials</code></div>
+<div class="message info">$expirationLabel : $expirationDate</div>
 HTML;
         }
 
