@@ -14,6 +14,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Service\GetOauth2AccessTokenData;
 use Payplug\Payments\Service\GetOauth2ClientData;
 
@@ -66,8 +67,8 @@ HTML;
         }
 
         if ($this->isDeveloperMode()) {
-            $testClientData = $this->getOauth2ClientData->execute('test', (int)$websiteId);
-            $liveClientData = $this->getOauth2ClientData->execute('live', (int)$websiteId);
+            $testClientData = $this->getOauth2ClientData->execute(Config::ENVIRONMENT_TEST, (int)$websiteId);
+            $liveClientData = $this->getOauth2ClientData->execute(Config::ENVIRONMENT_LIVE, (int)$websiteId);
             $accessTokenData = $this->getAccessTokenData();
             $expirationLabel = __('Current access token expiration date');
             $testClientValueLabel = __('TEST client credentials available');
