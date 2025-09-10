@@ -5,20 +5,24 @@ declare(strict_types=1);
 namespace Payplug\Payments\Cron;
 
 use DateTime;
+use Exception;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Area;
 use Magento\Framework\DB\Transaction;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\MailException;
 use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\ResourceModel\Quote\Payment\CollectionFactory;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\InvoiceManagementInterface;
-use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order\Email\Container\OrderIdentity;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Payplug\Payments\Api\Data\OrderInterface as PayplugOrderInterface;
-use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Gateway\Config\Standard;
+use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Logger\Logger;
 
 class AutoCaptureDeferredPayments
@@ -26,17 +30,18 @@ class AutoCaptureDeferredPayments
     public const FORCED_CAPTURE_DELAY_IN_DAYS = 6;
 
     public function __construct(
-        private TimezoneInterface $timezone,
-        private Logger $logger,
-        private OrderPaymentRepositoryInterface $paymentRepository,
-        private CollectionFactory $quotePaymentCollectionFactory,
-        private SearchCriteriaBuilder $searchCriteriaBuilder,
-        private OrderRepositoryInterface $orderRepository,
-        private InvoiceManagementInterface $invoiceService,
-        private InvoiceSender $invoiceSender,
-        private Transaction $transaction,
-        private Config $config,
-        private TransportBuilder $transportBuilder
+        private readonly TimezoneInterface $timezone,
+        private readonly Logger $logger,
+        private readonly OrderPaymentRepositoryInterface $paymentRepository,
+        private readonly CollectionFactory $quotePaymentCollectionFactory,
+        private readonly SearchCriteriaBuilder $searchCriteriaBuilder,
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly InvoiceManagementInterface $invoiceService,
+        private readonly InvoiceSender $invoiceSender,
+        private readonly Transaction $transaction,
+        private readonly Config $config,
+        private readonly TransportBuilder $transportBuilder,
+        private readonly OrderIdentity $orderIdentity
     ) {
     }
 
@@ -66,6 +71,7 @@ class AutoCaptureDeferredPayments
         $quotePaymentsToOrderPayments = [];
         foreach ($ordersPayments as $orderPayment) {
             $quoteId = $orderPayment->getAdditionalInformation('quote_id');
+            /** @noinspection PhpIllegalArrayKeyTypeInspection */
             $quotePaymentsToOrderPayments[$quoteId] = $orderPayment->getParentId();
         }
 
@@ -89,7 +95,8 @@ class AutoCaptureDeferredPayments
                 $orderId = $quotePaymentsToOrderPayments[$quotePayment->getQuoteId()];
                 $this->logger->info(sprintf(
                     'The order id %s has been validated for %s days and still is not captured, it was flagged as capturable.',
-                    $orderId, $difference->days
+                    $orderId,
+                    $difference->days
                 ));
                 $orderToInvoiceIds[] = $orderId;
             }
@@ -143,19 +150,17 @@ class AutoCaptureDeferredPayments
             $websiteOwnerEmail = $this->config->getWebsiteOwnerEmail();
             $this->sendEmail(
                 $websiteOwnerEmail,
-                $websiteOwnerEmail,
                 'Forced payment capture',
                 sprintf('The order id %s have been invoiced and captured.', $orderId),
                 (int)$order->getStoreId()
             );
-        } catch(\Exception $e) {
-            $history = '';
+        } catch (Exception $e) {
             if (str_contains($e->getMessage(), 'Forbidden error')) {
                 $history = sprintf('The order entity id %s cannot be retrieved anymore from payplug Api.', $order->getEntityId());
             } else {
                 $history = sprintf('An unexpected error occured with order entityId %s - %s', $order->getEntityId(), $e->getMessage());
             }
-            $this->logger->info(sprintf('Auto capture cron failed and wont run again for this order. You can try to create the invoice manually. Error message : %s',$history));
+            $this->logger->info(sprintf('Auto capture cron failed and wont run again for this order. You can try to create the invoice manually. Error message : %s', $history));
 
             // Get a fresh order without all the invoice collection items associated
             $order = $this->orderRepository->get($orderId);
@@ -175,7 +180,11 @@ class AutoCaptureDeferredPayments
         $this->paymentRepository->save($orderPayment);
     }
 
-    public function sendEmail(string $fromMail, string $toMail, string $subject, string $message, int $storeId): void
+    /**
+     * @throws MailException
+     * @throws LocalizedException
+     */
+    public function sendEmail(string $toMail, string $subject, string $message, int $storeId): void
     {
         $variables['data']['comment'] = $message;
         $this->transportBuilder->setTemplateIdentifier('auto_capture_email_template')
@@ -186,6 +195,7 @@ class AutoCaptureDeferredPayments
                     'subject' => $subject,
                 ]
             )->setTemplateVars($variables)
+            ->setFromByScope($this->orderIdentity->getEmailIdentity())
             ->addTo($toMail)
             ->setReplyTo($toMail)
             ->getTransport()
