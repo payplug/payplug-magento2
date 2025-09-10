@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Request\Http;
@@ -16,9 +17,11 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Payment\Transaction\ManagerInterface as TransactionManagerInterface;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
@@ -41,7 +44,8 @@ class Ipn extends AbstractPayment
         OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        private Config $payplugConfig,
+        private readonly Config $payplugConfig,
+        private readonly TransactionManagerInterface $transactionManager,
         protected OrderPaymentRepository $paymentRepository,
         protected CartRepositoryInterface $cartRepository,
         protected OrderRepositoryInterface $orderRepository,
@@ -117,7 +121,7 @@ class Ipn extends AbstractPayment
             $response->setData(['exception' => $e->getMessage()]);
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error($e->getMessage());
 
             return $response;
@@ -269,7 +273,7 @@ class Ipn extends AbstractPayment
                 // No need to log as it is not an error case
                 $responseCode = 200;
                 $responseDetail = '200 Order currently being processed.';
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logger->error($e->getMessage());
                 $responseCode = 500;
                 $responseDetail = '500 Error while updating order.';
@@ -325,7 +329,7 @@ class Ipn extends AbstractPayment
     private function processRefund(Raw $response, Refund $resource): void
     {
         $this->logger->info('This is a refund call.');
-        $this->logger->info('Refund ID : '.$resource->id);
+        $this->logger->info('Refund ID : ' . $resource->id);
         $refund = $resource;
 
         $paymentId = $refund->payment_id;
@@ -362,17 +366,38 @@ class Ipn extends AbstractPayment
             $response->setStatusHeader(200, null, "200 refund for installment plan not processed");
 
             return;
-        } catch (NoSuchEntityException $e) {
+        } catch (NoSuchEntityException) {
             // We want to process refund IPN for orders not linked to an installment plan
         }
 
+        /** @var OrderPaymentInterface $payment */
+        $payment = $order->getPayment();
+
+        if ($this->transactionManager->isTransactionExists(
+            $refund->id,
+            $payment->getId(),
+            $order->getId()
+        )) {
+            $this->logger->info(sprintf('Transaction already exists %s.', $refund->id));
+            $response->setStatusHeader(
+                500,
+                null,
+                sprintf('500 Transaction already exists %s.', $refund->id)
+            );
+
+            return;
+        }
+
         try {
+            $payment->setTransactionId($refund->id);
+            $payment->setParentTransactionId($refund->payment_id);
+
             $amountToRefund = $refund->amount / 100;
-            $order->getPayment()->registerRefundNotification($amountToRefund);
+            $payment->registerRefundNotification($amountToRefund);
             $order->save();
             $this->logger->info('200 Order updated.');
             $response->setStatusHeader(200, null, '200 Order updated.');
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->info(sprintf('500 Error while creating full refund %s.', $e->getMessage()));
             $response->setStatusHeader(
                 500,
