@@ -60,7 +60,7 @@ class PaymentConfigObserver implements ObserverInterface
         if (isset($sections['payplug_payments_general']) && isset($groups['general']['fields'])) {
             $isLegacy = !$this->helper->isOauthConnected(
                 ScopeInterface::SCOPE_WEBSITE,
-                (int)$this->request->getParam('website')
+                $this->getCurrentWebsite()
             );
 
             if ($isLegacy) {
@@ -246,10 +246,8 @@ class PaymentConfigObserver implements ObserverInterface
         $this->payplugConfigConnected = $this->helper->isOauthConnected();
         $this->payplugConfigVerified = true;
 
-        $testClientData = $this->getOauth2ClientData->execute('live', (int)$this->request->getParam('website'));
-
         if (isset($fields['environmentmode']['value']) && $fields['environmentmode']['value'] == Config::ENVIRONMENT_LIVE
-            && empty($testClientData)
+            && $this->getOauth2ClientData->execute(Config::ENVIRONMENT_LIVE, $this->getCurrentWebsite()) === null
         ) {
             $groups['general']['fields']['environmentmode']['value'] = Config::ENVIRONMENT_TEST;
             $this->saveConfig('environmentmode', Config::ENVIRONMENT_TEST);
@@ -1082,5 +1080,10 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         return $configuration;
+    }
+
+    private function getCurrentWebsite(): int
+    {
+        return (int)$this->request->getParam('website');
     }
 }
