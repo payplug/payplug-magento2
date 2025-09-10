@@ -44,7 +44,10 @@ class PaymentHandler implements HandlerInterface
             $payment->setAdditionalInformation('is_paid', $isPaid);
             $payment->setAdditionalInformation('payplug_payment_id', $payplugPayment->id);
             $payment->setAdditionalInformation('quote_id', $payment->getOrder()->getQuoteId());
-            $payment->setAdditionalInformation('is_deferred_payment_standard', $this->config->isStandardPaymentModeDeferred());
+
+            if ($this->config->isStandardPaymentModeDeferred()) {
+                $payment->setAdditionalInformation('is_deferred_payment_standard', true);
+            }
 
             if (isset($payplugPayment->payment_method['merchant_session'])) {
                 $payment->setAdditionalInformation('merchand_session', $payplugPayment->payment_method['merchant_session']);
