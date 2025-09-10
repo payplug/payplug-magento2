@@ -1,53 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Gateway\Response\Standard;
 
-use Payplug\Exception\UndefinedAttributeException;
-use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Response\HandlerInterface;
 use Magento\Sales\Model\Order\Payment;
+use Payplug\Payments\Gateway\Helper\SubjectReader;
+use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Model\Order\PaymentFactory;
 use Payplug\Payments\Model\OrderPaymentRepository;
 
 class PaymentHandler implements HandlerInterface
 {
-    /**
-     * @var SubjectReader
-     */
-    private $subjectReader;
-
-    /**
-     * @var \Payplug\Payments\Model\Order\PaymentFactory
-     */
-    private $payplugPaymentFactory;
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @param SubjectReader                                $subjectReader
-     * @param \Payplug\Payments\Model\Order\PaymentFactory $payplugPaymentFactory
-     * @param OrderPaymentRepository                       $orderPaymentRepository
-     */
     public function __construct(
-        SubjectReader $subjectReader,
-        \Payplug\Payments\Model\Order\PaymentFactory $payplugPaymentFactory,
-        OrderPaymentRepository $orderPaymentRepository
+        private readonly SubjectReader $subjectReader,
+        private readonly PaymentFactory $payplugPaymentFactory,
+        private readonly OrderPaymentRepository $orderPaymentRepository,
+        private readonly Config $config
     ) {
-        $this->subjectReader = $subjectReader;
-        $this->payplugPaymentFactory = $payplugPaymentFactory;
-        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
-    /**
-     * Handles response
-     *
-     * @param array $handlingSubject
-     * @param array $response
-     * @return void
-     */
-    public function handle(array $handlingSubject, array $response)
+    public function handle(array $handlingSubject, array $response): void
     {
         $paymentDO = $this->subjectReader->readPayment($handlingSubject);
 
@@ -56,8 +30,8 @@ class PaymentHandler implements HandlerInterface
 
             /** @var Payment $payment */
             $payment = $paymentDO->getPayment();
-
             $isPaid = 1;
+
             if (!$payplugPayment->is_paid && $payplugPayment->failure === null) {
                 // save payment url for pending redirect/lightbox payment
                 $payment->setAdditionalInformation(
@@ -66,18 +40,17 @@ class PaymentHandler implements HandlerInterface
                 );
                 $isPaid = 0;
             }
+
             $payment->setAdditionalInformation('is_paid', $isPaid);
             $payment->setAdditionalInformation('payplug_payment_id', $payplugPayment->id);
+            $payment->setAdditionalInformation('quote_id', $payment->getOrder()->getQuoteId());
 
-            try {
-                if ($payplugPayment->payment_method && isset($payplugPayment->payment_method['merchant_session'])) {
-                    $payment->setAdditionalInformation(
-                        'merchand_session',
-                        $payplugPayment->payment_method['merchant_session']
-                    );
-                }
-            } catch (UndefinedAttributeException $e) {
-                // "payment_method" attribute is not defined on all payment methods
+            if ($this->config->isStandardPaymentModeDeferred()) {
+                $payment->setAdditionalInformation('is_deferred_payment_standard', true);
+            }
+
+            if (isset($payplugPayment->payment_method['merchant_session'])) {
+                $payment->setAdditionalInformation('merchand_session', $payplugPayment->payment_method['merchant_session']);
             }
 
             $payment->setTransactionId($payplugPayment->id);
@@ -85,11 +58,11 @@ class PaymentHandler implements HandlerInterface
             $payment->setIsTransactionClosed(false);
             $payment->setShouldCloseParentTransaction(false);
 
-            /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
             $orderPayment = $this->payplugPaymentFactory->create();
             $orderPayment->setOrderId($payment->getOrder()->getIncrementId());
             $orderPayment->setPaymentId($payplugPayment->id);
             $orderPayment->setIsSandbox(!$payplugPayment->is_live);
+
             $this->orderPaymentRepository->save($orderPayment);
         }
     }
