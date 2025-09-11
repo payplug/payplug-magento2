@@ -13,14 +13,20 @@ $specificInfo = $block->getSpecificInformation();
 $title = $escaper->escapeHtml($block->getMethod()->getTitle());
 ?>
     <dl class="payment-method">
-        <dt class="title"><?= /* @noEscape */ $title ?></dt>
+        <dt class="title">
+            <?= $escaper->escapeHtml(__($title)) ?>
+        </dt>
         <?php if ($specificInfo): ?>
             <dd class="content">
                 <table class="data table">
-                    <caption class="table-caption"><?= /* @noEscape */ $title ?></caption>
+                    <caption class="table-caption">
+                        <?= $escaper->escapeHtml(__($title)) ?>
+                    </caption>
                     <?php foreach ($specificInfo as $label => $value): ?>
                         <tr>
-                            <th scope="row"><?= $escaper->escapeHtml($label) ?></th>
+                            <th scope="row">
+                                <?= $escaper->escapeHtml($label) ?>
+                            </th>
                             <td>
                                 <?php
                                 $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));

@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\OndemandInfo;
+
+/**
+ * @var Escaper $escaper
+ * @var OndemandInfo $block
+ */
+$specificInfo = $block->getSpecificInformation();
+$title = $block->getMethod()->getTitle();
+?>
+    <dl class="payment-method">
+        <dt class="title">
+            <?= $escaper->escapeHtml(__($title)) ?>
+        </dt>
+        <?php if ($specificInfo): ?>
+            <dd class="content">
+                <table class="data table">
+                    <caption class="table-caption">
+                        <?= $escaper->escapeHtml(__($title)) ?>
+                    </caption>
+                    <?php foreach ($specificInfo as $label => $value): ?>
+                        <tr>
+                            <th scope="row">
+                                <?= $escaper->escapeHtml($label) ?>
+                            </th>
+                            <td>
+                                <?php
+                                $formattedValue = implode(PHP_EOL, $block->getValueAsArray($value, true));
+                                ?>
+                                <?= /* @noEscape */ nl2br($escaper->escapeHtml($formattedValue)) ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+            </dd>
+        <?php endif;?>
+    </dl>
+<?= $block->getChildHtml() ?>

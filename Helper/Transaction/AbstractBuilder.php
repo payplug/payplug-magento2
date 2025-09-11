@@ -215,8 +215,8 @@ abstract class AbstractBuilder extends AbstractHelper
 
         $metadata = [
             'ID Quote' => $quoteId,
-            'Order'    => $order->getOrderIncrementId(),
-            'Website'  => $this->_urlBuilder->getUrl('', ['_nosid' => true]),
+            'Order' => $order->getOrderIncrementId() ?? $quote->getReservedOrderId(),
+            'Website' => $this->_urlBuilder->getUrl('', ['_nosid' => true]),
         ];
 
         $paymentTab = [

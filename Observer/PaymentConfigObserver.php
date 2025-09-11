@@ -1,12 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\Observer;
 
+use Laminas\Stdlib\Parameters;
 use Laminas\Validator\EmailAddress;
 use Laminas\Validator\NotEmpty;
 use Magento\Framework\App\Request\Http;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
+use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
 use Magento\Store\Model\ScopeInterface;
@@ -16,75 +19,19 @@ use Payplug\Payments\Model\Api\Login;
 
 class PaymentConfigObserver implements ObserverInterface
 {
-    /**
-     * @var Http
-     */
-    private $request;
+    private bool $payplugConfigConnected;
+    private bool $payplugConfigVerified;
+    private string $testApiKey;
+    private string $liveApiKey;
+    private array $permissions = [];
 
-    /**
-     * @var Login
-     */
-    private $login;
-
-    /**
-     * @var Config
-     */
-    private $helper;
-
-    /**
-     * @var ManagerInterface
-     */
-    private $messageManager;
-
-    /**
-     * @var bool
-     */
-    private $payplugConfigConnected;
-
-    /**
-     * @var bool
-     */
-    private $payplugConfigVerified;
-
-    /**
-     * @var string
-     */
-    private $testApiKey;
-
-    /**
-     * @var StoreManager
-     */
-    private $storeManager;
-
-    /**
-     * @var string
-     */
-    private $liveApiKey;
-
-    /**
-     * @var array
-     */
-    private $permissions = [];
-
-    /**
-     * @param Http             $request
-     * @param Login            $login
-     * @param Config           $helper
-     * @param ManagerInterface $messageManager
-     * @param StoreManagerInterface $storeManager
-     */
     public function __construct(
-        Http $request,
-        Login $login,
-        Config $helper,
-        ManagerInterface $messageManager,
-        StoreManagerInterface $storeManager
+        private readonly Http $request,
+        private readonly Login $login,
+        private readonly Config $helper,
+        private readonly ManagerInterface $messageManager,
+        private readonly StoreManagerInterface $storeManager
     ) {
-        $this->request = $request;
-        $this->login = $login;
-        $this->helper = $helper;
-        $this->messageManager = $messageManager;
-        $this->storeManager = $storeManager;
     }
 
     /**
@@ -92,62 +39,86 @@ class PaymentConfigObserver implements ObserverInterface
      *
      * @param EventObserver $observer
      */
-    public function execute(EventObserver $observer)
+    public function execute(EventObserver $observer): void
     {
         $postParams = $this->request->getPost();
+
+        if ($postParams instanceof Parameters) {
+            $postParams = $postParams->toArray();
+        }
 
         if (!isset($postParams['config_state'])) {
             return;
         }
 
+        $groups = $postParams['groups'];
+
         $sections = $postParams['config_state'];
-        if (isset($sections['payplug_payments_general']) && isset($postParams['groups']['general']['fields'])) {
-            $this->processGeneralConfig($postParams['groups']);
+
+        if (isset($sections['payplug_payments_general']) && isset($groups['general']['fields'])) {
+            $isLegacy = !$this->helper->isOauthConnected(
+                ScopeInterface::SCOPE_WEBSITE,
+                (int)$this->request->getParam('website')
+            );
+
+            if ($isLegacy) {
+                $this->processGeneralConfig($groups);
+            } else {
+                $this->processOauthGeneralConfig($groups);
+            }
+
             return;
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_standard')) {
-            $this->processStandardConfig($postParams['groups']);
+            $this->processStandardConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_installment_plan')) {
-            $this->processInstallmentPlanConfig($postParams['groups']);
+            $this->processInstallmentPlanConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_ondemand')) {
-            $this->processOndemandConfig($postParams['groups']);
+            $this->processOndemandConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_oney') ||
             $this->canProcessSection($postParams, 'payplug_payments_oney_without_fees')
         ) {
             $this->processOneyConfig($postParams['groups']);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_bancontact')) {
-            $this->processBancontactConfig($postParams['groups']);
+            $this->processBancontactConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_apple_pay')) {
-            $this->processApplePayConfig($postParams['groups']);
+            $this->processApplePayConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_amex')) {
-            $this->processAmexConfig($postParams['groups']);
+            $this->processAmexConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_satispay')) {
-            $this->processSatispayConfig($postParams['groups']);
+            $this->processSatispayConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_ideal')) {
-            $this->processIdealConfig($postParams['groups']);
+            $this->processIdealConfig($groups);
         }
+
         if ($this->canProcessSection($postParams, 'payplug_payments_mybank')) {
-            $this->processMybankConfig($postParams['groups']);
+            $this->processMybankConfig($groups);
         }
+
+        $this->setPostAndParamGroups($groups);
     }
 
     /**
      * Check if posted data contains section info
-     *
-     * @param array  $postParams
-     * @param string $sectionCode
-     *
-     * @return bool
      */
-    private function canProcessSection($postParams, $sectionCode)
+    private function canProcessSection(array $postParams, string $sectionCode): bool
     {
         $sections = $postParams['config_state'];
         foreach ($sections as $sectionKey => $value) {
@@ -163,17 +134,15 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle General configuration
-     *
-     * @param array $groups
      */
-    private function processGeneralConfig($groups)
+    private function processGeneralConfig(array &$groups): void
     {
         $fields = $groups['general']['fields'];
 
         $this->helper->initScopeData();
 
         $this->payplugConfigConnected = $this->helper->isConnected();
-        $this->payplugConfigVerified = (bool) $this->getConfig('verified');
+        $this->payplugConfigVerified = (bool)$this->getConfig('verified');
 
         $this->checkWebsiteScopeData($groups, $fields);
 
@@ -207,70 +176,96 @@ class PaymentConfigObserver implements ObserverInterface
             $this->saveConfig('connected', 0);
         }
         if (!$this->payplugConfigVerified && $isLive) {
-            $groups['general']['fields']['environmentmode']['value']
-                = Config::ENVIRONMENT_TEST;
+            $groups['general']['fields']['environmentmode']['value'] = Config::ENVIRONMENT_TEST;
             $this->saveConfig('verified', 0);
             $this->messageManager->addErrorMessage(__('You are able to perform only TEST transactions.'));
         }
 
-        if ($this->payplugConfigConnected) {
-            $apiKey = $this->testApiKey ?? $this->getConfig('test_api_key');
-        }
-        // Get live permissions only if account is verified and environment is switched to live
-        if ($this->payplugConfigVerified && $isLive) {
-            $apiKey = $this->liveApiKey ?? $this->getConfig('live_api_key');
-        }
-        if (!empty($apiKey)) {
-            $permissions = $this->getAccountPermissions($apiKey);
+        $this->enforceIntegratedPaymentPermissions($groups, $fields);
+    }
 
+    private function enforceIntegratedPaymentPermissions(array &$groups, array $fields): void
+    {
+        $apiKey = $this->getCurrentApiKey();
 
-            $payment_value = null;
-            if (isset($fields['payment_page']['value'])) {
-              $payment_value = $fields['payment_page']['value'];
-            }
-
-            if (isset($fields['payment_page']['inherit'])) {
-              $payment_value = $fields['payment_page']['inherit'];
-            }
-
-            if ($payment_value !== null && $payment_value == Config::PAYMENT_PAGE_INTEGRATED) {
-                if (!isset($permissions['can_use_integrated_payments']) || !$permissions['can_use_integrated_payments']) {
-                    $paymentPage = $this->getConfig('payment_page');
-                    if (empty($paymentPage) || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
-                        $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
-                    }
-                    $groups['general']['fields']['payment_page']['value'] = $paymentPage;
-                    $this->messageManager->addErrorMessage(__(
-                        'You do not have access to this feature yet. ' .
-                        'To activate it, please fill in the following form: ' .
-                        'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
-                    ));
-                }
-            }
+        if (!$apiKey && $this->payplugConfigConnected) {
+            $apiKey = $this->testApiKey ?: $this->getConfig('test_api_key');
         }
 
+        if (!$apiKey) {
+            return;
+        }
+
+        $permissions = $this->getAccountPermissions($apiKey);
+        $paymentValue = $fields['payment_page']['value']
+            ?? $fields['payment_page']['inherit']
+            ?? null;
+
+        if ($paymentValue === Config::PAYMENT_PAGE_INTEGRATED && empty($permissions['can_use_integrated_payments'])) {
+
+            $paymentPage = $this->getConfig('payment_page');
+            if (!$paymentPage || $paymentPage === Config::PAYMENT_PAGE_INTEGRATED) {
+                $paymentPage = Config::PAYMENT_PAGE_REDIRECT;
+            }
+            $groups['general']['fields']['payment_page']['value'] = $paymentPage;
+
+            $this->messageManager->addErrorMessage(
+                __(
+                    'You do not have access to this feature yet. ' .
+                    'To activate it, please fill in the following form: ' .
+                    'https://support.payplug.com/hc/en-gb/requests/new?ticket_form_id=8138934372636'
+                )
+            );
+        }
+    }
+
+    /**
+     * Returns the correct secret (legacy test/live OR OAuth2 access token)
+     */
+    private function getCurrentApiKey(): ?string
+    {
+        $env = $this->getConfig('environmentmode');
+        $isTest = ($env === Config::ENVIRONMENT_TEST);
+
+        return $this->helper->getApiKey($isTest);
+    }
+
+    /**
+     * Same idea as legacy processGeneralConfig() but without e-mail/pwd logic.
+     */
+    private function processOauthGeneralConfig(array &$groups): void
+    {
+        $fields = $groups['general']['fields'] ?? [];
+
+        $this->helper->initScopeData();
+        $this->payplugConfigConnected = $this->helper->isOauthConnected();
+        $this->payplugConfigVerified = true;
+
+        $this->enforceIntegratedPaymentPermissions($groups, $fields);
+    }
+
+    public function setPostAndParamGroups(array $groups): void
+    {
+        //Old method for 2.3 and older
         $this->request->setPostValue('groups', $groups);
+        //New method for 2.4+
+        $this->request->setParam('groups', $groups);
     }
 
     /**
      * Handle Standard configuration
-     *
-     * @param array $groups
      */
-    private function processStandardConfig($groups)
+    private function processStandardConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_standard']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_standard');
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_standard');
 
         if (!empty($fields['one_click']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
 
-            $apiKey = $this->getConfig('test_api_key');
-            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                $apiKey = $this->getConfig('live_api_key');
-            }
+            $apiKey = $this->getCurrentApiKey();
 
             if (empty($apiKey)) {
                 $this->messageManager->addErrorMessage(
@@ -290,29 +285,22 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             }
         }
-
-        $this->request->setPostValue('groups', $groups);
     }
 
     /**
      * Handle InstallmentPlan configuration
-     *
-     * @param array $groups
      */
-    private function processInstallmentPlanConfig($groups)
+    private function processInstallmentPlanConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_installment_plan']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_installment_plan');
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_installment_plan');
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
 
-            $apiKey = $this->getConfig('test_api_key');
-            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                $apiKey = $this->getConfig('live_api_key');
-            }
+            $apiKey = $this->getCurrentApiKey();
 
             if (empty($apiKey)) {
                 $this->messageManager->addErrorMessage(
@@ -344,31 +332,23 @@ class PaymentConfigObserver implements ObserverInterface
                 $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 20000;
             }
         }
-
-        $this->request->setPostValue('groups', $groups);
     }
 
     /**
      * Handle Ondemand configuration
-     *
-     * @param array $groups
      */
-    private function processOndemandConfig($groups)
+    private function processOndemandConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_ondemand']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_ondemand');
-
-        $this->request->setPostValue('groups', $groups);
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_ondemand');
     }
 
     /**
      * Handle Oney configuration
-     *
-     * @param array $groups
      */
-    private function processOneyConfig($groups)
+    private function processOneyConfig(array &$groups): void
     {
         $oneyGroups = [
             'payplug_payments_oney' => [],
@@ -380,7 +360,7 @@ class PaymentConfigObserver implements ObserverInterface
             $fields = $groups[$oney]['fields'];
 
             $this->helper->initScopeData();
-            $groups = $this->validatePayplugConnection($fields, $groups, $oney);
+            $this->validatePayplugConnection($fields, $groups, $oney);
 
             $oneyGroups[$oney]['current'] = $this->getConfig('active', sprintf('payment/%s/', $oney));
 
@@ -388,10 +368,7 @@ class PaymentConfigObserver implements ObserverInterface
             if (!empty($fields['active']['value'])) {
                 $environmentMode = $this->getConfig('environmentmode');
 
-                $apiKey = $this->getConfig('test_api_key');
-                if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                    $apiKey = $this->getConfig('live_api_key');
-                }
+                $apiKey = $this->getCurrentApiKey();
 
                 if (empty($apiKey)) {
                     $this->messageManager->addErrorMessage(
@@ -406,7 +383,7 @@ class PaymentConfigObserver implements ObserverInterface
                         $errorMessage = 'You don\'t have access to this feature yet. ' .
                             'To activate the Oney guaranteed split payment, go to your PayPlug portal: %1.';
                         $this->messageManager->addErrorMessage(
-                            __($errorMessage, 'https://portal-qa.payplug.com/#/configuration/oney')
+                            __($errorMessage, 'https://portal.payplug.com/#/configuration/oney')
                         );
                     } else {
                         $isActive = true;
@@ -418,17 +395,24 @@ class PaymentConfigObserver implements ObserverInterface
                     $storeId = (int)$this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
-                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
+                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE,
+                        null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::CONFIG_PATH);
 
-                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null, Config::CONFIG_PATH);
+                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE,
+                        null, Config::ONEY_CONFIG_PATH) ?
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::ONEY_CONFIG_PATH) :
+                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null,
+                            Config::CONFIG_PATH);
 
-                    $oney_default_thresholds = $this->helper->getAmountsByCurrency($currency, null, Config::CONFIG_PATH, 'oney_');
+                    $oneyDefaultThresholds = $this->helper->getAmountsByCurrency($currency, null, Config::CONFIG_PATH,
+                        'oney_');
 
-                    if (!$this->validateThresholdValues($fields, $oney_default_thresholds)) {
+                    if (!$this->validateThresholdValues($fields, $oneyDefaultThresholds)) {
 
                         $this->messageManager->addErrorMessage(
                             __('The value is not within the specified range.')
@@ -437,27 +421,28 @@ class PaymentConfigObserver implements ObserverInterface
 
                     // Website scope value
                     if (isset($groups[$oney]['fields']['oney_min_threshold']['value'])) {
-                      $min = $groups[$oney]['fields']['oney_min_threshold']['value'];
-                      $max = $groups[$oney]['fields']['oney_max_threshold']['value'];
+                        $min = $groups[$oney]['fields']['oney_min_threshold']['value'];
+                        $max = $groups[$oney]['fields']['oney_max_threshold']['value'];
                     } else {
-                      // Inherit value
-                      $min = $groups[$oney]['fields']['oney_min_threshold']['inherit'];
-                      $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
+                        // Inherit value
+                        $min = $groups[$oney]['fields']['oney_min_threshold']['inherit'];
+                        $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
                     }
 
-
                     // Save thresholds on the same format as general/oney_max_amount
-                    $this->saveOneyConfig('oney_min_amounts', preg_replace(
+                    $this->saveOneyConfig(
+                        'oney_min_amounts',
+                        preg_replace(
                             "/(?<=:).*$/i",
-                            $min * 100,
-                            $minAmountsConfig
+                            (string)((int)$min * 100),
+                            (string)$minAmountsConfig
                         )
                     );
 
                     $this->saveOneyConfig('oney_max_amounts', preg_replace(
                         "/(?<=:).*$/i",
-                      $max * 100,
-                        $maxAmountsConfig
+                        (string)((int)$max * 100),
+                        (string)$maxAmountsConfig
                     ));
                 }
 
@@ -475,40 +460,34 @@ class PaymentConfigObserver implements ObserverInterface
                 $groups[$oney]['fields']['active']['value'] = $data['current'];
             }
         }
-
-        $this->request->setPostValue('groups', $groups);
     }
 
-    private function validateThresholdValues($fields, $oney_thresholds){
-
+    private function validateThresholdValues(array $fields, bool|array $oneyThresholds): bool
+    {
         if (isset($fields['oney_min_threshold']["value"])) {
-          $min_threshold = intval($fields['oney_min_threshold']["value"]);
-          $max_threshold = intval($fields['oney_max_threshold']["value"]);
-        }
-
-        // Website scope has on inherit
+            $minThreshold = intval($fields['oney_min_threshold']["value"]);
+            $maxThreshold = intval($fields['oney_max_threshold']["value"]);
+        } // Website scope has on inherit
         elseif (isset($fields['oney_min_threshold']["inherit"])) {
-          $min_threshold = intval($fields['oney_min_threshold']["inherit"]);
-          $max_threshold = intval($fields['oney_max_threshold']["inherit"]);
-
+            $minThreshold = intval($fields['oney_min_threshold']["inherit"]);
+            $maxThreshold = intval($fields['oney_max_threshold']["inherit"]);
         } else {
-         return false;
-
-        }
-
-        if ($oney_thresholds === false) {
-          return false;
-        }
-
-        if ($min_threshold >= $max_threshold) {
             return false;
         }
 
-        if ($min_threshold < ($oney_thresholds["min_amount"]/100)) {
+        if ($oneyThresholds === false) {
             return false;
         }
 
-        if ($max_threshold > ($oney_thresholds["max_amount"]/100)) {
+        if ($minThreshold >= $maxThreshold) {
+            return false;
+        }
+
+        if ($minThreshold < ($oneyThresholds["min_amount"] / 100)) {
+            return false;
+        }
+
+        if ($maxThreshold > ($oneyThresholds["max_amount"] / 100)) {
             return false;
         }
 
@@ -517,10 +496,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Bancontact configuration
-     *
-     * @param array $groups
      */
-    private function processBancontactConfig($groups)
+    private function processBancontactConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -540,23 +517,18 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Bancontact configuration
-     *
-     * @param array $groups
      */
-    private function processApplePayConfig($groups)
+    private function processApplePayConfig(array &$groups): void
     {
         $fields = $groups['payplug_payments_apple_pay']['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, 'payplug_payments_apple_pay');
+        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_apple_pay');
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
 
-            $apiKey = $this->getConfig('test_api_key');
-            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                $apiKey = $this->getConfig('live_api_key');
-            }
+            $apiKey = $this->getCurrentApiKey();
             if (empty($apiKey)) {
                 $this->messageManager->addErrorMessage(
                     __('We are not able to retrieve your account information. ' .
@@ -584,16 +556,12 @@ class PaymentConfigObserver implements ObserverInterface
                 }
             }
         }
-
-        $this->request->setPostValue('groups', $groups);
     }
 
     /**
      * Handle Amex configuration
-     *
-     * @param array $groups
      */
-    private function processAmexConfig($groups)
+    private function processAmexConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -612,10 +580,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Satispay configuration
-     *
-     * @param array $groups
      */
-    private function processSatispayConfig($groups)
+    private function processSatispayConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -634,10 +600,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Ideal configuration
-     *
-     * @param array $groups
      */
-    private function processIdealConfig($groups)
+    private function processIdealConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -656,10 +620,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Mybank configuration
-     *
-     * @param array $groups
      */
-    private function processMybankConfig($groups)
+    private function processMybankConfig(array &$groups): void
     {
         $this->processLiveOnlyMethod(
             $groups,
@@ -676,61 +638,62 @@ class PaymentConfigObserver implements ObserverInterface
         );
     }
 
+    private function isPayplugConnected(): bool
+    {
+        return $this->helper->isConnected() || $this->helper->isOauthConnected();
+    }
+
     /**
      * Process method available only in LIVE mode
-     *
-     * @param array  $groups
-     * @param string $method
-     * @param Phrase $liveModeNoPermissionMessage
-     * @param Phrase $testModeMessage
      */
-    private function processLiveOnlyMethod($groups, $method, $liveModeNoPermissionMessage, $testModeMessage)
-    {
+    private function processLiveOnlyMethod(
+        array &$groups,
+        string $method,
+        Phrase|string $liveModeNoPermissionMessage,
+        Phrase|string $testModeMessage
+    ): void {
         $groupCode = 'payplug_payments_' . $method;
         $fields = $groups[$groupCode]['fields'];
 
         $this->helper->initScopeData();
-        $groups = $this->validatePayplugConnection($fields, $groups, $groupCode);
+        $this->validatePayplugConnection($fields, $groups, $groupCode);
 
-        if (!empty($fields['active']['value'])) {
-            $environmentMode = $this->getConfig('environmentmode');
-
-            if ($environmentMode == Config::ENVIRONMENT_LIVE) {
-                $apiKey = $this->getConfig('live_api_key');
-                if (empty($apiKey)) {
-                    $this->messageManager->addErrorMessage(
-                        __('We are not able to retrieve your account information. ' .
-                            'Please go to section Sales > Payplug Payments to log in again.')
-                    );
-                } else {
-                    $permissions = $this->getAccountPermissions($apiKey);
-
-                    if (empty($permissions['can_use_' . $method])) {
-                        $groups[$groupCode]['fields']['active']['value'] = 0;
-                        $this->messageManager->addErrorMessage($liveModeNoPermissionMessage);
-                    }
-                }
-            } else {
-                $groups[$groupCode]['fields']['active']['value'] = 0;
-                $this->messageManager->addErrorMessage($testModeMessage);
-            }
+        if (empty($fields['active']['value'])) {
+            return;
         }
 
-        $this->request->setPostValue('groups', $groups);
+        $environmentMode = $this->getConfig('environmentmode');
+        if ($environmentMode !== Config::ENVIRONMENT_LIVE) {
+            $groups[$groupCode]['fields']['active']['value'] = 0;
+            $this->messageManager->addErrorMessage($testModeMessage);
+            return;
+        }
+
+        $apiKey = $this->getCurrentApiKey();
+        if (!$apiKey) {
+            $this->messageManager->addErrorMessage(
+                __(
+                    'We are not able to retrieve your account information. ' .
+                    'Please go to section Sales > Payplug Payments to log in again.'
+                )
+            );
+            $groups[$groupCode]['fields']['active']['value'] = 0;
+            return;
+        }
+
+        $permissions = $this->getAccountPermissions($apiKey);
+        if (empty($permissions['can_use_' . $method])) {
+            $groups[$groupCode]['fields']['active']['value'] = 0;
+            $this->messageManager->addErrorMessage($liveModeNoPermissionMessage);
+        }
     }
 
     /**
      * Check if PayPlug account is connected before enabling PayPlug payment method
-     *
-     * @param array  $fields
-     * @param array  $groups
-     * @param string $fieldGroup
-     *
-     * @return array
      */
-    private function validatePayplugConnection($fields, $groups, $fieldGroup)
+    private function validatePayplugConnection(array $fields, array &$groups, string $fieldGroup): void
     {
-        if (!empty($fields['active']['value']) && !$this->helper->isConnected()) {
+        if (!empty($fields['active']['value']) && !$this->isPayplugConnected()) {
             $this->messageManager->addErrorMessage(
                 __('You are not connected to a payplug account. ' .
                     'Please go to section Sales > Payplug Payments to log in.')
@@ -738,17 +701,12 @@ class PaymentConfigObserver implements ObserverInterface
 
             $groups[$fieldGroup]['fields']['active']['value'] = 0;
         }
-
-        return $groups;
     }
 
     /**
      * Handle PayPlug configuration save on website level
-     *
-     * @param array &$groups
-     * @param array &$fields
      */
-    private function checkWebsiteScopeData(&$groups, &$fields)
+    private function checkWebsiteScopeData(array &$groups, array &$fields): void
     {
         if ($this->helper->getConfigScope() != 'websites') {
             return;
@@ -775,6 +733,7 @@ class PaymentConfigObserver implements ObserverInterface
             $this->messageManager->addErrorMessage(
                 __('All fields must be defined when trying to connect at website level.')
             );
+
             return;
         }
         // Once connected on website level, the only way to use global configuration is to disconnect
@@ -787,18 +746,13 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Check if all required fields are set
-     *
-     * @param array $fieldsRequiredForInit
-     * @param array $fields
-     *
-     * @return bool
      */
-    private function checkRequiredFields($fieldsRequiredForInit, $fields)
+    private function checkRequiredFields(array $fieldsRequiredForInit, array $fields): bool
     {
         foreach ($fieldsRequiredForInit as $field) {
             if (isset($fields[$field]['value'])) {
                 foreach ($fieldsRequiredForInit as $fieldCheck) {
-                    if ( !isset($fields[$fieldCheck]['value']) && !isset($fields[$fieldCheck]['inherit'])) {
+                    if (!isset($fields[$fieldCheck]['value']) && !isset($fields[$fieldCheck]['inherit'])) {
                         return false;
                     }
                 }
@@ -810,11 +764,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle account init
-     *
-     * @param string|null $pwd
-     * @param array       $fields
      */
-    private function processInit($pwd, $fields)
+    private function processInit(?string $pwd, array $fields): void
     {
         $email = $fields['email']['value'];
         if (!$this->payplugLogin($email, $pwd, true)) {
@@ -825,10 +776,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle live mode
-     *
-     * @param string|null $pwd
      */
-    private function processLive($pwd)
+    private function processLive(?string $pwd): void
     {
         $error = false;
         if (!$this->payplugConfigConnected) {
@@ -848,64 +797,34 @@ class PaymentConfigObserver implements ObserverInterface
         }
     }
 
-    /**
-     * Get PayPlug configuration
-     *
-     * @param string $field
-     * @param string $path
-     *
-     * @return mixed
-     */
-    private function getConfig($field, $path = Config::CONFIG_PATH)
+    private function getConfig(string $field, string $path = Config::CONFIG_PATH): mixed
     {
         return $this->helper->getConfigValue($field, ScopeInterface::SCOPE_STORE, null, $path);
     }
 
-    /**
-     * Save PayPlug configuration
-     *
-     * @param string $field
-     * @param string $value
-     */
-    private function saveConfig($field, $value)
+    private function saveConfig(string $field, mixed $value): void
     {
-        $this->helper->setConfigValue($field, $value);
+        $this->helper->setConfigValue($field, (string)$value);
     }
 
-    /**
-     * Save PayPlug configuration
-     *
-     * @param string $field
-     * @param string $value
-     */
-    private function saveOneyConfig($field, $value)
+    private function saveOneyConfig(string $field, mixed $value): void
     {
-        $this->helper->setConfigValue($field, $value, ScopeInterface::SCOPE_STORE, null, Config::ONEY_CONFIG_PATH);
+        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null,
+            Config::ONEY_CONFIG_PATH);
     }
 
-    /**
-     * Save PayPlug configuration
-     *
-     * @param string $field
-     * @param string $value
-     */
-    private function saveOneyWithoutFeesConfig($field, $value)
+    private function saveOneyWithoutFeesConfig(string $field, mixed $value): void
     {
-        $this->helper->setConfigValue($field, $value, ScopeInterface::SCOPE_STORE, null, Config::ONEY_WITHOUT_FEES_CONFIG_PATH);
+        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null,
+            Config::ONEY_WITHOUT_FEES_CONFIG_PATH);
     }
 
     /**
      * Connect to payplug account
      *
      * Handle flags for account connection, verification
-     *
-     * @param string $email
-     * @param string $pwd
-     * @param bool   $canChangeConfigConnected
-     *
-     * @return bool
      */
-    private function payplugLogin($email, $pwd, $canChangeConfigConnected = false)
+    private function payplugLogin(string $email, string $pwd, bool $canChangeConfigConnected = false): bool
     {
         $error = false;
         $notEmptyValidator = new NotEmpty();
@@ -928,6 +847,7 @@ class PaymentConfigObserver implements ObserverInterface
 
         if (!$login['status']) {
             $this->messageManager->addErrorMessage(__($login['message']));
+
             return false;
         }
 
@@ -952,12 +872,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Get PayPlug account permissions
-     *
-     * @param string $apiKey
-     *
-     * @return array
      */
-    private function getAccountPermissions($apiKey)
+    private function getAccountPermissions(string $apiKey): array
     {
         if (!array_key_exists($apiKey, $this->permissions)) {
             $result = $this->login->getAccount($apiKey);
@@ -974,12 +890,8 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Parse JSON Answer from PayPlug to save configurations and return permissions
-     *
-     * @param mixed $jsonAnswer
-     *
-     * @return array
      */
-    private function treatAccountResponse($jsonAnswer)
+    private function treatAccountResponse(mixed $jsonAnswer): ?array
     {
         $id = $jsonAnswer['id'];
 
@@ -1016,13 +928,13 @@ class PaymentConfigObserver implements ObserverInterface
                     $configuration['oney_min_amounts'] = $this->processAmounts(
                         $jsonAnswer['configuration']['oney']['min_amounts']
                     );
-                    $configuration['raw_oney_min_amounts'] = intval($jsonAnswer['configuration']['oney']['min_amounts']['EUR'])/100;
+                    $configuration['raw_oney_min_amounts'] = intval($jsonAnswer['configuration']['oney']['min_amounts']['EUR']) / 100;
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['max_amounts'])) {
                     $configuration['oney_max_amounts'] = $this->processAmounts(
                         $jsonAnswer['configuration']['oney']['max_amounts']
                     );
-                    $configuration['raw_oney_max_amounts'] = intval($jsonAnswer['configuration']['oney']['max_amounts']['EUR'])/100;
+                    $configuration['raw_oney_max_amounts'] = intval($jsonAnswer['configuration']['oney']['max_amounts']['EUR']) / 100;
                 }
             }
             if (!empty($jsonAnswer['country'])) {
@@ -1073,8 +985,7 @@ class PaymentConfigObserver implements ObserverInterface
             'mybank',
         ];
         foreach ($pproMethods as $method) {
-            $jsonAnswer['permissions']['can_use_' . $method] =
-                $jsonAnswer['payment_methods'][$method]['enabled'] ?? false;
+            $jsonAnswer['permissions']['can_use_' . $method] = $jsonAnswer['payment_methods'][$method]['enabled'] ?? false;
             $permissions[] = 'can_use_' . $method;
             $this->saveConfig(
                 $method . '_countries',
@@ -1103,19 +1014,15 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Process min/max amounts
-     *
-     * @param array $amounts
-     *
-     * @return string
      */
-    private function processAmounts($amounts)
+    private function processAmounts(?array $amounts): string
     {
         $configuration = '';
         foreach ($amounts as $key => $value) {
             if ($configuration !== '') {
                 $configuration .= ';';
             }
-            $configuration .= $key.':'.$value;
+            $configuration .= $key . ':' . $value;
         }
 
         return $configuration;

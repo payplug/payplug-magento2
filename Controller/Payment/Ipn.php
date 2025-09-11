@@ -199,7 +199,7 @@ class Ipn extends AbstractPayment
             // We want to process payment IPN for orders not linked to an installment plan
         }
 
-        $standardDeferredQuote = $this->getStandardDeferredPayment($order, $payment);
+        $standardDeferredQuote = $this->getStandardDeferredPayment($payment);
         if (!$payment->is_paid) {
             // If we are actually reviewing a standard deferred payment not yet captured
             if ($standardDeferredQuote) {
@@ -234,14 +234,12 @@ class Ipn extends AbstractPayment
     }
 
     /**
-     * In case of deferred payment, the payplug object only contain the ID Quote, and not the Order informations
-     * So the order retrieved from $payment->metadata['Order']; above do not contain an increment id
-     * Therefore if the incrementId is null and there is an ID Quote, the payment object from payplug has a chance to be a deferred payment
+     * In case of deferred payment, the payplug object contain a ID Quote
      * So we check wether it's one or not by retrieving the real quote object.
      */
-    private function getStandardDeferredPayment(OrderInterface $order, Payment $payment): ?Quote
+    private function getStandardDeferredPayment(Payment $payment): ?Quote
     {
-        if ($order->getIncrementId() || !$payment->metadata['ID Quote']) {
+        if (!$payment->metadata['ID Quote']) {
             return null;
         }
 
