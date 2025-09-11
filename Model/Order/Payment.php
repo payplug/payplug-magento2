@@ -247,10 +247,22 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Attempt to refund partially or totally a payment
-     * @throws ConfigurationNotSetException
+     * @throws ConfigurationNotSetException|ConfigurationException
      */
     public function makeRefund(float $amount, ?array $metadata, ?int $store = null): Refund
     {
+        $payplugPayment = $this->retrieve($store);
+
+        if (!empty($payplugPayment->metadata)) {
+            $metadata = (array) $metadata;
+            $metadata += $payplugPayment->metadata;
+        }
+
+        if (!empty($payplugPayment->id)) {
+            $metadata = (array) $metadata;
+            $metadata['Payment ID'] = $payplugPayment->id;
+        }
+
         $data = [
             'amount' => $amount * 100,
             'metadata' => $metadata

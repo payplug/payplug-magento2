@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="payment_method_is_active">
+        <observer name="payplug_restrict_payment_method_by_country"
+                  instance="Payplug\Payments\Observer\HidePaymentMethodForRestrictedCountries"  />
+    </event>
+    <event name="checkout_onepage_controller_success_action">
+        <observer name="payplug_payments_disable_quote_on_checkout_success"
+                  instance="Payplug\Payments\Observer\DeactivateQuoteOnCheckoutSuccess"/>
+    </event>
+</config>

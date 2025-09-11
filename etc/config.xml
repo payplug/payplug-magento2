@@ -5,7 +5,6 @@
                 <active>0</active>
                 <title>Credit card checkout</title>
                 <one_click>0</one_click>
-                <authorized_order_status>pending_payment</authorized_order_status>
                 <processing_order_status>processing</processing_order_status>
                 <canceled_order_status>canceled</canceled_order_status>
                 <allowspecific>0</allowspecific>
@@ -17,7 +16,7 @@
                 <is_gateway>1</is_gateway>
                 <order_status>pending</order_status>
                 <can_order>1</can_order>
-                <can_authorize>0</can_authorize>
+                <can_authorize>1</can_authorize>
                 <can_capture>1</can_capture>
                 <can_fetch_transaction_information>1</can_fetch_transaction_information>
                 <can_capture_partial>0</can_capture_partial>
@@ -294,6 +293,7 @@
             <general>
                 <environmentmode>test</environmentmode>
                 <payment_page>integrated</payment_page>
+                <apm_filtering_mode>shipping_address</apm_filtering_mode>
                 <connected>0</connected>
                 <verified>0</verified>
                 <use_live_mode>1</use_live_mode>
@@ -301,6 +301,10 @@
                 <can_create_installment_plan>1</can_create_installment_plan>
                 <can_create_deferred_payment>1</can_create_deferred_payment>
                 <can_use_oney>1</can_use_oney>
+                <bancontact_countries_override>["BE"]</bancontact_countries_override>
+                <ideal_countries_override>["NL"]</ideal_countries_override>
+                <mybank_countries_override>["IT"]</mybank_countries_override>
+                <satispay_countries_override>["IT"]</satispay_countries_override>
             </general>
         </payplug_payments>
     </default>
