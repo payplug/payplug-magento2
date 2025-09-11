@@ -5,15 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-
-## [4.5.1](https://github.com/payplug/payplug-magento2/releases/tag/v4.5.1) - 2025-08-20
+## [4.6.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.0) - 2025-XX-XX
 
 > **WARNING**
 > Orders are no longer assigned to the **Payment Review** status by default after creation. They will now remain in **Pending Payment** until the next valid status update, regardless of the payment flow. This prevents premature triggering of business processes such as invoicing and shipping.
 
+### Features
+
+- Fix Apple pay button disabled after payment cancel
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.5.0...v4.6.0)**
+
 ### Changed
 
 - Orders now default to **Pending Payment** (not Payment Review) after creation in all payment flows.
+
+### Fixed
+
+- Fix Apple pay button disabled after payment cancel [#305](https://github.com/payplug/payplug-magento2/pull/305)
 
 ## [4.5.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.5.0) - 2025-07-04
 
