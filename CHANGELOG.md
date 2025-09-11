@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Fix Apple pay button disabled after payment cancel [#305](https://github.com/payplug/payplug-magento2/pull/305)
+- Fix checkout payment methods render on Safari [#304](https://github.com/payplug/payplug-magento2/pull/304)
 
 ## [4.5.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.5.0) - 2025-07-04
 
