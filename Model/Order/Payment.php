@@ -13,6 +13,8 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Payments\Helper\Config;
 use Payplug\Resource\Payment as ResourcePayment;
 use Payplug\Resource\Refund;
@@ -245,9 +247,22 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Attempt to refund partially or totally a payment
+     * @throws ConfigurationNotSetException|ConfigurationException
      */
     public function makeRefund(float $amount, ?array $metadata, ?int $store = null): Refund
     {
+        $payplugPayment = $this->retrieve($store);
+
+        if (!empty($payplugPayment->metadata)) {
+            $metadata = (array) $metadata;
+            $metadata += $payplugPayment->metadata;
+        }
+
+        if (!empty($payplugPayment->id)) {
+            $metadata = (array) $metadata;
+            $metadata['Payment ID'] = $payplugPayment->id;
+        }
+
         $data = [
             'amount' => $amount * 100,
             'metadata' => $metadata
@@ -270,6 +285,8 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Update a payment
+     * @throws ConfigurationNotSetException
+     * @throws ConfigurationException
      */
     public function update(array $data, ?int $store = null): ResourcePayment
     {

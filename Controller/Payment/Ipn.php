@@ -16,7 +16,6 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
@@ -25,7 +24,6 @@ use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
-use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Gateway\Response\Standard\FetchTransactionInformationHandler;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
@@ -211,17 +209,13 @@ class Ipn extends AbstractPayment
                 $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
                 $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
                 $this->cartRepository->save($standardDeferredQuote);
-                $response->setStatusHeader(200, null, "200 payment for deferred standard payment not processed");
-
-                return;
             }
 
             $this->logger->info('Transaction was not paid.');
-            $this->logger->info('Canceling order');
         }
 
         // If this is a standard deferred payment captured, we try saving the customer card after the Capture IPN (Only doable after payment)
-        if ($standardDeferredQuote) {
+        if ($standardDeferredQuote && $payment->is_paid) {
             $this->fetchTransactionInformationHandler->saveCustomerCard($payment, $standardDeferredQuote->getCustomerId(), $standardDeferredQuote->getStoreId());
         }
 
