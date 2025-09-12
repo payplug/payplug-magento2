@@ -1034,4 +1034,5 @@
         <plugin name="payplug_payment_capture_standard_deferred_payment" type="Payplug\Payments\Plugin\CaptureStandardDeferredPayment" sortOrder="1"/>
     </type>
 
+    <preference for="Payplug\Payments\Api\Data\RefundRequestInterface" type="Payplug\Payments\Model\Data\RefundRequest"/>
 </config>

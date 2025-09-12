@@ -22,6 +22,7 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
+use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
@@ -49,9 +50,11 @@ use Payplug\Payments\Model\Order\ProcessingFactory as PayplugOrderProcessingFact
 use Payplug\Payments\Model\OrderInstallmentPlanRepository;
 use Payplug\Payments\Model\OrderPaymentRepository;
 use Payplug\Payments\Model\OrderProcessingRepository;
+use Payplug\Payments\Service\CreateOrderInvoice;
 use Payplug\Resource\InstallmentPlan as ResourceInstallmentPlan;
 use Payplug\Resource\IVerifiableAPIResource;
 use Payplug\Resource\Payment as ResourcePayment;
+use Magento\Sales\Model\Order\Invoice;
 
 class Data extends AbstractHelper
 {
@@ -68,7 +71,8 @@ class Data extends AbstractHelper
         private readonly FilterGroupBuilderFactory $filterGroupBuilderFactory,
         private readonly SortOrderBuilderFactory $sortOrderBuilderFactory,
         private readonly OndemandHelper $ondemandHelper,
-        private readonly PayplugConfig $payplugConfig
+        private readonly PayplugConfig $payplugConfig,
+        private readonly MessageQueuePublisherInterface $messageQueuePublisher
     ) {
         parent::__construct($context);
     }
@@ -966,31 +970,10 @@ class Data extends AbstractHelper
         $method->setStore($order->getStoreId());
         $method->fetchTransactionInfo($payment, $transactionId);
 
-        if ($payment->getIsTransactionApproved() ||
-            ($isInstallmentPlan && !$payment->getTransactionPending() && !$payment->getIsTransactionDenied())
+        if ($payment->getIsTransactionApproved()
+            || ($isInstallmentPlan && !$payment->getTransactionPending() && !$payment->getIsTransactionDenied())
         ) {
-            if (count($order->getInvoiceCollection()) === 0) {
-                $invoice = $order->prepareInvoice();
-                $invoice->register();
-                $order->addRelatedObject($invoice);
-                $invoice->setTransactionId($transactionId);
-
-                if (!$isInstallmentPlan) {
-                    $order->setState(Order::STATE_PROCESSING);
-                    $invoice->pay();
-                    $payment->setBaseAmountPaidOnline($order->getBaseGrandTotal());
-                    $message = __('Registered update about approved payment.') . ' '
-                        . __('Transaction ID: "%1"', $transactionId);
-                    $order->addStatusToHistory(
-                        $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING),
-                        (string)$message
-                    );
-                } else {
-                    // Order amounts and status history are already handled
-                    // In \Payplug\Payments\Gateway\Response\InstallmentPlan\FetchTransactionInformationHandler::handle
-                    $invoice->setState(Order\Invoice::STATE_PAID);
-                }
-            }
+            $this->messageQueuePublisher->publish(CreateOrderInvoice::MESSAGE_QUEUE_TOPIC, $order);
         } elseif ($payment->getIsTransactionDenied()) {
             // fetchTransactionInfo has already checked payplug payment status, no need to do it again
             $this->cancelOrderAndInvoice($order, false);

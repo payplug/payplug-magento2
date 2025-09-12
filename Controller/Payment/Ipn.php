@@ -15,13 +15,12 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
-use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order\Payment\Transaction\ManagerInterface as TransactionManagerInterface;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
@@ -31,7 +30,9 @@ use Payplug\Payments\Gateway\Response\Standard\FetchTransactionInformationHandle
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Data\RefundRequestFactory;
 use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Service\CreateOrderRefund;
 use Payplug\Resource\InstallmentPlan;
 use Payplug\Resource\Payment;
 use Payplug\Resource\Refund;
@@ -45,13 +46,14 @@ class Ipn extends AbstractPayment
         Logger $logger,
         Data $payplugHelper,
         private readonly Config $payplugConfig,
-        private readonly TransactionManagerInterface $transactionManager,
         protected OrderPaymentRepository $paymentRepository,
         protected CartRepositoryInterface $cartRepository,
         protected OrderRepositoryInterface $orderRepository,
         protected OrderPaymentRepositoryInterface $magentoPaymentRepository,
         protected FetchTransactionInformationHandler $fetchTransactionInformationHandler,
-        protected PaymentReturn $paymentReturn
+        protected PaymentReturn $paymentReturn,
+        private readonly MessageQueuePublisherInterface $messageQueuePublisher,
+        private readonly RefundRequestFactory $refundRequestFactory
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
@@ -367,43 +369,19 @@ class Ipn extends AbstractPayment
 
             return;
         } catch (NoSuchEntityException) {
-            // We want to process refund IPN for orders not linked to an installment plan
+            $this->logger->info('Processing refund IPN for orders not linked to an installment plan');
         }
 
-        /** @var OrderPaymentInterface $payment */
-        $payment = $order->getPayment();
+        $refundRequest = $this->refundRequestFactory->create();
+        $refundRequest->setOrder($order);
+        $refundRequest->setRefundId($refund->id);
+        $refundRequest->setRefundPaymentId($refund->payment_id);
+        $refundRequest->setRefundAmount($refund->amount);
 
-        if ($this->transactionManager->isTransactionExists(
-            $refund->id,
-            $payment->getId(),
-            $order->getId()
-        )) {
-            $this->logger->info(sprintf('Transaction already exists %s.', $refund->id));
-            $response->setStatusHeader(
-                500,
-                null,
-                sprintf('500 Transaction already exists %s.', $refund->id)
-            );
+        $this->messageQueuePublisher->publish(CreateOrderRefund::MESSAGE_QUEUE_TOPIC, $refundRequest);
 
-            return;
-        }
-
-        try {
-            $payment->setTransactionId($refund->id);
-            $payment->setParentTransactionId($refund->payment_id);
-
-            $amountToRefund = $refund->amount / 100;
-            $payment->registerRefundNotification($amountToRefund);
-            $order->save();
-            $this->logger->info('200 Order updated.');
-            $response->setStatusHeader(200, null, '200 Order updated.');
-        } catch (Exception $e) {
-            $this->logger->info(sprintf('500 Error while creating full refund %s.', $e->getMessage()));
-            $response->setStatusHeader(
-                500,
-                null,
-                sprintf('500 Error while creating full refund %s.', $e->getMessage())
-            );
-        }
+        $message = '200 Message submitted in queue for processing';
+        $this->logger->info($message);
+        $response->setStatusHeader(200, null, $message);
     }
 }
