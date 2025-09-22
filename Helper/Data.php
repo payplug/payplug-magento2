@@ -43,6 +43,7 @@ use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Config as PayplugConfig;
 use Payplug\Payments\Helper\Ondemand as OndemandHelper;
+use Payplug\Payments\Logger\Logger as PayplugLogger;
 use Payplug\Payments\Model\Order\InstallmentPlan as OrderInstallmentPlan;
 use Payplug\Payments\Model\Order\Payment;
 use Payplug\Payments\Model\Order\Processing;
@@ -54,7 +55,6 @@ use Payplug\Payments\Service\CreateOrderInvoice;
 use Payplug\Resource\InstallmentPlan as ResourceInstallmentPlan;
 use Payplug\Resource\IVerifiableAPIResource;
 use Payplug\Resource\Payment as ResourcePayment;
-use Magento\Sales\Model\Order\Invoice;
 
 class Data extends AbstractHelper
 {
@@ -72,7 +72,8 @@ class Data extends AbstractHelper
         private readonly SortOrderBuilderFactory $sortOrderBuilderFactory,
         private readonly OndemandHelper $ondemandHelper,
         private readonly PayplugConfig $payplugConfig,
-        private readonly MessageQueuePublisherInterface $messageQueuePublisher
+        private readonly MessageQueuePublisherInterface $messageQueuePublisher,
+        private readonly PayplugLogger $payplugLogger
     ) {
         parent::__construct($context);
     }
@@ -317,7 +318,7 @@ class Data extends AbstractHelper
      */
     public function updateOrderStatus(Order $order, bool $save = true): void
     {
-        $this->_logger->info(
+        $this->payplugLogger->info(
             sprintf(
                 '%s: Updating Order: %s. Status: %s / State: %s.',
                 __METHOD__,
@@ -336,7 +337,7 @@ class Data extends AbstractHelper
                     $payplugOrderPayment->getScope($order)
                 );
                 if ($payplugPayment->is_paid && empty($payplugPayment->failure)) {
-                    $this->_logger->info(
+                    $this->payplugLogger->info(
                         sprintf(
                             '%s: Updating Order: %s state to Processing.',
                             __METHOD__,
@@ -345,7 +346,7 @@ class Data extends AbstractHelper
                     );
                     $order->setState(Order::STATE_PROCESSING);
                 } elseif (!empty($payplugPayment->authorization->authorized_at) && empty($payment->failure)) {
-                    $this->_logger->info(
+                    $this->payplugLogger->info(
                         sprintf(
                             '%s: Updating Order: %s state to Payment Review.',
                             __METHOD__,
@@ -361,7 +362,7 @@ class Data extends AbstractHelper
                     $order->getPayment()->setRew(true);
                 }
             } catch (\Exception $e) {
-                $this->_logger->info($e->getMessage());
+                $this->payplugLogger->info($e->getMessage());
             }
         }
 
@@ -370,7 +371,7 @@ class Data extends AbstractHelper
         } elseif ($order->getState() == Order::STATE_CANCELED) {
             $field = 'canceled_order_status';
         }
-        $this->_logger->info(
+        $this->payplugLogger->info(
             sprintf(
                 '%s: Updating Order: %s status to %s.',
                 __METHOD__,
@@ -381,7 +382,7 @@ class Data extends AbstractHelper
         if ($field !== null) {
             $orderStatus = $order->getPayment()->getMethodInstance()->getConfigData($field, $order->getStoreId());
             if (!empty($orderStatus) && $orderStatus !== $order->getStatus()) {
-                $this->_logger->info(
+                $this->payplugLogger->info(
                     sprintf(
                         '%s: Adding Order: %s status %s to history.',
                         __METHOD__,
@@ -392,7 +393,7 @@ class Data extends AbstractHelper
                 $order->addStatusToHistory($orderStatus, (string)__('Custom Payplug Payments status'));
                 if ($save) {
                     $this->orderRepository->save($order);
-                    $this->_logger->info(
+                    $this->payplugLogger->info(
                         sprintf('%s: Order %s saved with new status.', __METHOD__, $order->getId())
                     );
                 }
@@ -413,7 +414,7 @@ class Data extends AbstractHelper
      */
     public function updateOrder(Order $order, array $data = []): Order
     {
-        $this->_logger->info(sprintf('%s: Updating Order %s.', __METHOD__, $order->getId()));
+        $this->payplugLogger->info(sprintf('%s: Updating Order %s.', __METHOD__, $order->getId()));
         try {
             $orderProcessing = $this->orderProcessingRepository->get($order->getId(), 'order_id');
             $createdAt = new \DateTime($orderProcessing->getCreatedAt());
@@ -432,7 +433,7 @@ class Data extends AbstractHelper
         try {
             $orderProcessing = $this->createOrderProcessing($order);
         } catch (\Exception $e) {
-            $this->_logger->info($e->getMessage());
+            $this->payplugLogger->info($e->getMessage());
             return $order;
         }
 
@@ -449,7 +450,7 @@ class Data extends AbstractHelper
             if (!empty($data)) {
                 if (!empty($data['status'])) {
                     $order->setStatus($data['status']);
-                    $this->_logger->info(
+                    $this->payplugLogger->info(
                         sprintf(
                             '%s: Forcing status %s on the order %s.',
                             __METHOD__,
@@ -516,13 +517,13 @@ class Data extends AbstractHelper
                 $orderPayment->abort((int)$storeId);
             }
         } catch (HttpException $e) {
-            $this->_logger->error('Could not abort payment', [
+            $this->payplugLogger->error('Could not abort payment', [
                 'exception' => $e,
                 'order' => $order->getId(),
                 'message' => $e->getErrorObject()['message'] ?? 'Payplug request error',
             ]);
         } catch (\Exception $e) {
-            $this->_logger->error('Could not abort payment', [
+            $this->payplugLogger->error('Could not abort payment', [
                 'exception' => $e,
                 'order' => $order->getId(),
             ]);
@@ -812,7 +813,7 @@ class Data extends AbstractHelper
             $orderProcessing->setCreatedAt($date->format('Y-m-d H:i:s'));
             $this->orderProcessingRepository->save($orderProcessing);
         } catch (\Exception $e) {
-            $this->_logger->error($e->getMessage());
+            $this->payplugLogger->error($e->getMessage());
         }
 
         return $orderProcessing;
@@ -974,6 +975,15 @@ class Data extends AbstractHelper
             || ($isInstallmentPlan && !$payment->getTransactionPending() && !$payment->getIsTransactionDenied())
         ) {
             $this->messageQueuePublisher->publish(CreateOrderInvoice::MESSAGE_QUEUE_TOPIC, $order);
+
+            $this->payplugLogger->info(
+                sprintf(
+                    '%s: "%s" message published for order %s.',
+                    __METHOD__,
+                    CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                    $order->getId()
+                )
+            );
         } elseif ($payment->getIsTransactionDenied()) {
             // fetchTransactionInfo has already checked payplug payment status, no need to do it again
             $this->cancelOrderAndInvoice($order, false);
