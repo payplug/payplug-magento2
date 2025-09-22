@@ -11,6 +11,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Invoice;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
+use Throwable;
 
 class CreateOrderInvoice
 {
@@ -54,12 +55,25 @@ class CreateOrderInvoice
             $order->setState(Order::STATE_PROCESSING);
             $order->addStatusToHistory(
                 $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING),
-                __('Registered update about approved payment.') . ' ' . __('Transaction ID: "%1"', $transactionId)
+                __('Invoice is created.') . ' ' . __('Transaction ID: "%1"', $transactionId)
+            );
+
+            $this->payplugLogger->info(
+                sprintf(
+                    '%s: "%s" message consumed for order %s. Invoice is created.',
+                    __METHOD__,
+                    CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                    $order->getId()
+                )
             );
         }
 
         $order->addRelatedObject($invoice);
 
-        $this->orderRepository->save($order);
+        try {
+            $this->orderRepository->save($order);
+        } catch (Throwable $e) {
+            $this->payplugLogger->error($e->getMessage());
+        }
     }
 }
