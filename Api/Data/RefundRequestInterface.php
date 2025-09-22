@@ -14,7 +14,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 interface RefundRequestInterface
 {
     /**
-     * @param OrderInterface $order
+     * @param \Magento\Sales\Api\Data\OrderInterface $order
      *
      * @return RefundRequestInterface
      * @api
@@ -22,7 +22,7 @@ interface RefundRequestInterface
     public function setOrder(OrderInterface $order): RefundRequestInterface;
 
     /**
-     * @return OrderInterface
+     * @return \Magento\Sales\Api\Data\OrderInterface
      * @api
      */
     public function getOrder(): OrderInterface;
