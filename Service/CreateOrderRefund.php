@@ -26,6 +26,15 @@ class CreateOrderRefund
     {
         $orderId = $refundRequest->getOrderId();
 
+        $this->payplugLogger->info(
+            sprintf(
+                '%s: "%s" processing refund for order %s.',
+                __METHOD__,
+                CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                $orderId
+            )
+        );
+
         try {
             $order = $this->orderRepository->get($orderId);
         } catch (Throwable $e) {

@@ -24,6 +24,15 @@ class CreateOrderInvoice
 
     public function execute(int $orderId): void
     {
+        $this->payplugLogger->info(
+            sprintf(
+                '%s: "%s" processing invoice for order %s.',
+                __METHOD__,
+                CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                $orderId
+            )
+        );
+
         try {
             $order = $this->orderRepository->get($orderId);
         } catch (Throwable $e) {
