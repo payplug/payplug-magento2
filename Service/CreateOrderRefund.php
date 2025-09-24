@@ -9,6 +9,7 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order\Payment\Transaction\ManagerInterface as TransactionManagerInterface;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
 use Payplug\Payments\Model\Data\RefundRequest;
+use Throwable;
 
 class CreateOrderRefund
 {
@@ -23,7 +24,15 @@ class CreateOrderRefund
 
     public function execute(RefundRequest $refundRequest): void
     {
-        $order = $refundRequest->getOrder();
+        $orderId = $refundRequest->getOrderId();
+
+        try {
+            $order = $this->orderRepository->get($orderId);
+        } catch (Throwable $e) {
+            $this->payplugLogger->error($e->getMessage());
+            return;
+        }
+
         $refundId = $refundRequest->getRefundId();
         $payment = $order->getPayment();
 

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Payplug\Payments\Service;
 
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Invoice;
@@ -23,9 +22,23 @@ class CreateOrderInvoice
     ) {
     }
 
-    public function execute(OrderInterface $order): void
+    public function execute(int $orderId): void
     {
+        try {
+            $order = $this->orderRepository->get($orderId);
+        } catch (Throwable $e) {
+            $this->payplugLogger->error($e->getMessage());
+            return;
+        }
+
         if ($order->getInvoiceCollection()->count() > 0) {
+            $this->payplugLogger->info(__(
+                '%s: "%s" invoice already created for order %s.',
+                __METHOD__,
+                CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                $order->getId()
+            ));
+
             return;
         }
 

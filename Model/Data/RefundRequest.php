@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Model\Data;
 
-use Magento\Sales\Api\Data\OrderInterface;
 use Payplug\Payments\Api\Data\RefundRequestInterface;
 
 class RefundRequest implements RefundRequestInterface
 {
-    private OrderInterface $order;
+    private int $orderId;
     private string $refundId;
     private string $refundPaymentId;
     private float $refundAmount;
@@ -17,9 +16,9 @@ class RefundRequest implements RefundRequestInterface
     /**
      * @inheritDoc
      */
-    public function setOrder(OrderInterface $order): RefundRequestInterface
+    public function setOrderId(int $orderId): RefundRequestInterface
     {
-        $this->order = $order;
+        $this->orderId = $orderId;
 
         return $this;
     }
@@ -27,9 +26,9 @@ class RefundRequest implements RefundRequestInterface
     /**
      * @inheritDoc
      */
-    public function getOrder(): OrderInterface
+    public function getOrderId(): int
     {
-        return $this->order;
+        return $this->orderId;
     }
 
     /**

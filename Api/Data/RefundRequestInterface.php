@@ -14,18 +14,18 @@ use Magento\Sales\Api\Data\OrderInterface;
 interface RefundRequestInterface
 {
     /**
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
+     * @param int $orderId
      *
      * @return RefundRequestInterface
      * @api
      */
-    public function setOrder(OrderInterface $order): RefundRequestInterface;
+    public function setOrderId(int $orderId): RefundRequestInterface;
 
     /**
-     * @return \Magento\Sales\Api\Data\OrderInterface
+     * @return int
      * @api
      */
-    public function getOrder(): OrderInterface;
+    public function getOrderId(): int;
 
     /**
      * @param string $refundId

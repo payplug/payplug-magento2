@@ -373,7 +373,7 @@ class Ipn extends AbstractPayment
         }
 
         $refundRequest = $this->refundRequestFactory->create();
-        $refundRequest->setOrder($order);
+        $refundRequest->setOrderId((int)$order->getId());
         $refundRequest->setRefundId($refund->id);
         $refundRequest->setRefundPaymentId($refund->payment_id);
         $refundRequest->setRefundAmount($refund->amount);

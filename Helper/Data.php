@@ -974,7 +974,7 @@ class Data extends AbstractHelper
         if ($payment->getIsTransactionApproved()
             || ($isInstallmentPlan && !$payment->getTransactionPending() && !$payment->getIsTransactionDenied())
         ) {
-            $this->messageQueuePublisher->publish(CreateOrderInvoice::MESSAGE_QUEUE_TOPIC, $order);
+            $this->messageQueuePublisher->publish(CreateOrderInvoice::MESSAGE_QUEUE_TOPIC, (int)$order->getId());
 
             $this->payplugLogger->info(
                 sprintf(
