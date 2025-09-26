@@ -3,91 +3,33 @@
 namespace Payplug\Payments\Gateway\Response\InstallmentPlan;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Payment\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Response\HandlerInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Payment;
-use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Order\PaymentFactory;
 use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Service\CreateOrderInvoice;
 
 class FetchTransactionInformationHandler implements HandlerInterface
 {
-    /**
-     * @var SubjectReader
-     */
-    private $subjectReader;
-
-    /**
-     * @var Logger
-     */
-    private $payplugLogger;
-
-    /**
-     * @var PaymentFactory
-     */
-    private $payplugPaymentFactory;
-
-    /**
-     * @var OrderSender
-     */
-    private $orderSender;
-
-    /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @var Data
-     */
-    private $payplugHelper;
-
-    /**
-     * @param SubjectReader          $subjectReader
-     * @param Logger                 $payplugLogger
-     * @param PaymentFactory         $payplugPaymentFactory
-     * @param OrderSender            $orderSender
-     * @param Config                 $payplugConfig
-     * @param OrderPaymentRepository $orderPaymentRepository
-     * @param Data                   $payplugHelper
-     */
     public function __construct(
-        SubjectReader $subjectReader,
-        Logger $payplugLogger,
-        PaymentFactory $payplugPaymentFactory,
-        OrderSender $orderSender,
-        Config $payplugConfig,
-        OrderPaymentRepository $orderPaymentRepository,
-        Data $payplugHelper
+        private readonly SubjectReader $subjectReader,
+        private readonly Logger $payplugLogger,
+        private readonly PaymentFactory $payplugPaymentFactory,
+        private readonly OrderSender $orderSender,
+        private readonly OrderPaymentRepository $orderPaymentRepository,
+        private readonly Data $payplugHelper,
+        private readonly MessageQueuePublisherInterface $messageQueuePublisher
     ) {
-        $this->subjectReader = $subjectReader;
-        $this->payplugLogger = $payplugLogger;
-        $this->payplugPaymentFactory = $payplugPaymentFactory;
-        $this->orderSender = $orderSender;
-        $this->payplugConfig = $payplugConfig;
-        $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->payplugHelper = $payplugHelper;
     }
 
-    /**
-     * Handles response
-     *
-     * @param array $handlingSubject
-     * @param array $response
-     * @return void
-     */
-    public function handle(array $handlingSubject, array $response)
+    public function handle(array $handlingSubject, array $response): void
     {
         $paymentDO = $this->subjectReader->readPayment($handlingSubject);
 
@@ -142,7 +84,16 @@ class FetchTransactionInformationHandler implements HandlerInterface
                             $order->setState(Order::STATE_PROCESSING);
                         }
 
-                        $payment->registerCaptureNotification($amount, true);
+                        $this->messageQueuePublisher->publish(CreateOrderInvoice::MESSAGE_QUEUE_TOPIC, (int)$order->getId());
+                        $this->payplugLogger->info(
+                            sprintf(
+                                '%s: "%s" message published for order %s.',
+                                __METHOD__,
+                                CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                                $order->getId()
+                            )
+                        );
+
                         $payment->setBaseShippingCaptured($order->getBaseShippingInclTax());
                         $payment->setShippingCaptured($order->getShippingInclTax());
                         $payment->setBaseAmountPaid($baseTotalPaid);
