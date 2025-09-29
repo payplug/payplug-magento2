@@ -147,7 +147,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
             $companyId = (int) $this->payplugConfig->getConfigValue(
                 'company_id',
                 ScopeInterface::SCOPE_STORE,
-                $storeId
+                (int)$storeId
             );
             $cardDate = $payment->card->exp_year . '-' . $payment->card->exp_month;
             $expDate = date('Y-m-t 23:59:59', strtotime($cardDate));

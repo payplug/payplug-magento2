@@ -11,7 +11,7 @@ use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
-use Magento\Sales\Model\Order;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Exception\ConfigurationNotSetException;
@@ -211,7 +211,7 @@ class Payment extends AbstractModel implements IdentityInterface
         return $this->setData(self::DESCRIPTION, $description);
     }
 
-    public function getScope(Order $order): string
+    public function getScope(OrderInterface $order): string
     {
         if ($order->getStoreId()) {
             return ScopeInterface::SCOPE_STORES;
@@ -222,7 +222,7 @@ class Payment extends AbstractModel implements IdentityInterface
         return ScopeInterfaceDefault::SCOPE_DEFAULT;
     }
 
-    public function getScopeId(Order $order): int
+    public function getScopeId(OrderInterface $order): int
     {
         if ($order->getStoreId()) {
             // Use store ID if non-zero
