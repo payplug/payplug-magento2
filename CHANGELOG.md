@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Missing magento transaction entity on Authorization Only orders (MAG-540)
 - Fix transaction ID on refund (MAG-542)
 - Fix auto-capture cron marking orders as Failed Capture (MAG-546)
-- Fix invoicing / refunding concurrendy (IPN vs PaymentReturn) by moving logics to message queue system (MAG-541)
+- Fix invoicing / refunding concurrency (IPN vs PaymentReturn) by moving logics to message queue system (MAG-541)
 
 **[View diff](https://github.com/payplug/payplug-magento2/compare/v4.5.0...v4.6.0)**
 
@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unified authentication : restrict "live" mode when Merchant KYC is uncompleted [#310](https://github.com/payplug/payplug-magento2/pull/310)
 - Fix transaction ID on refund. Check existing refund transaction durant IPN callback [#312](https://github.com/payplug/payplug-magento2/pull/312)
 - Fix order status + notification after auto-capture [#313](https://github.com/payplug/payplug-magento2/pull/313)
-- Fix invoicing / refunding concurrendy (IPN vs PaymentReturn) by moving logics to message queue system [#541](https://github.com/payplug/payplug-magento2/pull/314)
+- Fix invoicing / refunding concurrency (IPN vs PaymentReturn) by moving logics to message queue system [#541](https://github.com/payplug/payplug-magento2/pull/314)
 - Fix method parameter type [#541](https://github.com/payplug/payplug-magento2/pull/314/commits/0a0e667f7ba3e6b254a83ef010ffec5f0920c2b1)
 
 ## [4.5.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.5.0) - 2025-07-04
