@@ -69,6 +69,7 @@ class Data
         private readonly OndemandHelper $ondemandHelper,
         private readonly PayplugConfig $payplugConfig,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
+        private readonly PayplugLogger $payplugLogger,
         private readonly CartRepositoryInterface $cartRepository
     ) {
     }
@@ -905,18 +906,16 @@ class Data
         return null;
     }
 
-    public function saveAutorizationInformationOnQuote(ResourceInstallmentPlan|ResourcePayment $payment): void
+    public function saveAutorizationInformationOnQuote(CartInterface $quote, ResourceInstallmentPlan|ResourcePayment $payment): void
     {
-        $standardDeferredQuote = $this->getStandardDeferredQuote($payment);
+        $quotePayment = $quote->getPayment();
+        $quotePayment->setAdditionalInformation('is_authorized', true);
+        $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
+        $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
+        $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
+        $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
+        $this->cartRepository->save($quote);
 
-        if ($standardDeferredQuote) {
-            $quotePayment = $standardDeferredQuote->getPayment();
-            $quotePayment->setAdditionalInformation('is_authorized', true);
-            $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
-            $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
-            $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
-            $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
-            $this->cartRepository->save($standardDeferredQuote);
-        }
+        $this->payplugLogger->info('Autorisation information saved on quote');
     }
 }
