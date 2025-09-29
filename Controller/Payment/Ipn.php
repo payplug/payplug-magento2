@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\Payment;
 
 use Exception;
+use Laminas\Http\Response;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Request\Http;
@@ -77,16 +78,15 @@ class Ipn extends AbstractPayment
         $response->setContents('');
 
         try {
-            /** @var Http $this->getRequest() */
-            $body = $this->getRequest()->getContent();
+            /** @var Http $request */
+            $request = $this->getRequest();
+            $body = $request->getContent();
             $debug = (int) $this->getRequest()->getParam('debug');
 
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
 
             if ($debug == 1) {
-                $response = $this->processDebugCall($response);
-
-                return $response;
+                return $this->processDebugCall($response);
             }
 
             $this->logger->info('This is not a debug call.');
@@ -196,7 +196,7 @@ class Ipn extends AbstractPayment
 
         try {
             $this->payplugHelper->getOrderInstallmentPlan((string)$order->getIncrementId());
-            $response->setStatusHeader(200, null, "200 payment for installment plan not processed");
+            $response->setStatusHeader(Response::STATUS_CODE_200, null, "200 payment for installment plan not processed");
 
             return;
         } catch (NoSuchEntityException $e) {
@@ -307,7 +307,7 @@ class Ipn extends AbstractPayment
         try {
             $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
         } catch (NoSuchEntityException $e) {
-            $response->setStatusHeader(500, null, "500 installment plan not found for order [$orderIncrementId]");
+            $response->setStatusHeader(Response::STATUS_CODE_500, null, "500 installment plan not found for order [$orderIncrementId]");
 
             return;
         }
@@ -340,7 +340,7 @@ class Ipn extends AbstractPayment
         } catch (NoSuchEntityException $e) {
             $this->logger->info(sprintf('500 Unknown payment %s.', $paymentId));
             $response->setStatusHeader(
-                500,
+                Response::STATUS_CODE_500,
                 null,
                 sprintf('500 Unknown payment %s.', $paymentId)
             );
@@ -354,7 +354,7 @@ class Ipn extends AbstractPayment
         if (!$order->getId()) {
             $this->logger->info(sprintf('500 Unknown order %s.', $orderIncrementId));
             $response->setStatusHeader(
-                500,
+                Response::STATUS_CODE_500,
                 null,
                 sprintf('500 Unknown order %s.', $orderIncrementId)
             );
@@ -365,7 +365,7 @@ class Ipn extends AbstractPayment
         try {
             $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
             $this->logger->info("200 refund for installment plan not processed");
-            $response->setStatusHeader(200, null, "200 refund for installment plan not processed");
+            $response->setStatusHeader(Response::STATUS_CODE_200, null, "200 refund for installment plan not processed");
 
             return;
         } catch (NoSuchEntityException) {
@@ -382,6 +382,6 @@ class Ipn extends AbstractPayment
 
         $message = '200 Message submitted in queue for processing';
         $this->logger->info($message);
-        $response->setStatusHeader(200, null, $message);
+        $response->setStatusHeader(Response::STATUS_CODE_200, null, $message);
     }
 }
