@@ -19,6 +19,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
@@ -68,7 +69,7 @@ class Data
         private readonly OndemandHelper $ondemandHelper,
         private readonly PayplugConfig $payplugConfig,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
-        private readonly PayplugLogger $payplugLogger
+        private readonly CartRepositoryInterface $cartRepository
     ) {
     }
 
@@ -883,5 +884,39 @@ class Data
     public function isOrderPending(OrderInterface $order): bool
     {
         return in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW]);
+    }
+
+    /**
+     * @throws NoSuchEntityException
+     */
+    public function getStandardDeferredQuote(ResourcePayment $payment): ?CartInterface
+    {
+        if (!$payment->metadata['ID Quote']) {
+            return null;
+        }
+
+        $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
+        $quotePayment = $quote->getPayment();
+
+        if ($quotePayment->getMethod() === Standard::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
+            return $quote;
+        }
+
+        return null;
+    }
+
+    public function saveAutorizationInformationOnQuote(ResourceInstallmentPlan|ResourcePayment $payment): void
+    {
+        $standardDeferredQuote = $this->getStandardDeferredQuote($payment);
+
+        if ($standardDeferredQuote) {
+            $quotePayment = $standardDeferredQuote->getPayment();
+            $quotePayment->setAdditionalInformation('is_authorized', true);
+            $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
+            $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
+            $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
+            $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
+            $this->cartRepository->save($standardDeferredQuote);
+        }
     }
 }

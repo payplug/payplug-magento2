@@ -81,6 +81,10 @@ class PaymentReturn extends AbstractPayment
                 && $this->isAuthorizedOnlyStandardPayment($order)
                 && $payment->authorization
                 && $payment->authorization->authorized_at !== null) {
+                if ($this->payplugHelper->canUpdatePayment($order)) {
+                    $this->payplugHelper->updateOrder($order);
+                    $this->payplugHelper->saveAutorizationInformationOnQuote($payment);
+                }
 
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
