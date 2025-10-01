@@ -207,14 +207,7 @@ class Ipn extends AbstractPayment
         if (!$payment->is_paid) {
             // If we are actually reviewing a standard deferred payment not yet captured
             if ($standardDeferredQuote) {
-                $quotePayment = $standardDeferredQuote->getPayment();
-                // Add the additionnals informations to the deferred Order payment object
-                $quotePayment->setAdditionalInformation('is_authorized', true);
-                $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
-                $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
-                $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
-                $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
-                $this->cartRepository->save($standardDeferredQuote);
+                $this->payplugHelper->saveAutorizationInformationOnQuote($standardDeferredQuote, $payment);
             }
 
             $this->logger->info('Transaction was not paid.');

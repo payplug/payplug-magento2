@@ -76,11 +76,17 @@ class PaymentReturn extends AbstractPayment
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
-            // If this is the deferred standard paiement and authorized then return the user on the success checkout
+            // If this is the deferred standard paiement and authorized, then update the order and return the user on the success checkout
             if (!$payment->is_paid
                 && $this->isAuthorizedOnlyStandardPayment($order)
                 && $payment->authorization
-                && $payment->authorization->authorized_at !== null) {
+                && $payment->authorization->authorized_at !== null
+            ) {
+                if ($this->payplugHelper->canUpdatePayment($order)) {
+                    $this->payplugHelper->updateOrder($order);
+                    $standardDeferredQuote = $this->payplugHelper->getStandardDeferredQuote($payment);
+                    $this->payplugHelper->saveAutorizationInformationOnQuote($standardDeferredQuote, $payment);
+                }
 
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
