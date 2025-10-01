@@ -52,6 +52,7 @@ use Payplug\Payments\Model\OrderProcessingRepository;
 use Payplug\Payments\Service\CreateOrderInvoice;
 use Payplug\Resource\InstallmentPlan as ResourceInstallmentPlan;
 use Payplug\Resource\Payment as ResourcePayment;
+use Throwable;
 
 class Data
 {
@@ -914,8 +915,12 @@ class Data
         $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
         $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
         $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
-        $this->cartRepository->save($quote);
 
-        $this->payplugLogger->info('Autorisation information saved on quote');
+        try {
+            $this->cartRepository->save($quote);
+            $this->payplugLogger->info('Autorization informations saved on quote');
+        } catch (Throwable $e) {
+            $this->payplugLogger->error($e->getMessage());
+        }
     }
 }
