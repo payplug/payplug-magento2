@@ -125,7 +125,7 @@ HTML;
 
     private function getCurrentWebsite(): ?int
     {
-        return $this->getRequest()->getParam('website') ?: null;
+        return (int)$this->getRequest()->getParam('website') ?: null;
     }
 
     private function isDeveloperMode(): bool
