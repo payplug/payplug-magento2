@@ -7,40 +7,36 @@ namespace Payplug\Payments\Block;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Store\Model\ScopeInterface;
-use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Service\GetApiRouteByKey;
 
 class Formjs extends Template
 {
+    private const PAYPLUG_SECURE_URL = 'https://secure.payplug.com';
+    private const APPLEPAY_SDK_URL = 'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
+
     public function __construct(
+        private readonly GetApiRouteByKey $getApiRouteByKey,
         Context $context,
-        private Config $helper,
         array $data = []
     ) {
         parent::__construct($context, $data);
     }
 
-    /**
-     * Get list of external js to include in checkout
-     *
-     * @return array
-     */
     public function getJsUrls(): array
     {
         $urls = [];
         if ($this->_scopeConfig->getValue('payment/payplug_payments_apple_pay/active', ScopeInterface::SCOPE_STORE)) {
-            $urls[] = 'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
+            $urls[] = self::APPLEPAY_SDK_URL;
         }
 
         return $urls;
     }
 
-    /**
-     * Get PayPlug js url
-     *
-     * @return string
-     */
     public function getPayplugSecureUrl(): string
     {
-        return $this->getRequest()->getServer('PAYPLUG_SECURE_URL', 'https://secure.payplug.com');
+        return $this->getApiRouteByKey->execute(
+            'PAYPLUG_SECURE_URL',
+            self::PAYPLUG_SECURE_URL
+        );
     }
 }
