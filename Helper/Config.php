@@ -45,7 +45,7 @@ class Config extends AbstractHelper
     public const OAUTH_EMAIL = 'email';
     public const APM_FILTERING_MODE_SHIPPING_ADDRESS = 'shipping_address';
     public const APM_FILTERING_MODE_BILLING_ADDRESS = 'billing_address';
-    public const MODULE_VERSION = '4.6.0';
+    public const MODULE_VERSION = '4.6.1';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
 
     private ?AdapterInterface $adapter = null;
