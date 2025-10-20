@@ -291,6 +291,11 @@ class Data
                         ->setIsCustomerNotified(false);
 
                     $order->getPayment()->setRew(true);
+                } elseif ($this->isOneyPending($payplugPayment)) {
+                    $order->setStatus(Order::STATE_PAYMENT_REVIEW);
+                    $order->setState(Order::STATE_PAYMENT_REVIEW);
+
+                    $order->addCommentToStatusHistory(__('Transaction is waiting for a review from Oney'));
                 }
             } catch (Exception $e) {
                 $this->payplugLogger->info($e->getMessage());
@@ -922,5 +927,18 @@ class Data
         } catch (Throwable $e) {
             $this->payplugLogger->error($e->getMessage());
         }
+    }
+
+    public function isOneyPending(?ResourcePayment $paymentResource): bool
+    {
+        if ($paymentResource && isset($paymentResource->payment_method)) {
+            $paymentMethod = $paymentResource->payment_method;
+
+            if ($paymentResource->is_paid === false && isset($paymentMethod['is_pending']) && isset($paymentMethod['type'])) {
+                return (str_contains($paymentMethod['type'], 'oney') && $paymentMethod['is_pending'] === true);
+            }
+        }
+
+        return false;
     }
 }
