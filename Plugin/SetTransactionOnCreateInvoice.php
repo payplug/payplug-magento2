@@ -56,7 +56,7 @@ class SetTransactionOnCreateInvoice
             $payplugPayment = $this->orderPaymentRepository->get($lastTransId, 'payment_id');
         } catch (NoSuchEntityException $e) {
             $this->payplugLogger->error($e->getMessage());
-            throw new LocalizedException(__('The invoice cannot be created'));
+            return $proceed($orderPayment, $invoice, $operationMethod);
         }
 
         $payplugPaymentResource = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
