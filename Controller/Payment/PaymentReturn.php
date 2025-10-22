@@ -91,7 +91,10 @@ class PaymentReturn extends AbstractPayment
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
-            if (!$payment->is_paid && !$orderPaymentModel->isProcessing($payment) && !$this->isOneyPending($payment)) {
+            if (!$payment->is_paid
+                && !$orderPaymentModel->isProcessing($payment)
+                && !$this->payplugHelper->isOneyPending($payment)
+            ) {
                 $this->prepareErrorOnPayment($order);
 
                 return $resultRedirect->setPath($redirectUrlCart);
@@ -146,21 +149,6 @@ class PaymentReturn extends AbstractPayment
         }
 
         $this->getCheckout()->restoreQuote();
-    }
-
-    /**
-     * Return true if we are paying with oney and the payment isn't rejected but waiting for approval
-     */
-    public function isOneyPending(?Payment $payment): bool
-    {
-        if ($payment && isset($payment->payment_method)) {
-            $paymentMethod = $payment->payment_method;
-            if ($payment->is_paid === false && isset($paymentMethod['is_pending']) && isset($paymentMethod['type'])) {
-                return (str_contains($paymentMethod['type'], 'oney') && $paymentMethod['is_pending'] === true);
-            }
-        }
-
-        return false;
     }
 
     /**
