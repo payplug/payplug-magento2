@@ -76,16 +76,25 @@ class PaymentReturn extends AbstractPayment
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
-            // If this is the deferred standard paiement and authorized then return the user on the success checkout
+            // If this is the deferred standard paiement and authorized, then update the order and return the user on the success checkout
             if (!$payment->is_paid
                 && $this->isAuthorizedOnlyStandardPayment($order)
                 && $payment->authorization
-                && $payment->authorization->authorized_at !== null) {
+                && $payment->authorization->authorized_at !== null
+            ) {
+                if ($this->payplugHelper->canUpdatePayment($order)) {
+                    $this->payplugHelper->updateOrder($order);
+                    $standardDeferredQuote = $this->payplugHelper->getStandardDeferredQuote($payment);
+                    $this->payplugHelper->saveAutorizationInformationOnQuote($standardDeferredQuote, $payment);
+                }
 
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
-            if (!$payment->is_paid && !$orderPaymentModel->isProcessing($payment) && !$this->isOneyPending($payment)) {
+            if (!$payment->is_paid
+                && !$orderPaymentModel->isProcessing($payment)
+                && !$this->payplugHelper->isOneyPending($payment)
+            ) {
                 $this->prepareErrorOnPayment($order);
 
                 return $resultRedirect->setPath($redirectUrlCart);
@@ -140,21 +149,6 @@ class PaymentReturn extends AbstractPayment
         }
 
         $this->getCheckout()->restoreQuote();
-    }
-
-    /**
-     * Return true if we are paying with oney and the payment isn't rejected but waiting for approval
-     */
-    public function isOneyPending(?Payment $payment): bool
-    {
-        if ($payment && isset($payment->payment_method)) {
-            $paymentMethod = $payment->payment_method;
-            if ($payment->is_paid === false && isset($paymentMethod['is_pending']) && isset($paymentMethod['type'])) {
-                return (str_contains($paymentMethod['type'], 'oney') && $paymentMethod['is_pending'] === true);
-            }
-        }
-
-        return false;
     }
 
     /**

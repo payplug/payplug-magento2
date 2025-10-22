@@ -1,0 +1,9 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/consumer.xsd">
+    <consumer name="payplug.order.invoicing" queue="payplug.order.invoicing" connection="db"
+              consumerInstance="Magento\Framework\MessageQueue\Consumer"
+              handler="Payplug\Payments\Service\CreateOrderInvoice::execute"/>
+    <consumer name="payplug.order.refunding" queue="payplug.order.refunding" connection="db"
+              consumerInstance="Magento\Framework\MessageQueue\Consumer"
+              handler="Payplug\Payments\Service\CreateOrderRefund::execute"/>
+</config>
