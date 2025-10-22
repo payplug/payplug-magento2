@@ -6,4 +6,7 @@
     <type name="Magento\Sales\Block\Adminhtml\Order\Invoice\View">
         <plugin name="add_update_payplug_payment_button_sales_invoice_view" type="Payplug\Payments\Plugin\Adminhtml\Widget\SalesInvoiceViewContext" sortOrder="1"/>
     </type>
+    <type name="Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation">
+        <plugin name="payplug_payment_set_transaction_on_create_invoice" type="Payplug\Payments\Plugin\SetTransactionOnCreateInvoice" sortOrder="10"/>
+    </type>
 </config>
