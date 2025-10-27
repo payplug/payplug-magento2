@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add invoice increment ID into payplug transaction metadata (MAG-484)
 - Enable refunds for PPro transactions in the Magento Admin (MAG-468)
 - Conditional display of APMs based on the user’s country (MAG-434)
-- Always keep cart on incomplete payment (MAG-465)
 - Set initial order status to Pending Payment instead of Payment Review (MAG-517)
 - Unified authentication : restrict "live" mode when Merchant KYC is uncompleted (MAG-526)`
 - Missing magento transaction entity on Authorization Only orders (MAG-540)
@@ -38,7 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Create invoice after a transaction is valid only [#290](https://github.com/payplug/payplug-magento2/pull/290)
 - Conditional display of APMs based on the user’s country [#298](https://github.com/payplug/payplug-magento2/pull/298)
-- Always keep cart on incomplete payment [#303](https://github.com/payplug/payplug-magento2/pull/303)
 - Set initial order status to Pending Payment instead of Payment Review [#306](https://github.com/payplug/payplug-magento2/pull/306)
 
 ### Fixed
