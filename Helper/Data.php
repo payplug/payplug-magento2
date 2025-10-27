@@ -752,27 +752,6 @@ class Data
         ]);
     }
 
-    public function isCodePayplugPaymentWithRedirect(string $code): bool
-    {
-        $isCodePayplugPayment = $this->isCodePayplugPayment($code);
-
-        if (!$isCodePayplugPayment) {
-            return false;
-        }
-
-        if ($code === ApplePay::METHOD_CODE) {
-            return false;
-        }
-
-        if ($code === Standard::METHOD_CODE
-            && ($this->payplugConfig->isEmbedded() === true || $this->payplugConfig->isIntegrated() === true)
-        ) {
-            return false;
-        }
-
-        return true;
-    }
-
     public function updateInstallmentPlanStatus(
         OrderInstallmentPlan $orderInstallmentPlan,
         ResourceInstallmentPlan $installmentPlan
