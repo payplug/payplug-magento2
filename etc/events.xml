@@ -4,6 +4,7 @@
         <observer name="payplug_payments_section_payment_saved" instance="Payplug\Payments\Observer\PaymentConfigObserver"/>
     </event>
     <event name="controller_action_predispatch">
+        <observer name="payplug_payments_init_env_qa_on_front_dispatch" instance="Payplug\Payments\Observer\InitEnvQaOnFrontDispatch" />
         <observer name="payplug_payments_display_notice" instance="Payplug\Payments\Observer\DisplayNoticeObserver" />
     </event>
     <event name="controller_action_predispatch_sales_order_creditmemo_new">

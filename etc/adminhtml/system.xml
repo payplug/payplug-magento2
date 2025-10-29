@@ -91,6 +91,13 @@
                 <field id="client_data"/>
                 <field id="access_token_data"/>
             </group>
+            <group id="qa">
+                <field id="enable"/>
+                <field id="api_url"/>
+                <field id="service_url"/>
+                <field id="secure_url"/>
+                <field id="integrated_payment_js_url"/>
+            </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
             <group id="payplug_payments_standard" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">

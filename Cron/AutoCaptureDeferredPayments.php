@@ -24,6 +24,7 @@ use Payplug\Payments\Api\Data\OrderInterface as PayplugOrderInterface;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\InitEnvQa;
 
 class AutoCaptureDeferredPayments
 {
@@ -41,7 +42,8 @@ class AutoCaptureDeferredPayments
         private readonly Transaction $transaction,
         private readonly Config $config,
         private readonly TransportBuilder $transportBuilder,
-        private readonly OrderIdentity $orderIdentity
+        private readonly OrderIdentity $orderIdentity,
+        private readonly InitEnvQa $initEnvQa
     ) {
     }
 
@@ -54,6 +56,8 @@ class AutoCaptureDeferredPayments
     public function execute(): void
     {
         $this->logger->info('Running the AutoCaptureDeferredPayments cron');
+
+        $this->initEnvQa->execute();
 
         // All the invoiceable order will populate this array
         $orderToInvoiceIds = [];

@@ -6,14 +6,15 @@ namespace Payplug\Payments\Cron;
 
 use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\InitEnvQa;
 use Payplug\Resource\Payment as ResourcePayment;
 
 class CheckOrderConsistency
@@ -24,11 +25,12 @@ class CheckOrderConsistency
     public const PAST_HOURS_TO_CHECK = 4;
 
     public function __construct(
-        private Logger $logger,
-        private SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
-        private OrderPaymentRepositoryInterface $paymentRepository,
-        private OrderRepositoryInterface $orderRepository,
-        private Data $payplugHelper
+        private readonly Logger $logger,
+        private readonly SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
+        private readonly OrderPaymentRepositoryInterface $paymentRepository,
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly Data $payplugHelper,
+        private readonly InitEnvQa $initEnvQa
     ) {
     }
 
@@ -38,6 +40,8 @@ class CheckOrderConsistency
     public function execute(): void
     {
         $this->logger->info('Running the CheckOrderConsistency cron');
+
+        $this->initEnvQa->execute();
 
         $magentoOrdersPayments = $this->getCheckablePayplugOrderPaymentsList();
 
@@ -86,7 +90,7 @@ class CheckOrderConsistency
                 $this->logger->info(
                     sprintf(
                         'No payplug payment found for the magento order %s.',
-                    $magentoOrder->getEntityId()
+                        $magentoOrder->getEntityId()
                     )
                 );
             }
