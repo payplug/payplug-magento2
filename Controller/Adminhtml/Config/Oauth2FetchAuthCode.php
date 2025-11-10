@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Adminhtml\Config;
 
+use Laminas\Http\Response;
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Backend\Model\Auth\Session as AdminAuthSession;
@@ -57,7 +58,10 @@ class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
         try {
             PayplugAuthentication::initiateOAuth($clientId, $callbackUrl, $codeVerifier);
 
-            return $this->rawFactory->create();
+            $result = $this->rawFactory->create();
+            $result->setHttpResponseCode(Response::STATUS_CODE_302);
+
+            return $result;
         } catch (ConfigurationException $e) {
             $this->logger->error($e->getMessage());
             $this->messageManager->addErrorMessage(__('Could not retrieve Auth Code from Payplug Portal'));
