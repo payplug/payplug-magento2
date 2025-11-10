@@ -4,28 +4,20 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper;
 
-use Laminas\Stdlib\Parameters;
 use Magento\Config\App\Config\Type\System;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Exception\ConfigurationException;
-use Payplug\Payments\Model\Api\Login;
 use Payplug\Payments\Service\GetOauth2AccessTokenData;
 use Payplug\Payplug;
 
-class Config extends AbstractHelper
+class Config
 {
-    /**
-     * The constant to access the configurations
-     */
     public const CONFIG_PATH = 'payplug_payments/general/';
     public const OAUTH_CONFIG_PATH = 'payplug_payments/oauth2/';
     public const APPLE_PAY_CONFIG_PATH = 'payment/payplug_payments_apple_pay/';
@@ -38,43 +30,34 @@ class Config extends AbstractHelper
     public const PAYMENT_PAGE_REDIRECT = 'redirect';
     public const PAYMENT_PAGE_EMBEDDED = 'embedded';
     public const PAYMENT_PAGE_INTEGRATED = 'integrated';
-    public const OAUTH_ACCESS_TOKEN_DATA = 'access_token_data';
     public const OAUTH_ENVIRONMENT_MODE = 'environmentmode';
-    public const OAUTH_PAYMENT_PAGE = 'payment_page';
     public const OAUTH_CLIENT_DATA = 'client_data';
     public const OAUTH_EMAIL = 'email';
     public const APM_FILTERING_MODE_SHIPPING_ADDRESS = 'shipping_address';
     public const APM_FILTERING_MODE_BILLING_ADDRESS = 'billing_address';
     public const MODULE_VERSION = '4.6.1';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
-
-    private ?AdapterInterface $adapter = null;
     private ?string $scope = null;
     private mixed $scopeId = null;
 
     public function __construct(
-        Context $context,
-        protected WriterInterface $configWriter,
-        protected System $systemConfigType,
-        protected ProductMetadataInterface $productMetadata,
-        protected ResourceConnection $resourceConnection,
-        protected Login $login,
-        protected StoreManagerInterface $storeManager,
-        protected GetOauth2AccessTokenData $getOauth2AccessTokenData
+        private readonly WriterInterface $configWriter,
+        private readonly System $systemConfigType,
+        private readonly ProductMetadataInterface $productMetadata,
+        private readonly StoreManagerInterface $storeManager,
+        private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
+        private readonly RequestInterface $request,
+        private readonly ScopeConfigInterface $scopeConfig
     ) {
-        parent::__construct($context);
     }
 
-    /**
-     * Init BO config scope
-     */
     public function initScopeData(): void
     {
         $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
         $scopeId = 0;
 
-        $website = $this->_request->getParam('website');
-        $store = $this->_request->getParam('store');
+        $website = $this->request->getParam('website');
+        $store = $this->request->getParam('store');
 
         if ($website) {
             $scope = ScopeInterface::SCOPE_WEBSITES;
@@ -90,17 +73,11 @@ class Config extends AbstractHelper
         $this->scopeId = (int)$scopeId;
     }
 
-    /**
-     * Get payment mode (authorization / authorization_capture)
-     */
     public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, ?int $websiteId = null): ?string
     {
         return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_ACTION_CONFIG_PATH);
     }
 
-    /**
-     * Return true if the standard payment is on Authorization only
-     */
     public function isStandardPaymentModeDeferred(): bool
     {
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
@@ -115,24 +92,17 @@ class Config extends AbstractHelper
         return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, (int)$websiteId, self::EMAIL_WEBSITE_OWNER_CONFIG_PATH);
     }
 
-    /**
-     * Get config scope
-     */
     public function getConfigScope(): ?string
     {
         return $this->scope;
     }
 
-    /**
-     * Get config scope id
-     */
     public function getConfigScopeId(): ?int
     {
         return $this->scopeId;
     }
 
     /**
-     * Set API secret key
      * @throws ConfigurationException
      */
     public function setPayplugApiKey(?int $storeId, bool $isSandbox, ?string $scope = ScopeInterface::SCOPE_STORE): void
@@ -144,9 +114,6 @@ class Config extends AbstractHelper
         }
     }
 
-    /**
-     * Check if account is connected
-     */
     public function isConnected(?string $scope = '', ?int $storeId = null): bool
     {
         $email = $this->getConfigValue('email', $scope, $storeId);
@@ -171,9 +138,6 @@ class Config extends AbstractHelper
         return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
     }
 
-    /**
-     * Retrieve api key
-     */
     public function getApiKey(?bool $isSandbox, ?int $scopeId = null, ?string $scope = ScopeInterface::SCOPE_STORE): ?string
     {
         if ($scopeId === null && $this->scopeId !== null) {
@@ -202,41 +166,26 @@ class Config extends AbstractHelper
         return $isSandbox ? $this->getConfigValue('test_api_key', $scope, $scopeId) : $this->getConfigValue('live_api_key', $scope, $scopeId);
     }
 
-    /**
-     * Get is_sandbox flag depending on environment mode
-     */
     public function getIsSandbox(?int $store = null): bool
     {
         return (string)$this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store) === self::ENVIRONMENT_TEST;
     }
 
-    /**
-     * Get is embedded config
-     */
     public function isEmbedded(): bool
     {
         return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_EMBEDDED;
     }
 
-    /**
-     * Get is embedded config
-     */
     public function isShippingApmFilteringMode(): bool
     {
         return (string)$this->getConfigValue('apm_filtering_mode') === self::APM_FILTERING_MODE_SHIPPING_ADDRESS;
     }
 
-    /**
-     * Get is integrated config
-     */
     public function isIntegrated(): bool
     {
         return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_INTEGRATED;
     }
 
-    /**
-     * Get one click flag
-     */
     public function isOneClick(?int $storeId = null): bool
     {
         return $this->getConfigValue('can_save_cards', ScopeInterface::SCOPE_STORE, $storeId) &&
@@ -248,25 +197,16 @@ class Config extends AbstractHelper
             );
     }
 
-    /**
-     * Get PayPlug module version
-     */
     public function getModuleVersion(): string
     {
         return self::MODULE_VERSION;
     }
 
-    /**
-     * Get Magento version
-     */
     public function getMagentoVersion(): string
     {
         return $this->productMetadata->getVersion();
     }
 
-    /**
-     * Get config value
-     */
     public function getConfigValue(string $field, string $scope = ScopeInterface::SCOPE_STORE, ?int $scopeId = null, ?string $path = self::CONFIG_PATH): mixed
     {
         if ($scopeId === null && $this->scopeId !== null) {
@@ -281,9 +221,6 @@ class Config extends AbstractHelper
         );
     }
 
-    /**
-     * Set config value
-     */
     public function setConfigValue(string $field, string $value, string $scope = ScopeInterface::SCOPE_STORE, ?int $scopeId = null, ?string $path = null): void
     {
         if ($scopeId === null && $this->scopeId !== null) {
@@ -298,9 +235,6 @@ class Config extends AbstractHelper
         $this->configWriter->save($path . $field, $value, $scope, $scopeId);
     }
 
-    /**
-     * Remove payplug config for given scope
-     */
     public function clearConfig(): void
     {
         $keys = [
@@ -413,6 +347,7 @@ class Config extends AbstractHelper
             'ideal',
             'mybank',
         ];
+
         foreach ($pproMethods as $method) {
             $keys = array_merge($keys, [
                 'payment/payplug_payments_' . $method . '/active',
@@ -453,21 +388,13 @@ class Config extends AbstractHelper
         $this->systemConfigType->clean();
     }
 
-    /**
-     * @param string|null $isoCode
-     * @param int|null $storeId
-     * @param string|null $path
-     * @param string|null $amountPrefix
-     *
-     * @return array|bool
-     */
-    public function getAmountsByCurrency(?string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = '')
+    public function getAmountsByCurrency(?string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
     {
         $minAmounts = [];
         $maxAmounts = [];
 
-        if ($path===null) {
-            $path=self::CONFIG_PATH;
+        if ($path === null) {
+            $path = self::CONFIG_PATH;
         }
 
         $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
@@ -507,43 +434,5 @@ class Config extends AbstractHelper
     public function getApplePayDisallowedShippingMethods(): array
     {
         return array_map('trim', explode(',', (string)$this->getConfigValue('excluded_shipping_method', ScopeInterface::SCOPE_STORE, null, self::APPLE_PAY_CONFIG_PATH)));
-    }
-
-    /**
-     * Get config value from database directly
-     * Avoids cache issues
-     * Make sure to retrive data from specified scope only
-     */
-    private function getConfigFromDb(string $scope, int $scopeId, string $path): mixed
-    {
-        $this->adapter = $this->resourceConnection->getConnection();
-
-        $select = $this->adapter->select()
-            ->from(
-                ['main_table' => $this->adapter->getTableName('core_config_data')],
-                'value'
-            )
-            ->where('main_table.scope like ?', $scope . '%')
-            ->where('main_table.scope_id = ?', $scopeId)
-            ->where('main_table.path = ?', self::CONFIG_PATH . $path);
-
-        return $this->adapter->fetchOne($select);
-    }
-
-    /**
-     * Return true if the save of the admin configuration contain the key pwd
-     * that mean that the field exist therefore we are not doing an Oauth2
-     */
-    public function isUsingLegacyConnexion(array|Parameters $data): bool
-    {
-        if ($data instanceof Parameters) {
-            $data = $data->toArray();
-        }
-
-        $fields = $data['groups']['general']['fields']
-            ?? $data['general']['fields']
-            ?? null;
-
-        return is_array($fields) && array_key_exists('pwd', $fields);
     }
 }

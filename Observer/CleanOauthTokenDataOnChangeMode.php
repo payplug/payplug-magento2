@@ -9,6 +9,7 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Service\GetOauth2AccessTokenData;
 use Payplug\Payments\Helper\Config;
 
@@ -41,7 +42,8 @@ class CleanOauthTokenDataOnChangeMode implements ObserverInterface
         }
 
         if (in_array(Config::CONFIG_PATH . Config::OAUTH_ENVIRONMENT_MODE, $changedPaths)
-            && !$this->config->isUsingLegacyConnexion($postParams)) {
+            && $this->config->isOauthConnected(ScopeInterface::SCOPE_WEBSITE, (int)$this->request->getParam('website'))
+        ) {
             $this->getOauth2AccessTokenData->execute($websiteId, true);
         }
     }
