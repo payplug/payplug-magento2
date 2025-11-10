@@ -140,7 +140,7 @@ define([
 
                             if (selectedCardType.length > 0) {
                                 selectedCardType = selectedCardType.data('card-type');
-                                
+
                                 if (payplug.Scheme[selectedCardType]) {
                                     selectedScheme = payplug.Scheme[selectedCardType];
                                 }
@@ -148,7 +148,7 @@ define([
 
                             let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click && $('[name="save_card"]').is(':checked');
                             self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
-                            
+
                             self.integratedApi.onCompleted(function () {
                                 $.ajax({
                                     url: url.build('payplug_payments/payment/checkPayment'),
@@ -410,7 +410,7 @@ define([
             }
 
             this.integratedApi = new payplug.IntegratedPayment(window.checkoutConfig.payment.payplug_payments_standard.is_sandbox);
-            this.integratedApi.setDisplayMode3ds(payplug.DisplayMode3ds.LIGHTBOX);
+            this.integratedApi.setDisplayMode3ds(payplug.DisplayMode3ds.REDIRECT);
             this.integratedForm = {};
 
             this.integratedForm.cardholder = {element: this.integratedApi.cardHolder(
