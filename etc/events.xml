@@ -39,10 +39,6 @@
                   instance="Payplug\Payments\Observer\SendInvoiceIncrementIdToTransactionMetadata"/>
     </event>
 
-    <event name="controller_action_predispatch_checkout_index_index">
-        <observer name="payplug_payments_checkcout_page" instance="Payplug\Payments\Observer\PaymentReturnObserver"  />
-    </event>
-
     <event name="sales_order_payment_place_end">
         <observer name="payplug_payments_set_order_state_to_pending_payment"
                   instance="Payplug\Payments\Observer\SetOrderStateToPendingPayment" />
