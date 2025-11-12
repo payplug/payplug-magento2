@@ -52,7 +52,7 @@ abstract class AbstractBuilder extends AbstractHelper
         );
 
         $this->logger->info('New transaction', [
-            'details' => $transaction,
+            'details' => $this->getAnonymizedTransactionDetails($order, $transaction),
         ]);
 
         return $transaction;
@@ -267,5 +267,23 @@ abstract class AbstractBuilder extends AbstractHelper
         ];
 
         return $paymentData;
+    }
+
+    private function getAnonymizedTransactionDetails(OrderAdapterInterface $order, array $transaction): array
+    {
+        $maskedEmail = '***@***.***';
+
+        [$local, $domain] = explode('@', $order->getBillingAddress()->getEmail() ?? '', 2);
+
+        if (!empty($local) & !empty($domain) && str_contains($domain, '.')) {
+            $tld = substr(strrchr($domain, '.'), 1);
+            $maskedEmail = substr($local, 0, 1) . '***@' . explode('.', $domain)[0][0] . '***.' . $tld;
+        }
+
+        $transaction['email'] = $maskedEmail;
+
+        $transaction = array_diff_key($transaction, array_flip(['billing', 'shipping']));
+
+        return $transaction;
     }
 }
