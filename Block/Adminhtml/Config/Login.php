@@ -50,14 +50,14 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
 
         $this->helper->initScopeData();
 
-        $connected = $this->helper->isConnected(ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
+        $connected = $this->helper->isLegacyConnected(ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
         $oauthConnected = $this->helper->isOauthConnected(ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
         $isVerified = $this->helper->getConfigValue('verified', ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
 
-        $connexionFields = ['payplug_payments_general_email'];
-        $connexionFieldsWithPwd = ['payplug_payments_general_email', 'payplug_payments_general_pwd'];
+        $connexionFields = ['payplug_payments_auth_email'];
+        $connexionFieldsWithPwd = ['payplug_payments_auth_email', 'payplug_payments_auth_pwd'];
 
-        $disconnectionFields = ['payplug_payments_general_account_details'];
+        $disconnectionFields = ['payplug_payments_auth_account_details'];
 
         $elements = '';
         foreach ($element->getElements() as $field) {
