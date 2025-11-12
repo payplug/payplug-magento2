@@ -51,8 +51,14 @@ abstract class AbstractBuilder extends AbstractHelper
             $this->buildPaymentData($order, $payment, $quote)
         );
 
+        $anonymizedTransactionDetails = $transaction;
+
+        $anonymizedTransactionDetails['email'] = $this->getMaskedEmail($order->getBillingAddress()->getEmail());
+        unset($anonymizedTransactionDetails['billing']);
+        unset($anonymizedTransactionDetails['shipping']);
+
         $this->logger->info('New transaction', [
-            'details' => $transaction,
+            'details' => $anonymizedTransactionDetails,
         ]);
 
         return $transaction;
@@ -267,5 +273,18 @@ abstract class AbstractBuilder extends AbstractHelper
         ];
 
         return $paymentData;
+    }
+
+    private function getMaskedEmail(string $email): string
+    {
+        [$local, $domain] = explode('@', $email, 2);
+
+        if (empty($local) || empty($domain) || !str_contains($domain, '.')) {
+            return '***@***.***';
+        }
+
+        $tld = substr(strrchr($domain, '.'), 1);
+
+        return substr($local, 0, 1) . '***@' . explode('.', $domain)[0][0] . '***.' . $tld;
     }
 }
