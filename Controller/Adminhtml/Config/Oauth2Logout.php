@@ -14,6 +14,8 @@ use Payplug\Payments\Helper\Config as ConfigHelper;
 
 class Oauth2Logout extends Action implements HttpGetActionInterface
 {
+    public const ADMIN_RESOURCE = 'Payplug_Payments::general';
+
     public function __construct(
         private readonly RedirectFactory $redirectFactory,
         private readonly RequestInterface $request,
