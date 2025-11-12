@@ -19,6 +19,7 @@ use Payplug\Payplug;
 class Config
 {
     public const CONFIG_PATH = 'payplug_payments/general/';
+    public const LEGACY_CONFIG_PATH = 'payplug_payments/auth/';
     public const OAUTH_CONFIG_PATH = 'payplug_payments/oauth2/';
     public const APPLE_PAY_CONFIG_PATH = 'payment/payplug_payments_apple_pay/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
@@ -114,7 +115,7 @@ class Config
         }
     }
 
-    public function isConnected(?string $scope = '', ?int $storeId = null): bool
+    public function isLegacyConnected(?string $scope = '', ?int $storeId = null): bool
     {
         $email = $this->getConfigValue('email', $scope, $storeId);
         if ($this->scope == ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {

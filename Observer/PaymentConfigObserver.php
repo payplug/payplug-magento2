@@ -142,10 +142,19 @@ class PaymentConfigObserver implements ObserverInterface
     private function processGeneralConfig(array &$groups): void
     {
         $fields = $groups['general']['fields'];
+        $authFields = $fields = $groups['auth']['fields'];
+
+        if (empty($fields['email']) && !empty($authFields['email'])) {
+            $fields['email'] = $authFields['email'];
+        }
+
+        if (empty($fields['pwd']) && !empty($authFields['pwd'])) {
+            $fields['pwd'] = $authFields['pwd'];
+        }
 
         $this->helper->initScopeData();
 
-        $this->payplugConfigConnected = $this->helper->isConnected();
+        $this->payplugConfigConnected = $this->helper->isLegacyConnected();
         $this->payplugConfigVerified = (bool)$this->getConfig('verified');
 
         $this->checkWebsiteScopeData($groups, $fields);
@@ -684,7 +693,7 @@ class PaymentConfigObserver implements ObserverInterface
 
     private function isPayplugConnected(): bool
     {
-        return $this->helper->isConnected() || $this->helper->isOauthConnected();
+        return $this->helper->isLegacyConnected() || $this->helper->isOauthConnected();
     }
 
     /**
