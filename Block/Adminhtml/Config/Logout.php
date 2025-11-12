@@ -35,14 +35,13 @@ class Logout extends Field
         /** @var Button $buttonBlock  */
         $buttonBlock = $this->getForm()->getLayout()->createBlock(Button::class);
 
-        $html = '<p>' . $this->helper->getConfigValue('email') . '</p>';
         $data = [
             'id' => 'payplug_payments_disconnectUrl',
             'label' => $element->getLabel(),
             'onclick' => "setLocation('" . $this->getButtonUrl() . "')"
         ];
 
-        $html .= $buttonBlock->setData($data)->toHtml();
+        $html = $buttonBlock->setData($data)->toHtml();
 
         return $html;
     }
