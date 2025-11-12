@@ -19,6 +19,7 @@ use Payplug\Payments\Logger\Logger;
 
 class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
 {
+    public const ADMIN_RESOURCE = 'Payplug_Payments::general';
     public const OAUTH_CONFIG_FETCH_DATA = 'payplug_payments_admin/config/oauth2FetchClientData';
     public const OAUTH_CONFIG_FETCH_AUTH = 'payplug_payments_admin/config/oauth2FetchAuthCode';
 

@@ -13,6 +13,8 @@ use Payplug\Payments\Helper\Config;
 
 class Logout extends Action
 {
+    public const ADMIN_RESOURCE = 'Payplug_Payments::general';
+
     public function __construct(
         Context $context,
         private Config $helper,

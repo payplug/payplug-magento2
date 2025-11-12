@@ -29,6 +29,7 @@ use Payplug\Payplug;
 
 class Oauth2FetchClientData extends Action implements HttpGetActionInterface
 {
+    public const ADMIN_RESOURCE = 'Payplug_Payments::general';
     public const PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA = 'payplug_oauth2_params';
     public const PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE = 'test';
     public const PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE = 'integrated';
