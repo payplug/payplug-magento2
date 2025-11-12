@@ -218,8 +218,12 @@ class Ipn extends AbstractPayment
             $this->fetchTransactionInformationHandler->saveCustomerCard($payment, $standardDeferredQuote->getCustomerId(), $standardDeferredQuote->getStoreId());
         }
 
+        $anomymizedPaymentObject = clone $payment;
+        $anomymizedPaymentObject->__set('billing', null);
+        $anomymizedPaymentObject->__set('shipping', null);
+
         $this->logger->info('Gathering payment details...', [
-            'details' => var_export($payment, true),
+            'details' => var_export($anomymizedPaymentObject, true),
         ]);
         $this->logger->info('Order state current: ' . $order->getState());
 
