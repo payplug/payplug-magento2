@@ -7,20 +7,6 @@
             <resource>Payplug_Payments::general</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - General configuration</label>
-                <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Login</frontend_model>
-                <field id="email" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Email</label>
-                    <validate>validate-email</validate>
-                    <backend_model>Magento\Config\Model\Config\Backend\Email\Address</backend_model>
-                </field>
-                <field id="pwd" translate="label" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Password</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-                <field id="account_details" translate="label" type="button" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Disconnect</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Logout</frontend_model>
-                </field>
                 <field id="environmentmode" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Mode</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Mode</source_model>
@@ -60,6 +46,33 @@
                 <field id="mybank_min_amounts"/>
                 <field id="mybank_max_amounts"/>
                 <field id="can_use_mybank"/>
+            </group>
+            <group id="auth" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
+                <label>PayPlug Payments - Standard Auth</label>
+                <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Login</frontend_model>
+                <field id="info" translate="label" type="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\LegacyAuthInfo</frontend_model>
+                    <label>Status</label>
+                </field>
+                <field id="email" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Email</label>
+                    <validate>validate-email</validate>
+                    <backend_model>Magento\Config\Model\Config\Backend\Email\Address</backend_model>
+                    <config_path>payplug_payments/general/email</config_path>
+                </field>
+                <field id="pwd" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Password</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <config_path>payplug_payments/general/pwd</config_path>
+                </field>
+                <field id="connect" translate="label" type="button" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Login</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\LegacyLogin</frontend_model>
+                </field>
+                <field id="account_details" translate="label" type="button" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Disconnect</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Logout</frontend_model>
+                </field>
             </group>
             <group id="oauth2" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
                 <label>PayPlug Payments - Oauth2</label>

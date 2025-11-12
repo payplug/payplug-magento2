@@ -8,14 +8,14 @@ require(
         if (environment_mode === null) {
             return;
         }
-        var pwd = $('row_payplug_payments_general_pwd');
+        var pwd = $('row_payplug_payments_auth_pwd');
         var is_verified = $('payplug_payments_is_verified').value;
 
         if (pwd !== null) {
             hidePwdField();
 
-            if ($('payplug_payments_general_pwd')) {
-                var pwd_field = $('payplug_payments_general_pwd');
+            if ($('payplug_payments_auth_pwd')) {
+                var pwd_field = $('payplug_payments_auth_pwd');
                 pwd_field.value = '';
                 pwd_field.observe('keypress', keypressHandler);
             }
@@ -29,8 +29,8 @@ require(
         }
 
         var linkedFields = [
-            'payplug_payments_general_email',
-            'payplug_payments_general_pwd',
+            'payplug_payments_auth_email',
+            'payplug_payments_auth_pwd',
             'payplug_payments_general_environmentmode',
             'payplug_payments_general_page'
         ];
@@ -84,7 +84,7 @@ require(
 
         function hidePwdField(){
             if ($('payplug_payments_is_connected').value == 1) {
-                $('row_payplug_payments_general_pwd').hide();
+                $('row_payplug_payments_auth_pwd').hide();
             }
         }
 
