@@ -15,6 +15,8 @@ use Payplug\Authentication as PayplugAuthentication;
 
 class Oauth2Login extends Action implements HttpGetActionInterface
 {
+    public const ADMIN_RESOURCE = 'Payplug_Payments::general';
+
     public function __construct(
         private readonly RedirectFactory $redirectFactory,
         private readonly UrlInterface $urlBuilder,
