@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.0) - 2025-XX-XX
+
+> **WARNING**
+> Orders are no longer assigned to the **Payment Review** status by default after creation. They will now remain in **Pending Payment** until the next valid status update, regardless of the payment flow. This prevents premature triggering of business processes such as invoicing and shipping.
+
+### Features
+
+- Fix Apple pay button disabled after payment cancel (MAG-537)
+- Create invoice after a transaction is valid only (MAG-521)
+- Add invoice increment ID into payplug transaction metadata (MAG-484)
+- Enable refunds for PPro transactions in the Magento Admin (MAG-468)
+- Conditional display of APMs based on the user’s country (MAG-434)
+- Set initial order status to Pending Payment instead of Payment Review (MAG-517)
+- Unified authentication : restrict "live" mode when Merchant KYC is uncompleted (MAG-526)
+- Missing magento transaction entity on Authorization Only orders (MAG-540)
+- Fix transaction ID on refund. Check existing refund transaction durant IPN callback (MAG-542)
+- Fix auto-capture cron marking orders as Failed Capture (MAG-546)
+- Fix invoicing / refunding concurrency (IPN vs PaymentReturn) by moving logics to message queue system (MAG-541)
+- Add enriched metadata on refund lines (MAG-467)
+- Fix JS dependency missing for Installment Plan payment method (MAG-554)
+- Fix order status on Payment Return with Autorization only mode (MAG-555)
+- Fix order status (stays on payment_review state) when invoice is generated manually (MAG-571)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.5.0...v4.6.0)**
+
+### Added
+
+- Add invoice increment ID into payplug transaction metadata [#291](https://github.com/payplug/payplug-magento2/pull/291)
+- Enable refunds for PPro transactions in the Magento Admin [#292](https://github.com/payplug/payplug-magento2/pull/292)
+- Add enriched metadata on refund lines [#307](https://github.com/payplug/payplug-magento2/pull/307)
+- Missing magento transaction entity on Authorization Only orders [#311](https://github.com/payplug/payplug-magento2/pull/311)
+
+### Changed
+
+- Create invoice after a transaction is valid only [#290](https://github.com/payplug/payplug-magento2/pull/290)
+- Conditional display of APMs based on the user’s country [#298](https://github.com/payplug/payplug-magento2/pull/298)
+- Set initial order status to Pending Payment instead of Payment Review [#306](https://github.com/payplug/payplug-magento2/pull/306)
+
+### Fixed
+
+- Fix Apple pay button disabled after payment cancel [#305](https://github.com/payplug/payplug-magento2/pull/305)
+- Fix checkout payment methods render on Safari [#304](https://github.com/payplug/payplug-magento2/pull/304)
+- Unified authentication : restrict "live" mode when Merchant KYC is uncompleted [#310](https://github.com/payplug/payplug-magento2/pull/310)
+- Fix transaction ID on refund. Check existing refund transaction durant IPN callback [#312](https://github.com/payplug/payplug-magento2/pull/312)
+- Fix invoicing / refunding concurrency (IPN vs PaymentReturn) by moving logics to message queue system [#314](https://github.com/payplug/payplug-magento2/pull/314)
+- Fix method parameter type [#314](https://github.com/payplug/payplug-magento2/pull/314/commits/0a0e667f7ba3e6b254a83ef010ffec5f0920c2b1)
+- Fix auto-capture cron marking orders as Failed Capture [#313](https://github.com/payplug/payplug-magento2/pull/313)
+- Fix JS dependency missing for Installment Plan payment method [#315](https://github.com/payplug/payplug-magento2/pull/315)
+- Fix order status on Payment Return with Autorization only mode [#316](https://github.com/payplug/payplug-magento2/pull/316)
+- Fix order status (stays on payment_review state) when invoice is generated manually [#319](https://github.com/payplug/payplug-magento2/pull/319)
+
 ## [4.5.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.5.0) - 2025-09-03
 
 ### Features

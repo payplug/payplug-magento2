@@ -49,13 +49,12 @@ class CheckPayment extends AbstractPayment
 
         $paymentId = $this->getRequest()->getParam('payment_id');
         $order = $this->getCurrentOrder->execute();
-        $storeId = $order->getStoreId();
 
         if (empty($paymentId)) {
             throw new \Exception('Could not retrieve payment id for integrated payment');
         }
 
-        $payment = $this->payplugHelper->getPayment($order, $storeId);
+        $payment = $this->payplugHelper->getPayment($order);
         $isAuthorizedDeferred = (!empty($payment->authorization) && (int)$payment->authorization->authorized_amount > 0 && (int)$payment->authorization->authorized_at > 0);
 
         if ((!empty($payment->failure) || (!$payment->is_paid && is_null($payment->paid_at)))

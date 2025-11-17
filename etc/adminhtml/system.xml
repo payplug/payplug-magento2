@@ -30,6 +30,11 @@
                     <source_model>Payplug\Payments\Model\Config\Source\PaymentPage</source_model>
                     <comment>The Embedded Payment display is only compatible with a standardized checkout page that meets the Magento guidelines. Some checkout customizations will not allow the feature to work (changing the “Place order” button, etc.).</comment>
                 </field>
+                <field id="apm_filtering_mode" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>APM Display and Data Logic</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\ApmFilteringMode</source_model>
+                    <tooltip><![CDATA[<strong>Filter by Shipping Address (Recommended):</strong> The customer only sees the payment methods available for their shipping country. The transaction metadata is based on this same address.<br><br><strong>Validate by Billing Address:</strong> The customer sees all payment methods. The payment is blocked with an error if their final billing country is not compatible. The submitted metadata is always accurate.]]></tooltip>
+                </field>
                 <field id="test_api_key"/>
                 <field id="live_api_key"/>
                 <field id="min_amounts"/>
@@ -93,11 +98,12 @@
                     <source_model>Payplug\Payments\Model\Config\Source\AuthorizationType</source_model>
                     <comment><![CDATA[<span style="color:green;">Authorization & Capture</span> mean that the order is captured automatically as soon as it is authorized.</br><span style="color:blue;">Authorization only</span> mean that the order require your approval to be captured even after authorization.]]></comment>
                 </field>
-                <field id="authorized_order_status" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Authorized order status</label>
-                    <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Authorized</source_model>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="75" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <depends>
-                        <field id="payment_action">authorize</field>
+                        <field id="payment_action">authorize_capture</field>
                     </depends>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -152,6 +158,11 @@
                     <frontend_class>validate-number validate-number-range number-range-4-20000</frontend_class>
                     <comment>The amount must be between €4 and €20,000.</comment>
                 </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -189,6 +200,11 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -225,6 +241,11 @@
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
+                </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
@@ -264,6 +285,11 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -300,6 +326,11 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -308,14 +339,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label" type="allowspecific" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
-                    <source_model>Magento\Payment\Model\Config\Source\Allspecificcountries</source_model>
-                </field>
-                <field id="specificcountry" translate="label" type="multiselect" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Payment from Specific Countries</label>
-                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
-                    <can_be_empty>1</can_be_empty>
+                    <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
@@ -327,6 +353,7 @@
                     <frontend_class>validate-number</frontend_class>
                 </field>
                 <field id="model"/>
+                <field id="specificcountry"/>
             </group>
             <group id="payplug_payments_apple_pay" translate="label" type="text" sortOrder="7" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Apple Pay</label>
@@ -357,6 +384,11 @@
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
+                </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
@@ -425,6 +457,11 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -453,7 +490,7 @@
                 </field>
                 <field id="model"/>
             </group>
-            <group id="payplug_payments_satispay" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_satispay" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - Satispay</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -462,6 +499,11 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -470,10 +512,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
-                    <comment>Satispay is only available for payers with billing addresses in Austria, Belgium, Cyprus, Germany, Estonia, Spain, Finland, France, Greece, Croatia, Hungary, Ireland, Italy, Lithuania, Luxembourg, Latvia, Malta, Netherlands, Portugal, Slovenia, Slovakia.</comment>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
@@ -487,7 +528,7 @@
                 <field id="model"/>
                 <field id="specificcountry"/>
             </group>
-            <group id="payplug_payments_ideal" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_ideal" translate="label" type="text" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - iDEAL</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -496,6 +537,11 @@
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
                 </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="75" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
                     <source_model>Magento\Sales\Model\Config\Source\Order\Status\Processing</source_model>
@@ -504,10 +550,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
-                    <comment>iDEAL is only available for payers with billing addresses in the Netherlands.</comment>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
@@ -521,7 +566,7 @@
                 <field id="model"/>
                 <field id="specificcountry"/>
             </group>
-            <group id="payplug_payments_mybank" translate="label" type="text" sortOrder="8" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="payplug_payments_mybank" translate="label" type="text" sortOrder="12" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - MyBank</label>
                 <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enabled</label>
@@ -529,6 +574,11 @@
                 </field>
                 <field id="title" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Title</label>
+                </field>
+                <field id="invoice_on_payment" translate="label comment" type="select" sortOrder="75" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Invoice on payment validation</label>
+                    <comment><![CDATA[By activating this option, only validated payments will create invoices.]]></comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="processing_order_status" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Processing order status</label>
@@ -538,10 +588,9 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="allowspecific" translate="label comment" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>
                     <source_model>Payplug\Payments\Model\Config\Source\AllowedCountries</source_model>
-                    <comment>MyBank is only available for payers with billing addresses in Italy.</comment>
                 </field>
                 <field id="default_country" translate="label comment" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Default Country</label>
