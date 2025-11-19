@@ -50,12 +50,12 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
 
         $this->helper->initScopeData();
 
-        $connected = $this->helper->isLegacyConnected(ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
+        $legacyConnected = $this->helper->isLegacyConnected(ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
         $oauthConnected = $this->helper->isOauthConnected(ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
         $isVerified = $this->helper->getConfigValue('verified', ScopeInterface::SCOPE_WEBSITE, $this->request->getParam('website'));
 
-        $connexionFields = ['payplug_payments_auth_email'];
-        $connexionFieldsWithPwd = ['payplug_payments_auth_email', 'payplug_payments_auth_pwd'];
+        $connexionFields = ['payplug_payments_auth_email', 'payplug_payments_auth_connect'];
+        $connexionFieldsWithPwd = ['payplug_payments_auth_email', 'payplug_payments_auth_pwd', 'payplug_payments_auth_connect'];
 
         $disconnectionFields = ['payplug_payments_auth_account_details'];
 
@@ -67,7 +67,7 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
                 }
             }
 
-            if ($connected) {
+            if ($legacyConnected) {
                 if (in_array($field->getId(), $connexionFields)) {
                     continue;
                 }
@@ -88,14 +88,14 @@ class Login extends \Magento\Config\Block\System\Config\Form\Fieldset
         $extraElements = '';
 
         $extraElements .= '<input id="payplug_payments_is_connected" type="hidden" name="payplug_payments_is_connected"
-        value="'.(int)$connected.'" />';
+        value="'.(int)$legacyConnected.'" />';
 
         $extraElements .= '<input id="payplug_payments_is_verified" type="hidden" name="payplug_payments_is_verified"
         value="'.(int)$isVerified.'" />';
 
         if ($this->helper->getConfigScope() == ScopeInterface::SCOPE_WEBSITES) {
             $input = 'payplug_payments_prevent_default';
-            if (!$connected) {
+            if (!$legacyConnected) {
                 $input = 'payplug_payments_can_override_default';
             }
 
