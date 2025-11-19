@@ -27,11 +27,11 @@ class LegacyAuthInfo extends Field
         $isOauthConnected = $this->helper->isOauthConnected(ScopeInterface::SCOPE_WEBSITE, (int)$this->_request->getParam('website'));
 
         if ($isLegacyConnected) {
-            $message = __('You are currently connected');
+            $message = __('Connected with <strong>%1</strong>', $this->helper->getConfigValue('email'));
         } elseif ($isOauthConnected) {
-            $message = __('You are currently connected with OAuth Authentication');
+            $message = __('Connected with OAuth2 Authentication');
         } else {
-            $message = __('You are currently not connected');
+            $message = __('Not connected');
         }
 
         return  $message->render();
