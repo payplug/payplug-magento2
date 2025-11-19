@@ -273,7 +273,7 @@ abstract class AbstractBuilder extends AbstractHelper
     {
         $maskedEmail = '***@***.***';
 
-        [$local, $domain] = explode('@', $order->getBillingAddress()->getEmail(), 2);
+        [$local, $domain] = explode('@', $order->getBillingAddress()->getEmail() ?? '', 2);
 
         if (!empty($local) & !empty($domain) && str_contains($domain, '.')) {
             $tld = substr(strrchr($domain, '.'), 1);
@@ -282,8 +282,7 @@ abstract class AbstractBuilder extends AbstractHelper
 
         $transaction['email'] = $maskedEmail;
 
-        unset($transaction['billing']);
-        unset($transaction['shipping']);
+        $transaction = array_diff_key($transaction, array_flip(['billing', 'shipping']));
 
         return $transaction;
     }
