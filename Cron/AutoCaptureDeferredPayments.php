@@ -88,6 +88,11 @@ class AutoCaptureDeferredPayments
         foreach ($quotePayments as $quotePayment) {
             // Unix timestamp
             $authorizedAtTimestamp = $quotePayment->getAdditionalInformation('authorized_at');
+
+            if ($authorizedAtTimestamp === null) {
+                continue;
+            }
+
             $deferredPaymentValidationDate->setTimestamp($authorizedAtTimestamp);
             $difference = $currentDay->diff($deferredPaymentValidationDate);
             if ($difference->days >= AutoCaptureDeferredPayments::FORCED_CAPTURE_DELAY_IN_DAYS) {
