@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.6.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.0) - 2025-XX-XX
+## [4.6.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.0) - 2025-11-17
 
 > **WARNING**
 > Orders are no longer assigned to the **Payment Review** status by default after creation. They will now remain in **Pending Payment** until the next valid status update, regardless of the payment flow. This prevents premature triggering of business processes such as invoicing and shipping.
