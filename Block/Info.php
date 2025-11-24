@@ -79,6 +79,8 @@ class Info extends BaseInfo
             $status = __('Partially Refunded');
         } elseif ($payment->is_paid) {
             $status = __('Paid');
+        } elseif ($payment->authorization->authorized_at) {
+            $status = __('Authorized');
         }
 
         $amount = $order->getOrderCurrency()->formatPrecision((float)($payment->amount / 100), 2, [], false, false);
