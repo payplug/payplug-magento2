@@ -15,10 +15,10 @@ class InitEnvQaOnRestDispatch
     ) {
     }
 
-    public function beforeDispatch(Rest $subject, Request $request): array
+    public function beforeDispatch()
     {
         $this->initEnvQa->execute();
 
-        return [$request];
+        return null;
     }
 }
