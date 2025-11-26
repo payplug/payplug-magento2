@@ -10,14 +10,28 @@ use Payplug\Payments\Service\InitEnvQa;
 
 class InitEnvQaOnRestDispatch
 {
+    private const TARGET_ROUTE_SEGMENTS = [
+        'shipping-information',
+        'payment-information'
+    ];
+
     public function __construct(
         private readonly InitEnvQa $initEnvQa
     ) {
     }
 
-    public function beforeDispatch()
+    /**
+     * @return null
+     */
+    public function beforeDispatch(Rest $subject, Request $request)
     {
-        $this->initEnvQa->execute();
+        $path = $request->getPathInfo();
+        $segments = explode('/', trim($path, '/'));
+        $lastSegment = end($segments);
+
+        if (in_array($lastSegment, self::TARGET_ROUTE_SEGMENTS)) {
+            $this->initEnvQa->execute();
+        }
 
         return null;
     }
