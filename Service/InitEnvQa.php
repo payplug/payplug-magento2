@@ -24,8 +24,8 @@ class InitEnvQa
             return;
         }
 
-        $apiUrl = trim((string) $this->scopeConfig->getValue(self::XML_PATH_PAYPLUG_API_URL_KEY));
-        $serviceUrl = trim((string) $this->scopeConfig->getValue(self::XML_PATH_PAYPLUG_SERVICE_URL_KEY));
+        $apiUrl = $this->getUrlByConfigPath(self::XML_PATH_PAYPLUG_API_URL_KEY);
+        $serviceUrl = $this->getUrlByConfigPath(self::XML_PATH_PAYPLUG_SERVICE_URL_KEY);
 
         if ($apiUrl !== '' && $serviceUrl !== '') {
             BaseAPIRoutes::setApiBaseUrl($apiUrl);
@@ -36,5 +36,10 @@ class InitEnvQa
     public function isQaEnabled(): bool
     {
         return $this->scopeConfig->isSetFlag(self::XML_PATH_ENABLE_QA);
+    }
+
+    private function getUrlByConfigPath(string $path): string
+    {
+        return trim((string) $this->scopeConfig->getValue($path));
     }
 }
