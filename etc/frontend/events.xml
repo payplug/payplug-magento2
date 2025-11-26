@@ -12,4 +12,8 @@
         <observer name="payplug_payments_init_env_qa_on_front_dispatch"
                   instance="Payplug\Payments\Observer\InitEnvQaOnFrontDispatch" />
     </event>
+    <event name="controller_action_predispatch_checkout_cart_index">
+        <observer name="payplug_payments_init_env_qa_on_front_dispatch"
+                  instance="Payplug\Payments\Observer\InitEnvQaOnFrontDispatch" />
+    </event>
 </config>
