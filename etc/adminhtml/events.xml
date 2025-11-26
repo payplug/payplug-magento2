@@ -7,4 +7,8 @@
         <observer name="payplug_clean_oauth_token_data_on_change_mode"
                   instance="Payplug\Payments\Observer\CleanOauthTokenDataOnChangeMode"/>
     </event>
+    <event name="controller_action_predispatch">
+        <observer name="payplug_payments_init_env_qa_on_adminhtml_front_dispatch"
+                  instance="Payplug\Payments\Observer\InitEnvQaOnFrontDispatch" />
+    </event>
 </config>
