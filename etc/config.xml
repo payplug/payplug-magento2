@@ -306,6 +306,9 @@
                 <mybank_countries_override>["IT"]</mybank_countries_override>
                 <satispay_countries_override>["IT"]</satispay_countries_override>
             </general>
+            <qa>
+                <enable>0</enable>
+            </qa>
         </payplug_payments>
     </default>
 </config>
