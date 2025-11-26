@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework-message-queue:etc/topology.xsd">
+    <exchange name="magento" type="topic" connection="db">
+        <binding id="PayplugOrderInvoicing" topic="payplug.order.invoicing" destinationType="queue"
+                 destination="payplug.order.invoicing"/>
+        <binding id="PayplugOrderRefunding" topic="payplug.order.refunding" destinationType="queue"
+                 destination="payplug.order.refunding"/>
+    </exchange>
+</config>

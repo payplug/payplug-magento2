@@ -16,6 +16,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
+use Payplug\Payments\Service\GetOauth2ClientData;
 
 class PaymentConfigObserver implements ObserverInterface
 {
@@ -30,7 +31,8 @@ class PaymentConfigObserver implements ObserverInterface
         private readonly Login $login,
         private readonly Config $helper,
         private readonly ManagerInterface $messageManager,
-        private readonly StoreManagerInterface $storeManager
+        private readonly StoreManagerInterface $storeManager,
+        private readonly GetOauth2ClientData $getOauth2ClientData
     ) {
     }
 
@@ -58,7 +60,7 @@ class PaymentConfigObserver implements ObserverInterface
         if (isset($sections['payplug_payments_general']) && isset($groups['general']['fields'])) {
             $isLegacy = !$this->helper->isOauthConnected(
                 ScopeInterface::SCOPE_WEBSITE,
-                (int)$this->request->getParam('website')
+                $this->getCurrentWebsite()
             );
 
             if ($isLegacy) {
@@ -66,6 +68,8 @@ class PaymentConfigObserver implements ObserverInterface
             } else {
                 $this->processOauthGeneralConfig($groups);
             }
+
+            $this->setPostAndParamGroups($groups);
 
             return;
         }
@@ -238,8 +242,20 @@ class PaymentConfigObserver implements ObserverInterface
         $fields = $groups['general']['fields'] ?? [];
 
         $this->helper->initScopeData();
+
         $this->payplugConfigConnected = $this->helper->isOauthConnected();
         $this->payplugConfigVerified = true;
+
+        if (isset($fields['environmentmode']['value']) && $fields['environmentmode']['value'] == Config::ENVIRONMENT_LIVE
+            && $this->getOauth2ClientData->execute(Config::ENVIRONMENT_LIVE, $this->getCurrentWebsite()) === null
+        ) {
+            $groups['general']['fields']['environmentmode']['value'] = Config::ENVIRONMENT_TEST;
+            $this->saveConfig('environmentmode', Config::ENVIRONMENT_TEST);
+            $this->messageManager->addErrorMessage(__('You are able to perform only TEST transactions.'));
+            $this->messageManager->addErrorMessage(
+                __('Once your account is verified, you will need to logout, then login to refresh permissions')
+            );
+        }
 
         $this->enforceIntegratedPaymentPermissions($groups, $fields);
     }
@@ -395,22 +411,50 @@ class PaymentConfigObserver implements ObserverInterface
                     $storeId = (int)$this->storeManager->getStore()->getId();
                     $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
 
-                    $minAmountsConfig = $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE,
-                        null, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null,
-                            Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_min_amounts', ScopeInterface::SCOPE_STORE, null,
-                            Config::CONFIG_PATH);
+                    $minAmountsConfig = $this->helper->getConfigValue(
+                        'oney_min_amounts',
+                        ScopeInterface::SCOPE_STORE,
+                        null,
+                        Config::ONEY_CONFIG_PATH
+                    ) ?
+                        $this->helper->getConfigValue(
+                            'oney_min_amounts',
+                            ScopeInterface::SCOPE_STORE,
+                            null,
+                            Config::ONEY_CONFIG_PATH
+                        ) :
+                        $this->helper->getConfigValue(
+                            'oney_min_amounts',
+                            ScopeInterface::SCOPE_STORE,
+                            null,
+                            Config::CONFIG_PATH
+                        );
 
-                    $maxAmountsConfig = $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE,
-                        null, Config::ONEY_CONFIG_PATH) ?
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null,
-                            Config::ONEY_CONFIG_PATH) :
-                        $this->helper->getConfigValue('oney_max_amounts', ScopeInterface::SCOPE_STORE, null,
-                            Config::CONFIG_PATH);
+                    $maxAmountsConfig = $this->helper->getConfigValue(
+                        'oney_max_amounts',
+                        ScopeInterface::SCOPE_STORE,
+                        null,
+                        Config::ONEY_CONFIG_PATH
+                    ) ?
+                        $this->helper->getConfigValue(
+                            'oney_max_amounts',
+                            ScopeInterface::SCOPE_STORE,
+                            null,
+                            Config::ONEY_CONFIG_PATH
+                        ) :
+                        $this->helper->getConfigValue(
+                            'oney_max_amounts',
+                            ScopeInterface::SCOPE_STORE,
+                            null,
+                            Config::CONFIG_PATH
+                        );
 
-                    $oneyDefaultThresholds = $this->helper->getAmountsByCurrency($currency, null, Config::CONFIG_PATH,
-                        'oney_');
+                    $oneyDefaultThresholds = $this->helper->getAmountsByCurrency(
+                        $currency,
+                        null,
+                        Config::CONFIG_PATH,
+                        'oney_'
+                    );
 
                     if (!$this->validateThresholdValues($fields, $oneyDefaultThresholds)) {
 
@@ -809,14 +853,24 @@ class PaymentConfigObserver implements ObserverInterface
 
     private function saveOneyConfig(string $field, mixed $value): void
     {
-        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null,
-            Config::ONEY_CONFIG_PATH);
+        $this->helper->setConfigValue(
+            $field,
+            (string)$value,
+            ScopeInterface::SCOPE_STORE,
+            null,
+            Config::ONEY_CONFIG_PATH
+        );
     }
 
     private function saveOneyWithoutFeesConfig(string $field, mixed $value): void
     {
-        $this->helper->setConfigValue($field, (string)$value, ScopeInterface::SCOPE_STORE, null,
-            Config::ONEY_WITHOUT_FEES_CONFIG_PATH);
+        $this->helper->setConfigValue(
+            $field,
+            (string)$value,
+            ScopeInterface::SCOPE_STORE,
+            null,
+            Config::ONEY_WITHOUT_FEES_CONFIG_PATH
+        );
     }
 
     /**
@@ -1026,5 +1080,10 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         return $configuration;
+    }
+
+    private function getCurrentWebsite(): int
+    {
+        return (int)$this->request->getParam('website');
     }
 }

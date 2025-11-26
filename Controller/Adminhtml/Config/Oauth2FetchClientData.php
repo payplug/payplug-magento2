@@ -18,6 +18,7 @@ use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\Result\RedirectFactory;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Event\ManagerInterface as EventManager;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
@@ -92,19 +93,33 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
                 ConfigHelper::ENVIRONMENT_LIVE
             );
 
+            if (empty($testClientDataResult['httpResponse'])) {
+                throw new LocalizedException(__('Could not retrieve TEST credentials from Payplug Portal'));
+            }
+
             /**
              * Store client data and merchant email into config
              */
-            $clientDataValue = $this->serializer->serialize([
+            $clientData = [
                 ConfigHelper::ENVIRONMENT_TEST => [
                     'client_id' => $testClientDataResult['httpResponse']['client_id'],
                     'client_secret' => $testClientDataResult['httpResponse']['client_secret']
-                ],
-                ConfigHelper::ENVIRONMENT_LIVE => [
+                ]
+            ];
+
+            if (empty($liveClientDataResult['httpResponse'])) {
+                $this->saveConfig(ConfigHelper::CONFIG_PATH . 'environmentmode', ConfigHelper::ENVIRONMENT_TEST);
+                $this->messageManager->addWarningMessage(
+                    __('You are able to perform only TEST transactions.')
+                );
+            } else {
+                $clientData[ConfigHelper::ENVIRONMENT_LIVE] = [
                     'client_id' => $liveClientDataResult['httpResponse']['client_id'],
                     'client_secret' => $liveClientDataResult['httpResponse']['client_secret']
-                ]
-            ]);
+                ];
+            }
+
+            $clientDataValue = $this->serializer->serialize($clientData);
 
             $this->saveConfig(
                 ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_CLIENT_DATA,

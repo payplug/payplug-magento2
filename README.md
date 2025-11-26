@@ -4,7 +4,9 @@
 
 ### Pre-requirements
 
-PHP >=8.1 and openssl php extension are required
+- Adobe Commerce / Magento Open Source **2.4.0 – 2.4.8**
+- PHP **8.1 – 8.4**
+- PHP extension **openssl** (required)
 
 ### Installation via Magento Back Office
 

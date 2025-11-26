@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Exception;
+use Laminas\Http\Response;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Request\Http;
@@ -14,9 +16,9 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
@@ -25,12 +27,13 @@ use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
-use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Gateway\Response\Standard\FetchTransactionInformationHandler;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Data\RefundRequestFactory;
 use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Service\CreateOrderRefund;
 use Payplug\Resource\InstallmentPlan;
 use Payplug\Resource\Payment;
 use Payplug\Resource\Refund;
@@ -43,13 +46,15 @@ class Ipn extends AbstractPayment
         OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        private Config $payplugConfig,
+        private readonly Config $payplugConfig,
         protected OrderPaymentRepository $paymentRepository,
         protected CartRepositoryInterface $cartRepository,
         protected OrderRepositoryInterface $orderRepository,
         protected OrderPaymentRepositoryInterface $magentoPaymentRepository,
         protected FetchTransactionInformationHandler $fetchTransactionInformationHandler,
-        protected PaymentReturn $paymentReturn
+        protected PaymentReturn $paymentReturn,
+        private readonly MessageQueuePublisherInterface $messageQueuePublisher,
+        private readonly RefundRequestFactory $refundRequestFactory
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
 
@@ -73,16 +78,15 @@ class Ipn extends AbstractPayment
         $response->setContents('');
 
         try {
-            /** @var Http $this->getRequest() */
-            $body = $this->getRequest()->getContent();
+            /** @var Http $request */
+            $request = $this->getRequest();
+            $body = $request->getContent();
             $debug = (int) $this->getRequest()->getParam('debug');
 
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
 
             if ($debug == 1) {
-                $response = $this->processDebugCall($response);
-
-                return $response;
+                return $this->processDebugCall($response);
             }
 
             $this->logger->info('This is not a debug call.');
@@ -119,7 +123,7 @@ class Ipn extends AbstractPayment
             $response->setData(['exception' => $e->getMessage()]);
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error($e->getMessage());
 
             return $response;
@@ -192,7 +196,7 @@ class Ipn extends AbstractPayment
 
         try {
             $this->payplugHelper->getOrderInstallmentPlan((string)$order->getIncrementId());
-            $response->setStatusHeader(200, null, "200 payment for installment plan not processed");
+            $response->setStatusHeader(Response::STATUS_CODE_200, null, "200 payment for installment plan not processed");
 
             return;
         } catch (NoSuchEntityException $e) {
@@ -203,25 +207,14 @@ class Ipn extends AbstractPayment
         if (!$payment->is_paid) {
             // If we are actually reviewing a standard deferred payment not yet captured
             if ($standardDeferredQuote) {
-                $quotePayment = $standardDeferredQuote->getPayment();
-                // Add the additionnals informations to the deferred Order payment object
-                $quotePayment->setAdditionalInformation('is_authorized', true);
-                $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
-                $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
-                $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
-                $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
-                $this->cartRepository->save($standardDeferredQuote);
-                $response->setStatusHeader(200, null, "200 payment for deferred standard payment not processed");
-
-                return;
+                $this->payplugHelper->saveAutorizationInformationOnQuote($standardDeferredQuote, $payment);
             }
 
             $this->logger->info('Transaction was not paid.');
-            $this->logger->info('Canceling order');
         }
 
         // If this is a standard deferred payment captured, we try saving the customer card after the Capture IPN (Only doable after payment)
-        if ($standardDeferredQuote) {
+        if ($standardDeferredQuote && $payment->is_paid) {
             $this->fetchTransactionInformationHandler->saveCustomerCard($payment, $standardDeferredQuote->getCustomerId(), $standardDeferredQuote->getStoreId());
         }
 
@@ -275,7 +268,7 @@ class Ipn extends AbstractPayment
                 // No need to log as it is not an error case
                 $responseCode = 200;
                 $responseDetail = '200 Order currently being processed.';
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $this->logger->error($e->getMessage());
                 $responseCode = 500;
                 $responseDetail = '500 Error while updating order.';
@@ -307,7 +300,7 @@ class Ipn extends AbstractPayment
         try {
             $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
         } catch (NoSuchEntityException $e) {
-            $response->setStatusHeader(500, null, "500 installment plan not found for order [$orderIncrementId]");
+            $response->setStatusHeader(Response::STATUS_CODE_500, null, "500 installment plan not found for order [$orderIncrementId]");
 
             return;
         }
@@ -331,7 +324,7 @@ class Ipn extends AbstractPayment
     private function processRefund(Raw $response, Refund $resource): void
     {
         $this->logger->info('This is a refund call.');
-        $this->logger->info('Refund ID : '.$resource->id);
+        $this->logger->info('Refund ID : ' . $resource->id);
         $refund = $resource;
 
         $paymentId = $refund->payment_id;
@@ -340,7 +333,7 @@ class Ipn extends AbstractPayment
         } catch (NoSuchEntityException $e) {
             $this->logger->info(sprintf('500 Unknown payment %s.', $paymentId));
             $response->setStatusHeader(
-                500,
+                Response::STATUS_CODE_500,
                 null,
                 sprintf('500 Unknown payment %s.', $paymentId)
             );
@@ -354,7 +347,7 @@ class Ipn extends AbstractPayment
         if (!$order->getId()) {
             $this->logger->info(sprintf('500 Unknown order %s.', $orderIncrementId));
             $response->setStatusHeader(
-                500,
+                Response::STATUS_CODE_500,
                 null,
                 sprintf('500 Unknown order %s.', $orderIncrementId)
             );
@@ -365,26 +358,23 @@ class Ipn extends AbstractPayment
         try {
             $this->payplugHelper->getOrderInstallmentPlan($order->getIncrementId());
             $this->logger->info("200 refund for installment plan not processed");
-            $response->setStatusHeader(200, null, "200 refund for installment plan not processed");
+            $response->setStatusHeader(Response::STATUS_CODE_200, null, "200 refund for installment plan not processed");
 
             return;
-        } catch (NoSuchEntityException $e) {
-            // We want to process refund IPN for orders not linked to an installment plan
+        } catch (NoSuchEntityException) {
+            $this->logger->info('Processing refund IPN for orders not linked to an installment plan');
         }
 
-        try {
-            $amountToRefund = $refund->amount / 100;
-            $order->getPayment()->registerRefundNotification($amountToRefund);
-            $order->save();
-            $this->logger->info('200 Order updated.');
-            $response->setStatusHeader(200, null, '200 Order updated.');
-        } catch (\Exception $e) {
-            $this->logger->info(sprintf('500 Error while creating full refund %s.', $e->getMessage()));
-            $response->setStatusHeader(
-                500,
-                null,
-                sprintf('500 Error while creating full refund %s.', $e->getMessage())
-            );
-        }
+        $refundRequest = $this->refundRequestFactory->create();
+        $refundRequest->setOrderId((int)$order->getId());
+        $refundRequest->setRefundId($refund->id);
+        $refundRequest->setRefundPaymentId($refund->payment_id);
+        $refundRequest->setRefundAmount($refund->amount);
+
+        $this->messageQueuePublisher->publish(CreateOrderRefund::MESSAGE_QUEUE_TOPIC, $refundRequest);
+
+        $message = '200 Message submitted in queue for processing';
+        $this->logger->info($message);
+        $response->setStatusHeader(Response::STATUS_CODE_200, null, $message);
     }
 }

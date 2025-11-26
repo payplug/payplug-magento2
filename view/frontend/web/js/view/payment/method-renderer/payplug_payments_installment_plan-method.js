@@ -2,8 +2,9 @@ define([
     'Magento_Checkout/js/view/payment/default',
     'Payplug_Payments/js/action/redirect-on-success',
     'Payplug_Payments/js/action/lightbox-on-success',
-    'Magento_Checkout/js/model/full-screen-loader'
-], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, fullScreenLoader) {
+    'Magento_Checkout/js/model/full-screen-loader',
+    'ko'
+], function (Component, redirectOnSuccessAction, lightboxOnSuccessAction, fullScreenLoader, ko) {
     'use strict';
 
     return Component.extend({

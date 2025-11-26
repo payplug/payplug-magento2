@@ -1,0 +1,5 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Communication/etc/communication.xsd">
+    <topic name="payplug.order.invoicing" request="int"/>
+    <topic name="payplug.order.refunding" request="Payplug\Payments\Api\Data\RefundRequestInterface"/>
+</config>

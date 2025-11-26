@@ -3,12 +3,13 @@
 namespace Payplug\Payments\Model\Order;
 
 use Magento\Framework\App\ScopeInterface as ScopeInterfaceDefault;
-use Magento\Sales\Model\Order;
+use Magento\Framework\DataObject\IdentityInterface;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
 
-class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
-    \Magento\Framework\DataObject\IdentityInterface
+class InstallmentPlan extends AbstractModel implements IdentityInterface
 {
     public const CACHE_TAG = 'payplug_payments_order_installment_plan';
 
@@ -156,7 +157,7 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
         return $this->setData(self::STATUS, $status);
     }
 
-    public function getScope(Order $order): string
+    public function getScope(OrderInterface $order): string
     {
         if ($order->getStoreId()) {
             return ScopeInterface::SCOPE_STORES;
@@ -167,7 +168,7 @@ class InstallmentPlan extends \Magento\Framework\Model\AbstractModel implements
         return ScopeInterfaceDefault::SCOPE_DEFAULT;
     }
 
-    public function getScopeId(Order $order): int
+    public function getScopeId(OrderInterface $order): int
     {
         if ($order->getStoreId()) {
             // Use store ID if non-zero

@@ -90,7 +90,7 @@ abstract class AbstractBuilder extends AbstractHelper
         $language = $this->payplugConfig->getConfigValue(
             'code',
             ScopeInterface::SCOPE_STORE,
-            $order->getStoreId(),
+            (int)$order->getStoreId(),
             'general/locale/'
         );
         $language = substr($language, 0, 2);
