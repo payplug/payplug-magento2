@@ -18,19 +18,19 @@ class InitEnvQa
     ) {
     }
 
-    public function execute(): bool
+    public function execute(): void
     {
-        $apiUrl = $this->scopeConfig->getValue(self::XML_PATH_PAYPLUG_API_URL_KEY);
-        $serviceUrl = $this->scopeConfig->getValue(self::XML_PATH_PAYPLUG_SERVICE_URL_KEY);
-
-        if ($this->isQaEnabled() === false || empty($apiUrl) || empty($serviceUrl)) {
-            return false;
+        if ($this->isQaEnabled() === false) {
+            return;
         }
 
-        BaseAPIRoutes::setApiBaseUrl($apiUrl);
-        BaseAPIRoutes::setServiceBaseUrl($serviceUrl);
+        $apiUrl = trim((string) $this->scopeConfig->getValue(self::XML_PATH_PAYPLUG_API_URL_KEY));
+        $serviceUrl = trim((string) $this->scopeConfig->getValue(self::XML_PATH_PAYPLUG_SERVICE_URL_KEY));
 
-        return true;
+        if ($apiUrl !== '' && $serviceUrl !== '') {
+            BaseAPIRoutes::setApiBaseUrl($apiUrl);
+            BaseAPIRoutes::setServiceBaseUrl($serviceUrl);
+        }
     }
 
     public function isQaEnabled(): bool
