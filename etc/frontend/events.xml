@@ -5,15 +5,15 @@
                   instance="Payplug\Payments\Observer\HidePaymentMethodForRestrictedCountries"  />
     </event>
     <event name="controller_action_predispatch_payplug_payments">
-        <observer name="payplug_payments_init_env_qa_on_front_dispatch"
+        <observer name="payplug_payments_init_env_qa_on_payplug_dispatch"
                   instance="Payplug\Payments\Observer\InitEnvQaOnFrontDispatch" />
     </event>
     <event name="controller_action_predispatch_catalog_product_view">
-        <observer name="payplug_payments_init_env_qa_on_front_dispatch"
+        <observer name="payplug_payments_init_env_qa_on_product_view_dispatch"
                   instance="Payplug\Payments\Observer\InitEnvQaOnFrontDispatch" />
     </event>
     <event name="controller_action_predispatch_checkout_cart_index">
-        <observer name="payplug_payments_init_env_qa_on_front_dispatch"
+        <observer name="payplug_payments_init_env_qa_on_cart_dispatch"
                   instance="Payplug\Payments\Observer\InitEnvQaOnFrontDispatch" />
     </event>
 </config>
