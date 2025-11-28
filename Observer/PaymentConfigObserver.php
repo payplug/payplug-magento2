@@ -53,6 +53,10 @@ class PaymentConfigObserver implements ObserverInterface
             return;
         }
 
+        if (!isset($postParams['groups'])) {
+            return;
+        }
+
         $groups = $postParams['groups'];
 
         $sections = $postParams['config_state'];
