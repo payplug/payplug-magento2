@@ -56,6 +56,8 @@ class PaymentHandler implements HandlerInterface
 
             /** @var Payment $payment */
             $payment = $paymentDO->getPayment();
+            $order = $payment->getOrder();
+            $order->setCanSendNewEmailFlag(false);
 
             $payment->setTransactionId($installmentPlan->id);
             $payment->setAdditionalInformation('payment_url', $installmentPlan->hosted_payment->payment_url);
@@ -65,7 +67,7 @@ class PaymentHandler implements HandlerInterface
 
             /** @var \Payplug\Payments\Model\Order\InstallmentPlan $orderInstallmentPlan */
             $orderInstallmentPlan = $this->installmentPlanFactory->create();
-            $orderInstallmentPlan->setOrderId($payment->getOrder()->getIncrementId());
+            $orderInstallmentPlan->setOrderId($order->getIncrementId());
             $orderInstallmentPlan->setInstallmentPlanId($installmentPlan->id);
             $orderInstallmentPlan->setIsSandbox(!$installmentPlan->is_live);
             $orderInstallmentPlan->setStatus(\Payplug\Payments\Model\Order\InstallmentPlan::STATUS_NEW);
