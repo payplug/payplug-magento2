@@ -30,6 +30,9 @@ class PaymentHandler implements HandlerInterface
 
             /** @var Payment $payment */
             $payment = $paymentDO->getPayment();
+            $order = $payment->getOrder();
+            $order->setCanSendNewEmailFlag(false);
+
             $isPaid = 1;
 
             if (!$payplugPayment->is_paid && $payplugPayment->failure === null) {
@@ -43,7 +46,7 @@ class PaymentHandler implements HandlerInterface
 
             $payment->setAdditionalInformation('is_paid', $isPaid);
             $payment->setAdditionalInformation('payplug_payment_id', $payplugPayment->id);
-            $payment->setAdditionalInformation('quote_id', $payment->getOrder()->getQuoteId());
+            $payment->setAdditionalInformation('quote_id', $order->getQuoteId());
 
             if ($this->config->isStandardPaymentModeDeferred()) {
                 $payment->setAdditionalInformation('is_deferred_payment_standard', true);
@@ -59,7 +62,7 @@ class PaymentHandler implements HandlerInterface
             $payment->setShouldCloseParentTransaction(false);
 
             $orderPayment = $this->payplugPaymentFactory->create();
-            $orderPayment->setOrderId($payment->getOrder()->getIncrementId());
+            $orderPayment->setOrderId($order->getIncrementId());
             $orderPayment->setPaymentId($payplugPayment->id);
             $orderPayment->setIsSandbox(!$payplugPayment->is_live);
 
