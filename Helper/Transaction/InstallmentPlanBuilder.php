@@ -42,10 +42,10 @@ class InstallmentPlanBuilder extends AbstractBuilder
      */
     private function generateSchedule($order, $payment)
     {
-        $total = $order->getGrandTotalAmount() * 100;
+        $total = (int) round($order->getGrandTotalAmount() * 100);
 
         $schedule = [];
-        $splitCount = $payment->getMethodInstance()->getConfigData('count');
+        $splitCount = (int) $payment->getMethodInstance()->getConfigData('count');
 
         $amounts = [];
         for ($i=1; $i<=$splitCount; $i++) {
