@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Cron;
 
-use DateTime;
+use DateMalformedStringException;
 use Exception;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Area;
@@ -48,6 +48,8 @@ class AutoCaptureDeferredPayments
     /**
      * Loop through all pending deferred payments, and force to capture them
      * if the time elapsed since the order creation exceed 6 days
+     *
+     * @throws DateMalformedStringException
      */
     public function execute(): void
     {
@@ -55,8 +57,6 @@ class AutoCaptureDeferredPayments
 
         // All the invoiceable order will populate this array
         $orderToInvoiceIds = [];
-
-        $currentDay = $this->timezone->date();
 
         // Get all the order payment that are not paid and using the payplug standard deferred (sales_order_payment table)
         $searchOrderPaymentCriteria = $this->searchCriteriaBuilder
@@ -83,7 +83,10 @@ class AutoCaptureDeferredPayments
             ->addFieldToFilter('additional_information', ['like' => '%is_authorized%'])
             ->getItems();
 
-        $deferredPaymentValidationDate = new DateTime();
+        /** Don't use timezone to perform UTC+0 comparison */
+        $currentDateTime = $this->timezone->date(null, null, false);
+        $authorizationValidationDateTime = $this->timezone->date(null, null, false);
+
         // Using the quotePayment additionnal info we filter on the authorization date exceeding or equal to 6 days
         foreach ($quotePayments as $quotePayment) {
             // Unix timestamp
@@ -93,8 +96,10 @@ class AutoCaptureDeferredPayments
                 continue;
             }
 
-            $deferredPaymentValidationDate->setTimestamp($authorizedAtTimestamp);
-            $difference = $currentDay->diff($deferredPaymentValidationDate);
+            $authorizationValidationDateTime->setTimestamp($authorizedAtTimestamp);
+            $authorizationValidationDateTime->modify('-2 hours'); // add tolerance for this time calculation
+            $difference = $currentDateTime->diff($authorizationValidationDateTime);
+
             if ($difference->days >= AutoCaptureDeferredPayments::FORCED_CAPTURE_DELAY_IN_DAYS) {
                 // We add the order id to the array of the invoiceables ones
                 $orderId = $quotePaymentsToOrderPayments[$quotePayment->getQuoteId()];
