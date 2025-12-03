@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.3](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.3) - 2026-XX-XX
+
+### Features
+
+- Add full Magento Coding Standard ruleset compliance (MAG-601)
+- Add React headless payment app example (MAG-549)
+- Fix type casting for total amount and split count in installment plan generation (MAG-539)
+- Fix undefined index error in PaymentConfigObserver (MAG-597)
+- Fix double shipping rate calculation on configurable product (MAG-608)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.6.2...v4.6.3)**
+
+### Added
+
+- Add full Magento Coding Standard ruleset compliance (MAG-601) [2f4ce644](https://github.com/payplug/payplug-magento2/commit/ae8a2f29ae2c418bb87c47ed963dafad0bbaa909)
+- Add React headless payment app example (MAG-549) [ae8a2f29](https://github.com/payplug/payplug-magento2/commit/2f4ce644adc96d5064a546f156293b61fef33750)
+
+### Fixed
+
+- Fix type casting for total amount and split count in installment plan generation (MAG-539) [0e61ddf7](https://github.com/payplug/payplug-magento2/commit/0e61ddf79cc661cd97c306a5b8c4bca22ba14d19)
+- Fix undefined index error in PaymentConfigObserver (MAG-597) [#b2166750](https://github.com/payplug/payplug-magento2/commit/b2166750dad757dab15b84c5f32b6588244a1cfe)
+- Fix double shipping rate calculation on configurable product (MAG-608) [#7d74ac6e](https://github.com/payplug/payplug-magento2/commit/7d74ac6e55d069e0b4b6d350c252331c91e719d3)
+
 ## [4.6.2](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.2) - 2026-01-26
 
 ### Features
