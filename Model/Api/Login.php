@@ -12,12 +12,23 @@ use Payplug\Payplug;
 
 class Login
 {
+    /**
+     * @param Authentication $authentication
+     * @param Logger $logger
+     */
     public function __construct(
         private readonly Authentication $authentication,
         private readonly Logger $logger
     ) {
     }
 
+    /**
+     * Login to PayPlug API
+     *
+     * @param string $email
+     * @param string $password
+     * @return array
+     */
     public function login(string $email, string $password): array
     {
         $result = [
@@ -56,6 +67,12 @@ class Login
         return $result;
     }
 
+    /**
+     * Get account information
+     *
+     * @param string $apiKey
+     * @return array
+     */
     public function getAccount(string $apiKey): array
     {
         $result = [

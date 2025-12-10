@@ -15,6 +15,11 @@ use Payplug\Payments\Logger\Logger;
 
 class SetDeferredAfterInvoiceOrderStatus implements ObserverInterface
 {
+    /**
+     * @param Config $config
+     * @param Logger $logger
+     * @param OrderRepositoryInterface $orderRepository
+     */
     public function __construct(
         protected Config $config,
         protected Logger $logger,
@@ -23,10 +28,13 @@ class SetDeferredAfterInvoiceOrderStatus implements ObserverInterface
     }
 
     /**
-     * For standard deferred orders only
+     * For standard deferred orders only. As changing the order status do not save in the invoice creation process
      *
-     * As changing the order status do not save in the invoice creation process
-     * we must observe the invoice to change the status to processing later
+     * As changing the order status do not save in the invoice creation process,
+     * we must observe the invoice to change the status to processing later.
+     *
+     * @param Observer $observer
+     * @return void
      */
     public function execute(Observer $observer): void
     {

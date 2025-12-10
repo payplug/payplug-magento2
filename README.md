@@ -4,7 +4,7 @@
 
 ### Pre-requirements
 
-- Adobe Commerce / Magento Open Source **2.4.0 – 2.4.8**
+- Adobe Commerce / Magento Open Source **2.4.1 – 2.4.8**
 - PHP **8.1 – 8.4**
 - PHP extension **openssl** (required)
 

@@ -7,6 +7,7 @@ namespace Payplug\Payments\Model\Order;
 use Magento\Framework\App\ScopeInterface as ScopeInterfaceDefault;
 use Magento\Framework\Data\Collection\AbstractDb;
 use Magento\Framework\DataObject\IdentityInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
@@ -42,6 +43,15 @@ class Payment extends AbstractModel implements IdentityInterface
     public const SENT_BY_SMS = 'SMS';
     public const SENT_BY_EMAIL = 'EMAIL';
 
+    /**
+     * @param Context $context
+     * @param Registry $registry
+     * @param Config $payplugConfig
+     * @param AbstractResource|null $resource
+     * @param AbstractDb|null $resourceCollection
+     * @param array $data
+     * @throws LocalizedException
+     */
     public function __construct(
         Context $context,
         Registry $registry,
@@ -63,6 +73,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * If the payment is still being processed
+     *
+     * @param ResourcePayment $resourcePayment
+     * @return bool
      */
     public function isProcessing(ResourcePayment $resourcePayment): bool
     {
@@ -93,6 +106,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set order id
+     *
+     * @param string $orderId
+     * @return self
      */
     public function setOrderId(string $orderId): self
     {
@@ -109,6 +125,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set payment id
+     *
+     * @param string $paymentId
+     * @return self
      */
     public function setPaymentId(string $paymentId): self
     {
@@ -125,6 +144,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set is sandbox
+     *
+     * @param bool $isSandbox
+     * @return self
      */
     public function setIsSandbox(bool $isSandbox): self
     {
@@ -141,6 +163,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set installment plan processed flag
+     *
+     * @param bool $isProcessed
+     * @return self
      */
     public function setIsInstallmentPlanPaymentProcessed(bool $isProcessed): self
     {
@@ -157,6 +182,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set sent by
+     *
+     * @param string|null $sentBy
+     * @return self
      */
     public function setSentBy(?string $sentBy = null): self
     {
@@ -173,6 +201,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set sent by value
+     *
+     * @param string|null $sentByValue
+     * @return self
      */
     public function setSentByValue(?string $sentByValue = null): self
     {
@@ -189,6 +220,9 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set language
+     *
+     * @param string|null $language
+     * @return self
      */
     public function setLanguage(?string $language = null): self
     {
@@ -205,12 +239,21 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Set description
+     *
+     * @param string|null $description
+     * @return self
      */
     public function setDescription(?string $description = null): self
     {
         return $this->setData(self::DESCRIPTION, $description);
     }
 
+    /**
+     * Get scope
+     *
+     * @param OrderInterface $order
+     * @return string
+     */
     public function getScope(OrderInterface $order): string
     {
         if ($order->getStoreId()) {
@@ -222,6 +265,12 @@ class Payment extends AbstractModel implements IdentityInterface
         return ScopeInterfaceDefault::SCOPE_DEFAULT;
     }
 
+    /**
+     * Get scope ID
+     *
+     * @param OrderInterface $order
+     * @return int
+     */
     public function getScopeId(OrderInterface $order): int
     {
         if ($order->getStoreId()) {
@@ -237,6 +286,12 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Retrieve a payment
+     *
+     * @param int|null $store
+     * @param string|null $scope
+     * @return ResourcePayment
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      */
     public function retrieve(?int $store = null, ?string $scope = ScopeInterface::SCOPE_STORE): ResourcePayment
     {
@@ -247,7 +302,13 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Attempt to refund partially or totally a payment
-     * @throws ConfigurationNotSetException|ConfigurationException
+     *
+     * @param float $amount
+     * @param array|null $metadata
+     * @param int|null $store
+     * @return Refund
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      */
     public function makeRefund(float $amount, ?array $metadata, ?int $store = null): Refund
     {
@@ -275,6 +336,11 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Abort an installment plan
+     *
+     * @param int|null $store
+     * @return ResourcePayment
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      */
     public function abort(?int $store = null): ResourcePayment
     {
@@ -285,8 +351,12 @@ class Payment extends AbstractModel implements IdentityInterface
 
     /**
      * Update a payment
-     * @throws ConfigurationNotSetException
+     *
+     * @param array $data
+     * @param int|null $store
+     * @return ResourcePayment
      * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      */
     public function update(array $data, ?int $store = null): ResourcePayment
     {

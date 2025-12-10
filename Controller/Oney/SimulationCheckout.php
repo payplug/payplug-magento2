@@ -14,6 +14,12 @@ use Payplug\Payments\Logger\Logger;
 
 class SimulationCheckout extends Action
 {
+    /**
+     * @param Context $context
+     * @param JsonFactory $resultJsonFactory
+     * @param Oney $oneyHelper
+     * @param Logger $logger
+     */
     public function __construct(
         Context $context,
         private JsonFactory $resultJsonFactory,
@@ -39,7 +45,7 @@ class SimulationCheckout extends Action
             }
 
             $simulationResult = $this->oneyHelper->getOneySimulationCheckout(
-                $params['amount'],
+                (float)$params['amount'],
                 $params['billingCountry'] ?? null,
                 $shippingCountry,
                 $params['paymentMethod'] ?? null
@@ -65,6 +71,9 @@ class SimulationCheckout extends Action
 
     /**
      * Transform simulation object into array
+     *
+     * @param DataObject $object
+     * @return array
      */
     private function transformSimulationResultToArray(DataObject $object): array
     {

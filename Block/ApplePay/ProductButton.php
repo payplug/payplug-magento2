@@ -7,8 +7,16 @@ use Magento\Framework\Exception\NoSuchEntityException;
 
 class ProductButton extends AbstractButton
 {
+    /**
+     * @var array
+     */
     private array $productCache = [];
 
+    /**
+     * Return button HTML
+     *
+     * @return string
+     */
     public function _toHtml(): string
     {
         if ($this->getRequest()->getFullActionName() === 'catalog_product_view'
@@ -22,6 +30,11 @@ class ProductButton extends AbstractButton
         return '';
     }
 
+    /**
+     * Return current product
+     *
+     * @return ProductInterface|null
+     */
     public function getCurrentProduct(): ?ProductInterface
     {
         $productId = (int) $this->getRequest()->getParam('id');
