@@ -20,6 +20,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Event\ManagerInterface as EventManager;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\SerializerInterface;
+use Magento\Framework\Url\Decoder as UrlDecoder;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
 use Payplug\Payments\Helper\Config as ConfigHelper;
@@ -34,6 +35,22 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
     public const PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE = 'test';
     public const PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE = 'integrated';
 
+    /**
+     * @param RequestInterface $request
+     * @param RedirectFactory $redirectFactory
+     * @param Logger $logger
+     * @param AdminAuthSession $adminAuthSession
+     * @param ConfigWriterInterface $configWriter
+     * @param SerializerInterface $serializer
+     * @param ReinitableConfigInterface $scopeConfig
+     * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
+     * @param ConfigHelper $configHelper
+     * @param EventManager $eventManager
+     * @param TypeListInterface $typeList
+     * @param EncryptorInterface $encryptor
+     * @param UrlDecoder $urlDecoder
+     * @param Context $context
+     */
     public function __construct(
         private readonly RequestInterface $request,
         private readonly RedirectFactory $redirectFactory,
@@ -47,11 +64,17 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
         private readonly EventManager $eventManager,
         private readonly TypeListInterface $typeList,
         private readonly EncryptorInterface $encryptor,
+        private readonly UrlDecoder $urlDecoder,
         Context $context
     ) {
         parent::__construct($context);
     }
 
+    /**
+     * Fetch Client Data from PayPlug Portal
+     *
+     * @return Redirect
+     */
     public function execute(): Redirect
     {
         $code = $this->request->getParam('code');
@@ -70,7 +93,7 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
             );
             $idToken = $jwtOneShopResponse['httpResponse']['id_token'];
             $idTokenSplit = explode('.', $idToken);
-            $payload = base64_decode($idTokenSplit[1]);
+            $payload = $this->urlDecoder->decode($idTokenSplit[1]);
             $payloadDecode = json_decode($payload, true);
 
             /**
@@ -169,6 +192,13 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
         );
     }
 
+    /**
+     * Save config value
+     *
+     * @param string $path
+     * @param string $value
+     * @return void
+     */
     private function saveConfig(string $path, string $value): void
     {
         $websiteId = $this->getWebsiteId();
@@ -181,6 +211,11 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
         );
     }
 
+    /**
+     * Get website id from request
+     *
+     * @return int
+     */
     private function getWebsiteId(): int
     {
         return (int)$this->request->getParam('website');
@@ -188,6 +223,9 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
 
     /**
      * We need to simulate an admin save after the Oauth2 first connexion
+     *
+     * @param int $websiteId
+     * @return array
      */
     private function getBasePostParams(int $websiteId): array
     {

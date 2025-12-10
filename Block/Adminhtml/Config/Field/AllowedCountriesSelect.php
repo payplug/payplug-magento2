@@ -13,6 +13,16 @@ use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
 
 class AllowedCountriesSelect extends Select
 {
+    /**
+     * @param GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod
+     * @param CountryFactory $countryFactory
+     * @param Factory $factoryElement
+     * @param CollectionFactory $factoryCollection
+     * @param Escaper $escaper
+     * @param array $data
+     * @param SecureHtmlRenderer|null $secureRenderer
+     * @param Random|null $random
+     */
     public function __construct(
         private readonly GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod,
         private readonly CountryFactory $countryFactory,
@@ -28,6 +38,11 @@ class AllowedCountriesSelect extends Select
         parent::__construct($factoryElement, $factoryCollection, $escaper, $data, $secureRenderer, $random);
     }
 
+    /**
+     * Get comment for the field
+     *
+     * @return string
+     */
     public function getComment(): string
     {
         $name = $this->getData('name');

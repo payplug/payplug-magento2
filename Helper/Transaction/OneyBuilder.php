@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use DateMalformedStringException;
+use Exception;
+use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\LocalizedException;
@@ -20,24 +23,37 @@ use Payplug\Payments\Logger\Logger;
 
 class OneyBuilder extends AbstractBuilder
 {
+    /**
+     * @param Oney $oneyHelper
+     * @param Context $context
+     * @param Config $payplugConfig
+     * @param Country $countryHelper
+     * @param Phone $phoneHelper
+     * @param Logger $logger
+     * @param FormKey $formKey
+     * @param UriHelper $uriHelper
+     */
     public function __construct(
+        private readonly Oney $oneyHelper,
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
         Phone $phoneHelper,
         Logger $logger,
         FormKey $formKey,
-        private Oney $oneyHelper
+        UriHelper $uriHelper
     ) {
-        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey);
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey, $uriHelper);
     }
 
     /**
      * @inheritdoc
+     *
+     * @throws LocalizedException
      */
     public function buildTransaction($order, InfoInterface $payment, $quote): array
     {
-        $this->validateTransaction($order, $payment, $quote);
+        $this->validateTransaction($order, $payment);
 
         return parent::buildTransaction($order, $payment, $quote);
     }
@@ -45,13 +61,12 @@ class OneyBuilder extends AbstractBuilder
     /**
      * Validate Oney payment before creating PayPlug transaction
      *
-     * @param OrderAdapterInterface|OrderInterface $order
-     * @param InfoInterface         $payment
-     * @param CartInterface      $quote
-     *
+     * @param OrderInterface|OrderAdapterInterface $order
+     * @param InfoInterface $payment
+     * @return void
      * @throws LocalizedException
      */
-    private function validateTransaction($order, InfoInterface $payment, CartInterface $quote)
+    private function validateTransaction($order, InfoInterface $payment): void
     {
         try {
             $this->oneyHelper->oneyCheckoutValidation(
@@ -69,7 +84,7 @@ class OneyBuilder extends AbstractBuilder
             $oneyOption = $payment->getAdditionalInformation('payplug_payments_oney_option');
             $this->oneyHelper->validateOneyOption($payment->getMethodInstance()->getCode(), $oneyOption);
             $this->validateBillingMobilePhone($order);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error(sprintf(
                 "A customer tried to pay with Oney but an error occurred : %s",
                 $e->getMessage()
@@ -104,23 +119,25 @@ class OneyBuilder extends AbstractBuilder
      *
      * @param OrderAdapterInterface|OrderInterface $order
      *
-     * @throws \Exception
+     * @throws Exception
      */
     private function validateBillingMobilePhone($order): void
     {
         $exceptionMessage = (string)__('Please fill in a mobile phone on your billing address.');
         $address = $order->getBillingAddress();
+
         if (empty($address->getTelephone())) {
-            throw new \Exception($exceptionMessage);
+            throw new Exception($exceptionMessage);
         }
+
         $phoneResult = $this->phoneHelper->getPhoneInfo($address->getTelephone(), $address->getCountryId());
-        $mobile = null;
-        $landline = null;
+
         if (!is_array($phoneResult)) {
-            throw new \Exception($exceptionMessage);
+            throw new Exception($exceptionMessage);
         }
+
         if (!$phoneResult['mobile']) {
-            throw new \Exception($exceptionMessage);
+            throw new Exception($exceptionMessage);
         }
     }
 
@@ -141,10 +158,9 @@ class OneyBuilder extends AbstractBuilder
      *
      * @param OrderInterface|OrderAdapterInterface $order
      * @param CartInterface $quote
-     *
      * @return array
      *
-     * @throws LocalizedException
+     * @throws LocalizedException|DateMalformedStringException
      */
     private function buildCartContext($order, CartInterface $quote): array
     {
@@ -214,6 +230,8 @@ class OneyBuilder extends AbstractBuilder
 
     /**
      * @inheritdoc
+     *
+     * @throws LocalizedException
      */
     public function buildCustomerData($order, InfoInterface $payment, $quote): array
     {
@@ -275,8 +293,6 @@ class OneyBuilder extends AbstractBuilder
         );
         $paymentData['payment_method'] = 'oney_' . $oneyOption;
 
-        $paymentData = array_merge($paymentData, $this->buildCartContext($order, $quote));
-
-        return $paymentData;
+        return array_merge($paymentData, $this->buildCartContext($order, $quote));
     }
 }

@@ -4,32 +4,51 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Block;
 
+use Exception;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\OrderInstallmentPlanRepository;
 use Payplug\Payments\Model\OrderPaymentRepository;
+use Throwable;
 
 class InstallmentPlanInfo extends Info
 {
+    /**
+     * @var string
+     */
     protected $_template = 'Payplug_Payments::info/installment_plan.phtml';
 
+    /**
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param OrderInstallmentPlanRepository $orderInstallmentPaymentRepository
+     * @param FormKey $formKey
+     * @param Context $context
+     * @param Data $payplugHelper
+     * @param Logger $payplugLogger
+     * @param array $data
+     */
     public function __construct(
+        private readonly OrderPaymentRepository $orderPaymentRepository,
+        private readonly OrderInstallmentPlanRepository $orderInstallmentPaymentRepository,
+        private readonly FormKey $formKey,
         Context $context,
         Data $payplugHelper,
         Logger $payplugLogger,
-        private OrderPaymentRepository $orderPaymentRepository,
-        private OrderInstallmentPlanRepository $orderInstallmentPaymentRepository,
-        private FormKey $formKey,
         array $data = []
     ) {
         parent::__construct($context, $payplugHelper, $payplugLogger, $data);
     }
 
+    /**
+     * Get the form key
+     *
+     * @throws LocalizedException
+     */
     public function getFormKey(): string
     {
         return $this->formKey->getFormKey() ?: '';
@@ -43,7 +62,7 @@ class InstallmentPlanInfo extends Info
         try {
             $orderIncrementId = $this->getInfo()->getOrder()->getIncrementId();
             $orderInstallmentPlan = $this->payplugHelper->getOrderInstallmentPlan($orderIncrementId);
-        } catch (NoSuchEntityException $e) {
+        } catch (Throwable) {
             return [];
         }
 
@@ -51,15 +70,17 @@ class InstallmentPlanInfo extends Info
             return [];
         }
 
-        $order = $this->getInfo()->getOrder();
-
         try {
+            $order = $this->getInfo()->getOrder();
             $orderPayment = $this->orderInstallmentPaymentRepository->get($orderIncrementId, 'order_id');
-            $installmentPlan = $orderInstallmentPlan->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
+            $installmentPlan = $orderInstallmentPlan->retrieve(
+                $orderPayment->getScopeId($order),
+                $orderPayment->getScope($order)
+            );
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
             return [];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->payplugLogger->error($e->getMessage());
             return [];
         }
@@ -101,10 +122,14 @@ class InstallmentPlanInfo extends Info
 
                 try {
                     $orderPayment = $this->orderPaymentRepository->get($paymentId, 'payment_id');
-                    $payment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
+                    $payment = $orderPayment->retrieve(
+                        $orderPayment->getScopeId($order),
+                        $orderPayment->getScope($order)
+                    );
                     $paymentInfo['details'] = $this->buildPaymentDetails($payment, $order);
                     $paymentInfo['status'] = $paymentInfo['details']['Status'];
-                } catch (NoSuchEntityException $e) {
+                } catch (NoSuchEntityException) {
+                    $this->payplugLogger->error(sprintf('Order Payment with id %s not found', $paymentId));
                 }
             }
 

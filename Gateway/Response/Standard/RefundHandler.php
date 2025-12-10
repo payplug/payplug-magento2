@@ -13,11 +13,21 @@ use Payplug\Resource\Refund;
 
 class RefundHandler implements HandlerInterface
 {
+    /**
+     * @param PayplugLogger $payplugLogger
+     */
     public function __construct(
         private readonly PayplugLogger $payplugLogger
     ) {
     }
 
+    /**
+     * Handle response
+     *
+     * @param array $handlingSubject
+     * @param array $response
+     * @return void
+     */
     public function handle(array $handlingSubject, array $response): void
     {
         $paymentData = $handlingSubject['payment'] ?? null;

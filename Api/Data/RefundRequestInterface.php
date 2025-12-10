@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Api\Data;
 
-use Magento\Sales\Api\Data\OrderInterface;
-
 /**
  * RefundRequest interface for message queue
  *
@@ -14,20 +12,25 @@ use Magento\Sales\Api\Data\OrderInterface;
 interface RefundRequestInterface
 {
     /**
-     * @param int $orderId
+     * Set order ID
      *
+     * @param int $orderId
      * @return RefundRequestInterface
      * @api
      */
     public function setOrderId(int $orderId): RefundRequestInterface;
 
     /**
+     * Get order ID
+     *
      * @return int
      * @api
      */
     public function getOrderId(): int;
 
     /**
+     * Set refund ID
+     *
      * @param string $refundId
      *
      * @return RefundRequestInterface
@@ -36,12 +39,16 @@ interface RefundRequestInterface
     public function setRefundId(string $refundId): RefundRequestInterface;
 
     /**
+     * Get refund ID
+     *
      * @return string
      * @api
      */
     public function getRefundId(): string;
 
     /**
+     * Set refund payment ID
+     *
      * @param string $refundPaymentId
      *
      * @return RefundRequestInterface
@@ -50,12 +57,16 @@ interface RefundRequestInterface
     public function setRefundPaymentId(string $refundPaymentId): RefundRequestInterface;
 
     /**
+     * Get refund payment ID
+     *
      * @return string
      * @api
      */
     public function getRefundPaymentId(): string;
 
     /**
+     * Set refund amount
+     *
      * @param float $refundAmount
      *
      * @return RefundRequestInterface
@@ -64,6 +75,8 @@ interface RefundRequestInterface
     public function setRefundAmount(float $refundAmount): RefundRequestInterface;
 
     /**
+     * Get refund amount
+     *
      * @return float
      * @api
      */

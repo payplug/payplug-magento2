@@ -29,6 +29,20 @@ class AutoCaptureDeferredPayments
 {
     public const FORCED_CAPTURE_DELAY_IN_DAYS = 6;
 
+    /**
+     * @param TimezoneInterface $timezone
+     * @param Logger $logger
+     * @param OrderPaymentRepositoryInterface $paymentRepository
+     * @param CollectionFactory $quotePaymentCollectionFactory
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param OrderRepositoryInterface $orderRepository
+     * @param InvoiceManagementInterface $invoiceService
+     * @param InvoiceSender $invoiceSender
+     * @param Transaction $transaction
+     * @param Config $config
+     * @param TransportBuilder $transportBuilder
+     * @param OrderIdentity $orderIdentity
+     */
     public function __construct(
         private readonly TimezoneInterface $timezone,
         private readonly Logger $logger,
@@ -46,8 +60,7 @@ class AutoCaptureDeferredPayments
     }
 
     /**
-     * Loop through all pending deferred payments, and force to capture them
-     * if the time elapsed since the order creation exceed 6 days
+     * Loop through all pending deferred payments, and force to capture them if the order creation exceed 6 days
      *
      * @throws DateMalformedStringException
      */
@@ -58,7 +71,10 @@ class AutoCaptureDeferredPayments
         // All the invoiceable order will populate this array
         $orderToInvoiceIds = [];
 
-        // Get all the order payment that are not paid and using the payplug standard deferred (sales_order_payment table)
+        /**
+         * Get all the order payment that are not paid and using the payplug standard deferred
+         * (sales_order_payment table)
+         */
         $searchOrderPaymentCriteria = $this->searchCriteriaBuilder
             ->addFilter('method', Standard::METHOD_CODE)
             ->addFilter('base_amount_paid', null, 'null')
@@ -103,8 +119,10 @@ class AutoCaptureDeferredPayments
             if ($difference->days >= AutoCaptureDeferredPayments::FORCED_CAPTURE_DELAY_IN_DAYS) {
                 // We add the order id to the array of the invoiceables ones
                 $orderId = $quotePaymentsToOrderPayments[$quotePayment->getQuoteId()];
+                $message = 'The order id %s has been validated for %s days and still is not captured.';
+                $message .= 'It was flagged as capturable.';
                 $this->logger->info(sprintf(
-                    'The order id %s has been validated for %s days and still is not captured, it was flagged as capturable.',
+                    $message,
                     $orderId,
                     $difference->days
                 ));
@@ -125,12 +143,21 @@ class AutoCaptureDeferredPayments
         $this->logger->info('The AutoCaptureDeferredPayments cron is over');
     }
 
+    /**
+     * Create an invoice and capture it
+     *
+     * @param OrderInterface $order
+     * @return void
+     */
     public function createInvoiceAndCapture(OrderInterface $order): void
     {
         $orderId = $order->getId();
 
         if (!$order->canInvoice()) {
-            $this->logger->info(sprintf('The order id %s does not allow an invoice to be create. Not capturing.', $orderId));
+            $this->logger->info(sprintf(
+                'The order id %s does not allow an invoice to be create. Not capturing.',
+                $orderId
+            ));
             $this->setFailedToCapture($order);
 
             return;
@@ -142,7 +169,10 @@ class AutoCaptureDeferredPayments
             $invoice = $this->invoiceService->prepareInvoice($order);
             $invoice->setRequestedCaptureCase($invoice::CAPTURE_ONLINE);
             $invoice->addComment('Order automatically invoiced and captured after 6 days of authorization.');
-            // Throw Environment emulation nesting is not allowed as of 2.4.6 https://github.com/magento/magento2/issues/36134
+            /**
+             * Throw Environment emulation nesting is not allowed as of 2.4.6
+             * @see https://github.com/magento/magento2/issues/36134
+             */
             $invoice->register();
 
             $transactionSave = $this->transaction
@@ -166,11 +196,24 @@ class AutoCaptureDeferredPayments
             );
         } catch (Exception $e) {
             if (str_contains($e->getMessage(), 'Forbidden error')) {
-                $history = sprintf('The order entity id %s cannot be retrieved anymore from payplug Api.', $order->getEntityId());
+                $history = sprintf(
+                    'The order entity id %s cannot be retrieved anymore from payplug Api.',
+                    $order->getEntityId()
+                );
             } else {
-                $history = sprintf('An unexpected error occured with order entityId %s - %s', $order->getEntityId(), $e->getMessage());
+                $history = sprintf(
+                    'An unexpected error occured with order entityId %s - %s',
+                    $order->getEntityId(),
+                    $e->getMessage()
+                );
             }
-            $this->logger->info(sprintf('Auto capture cron failed and wont run again for this order. You can try to create the invoice manually. Error message : %s', $history));
+
+            $message = 'Auto capture cron failed and wont run again for this order.';
+            $message .= 'You can try to create the invoice manually. Error message : %s';
+            $this->logger->info(sprintf(
+                $message,
+                $history
+            ));
 
             // Get a fresh order without all the invoice collection items associated
             $order = $this->orderRepository->get($orderId);
@@ -183,6 +226,12 @@ class AutoCaptureDeferredPayments
         }
     }
 
+    /**
+     * Set the flag to indicate that the payment failed to capture
+     *
+     * @param OrderInterface $order
+     * @return void
+     */
     public function setFailedToCapture(OrderInterface $order): void
     {
         $orderPayment = $order->getPayment();
@@ -191,8 +240,15 @@ class AutoCaptureDeferredPayments
     }
 
     /**
-     * @throws MailException
+     * Send an email
+     *
+     * @param string $toMail
+     * @param string $subject
+     * @param string $message
+     * @param int $storeId
+     * @return void
      * @throws LocalizedException
+     * @throws MailException
      */
     public function sendEmail(string $toMail, string $subject, string $message, int $storeId): void
     {

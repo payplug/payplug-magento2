@@ -17,6 +17,12 @@ class Oauth2Login extends Action implements HttpGetActionInterface
 {
     public const ADMIN_RESOURCE = 'Payplug_Payments::general';
 
+    /**
+     * @param RedirectFactory $redirectFactory
+     * @param UrlInterface $urlBuilder
+     * @param RequestInterface $request
+     * @param Context $context
+     */
     public function __construct(
         private readonly RedirectFactory $redirectFactory,
         private readonly UrlInterface $urlBuilder,
@@ -26,6 +32,11 @@ class Oauth2Login extends Action implements HttpGetActionInterface
         parent::__construct($context);
     }
 
+    /**
+     * Redirect to PayPlug login page
+     *
+     * @return ResultInterface
+     */
     public function execute(): ResultInterface
     {
         $websiteId = $this->request->getParam('website');

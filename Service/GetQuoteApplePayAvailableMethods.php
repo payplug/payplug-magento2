@@ -4,18 +4,30 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Service;
 
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\StateException;
 use Magento\Quote\Api\ShippingMethodManagementInterface;
 use Payplug\Payments\Helper\Config;
 
 class GetQuoteApplePayAvailableMethods
 {
+    /**
+     * @param ShippingMethodManagementInterface $shippingMethodManagement
+     * @param Config $payPlugConfig
+     */
     public function __construct(
-        private ShippingMethodManagementInterface $shippingMethodManagement,
-        private Config $payPlugConfig
-    ) {}
+        private readonly ShippingMethodManagementInterface $shippingMethodManagement,
+        private readonly Config $payPlugConfig
+    ) {
+    }
 
     /**
      * Get a formated array with method available for Apple pay on quote
+     *
+     * @param int $quoteId
+     * @return array
+     * @throws NoSuchEntityException
+     * @throws StateException
      */
     public function execute(int $quoteId): array
     {

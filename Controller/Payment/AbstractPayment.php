@@ -7,6 +7,8 @@ namespace Payplug\Payments\Controller\Payment;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\OrderFactory;
@@ -15,6 +17,13 @@ use Payplug\Payments\Logger\Logger;
 
 abstract class AbstractPayment extends Action
 {
+    /**
+     * @param Context $context
+     * @param Session $checkoutSession
+     * @param OrderFactory $salesOrderFactory
+     * @param Logger $logger
+     * @param Data $payplugHelper
+     */
     public function __construct(
         Context $context,
         protected Session $checkoutSession,
@@ -29,6 +38,8 @@ abstract class AbstractPayment extends Action
      * Get quote
      *
      * @return CartInterface|Quote
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     protected function getQuote()
     {

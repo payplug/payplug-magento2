@@ -15,6 +15,11 @@ use Payplug\Payments\Helper\Config;
 
 class CleanOauthTokenDataOnChangeMode implements ObserverInterface
 {
+    /**
+     * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
+     * @param Http $request
+     * @param Config $config
+     */
     public function __construct(
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
         private readonly Http $request,
@@ -23,6 +28,10 @@ class CleanOauthTokenDataOnChangeMode implements ObserverInterface
     }
 
     /**
+     * Clean oauth token data when changing mode
+     *
+     * @param Observer $observer
+     * @return void
      * @throws LocalizedException
      */
     public function execute(Observer $observer): void

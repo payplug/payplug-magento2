@@ -16,12 +16,22 @@ class CreateOrderInvoice
 {
     public const MESSAGE_QUEUE_TOPIC = 'payplug.order.invoicing';
 
+    /**
+     * @param OrderRepositoryInterface $orderRepository
+     * @param PayplugLogger $payplugLogger
+     */
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly PayplugLogger $payplugLogger
     ) {
     }
 
+    /**
+     * Create invoice for order
+     *
+     * @param int $orderId
+     * @return void
+     */
     public function execute(int $orderId): void
     {
         $this->payplugLogger->info(

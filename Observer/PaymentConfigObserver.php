@@ -10,6 +10,7 @@ use Laminas\Validator\NotEmpty;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
 use Magento\Store\Model\ScopeInterface;
@@ -20,12 +21,35 @@ use Payplug\Payments\Service\GetOauth2ClientData;
 
 class PaymentConfigObserver implements ObserverInterface
 {
+    /**
+     * @var bool
+     */
     private bool $payplugConfigConnected;
+    /**
+     * @var bool
+     */
     private bool $payplugConfigVerified;
+    /**
+     * @var string
+     */
     private string $testApiKey;
+    /**
+     * @var string
+     */
     private string $liveApiKey;
+    /**
+     * @var array
+     */
     private array $permissions = [];
 
+    /**
+     * @param Http $request
+     * @param Login $login
+     * @param Config $helper
+     * @param ManagerInterface $messageManager
+     * @param StoreManagerInterface $storeManager
+     * @param GetOauth2ClientData $getOauth2ClientData
+     */
     public function __construct(
         private readonly Http $request,
         private readonly Login $login,
@@ -120,6 +144,10 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Check if posted data contains section info
+     *
+     * @param array $postParams
+     * @param string $sectionCode
+     * @return bool
      */
     private function canProcessSection(array $postParams, string $sectionCode): bool
     {
@@ -137,6 +165,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle General configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processGeneralConfig(array &$groups): void
     {
@@ -195,6 +226,13 @@ class PaymentConfigObserver implements ObserverInterface
         $this->enforceIntegratedPaymentPermissions($groups, $fields);
     }
 
+    /**
+     * Enforce integrated payment permissions
+     *
+     * @param array $groups
+     * @param array $fields
+     * @return void
+     */
     private function enforceIntegratedPaymentPermissions(array &$groups, array $fields): void
     {
         $apiKey = $this->getCurrentApiKey();
@@ -243,6 +281,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Same idea as legacy processGeneralConfig() but without e-mail/pwd logic.
+     *
+     * @param array $groups
+     * @return void
      */
     private function processOauthGeneralConfig(array &$groups): void
     {
@@ -253,7 +294,8 @@ class PaymentConfigObserver implements ObserverInterface
         $this->payplugConfigConnected = $this->helper->isOauthConnected();
         $this->payplugConfigVerified = true;
 
-        if (isset($fields['environmentmode']['value']) && $fields['environmentmode']['value'] == Config::ENVIRONMENT_LIVE
+        if (isset($fields['environmentmode']['value'])
+            && $fields['environmentmode']['value'] == Config::ENVIRONMENT_LIVE
             && $this->getOauth2ClientData->execute(Config::ENVIRONMENT_LIVE, $this->getCurrentWebsite()) === null
         ) {
             $groups['general']['fields']['environmentmode']['value'] = Config::ENVIRONMENT_TEST;
@@ -267,6 +309,12 @@ class PaymentConfigObserver implements ObserverInterface
         $this->enforceIntegratedPaymentPermissions($groups, $fields);
     }
 
+    /**
+     * Set Post and Param groups
+     *
+     * @param array $groups
+     * @return void
+     */
     public function setPostAndParamGroups(array $groups): void
     {
         //Old method for 2.3 and older
@@ -277,6 +325,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Standard configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processStandardConfig(array &$groups): void
     {
@@ -312,6 +363,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle InstallmentPlan configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processInstallmentPlanConfig(array &$groups): void
     {
@@ -359,6 +413,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Ondemand configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processOndemandConfig(array &$groups): void
     {
@@ -370,6 +427,10 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Oney configuration
+     *
+     * @param array $groups
+     * @return void
+     * @throws NoSuchEntityException
      */
     private function processOneyConfig(array &$groups): void
     {
@@ -513,15 +574,22 @@ class PaymentConfigObserver implements ObserverInterface
         }
     }
 
+    /**
+     * Validate threshold values
+     *
+     * @param array $fields
+     * @param bool|array $oneyThresholds
+     * @return bool
+     */
     private function validateThresholdValues(array $fields, bool|array $oneyThresholds): bool
     {
         if (isset($fields['oney_min_threshold']["value"])) {
-            $minThreshold = intval($fields['oney_min_threshold']["value"]);
-            $maxThreshold = intval($fields['oney_max_threshold']["value"]);
-        } // Website scope has on inherit
-        elseif (isset($fields['oney_min_threshold']["inherit"])) {
-            $minThreshold = intval($fields['oney_min_threshold']["inherit"]);
-            $maxThreshold = intval($fields['oney_max_threshold']["inherit"]);
+            $minThreshold = (int) $fields['oney_min_threshold']['value'];
+            $maxThreshold = (int) $fields['oney_max_threshold']['value'];
+        } elseif (isset($fields['oney_min_threshold']["inherit"])) {
+            // Website scope has on inheriting
+            $minThreshold = (int) $fields['oney_min_threshold']['inherit'];
+            $maxThreshold = (int) $fields['oney_max_threshold']['inherit'];
         } else {
             return false;
         }
@@ -547,6 +615,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Bancontact configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processBancontactConfig(array &$groups): void
     {
@@ -568,6 +639,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Bancontact configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processApplePayConfig(array &$groups): void
     {
@@ -611,6 +685,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Amex configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processAmexConfig(array &$groups): void
     {
@@ -631,6 +708,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Satispay configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processSatispayConfig(array &$groups): void
     {
@@ -651,6 +731,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Ideal configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processIdealConfig(array &$groups): void
     {
@@ -671,6 +754,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle Mybank configuration
+     *
+     * @param array $groups
+     * @return void
      */
     private function processMybankConfig(array &$groups): void
     {
@@ -689,6 +775,11 @@ class PaymentConfigObserver implements ObserverInterface
         );
     }
 
+    /**
+     * Is PayPlug account connected
+     *
+     * @return bool
+     */
     private function isPayplugConnected(): bool
     {
         return $this->helper->isLegacyConnected() || $this->helper->isOauthConnected();
@@ -696,6 +787,12 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Process method available only in LIVE mode
+     *
+     * @param array $groups
+     * @param string $method
+     * @param Phrase|string $liveModeNoPermissionMessage
+     * @param Phrase|string $testModeMessage
+     * @return void
      */
     private function processLiveOnlyMethod(
         array &$groups,
@@ -741,6 +838,11 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Check if PayPlug account is connected before enabling PayPlug payment method
+     *
+     * @param array $fields
+     * @param array $groups
+     * @param string $fieldGroup
+     * @return void
      */
     private function validatePayplugConnection(array $fields, array &$groups, string $fieldGroup): void
     {
@@ -756,6 +858,10 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle PayPlug configuration save on website level
+     *
+     * @param array $groups
+     * @param array $fields
+     * @return void
      */
     private function checkWebsiteScopeData(array &$groups, array &$fields): void
     {
@@ -797,6 +903,10 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Check if all required fields are set
+     *
+     * @param array $fieldsRequiredForInit
+     * @param array $fields
+     * @return bool
      */
     private function checkRequiredFields(array $fieldsRequiredForInit, array $fields): bool
     {
@@ -815,6 +925,10 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle account init
+     *
+     * @param string|null $pwd
+     * @param array $fields
+     * @return void
      */
     private function processInit(?string $pwd, array $fields): void
     {
@@ -827,6 +941,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Handle live mode
+     *
+     * @param string|null $pwd
+     * @return void
      */
     private function processLive(?string $pwd): void
     {
@@ -848,16 +965,37 @@ class PaymentConfigObserver implements ObserverInterface
         }
     }
 
+    /**
+     * Get config
+     *
+     * @param string $field
+     * @param string $path
+     * @return mixed
+     */
     private function getConfig(string $field, string $path = Config::CONFIG_PATH): mixed
     {
         return $this->helper->getConfigValue($field, ScopeInterface::SCOPE_STORE, null, $path);
     }
 
+    /**
+     * Save config
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return void
+     */
     private function saveConfig(string $field, mixed $value): void
     {
         $this->helper->setConfigValue($field, (string)$value);
     }
 
+    /**
+     * Save Oney Config
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return void
+     */
     private function saveOneyConfig(string $field, mixed $value): void
     {
         $this->helper->setConfigValue(
@@ -869,6 +1007,13 @@ class PaymentConfigObserver implements ObserverInterface
         );
     }
 
+    /**
+     * Save Oney Without Fees Config
+     *
+     * @param string $field
+     * @param mixed $value
+     * @return void
+     */
     private function saveOneyWithoutFeesConfig(string $field, mixed $value): void
     {
         $this->helper->setConfigValue(
@@ -881,9 +1026,12 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
-     * Connect to payplug account
+     * Connect to payplug account. Handle flags for account connection, verification
      *
-     * Handle flags for account connection, verification
+     * @param string $email
+     * @param string $pwd
+     * @param bool $canChangeConfigConnected
+     * @return bool
      */
     private function payplugLogin(string $email, string $pwd, bool $canChangeConfigConnected = false): bool
     {
@@ -933,6 +1081,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Get PayPlug account permissions
+     *
+     * @param string $apiKey
+     * @return array
      */
     private function getAccountPermissions(string $apiKey): array
     {
@@ -951,6 +1102,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Parse JSON Answer from PayPlug to save configurations and return permissions
+     *
+     * @param mixed $jsonAnswer
+     * @return array|null
      */
     private function treatAccountResponse(mixed $jsonAnswer): ?array
     {
@@ -989,13 +1143,15 @@ class PaymentConfigObserver implements ObserverInterface
                     $configuration['oney_min_amounts'] = $this->processAmounts(
                         $jsonAnswer['configuration']['oney']['min_amounts']
                     );
-                    $configuration['raw_oney_min_amounts'] = intval($jsonAnswer['configuration']['oney']['min_amounts']['EUR']) / 100;
+                    $minAmounts = (int) $jsonAnswer['configuration']['oney']['min_amounts']['EUR'];
+                    $configuration['raw_oney_min_amounts'] = $minAmounts / 100;
                 }
                 if (!empty($jsonAnswer['configuration']['oney']['max_amounts'])) {
                     $configuration['oney_max_amounts'] = $this->processAmounts(
                         $jsonAnswer['configuration']['oney']['max_amounts']
                     );
-                    $configuration['raw_oney_max_amounts'] = intval($jsonAnswer['configuration']['oney']['max_amounts']['EUR']) / 100;
+                    $maxAmount = (int) $jsonAnswer['configuration']['oney']['max_amounts']['EUR'];
+                    $configuration['raw_oney_max_amounts'] = $maxAmount / 100;
                 }
             }
             if (!empty($jsonAnswer['country'])) {
@@ -1046,7 +1202,8 @@ class PaymentConfigObserver implements ObserverInterface
             'mybank',
         ];
         foreach ($pproMethods as $method) {
-            $jsonAnswer['permissions']['can_use_' . $method] = $jsonAnswer['payment_methods'][$method]['enabled'] ?? false;
+            $jsonAnswer['permissions']['can_use_' . $method] = $jsonAnswer['payment_methods'][$method]['enabled']
+                ?? false;
             $permissions[] = 'can_use_' . $method;
             $this->saveConfig(
                 $method . '_countries',
@@ -1075,6 +1232,9 @@ class PaymentConfigObserver implements ObserverInterface
 
     /**
      * Process min/max amounts
+     *
+     * @param array|null $amounts
+     * @return string
      */
     private function processAmounts(?array $amounts): string
     {
@@ -1089,6 +1249,11 @@ class PaymentConfigObserver implements ObserverInterface
         return $configuration;
     }
 
+    /**
+     * Get Current Website
+     *
+     * @return int
+     */
     private function getCurrentWebsite(): int
     {
         return (int)$this->request->getParam('website');
