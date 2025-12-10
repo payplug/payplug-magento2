@@ -6,6 +6,7 @@ use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Customer\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
@@ -20,57 +21,35 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
     /**
      * @var string
      */
-    private $methodCode = Standard::METHOD_CODE;
+    private string $methodCode = Standard::METHOD_CODE;
 
     /**
      * @var MethodInterface
      */
-    private $method;
-
-    /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
-
-    /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
-     * @var Card
-     */
-    private $payplugCardHelper;
-
-    /**
-     * @var Session
-     */
-    private $customerSession;
+    private MethodInterface $method;
 
     /**
      * @param ScopeConfigInterface $scopeConfig
-     * @param Repository           $assetRepo
-     * @param RequestInterface     $request
-     * @param PaymentHelper        $paymentHelper
-     * @param Config               $payplugConfig
-     * @param Card                 $payplugCardHelper
-     * @param Session              $customerSession
+     * @param Config $payplugConfig
+     * @param Card $payplugCardHelper
+     * @param Session $customerSession
+     * @param PaymentHelper $paymentHelper
+     * @param Repository $assetRepo
+     * @param RequestInterface $request
+     * @throws LocalizedException
      */
     public function __construct(
-        ScopeConfigInterface $scopeConfig,
-        Repository $assetRepo,
-        RequestInterface $request,
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly Config $payplugConfig,
+        private readonly Card $payplugCardHelper,
+        private readonly Session $customerSession,
         PaymentHelper $paymentHelper,
-        Config $payplugConfig,
-        Card $payplugCardHelper,
-        Session $customerSession
+        Repository $assetRepo,
+        RequestInterface $request
     ) {
         parent::__construct($assetRepo, $request);
-        $this->scopeConfig = $scopeConfig;
+
         $this->method = $paymentHelper->getMethodInstance($this->methodCode);
-        $this->payplugConfig = $payplugConfig;
-        $this->payplugCardHelper = $payplugCardHelper;
-        $this->customerSession = $customerSession;
     }
 
     /**
@@ -78,7 +57,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      *
      * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->method->isAvailable() ? [
             'payment' => [
@@ -102,7 +81,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      *
      * @return string|null
      */
-    public function getCardLogo()
+    public function getCardLogo(): ?string
     {
         $localeCode = $this->getLocaleCode();
         $filename = 'payment-cards';
@@ -119,7 +98,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      *
      * @return array
      */
-    public function getBrandLogos()
+    public function getBrandLogos(): array
     {
         $cards = ['mastercard', 'visa', 'other'];
         $logos = [];
@@ -131,13 +110,13 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
     }
 
     /**
-     * Get store locale
+     * Get locale code
      *
      * @return string
      */
-    private function getLocaleCode()
+    private function getLocaleCode(): string
     {
-        return $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);;
+        return (string) $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -169,20 +148,16 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
 
     /**
      * Check if customer is logged in to enable one click
-     *
-     * @return bool
      */
-    private function isOneClick()
+    private function isOneClick(): bool
     {
         return $this->payplugConfig->isOneClick() && $this->customerSession->isLoggedIn();
     }
 
     /**
      * Handle customer cards display depending on checkout module
-     *
-     * @return bool
      */
-    private function shouldDisplayCardsInContainer()
+    private function shouldDisplayCardsInContainer(): bool
     {
         // Fix display of cards with Onestepcheckout module
         // Display cards in payment method container instead of alongside payment title

@@ -10,6 +10,9 @@ use Payplug\Payments\Helper\Http\AbstractClient;
 
 class Capture implements ClientInterface
 {
+    /**
+     * @param AbstractClient $client
+     */
     public function __construct(
         private AbstractClient $client
     ) {

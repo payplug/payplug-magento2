@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
@@ -22,13 +23,23 @@ use Payplug\Payments\Logger\Logger;
 
 abstract class AbstractBuilder extends AbstractHelper
 {
+    /**
+     * @param Context $context
+     * @param Config $payplugConfig
+     * @param Country $countryHelper
+     * @param Phone $phoneHelper
+     * @param Logger $logger
+     * @param FormKey $formKey
+     * @param UriHelper $uriHelper
+     */
     public function __construct(
         Context $context,
         protected Config $payplugConfig,
         protected Country $countryHelper,
         protected Phone $phoneHelper,
         protected Logger $logger,
-        protected FormKey $formKey
+        protected FormKey $formKey,
+        protected UriHelper $uriHelper
     ) {
         parent::__construct($context);
     }
@@ -140,9 +151,19 @@ abstract class AbstractBuilder extends AbstractHelper
 
     /**
      * Build customer address data
+     *
+     * @param object $address
+     * @param string $language
+     * @param array $allowedCountries
+     * @param string $defaultCountry
+     * @return array
      */
-    private function buildAddressData(object $address, string $language, array $allowedCountries, string $defaultCountry): array
-    {
+    private function buildAddressData(
+        object $address,
+        string $language,
+        array $allowedCountries,
+        string $defaultCountry
+    ): array {
         $street1 = null;
         $street2 = null;
         if ($address instanceof AddressAdapterInterface) {
@@ -269,6 +290,13 @@ abstract class AbstractBuilder extends AbstractHelper
         return $paymentData;
     }
 
+    /**
+     * Get anonymized transaction details
+     *
+     * @param OrderAdapterInterface $order
+     * @param array $transaction
+     * @return array
+     */
     private function getAnonymizedTransactionDetails(OrderAdapterInterface $order, array $transaction): array
     {
         $maskedEmail = '***@***.***';
@@ -282,8 +310,6 @@ abstract class AbstractBuilder extends AbstractHelper
 
         $transaction['email'] = $maskedEmail;
 
-        $transaction = array_diff_key($transaction, array_flip(['billing', 'shipping']));
-
-        return $transaction;
+        return array_diff_key($transaction, array_flip(['billing', 'shipping']));
     }
 }

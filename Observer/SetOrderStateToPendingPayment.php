@@ -15,12 +15,22 @@ use Payplug\Payments\Helper\Data as PayplugDataHelper;
 
 class SetOrderStateToPendingPayment implements ObserverInterface
 {
+    /**
+     * @param StatusResolver $statusResolver
+     * @param PayplugDataHelper $payplugDataHelper
+     */
     public function __construct(
         private readonly StatusResolver $statusResolver,
         private readonly PayplugDataHelper $payplugDataHelper
     ) {
     }
 
+    /**
+     * Set order state to pending payment if payment method is PayPlug
+     *
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(Observer $observer): void
     {
         /** @var PaymentInterface $payment */

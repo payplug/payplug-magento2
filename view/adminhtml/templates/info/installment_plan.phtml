@@ -11,81 +11,90 @@ use Payplug\Payments\Block\InstallmentPlanInfo as Info;
  */
 $specificInfo = $block->getAdminSpecificInformation();
 $title = $block->getMethod()->getTitle();
+$abortUrl = $block->getUrl(
+    'payplug_payments_admin/order/installmentPlanAbort',
+    ['order_id' => $block->getInfo()->getOrder()->getId(), 'form_key' => $block->getFormKey()]
+);
 ?>
 <?= $escaper->escapeHtml(__($title)) ?>
-<?php if ($specificInfo) : ?>
-<p><?= $escaper->escapeHtml($specificInfo['status']) ?></p>
-<p><?= $escaper->escapeHtml(__('Installment plan id')) ?> : <?= $escaper->escapeHtml($specificInfo['installment_plan_id']) ?></p>
-<table class="data-table admin__table-primary">
-    <tr>
-        <th><?= $escaper->escapeHtml(__('Date')) ?></th>
-        <th><?= $escaper->escapeHtml(__('Amount')) ?></th>
-        <th><?= $escaper->escapeHtml(__('Status')) ?></th>
-        <th></th>
-    </tr>
-    <?php foreach ($specificInfo['payments'] as $key => $paymentInfo) : ?>
-    <tr>
-        <td><?= $escaper->escapeHtml($paymentInfo['date']) ?></td>
-        <td><?= $escaper->escapeHtml($paymentInfo['amount']) ?></td>
-        <td><?= $escaper->escapeHtml($paymentInfo['status']) ?></td>
-        <td>
-            <?php if (!empty($paymentInfo['details'])) : ?>
-            <button type="button"
-                    class="toggle-details"
-                    data-toggle="collapse"
-                    data-target="#payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
-                    role="button"
-                    aria-expanded="false"
-                    aria-controls="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>">
-                <?= $escaper->escapeHtml(__('Details')) ?>
-            </button>
-            <?php endif; ?>
-        </td>
-    </tr>
-    <?php if (!empty($paymentInfo['details'])) : ?>
-        <tr class="collapse"
-            id="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
-            style="display: none;">
-            <td colspan="4">
-                <table class="data-table admin__table-secondary">
-                    <?php foreach ($paymentInfo['details'] as $label => $value) : ?>
-                    <tr>
-                        <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
-                        <td>
-                            <?= /* @noEscape */ nl2br($escaper->escapeHtml(implode("\n", $block->getValueAsArray($value, true)))) ?>
-                        </td>
-                    </tr>
-                    <?php endforeach; ?>
-                </table>
+<?php if ($specificInfo): ?>
+    <p><?= $escaper->escapeHtml($specificInfo['status']) ?></p>
+    <p>
+        <?= $escaper->escapeHtml(__('Installment plan id')) ?> :
+        <?= $escaper->escapeHtml($specificInfo['installment_plan_id']) ?>
+    </p>
+    <table class="data-table admin__table-primary">
+        <tr>
+            <th><?= $escaper->escapeHtml(__('Date')) ?></th>
+            <th><?= $escaper->escapeHtml(__('Amount')) ?></th>
+            <th><?= $escaper->escapeHtml(__('Status')) ?></th>
+            <th></th>
+        </tr>
+        <?php foreach ($specificInfo['payments'] as $key => $paymentInfo): ?>
+        <tr>
+            <td><?= $escaper->escapeHtml($paymentInfo['date']) ?></td>
+            <td><?= $escaper->escapeHtml($paymentInfo['amount']) ?></td>
+            <td><?= $escaper->escapeHtml($paymentInfo['status']) ?></td>
+            <td>
+                <?php if (!empty($paymentInfo['details'])): ?>
+                <button type="button"
+                        class="toggle-details"
+                        data-toggle="collapse"
+                        data-target="#payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
+                        role="button"
+                        aria-expanded="false"
+                        aria-controls="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>">
+                    <?= $escaper->escapeHtml(__('Details')) ?>
+                </button>
+                <?php endif; ?>
             </td>
         </tr>
+            <?php if (!empty($paymentInfo['details'])): ?>
+            <tr class="collapse"
+                id="payment-detail-<?= $escaper->escapeHtmlAttr($key) ?>"
+                style="display: none;">
+                <td colspan="4">
+                    <table class="data-table admin__table-secondary">
+                        <?php foreach ($paymentInfo['details'] as $label => $value): ?>
+                        <tr>
+                            <th><?= $escaper->escapeHtml(__($label)) ?>:</th>
+                            <td>
+                                <?= /* @noEscape */ nl2br($escaper->escapeHtml(
+                                    implode("\n", $block->getValueAsArray($value, true))
+                                )) ?>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </table>
+                </td>
+            </tr>
 
-        <script>
-            require([
-                'jquery',
-            ], function ($) {
-                $('.toggle-details').on('click', function() {
-                    const targetId = $(this).data('target');
-                    const targetElement = $(targetId);
-                    if (targetElement.css('display') === 'none' || targetElement.css('display') === '') {
-                        targetElement.css('display', 'table-row');
-                    } else {
-                        targetElement.css('display', 'none');
-                    }
+            <script>
+                require([
+                    'jquery',
+                ], function ($) {
+                    $('.toggle-details').on('click', function() {
+                        const targetId = $(this).data('target');
+                        const targetElement = $(targetId);
+                        if (targetElement.css('display') === 'none' || targetElement.css('display') === '') {
+                            targetElement.css('display', 'table-row');
+                        } else {
+                            targetElement.css('display', 'none');
+                        }
+                    });
                 });
-            });
-        </script>
-    <?php endif; ?>
-    <?php endforeach; ?>
-</table>
+            </script>
+        <?php endif; ?>
+        <?php endforeach; ?>
+    </table>
 
-<?php if ($specificInfo['can_abort']) : ?>
-<a class="action-default"
-   href="<?= $escaper->escapeUrl($block->getUrl('payplug_payments_admin/order/installmentPlanAbort', ['order_id' => $block->getInfo()->getOrder()->getId(), 'form_key' => $block->getFormKey()])) ?>"
-   onclick="return confirmAbortInstallmentPlan()">
-    <?= $escaper->escapeHtml(__('Abort')) ?>
-</a>
-<?php endif; ?>
+    <?php if ($specificInfo['can_abort']): ?>
+        <a class="action-default"
+           href="<?= $escaper->escapeUrl($abortUrl) ?>"
+           onclick="return confirmAbortInstallmentPlan()">
+                <?= $escaper->escapeHtml(__('Abort')) ?>
+        </a>
+    <?php endif; ?>
 <?php endif;?>
 
 <?= $block->getChildHtml() ?>

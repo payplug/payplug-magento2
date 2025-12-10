@@ -7,7 +7,6 @@ namespace Payplug\Payments\Helper\Transaction;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Sales\Api\Data\OrderInterface;
 
 class InstallmentPlanBuilder extends AbstractBuilder
 {

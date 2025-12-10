@@ -25,6 +25,12 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
         ],
     ];
 
+    /**
+     * @param StatusFactory $statusFactory
+     * @param ModuleDataSetupInterface $moduleDataSetup
+     * @param ResourceConnection $resource
+     * @param StoreManagerInterface $storeManager
+     */
     public function __construct(
         protected StatusFactory $statusFactory,
         protected ModuleDataSetupInterface $moduleDataSetup,
@@ -34,6 +40,8 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
     }
 
     /**
+     * Return dependencies
+     *
      * @return string[]
      */
     public static function getDependencies(): array
@@ -42,6 +50,8 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
     }
 
     /**
+     * Get aliases
+     *
      * @return string[]
      */
     public function getAliases(): array
@@ -50,6 +60,8 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
     }
 
     /**
+     * Apply patch
+     *
      * @return CreateFailedCaptureOrderStatus
      * @throws Exception
      */

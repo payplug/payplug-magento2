@@ -13,78 +13,29 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Customer\CardFactory;
 use Payplug\Payments\Model\CustomerCardRepository;
-use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Resource\Payment as PaymentResource;
 
 class FetchTransactionInformationHandler implements HandlerInterface
 {
-    /**
-     * @var SubjectReader
-     */
-    private $subjectReader;
 
     /**
-     * @var Logger
-     */
-    private $payplugLogger;
-
-    /**
-     * @var CardFactory
-     */
-    private $cardFactory;
-
-    /**
-     * @var CustomerCardRepository
-     */
-    private $customerCardRepository;
-
-    /**
-     * @var OrderSender
-     */
-    private $orderSender;
-
-    /**
-     * @var Card
-     */
-    private $cardHelper;
-
-    /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @param SubjectReader          $subjectReader
-     * @param Logger                 $payplugLogger
-     * @param CardFactory            $cardFactory
+     * @param SubjectReader $subjectReader
+     * @param Logger $payplugLogger
+     * @param CardFactory $cardFactory
      * @param CustomerCardRepository $customerCardRepository
-     * @param OrderSender            $orderSender
-     * @param Card                   $cardHelper
-     * @param Config                 $payplugConfig
-     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param OrderSender $orderSender
+     * @param Card $cardHelper
+     * @param Config $payplugConfig
      */
     public function __construct(
-        SubjectReader $subjectReader,
-        Logger $payplugLogger,
-        CardFactory $cardFactory,
-        CustomerCardRepository $customerCardRepository,
-        OrderSender $orderSender,
-        Card $cardHelper,
-        Config $payplugConfig,
-        OrderPaymentRepository $orderPaymentRepository
+        private readonly SubjectReader $subjectReader,
+        private readonly Logger $payplugLogger,
+        private readonly CardFactory $cardFactory,
+        private readonly CustomerCardRepository $customerCardRepository,
+        private readonly OrderSender $orderSender,
+        private readonly Card $cardHelper,
+        private readonly Config $payplugConfig
     ) {
-        $this->subjectReader = $subjectReader;
-        $this->payplugLogger = $payplugLogger;
-        $this->cardFactory = $cardFactory;
-        $this->customerCardRepository = $customerCardRepository;
-        $this->orderSender = $orderSender;
-        $this->cardHelper = $cardHelper;
-        $this->payplugConfig = $payplugConfig;
-        $this->orderPaymentRepository = $orderPaymentRepository;
     }
 
     /**
@@ -94,7 +45,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
      * @param array $response
      * @return void
      */
-    public function handle(array $handlingSubject, array $response)
+    public function handle(array $handlingSubject, array $response): void
     {
         $paymentDO = $this->subjectReader->readPayment($handlingSubject);
 
@@ -123,9 +74,9 @@ class FetchTransactionInformationHandler implements HandlerInterface
     /**
      * Save customer card
      *
-     * @param \Payplug\Resource\Payment $payment
-     * @param int|null                  $customerId
-     * @param int                       $storeId
+     * @param PaymentResource $payment
+     * @param int|null $customerId
+     * @param int $storeId
      */
     public function saveCustomerCard($payment, $customerId, $storeId)
     {
@@ -137,8 +88,8 @@ class FetchTransactionInformationHandler implements HandlerInterface
             try {
                 $this->customerCardRepository->get($payment->card->id, 'card_token');
                 return;
-            } catch (NoSuchEntityException $e) {
-                // Nothing to do, we want to create card if it does not already exist
+            } catch (NoSuchEntityException) {
+                $this->payplugLogger->info('Nothing to do, we want to create card if it does not already exist');
             }
 
             /** @var \Payplug\Payments\Model\Customer\Card $card */

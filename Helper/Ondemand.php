@@ -4,14 +4,15 @@ namespace Payplug\Payments\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Payment\Gateway\Data\Order\OrderAdapterFactory;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
-use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Http\OndemandClient;
 use Payplug\Payments\Helper\Transaction\OndemandBuilder;
-use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Order\Payment as OrderPayment;
+use Payplug\Payments\Model\Order\PaymentFactory;
 use Payplug\Payments\Model\OrderPaymentRepository;
 
 class Ondemand extends AbstractHelper
@@ -19,79 +20,45 @@ class Ondemand extends AbstractHelper
     public const DESCRIPTION_MAX_LENGTH = 80;
 
     /**
-     * @var \Payplug\Payments\Model\Order\PaymentFactory
-     */
-    private $payplugPaymentFactory;
-
-    /**
-     * @var OrderPaymentRepository
-     */
-    private $orderPaymentRepository;
-
-    /**
-     * @var OndemandBuilder
-     */
-    private $ondemandBuilder;
-
-    /**
-     * @var OrderAdapterFactory
-     */
-    private $orderAdapterFactory;
-
-    /**
-     * @var Logger
-     */
-    private $payplugLogger;
-
-    /**
-     * @var OndemandClient
-     */
-    private $ondemandClient;
-
-    /**
-     * @param Context                                      $context
-     * @param \Payplug\Payments\Model\Order\PaymentFactory $payplugPaymentFactory
-     * @param OrderPaymentRepository                       $orderPaymentRepository
-     * @param OndemandBuilder                              $ondemandBuilder
-     * @param OrderAdapterFactory                          $orderAdapterFactory
-     * @param Logger                                       $payplugLogger
-     * @param OndemandClient                               $ondemandClient
+     * @param Context $context
+     * @param PaymentFactory $payplugPaymentFactory
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param OndemandBuilder $ondemandBuilder
+     * @param OrderAdapterFactory $orderAdapterFactory
+     * @param OndemandClient $ondemandClient
      */
     public function __construct(
         Context $context,
-        \Payplug\Payments\Model\Order\PaymentFactory $payplugPaymentFactory,
-        OrderPaymentRepository $orderPaymentRepository,
-        OndemandBuilder $ondemandBuilder,
-        OrderAdapterFactory $orderAdapterFactory,
-        Logger $payplugLogger,
-        OndemandClient $ondemandClient
+        private readonly PaymentFactory $payplugPaymentFactory,
+        private readonly OrderPaymentRepository $orderPaymentRepository,
+        private readonly OndemandBuilder $ondemandBuilder,
+        private readonly OrderAdapterFactory $orderAdapterFactory,
+        private readonly OndemandClient $ondemandClient
     ) {
         parent::__construct($context);
-
-        $this->payplugPaymentFactory = $payplugPaymentFactory;
-        $this->orderPaymentRepository = $orderPaymentRepository;
-        $this->ondemandBuilder = $ondemandBuilder;
-        $this->orderAdapterFactory = $orderAdapterFactory;
-        $this->payplugLogger = $payplugLogger;
-        $this->ondemandClient = $ondemandClient;
     }
 
     /**
      * Send OnDemand payment link
      *
-     * @param Order                                 $order
-     * @param \Payplug\Payments\Model\Order\Payment $lastOrderPayment
-     * @param array                                 $paymentLinkData
+     * @param Order $order
+     * @param OrderPayment $lastOrderPayment
+     * @param array $paymentLinkData
      *
      * @throws PaymentException
+     * @throws LocalizedException
      */
-    public function sendNewPaymentLink($order, $lastOrderPayment, $paymentLinkData)
+    public function sendNewPaymentLink($order, $lastOrderPayment, $paymentLinkData): void
     {
         if ($lastOrderPayment === null) {
             throw new PaymentException(__('Unable to find payment linked to order %1', $order->getIncrementId()));
         }
 
-        $payplugPayment = $lastOrderPayment->retrieve($lastOrderPayment->getScopeId($order), $lastOrderPayment->getScope($order));
+        $payplugPayment = $lastOrderPayment->retrieve(
+            $lastOrderPayment->getScopeId($order),
+            $lastOrderPayment->getScope($order)
+        );
+
         if ($payplugPayment->is_paid) {
             $exceptionMessage = 'Last payment %1 has already been paid. ' .
                 'Please wait for the automatic notification or update the payment manually.';
@@ -156,7 +123,7 @@ class Ondemand extends AbstractHelper
         $payment->setIsTransactionClosed(false);
         $payment->setShouldCloseParentTransaction(false);
 
-        /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
+        /** @var OrderPayment $orderPayment */
         $orderPayment = $this->payplugPaymentFactory->create();
         $orderPayment->setOrderId($payment->getOrder()->getIncrementId());
         $orderPayment->setPaymentId($payplugPayment->id);

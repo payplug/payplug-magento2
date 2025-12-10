@@ -8,9 +8,21 @@ use Payplug\Payments\Api\Data\RefundRequestInterface;
 
 class RefundRequest implements RefundRequestInterface
 {
+    /**
+     * @var int
+     */
     private int $orderId;
+    /**
+     * @var string
+     */
     private string $refundId;
+    /**
+     * @var string
+     */
     private string $refundPaymentId;
+    /**
+     * @var float
+     */
     private float $refundAmount;
 
     /**
@@ -67,6 +79,12 @@ class RefundRequest implements RefundRequestInterface
         return $this->refundPaymentId;
     }
 
+    /**
+     * Set refund amount
+     *
+     * @param float $refundAmount
+     * @return RefundRequestInterface
+     */
     public function setRefundAmount(float $refundAmount): RefundRequestInterface
     {
         $this->refundAmount = $refundAmount;
@@ -74,6 +92,11 @@ class RefundRequest implements RefundRequestInterface
         return $this;
     }
 
+    /**
+     * Get refund amount
+     *
+     * @return float
+     */
     public function getRefundAmount(): float
     {
         return $this->refundAmount;

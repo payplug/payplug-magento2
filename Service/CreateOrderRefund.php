@@ -15,6 +15,11 @@ class CreateOrderRefund
 {
     public const MESSAGE_QUEUE_TOPIC = 'payplug.order.refunding';
 
+    /**
+     * @param TransactionManagerInterface $transactionManager
+     * @param OrderRepositoryInterface $orderRepository
+     * @param PayplugLogger $payplugLogger
+     */
     public function __construct(
         private readonly TransactionManagerInterface $transactionManager,
         private readonly OrderRepositoryInterface $orderRepository,
@@ -22,6 +27,12 @@ class CreateOrderRefund
     ) {
     }
 
+    /**
+     * Create refund for order
+     *
+     * @param RefundRequest $refundRequest
+     * @return void
+     */
     public function execute(RefundRequest $refundRequest): void
     {
         $orderId = $refundRequest->getOrderId();
@@ -45,7 +56,11 @@ class CreateOrderRefund
         $refundId = $refundRequest->getRefundId();
         $payment = $order->getPayment();
 
-        $isTransactionExists = $this->transactionManager->isTransactionExists($refundId, $payment->getId(), $order->getId());
+        $isTransactionExists = $this->transactionManager->isTransactionExists(
+            $refundId,
+            $payment->getId(),
+            $order->getId()
+        );
 
         if ($isTransactionExists) {
             $this->payplugLogger->info(sprintf('Transaction already exists %s.', $refundId));

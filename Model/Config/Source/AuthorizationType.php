@@ -13,7 +13,16 @@ class AuthorizationType implements ArrayInterface
      */
     public function toOptionArray(): array
     {
-        return [['value' => 'authorize_capture', 'label' => __('Authorization and Capture')], ['value' => 'authorize', 'label' => __('Authorization only')]];
+        return [
+            [
+                'value' => 'authorize_capture',
+                'label' => __('Authorization and Capture')
+            ],
+            [
+                'value' => 'authorize',
+                'label' => __('Authorization only')
+            ]
+        ];
     }
 
     /**

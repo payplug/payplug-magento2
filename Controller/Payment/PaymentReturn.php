@@ -10,10 +10,13 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
-use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
@@ -22,10 +25,19 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
-use Payplug\Resource\Payment;
 
 class PaymentReturn extends AbstractPayment
 {
+    /**
+     * @param Context $context
+     * @param Session $checkoutSession
+     * @param OrderFactory $salesOrderFactory
+     * @param Logger $logger
+     * @param Data $payplugHelper
+     * @param Config $config
+     * @param CartRepositoryInterface $cartRepository
+     * @param GetCurrentOrder $getCurrentOrder
+     */
     public function __construct(
         Context $context,
         Session $checkoutSession,
@@ -53,18 +65,19 @@ class PaymentReturn extends AbstractPayment
         try {
             $order = $this->getCurrentOrder->execute();
             $lastIncrementId = $order->getIncrementId();
-
-            $orderPaymentModel = null;
             $isInstallment = false;
-            if ($order->getPayment()->getMethod() === InstallmentPlanConfig::METHOD_CODE)
-            {
+
+            if ($order->getPayment()->getMethod() === InstallmentPlanConfig::METHOD_CODE) {
                 $isInstallment = true;
                 $orderPaymentModel = $this->payplugHelper->getOrderInstallmentPlan((string)$lastIncrementId);
             } else {
                 $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
             }
 
-            $payment = $orderPaymentModel->retrieve($orderPaymentModel->getScopeId($order), $orderPaymentModel->getScope($order));
+            $payment = $orderPaymentModel->retrieve(
+                $orderPaymentModel->getScopeId($order),
+                $orderPaymentModel->getScope($order)
+            );
 
             if ($isInstallment) {
                 if ($payment->failure) {
@@ -76,7 +89,10 @@ class PaymentReturn extends AbstractPayment
                 return $resultRedirect->setPath($redirectUrlSuccess);
             }
 
-            // If this is the deferred standard paiement and authorized, then update the order and return the user on the success checkout
+            /**
+             * If this is the deferred standard paiement and authorized, then update the order and return the user
+             * on the success checkout
+             */
             if (!$payment->is_paid
                 && $this->isAuthorizedOnlyStandardPayment($order)
                 && $payment->authorization
@@ -135,6 +151,16 @@ class PaymentReturn extends AbstractPayment
         }
     }
 
+    /**
+     * Prepare error on payment
+     *
+     * @param OrderInterface $order
+     * @return void
+     * @throws AlreadyExistsException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
     public function prepareErrorOnPayment(OrderInterface $order): void
     {
         $this->payplugHelper->cancelOrderAndInvoice($order);
@@ -153,6 +179,9 @@ class PaymentReturn extends AbstractPayment
 
     /**
      * Return true if the paiement methode was standard deferred
+     *
+     * @param OrderInterface|null $order
+     * @return bool
      */
     public function isAuthorizedOnlyStandardPayment(?OrderInterface $order): bool
     {
@@ -161,6 +190,10 @@ class PaymentReturn extends AbstractPayment
 
     /**
      * Return true if the paiement methode was standard deferred
+     *
+     * @param string|null $method
+     * @return bool
+     * @throws NoSuchEntityException
      */
     public function isAuthorizedOnlyStandardPaymentFromMethod(?string $method): bool
     {

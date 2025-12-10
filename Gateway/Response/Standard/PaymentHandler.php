@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Gateway\Response\Standard;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Payment\Gateway\Response\HandlerInterface;
 use Magento\Sales\Model\Order\Payment;
 use Payplug\Payments\Gateway\Helper\SubjectReader;
@@ -13,6 +15,12 @@ use Payplug\Payments\Model\OrderPaymentRepository;
 
 class PaymentHandler implements HandlerInterface
 {
+    /**
+     * @param SubjectReader $subjectReader
+     * @param PaymentFactory $payplugPaymentFactory
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param Config $config
+     */
     public function __construct(
         private readonly SubjectReader $subjectReader,
         private readonly PaymentFactory $payplugPaymentFactory,
@@ -21,6 +29,15 @@ class PaymentHandler implements HandlerInterface
     ) {
     }
 
+    /**
+     * Handle response
+     *
+     * @param array $handlingSubject
+     * @param array $response
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
     public function handle(array $handlingSubject, array $response): void
     {
         $paymentDO = $this->subjectReader->readPayment($handlingSubject);
@@ -53,7 +70,10 @@ class PaymentHandler implements HandlerInterface
             }
 
             if (isset($payplugPayment->payment_method['merchant_session'])) {
-                $payment->setAdditionalInformation('merchand_session', $payplugPayment->payment_method['merchant_session']);
+                $payment->setAdditionalInformation(
+                    'merchand_session',
+                    $payplugPayment->payment_method['merchant_session']
+                );
             }
 
             $payment->setTransactionId($payplugPayment->id);

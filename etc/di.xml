@@ -224,7 +224,6 @@
             <argument name="requestBuilder" xsi:type="object">PayplugPaymentInstallmentPlanRefundRequest</argument>
             <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
             <argument name="client" xsi:type="object">Payplug\Payments\Gateway\Http\Client\InstallmentPlan\Refund</argument>
-            <argument name="handler" xsi:type="object">Payplug\Payments\Gateway\Response\InstallmentPlan\RefundHandler</argument>
         </arguments>
     </virtualType>
     <virtualType name="PayplugPaymentInstallmentPlanRefundRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">

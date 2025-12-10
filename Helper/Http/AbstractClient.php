@@ -7,11 +7,16 @@ namespace Payplug\Payments\Helper\Http;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Payplug\Core\HttpClient;
+use Payplug\Exception\ConfigurationException;
 use Payplug\Payments\Helper\Config;
 use Payplug\Resource\APIResource;
 
 abstract class AbstractClient extends AbstractHelper
 {
+    /**
+     * @param Context $context
+     * @param Config $payplugConfig
+     */
     public function __construct(
         Context $context,
         private Config $payplugConfig
@@ -21,6 +26,10 @@ abstract class AbstractClient extends AbstractHelper
 
     /**
      * Place PayPlug request
+     *
+     * @param array $data
+     * @return array
+     * @throws ConfigurationException
      */
     public function placeRequest(array $data): array
     {
@@ -42,6 +51,9 @@ abstract class AbstractClient extends AbstractHelper
 
     /**
      * Remove unnecessary data
+     *
+     * @param array $data
+     * @return array
      */
     protected function prepareData(array $data): array
     {
@@ -52,11 +64,18 @@ abstract class AbstractClient extends AbstractHelper
 
     /**
      * Create payplug object
+     *
+     * @param array $payplugData
+     * @return APIResource|null
      */
     abstract protected function createPayplugObject(array $payplugData): ?APIResource;
 
     /**
      * Prepare return data
+     *
+     * @param APIResource $payplugObject
+     * @param array $data
+     * @return array
      */
     abstract protected function prepareReturnData(APIResource $payplugObject, array $data): array;
 }

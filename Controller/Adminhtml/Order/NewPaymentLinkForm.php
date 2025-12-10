@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\Adminhtml\Order;
 
 use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\Response\Http\FileFactory;
 use Magento\Framework\Controller\Result\JsonFactory;
@@ -27,6 +28,23 @@ use Psr\Log\LoggerInterface;
 
 class NewPaymentLinkForm extends AdminOrder
 {
+    /**
+     * @param Context $context
+     * @param Registry $coreRegistry
+     * @param FileFactory $fileFactory
+     * @param InlineInterface $translateInline
+     * @param PageFactory $resultPageFactory
+     * @param JsonFactory $resultJsonFactory
+     * @param LayoutFactory $resultLayoutFactory
+     * @param RawFactory $resultRawFactory
+     * @param OrderManagementInterface $orderManagement
+     * @param OrderRepositoryInterface $orderRepository
+     * @param LoggerInterface $logger
+     * @param Logger $payplugLogger
+     * @param Data $payplugHelper
+     * @param Validator $formKeyValidator
+     * @param RequestInterface $request
+     */
     public function __construct(
         Action\Context $context,
         Registry $coreRegistry,

@@ -9,7 +9,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Payment\Block\Info as BaseInfo;
 use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -17,8 +16,17 @@ use Payplug\Resource\Payment;
 
 class Info extends BaseInfo
 {
+    /**
+     * @var string
+     */
     protected $_template = 'Payplug_Payments::info/default.phtml';
 
+    /**
+     * @param Context $context
+     * @param Data $payplugHelper
+     * @param Logger $payplugLogger
+     * @param array $data
+     */
     public function __construct(
         Context $context,
         protected Data $payplugHelper,

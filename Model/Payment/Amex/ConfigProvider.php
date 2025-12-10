@@ -6,6 +6,7 @@ namespace Payplug\Payments\Model\Payment\Amex;
 
 use Magento\Checkout\Model\ConfigProviderInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
@@ -24,6 +25,12 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      */
     private $method;
 
+    /**
+     * @param Repository $assetRepo
+     * @param RequestInterface $request
+     * @param PaymentHelper $paymentHelper
+     * @throws LocalizedException
+     */
     public function __construct(
         protected Repository $assetRepo,
         protected RequestInterface $request,

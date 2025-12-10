@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use Laminas\Uri\Http as UriHelper;
 use Laminas\Validator\EmailAddress;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
@@ -23,16 +24,27 @@ use Payplug\Payments\Model\Order\Payment;
 
 class OndemandBuilder extends AbstractBuilder
 {
+    /**
+     * @param OndemandOptions $onDemandHelper
+     * @param Context $context
+     * @param Config $payplugConfig
+     * @param Country $countryHelper
+     * @param Phone $phoneHelper
+     * @param Logger $logger
+     * @param FormKey $formKey
+     * @param UriHelper $uriHelper
+     */
     public function __construct(
+        private readonly OndemandOptions $onDemandHelper,
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
         Phone $phoneHelper,
         Logger $logger,
         FormKey $formKey,
-        private OndemandOptions $onDemandHelper,
+        UriHelper $uriHelper
     ) {
-        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey);
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey, $uriHelper);
     }
 
     /**
