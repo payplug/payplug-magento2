@@ -49,12 +49,11 @@ class PaymentConfigObserver implements ObserverInterface
             $postParams = $postParams->toArray();
         }
 
-        if (!isset($postParams['config_state'])) {
+        if (!isset($postParams['groups'], $postParams['config_state'])) {
             return;
         }
 
         $groups = $postParams['groups'];
-
         $sections = $postParams['config_state'];
 
         if (isset($sections['payplug_payments_general']) && isset($groups['general']['fields'])) {
