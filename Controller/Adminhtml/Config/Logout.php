@@ -15,6 +15,12 @@ class Logout extends Action
 {
     public const ADMIN_RESOURCE = 'Payplug_Payments::general';
 
+    /**
+     * @param Context $context
+     * @param Config $helper
+     * @param Validator $formKeyValidator
+     * @param RequestInterface $request
+     */
     public function __construct(
         Context $context,
         private Config $helper,

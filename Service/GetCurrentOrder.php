@@ -4,29 +4,34 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Service;
 
+use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
-use Payplug\Payments\Logger\Logger;
 
 class GetCurrentOrder
 {
+    /**
+     * @param RequestInterface $request
+     * @param Session $checkoutSession
+     * @param OrderFactory $salesOrderFactory
+     * @param CartRepositoryInterface $cartRepositoryInterface
+     */
     public function __construct(
-        protected RequestInterface $request,
-        protected Session $checkoutSession,
-        protected OrderFactory $salesOrderFactory,
-        protected CartRepositoryInterface $cartRepositoryInterface,
-        protected Logger $logger
+        private readonly RequestInterface $request,
+        private readonly Session $checkoutSession,
+        private readonly OrderFactory $salesOrderFactory,
+        private readonly CartRepositoryInterface $cartRepositoryInterface,
     ) {
     }
 
     /**
      * Attempt to retrieve the currently active order using multiple strategies.
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function execute(): ?OrderInterface
     {
@@ -51,11 +56,14 @@ class GetCurrentOrder
         }
 
         // If all attempts failed:
-        throw new \Exception('Could not retrieve last order id');
+        throw new Exception('Could not retrieve last order id');
     }
 
     /**
      * Helper method to load an order from a given increment ID, or return null if not found.
+     *
+     * @param string|null $incrementId
+     * @return OrderInterface|null
      */
     private function loadOrderByIncrementId(?string $incrementId): ?OrderInterface
     {
@@ -72,6 +80,8 @@ class GetCurrentOrder
     /**
      * Helper method to load an order from a quote's reserved order ID, or return null if not found.
      *
+     * @param int|null $quoteId
+     * @return OrderInterface|null
      * @throws NoSuchEntityException
      */
     private function loadOrderByQuoteId(?int $quoteId): ?OrderInterface

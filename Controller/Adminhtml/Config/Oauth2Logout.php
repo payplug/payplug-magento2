@@ -16,6 +16,12 @@ class Oauth2Logout extends Action implements HttpGetActionInterface
 {
     public const ADMIN_RESOURCE = 'Payplug_Payments::general';
 
+    /**
+     * @param RedirectFactory $redirectFactory
+     * @param RequestInterface $request
+     * @param ConfigHelper $configHelper
+     * @param Context $context
+     */
     public function __construct(
         private readonly RedirectFactory $redirectFactory,
         private readonly RequestInterface $request,
@@ -25,6 +31,11 @@ class Oauth2Logout extends Action implements HttpGetActionInterface
         parent::__construct($context);
     }
 
+    /**
+     * Logout account
+     *
+     * @return ResultInterface
+     */
     public function execute(): ResultInterface
     {
         $this->messageManager->addSuccessMessage(__('You have been logged out successfully'));
@@ -38,6 +49,11 @@ class Oauth2Logout extends Action implements HttpGetActionInterface
         );
     }
 
+    /**
+     * Get website ID from request
+     *
+     * @return int
+     */
     private function getWebsiteId(): int
     {
         return (int)$this->request->getParam('website');

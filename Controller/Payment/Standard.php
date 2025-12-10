@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Payment;
 
+use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
@@ -11,15 +12,26 @@ use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
+use Throwable;
 
 class Standard extends AbstractPayment
 {
+    /**
+     * @param Context $context
+     * @param Session $checkoutSession
+     * @param OrderFactory $salesOrderFactory
+     * @param Logger $logger
+     * @param Data $payplugHelper
+     * @param FormKey $formKey
+     * @param GetCurrentOrder $getCurrentOrder
+     */
     public function __construct(
         Context $context,
         Session $checkoutSession,
@@ -36,6 +48,7 @@ class Standard extends AbstractPayment
      * Retrieve PayPlug Standard payment url
      *
      * @return Redirect|ResultInterface|Json
+     * @throws LocalizedException
      */
     public function execute()
     {
@@ -72,7 +85,7 @@ class Standard extends AbstractPayment
                 $order->getPayment()->unsAdditionalInformation('payplug_payment_id');
 
                 if (empty($paymentId)) {
-                    throw new \Exception('Could not retrieve payment id for integrated payment');
+                    throw new Exception('Could not retrieve payment id for integrated payment');
                 }
                 $response->setData([
                     'payment_id' => $paymentId,
@@ -83,7 +96,7 @@ class Standard extends AbstractPayment
             }
 
             if (empty($url)) {
-                throw new \Exception('Could not retrieve payment url');
+                throw new Exception('Could not retrieve payment url');
             }
 
             if ($shouldRedirect) {
@@ -130,7 +143,7 @@ class Standard extends AbstractPayment
             $response->setData($responseParams);
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->error($e->getMessage());
 
             if ($shouldRedirect) {

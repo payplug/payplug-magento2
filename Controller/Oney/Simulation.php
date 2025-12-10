@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\Oney;
 
+use Exception;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\ConfigurableProduct\Api\LinkManagementInterface;
@@ -11,18 +12,28 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\LayoutInterface;
 use Payplug\Payments\Block\Oney\Simulation as OneySimulationBlock;
-use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\ViewModel\Oney as OneyViewHelper;
 
 class Simulation extends Action
 {
+    /**
+     * @param Context $context
+     * @param JsonFactory $resultJsonFactory
+     * @param ProductFactory $productFactory
+     * @param LayoutInterface $layout
+     * @param LinkManagementInterface $linkManagement
+     * @param OneyViewHelper $oneyViewHelper
+     */
     public function __construct(
         Context $context,
-        private JsonFactory $resultJsonFactory,
-        private ProductFactory $productFactory,
-        private LayoutInterface $layout,
-        private LinkManagementInterface $linkManagement
+        private readonly JsonFactory $resultJsonFactory,
+        private readonly ProductFactory $productFactory,
+        private readonly LayoutInterface $layout,
+        private readonly LinkManagementInterface $linkManagement,
+        private readonly OneyViewHelper $oneyViewHelper
     ) {
         parent::__construct($context);
     }
@@ -54,6 +65,7 @@ class Simulation extends Action
 
             $block = $this->layout->createBlock(OneySimulationBlock::class)
                 ->setTemplate($template)
+                ->setData('oneyViewHelper', $this->oneyViewHelper)
                 ->setAmount($productPrice)
                 ->setQty($qty);
 
@@ -61,7 +73,7 @@ class Simulation extends Action
                 'success' => true,
                 'html' => $block->toHtml(),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception) {
             $result->setData(['success' => false]);
         }
 
@@ -71,7 +83,9 @@ class Simulation extends Action
     /**
      * Get product for oney simulation
      *
-     * @throws \Exception
+     * @param array|null $params
+     * @return Product|null
+     * @throws LocalizedException
      */
     private function getProduct(?array $params): ?Product
     {
@@ -82,7 +96,7 @@ class Simulation extends Action
         $product = $this->productFactory->create();
         $product->load($params['product']);
         if (!$product->getId()) {
-            throw new \Exception('Product not found');
+            throw new LocalizedException(__('Product not found'));
         }
 
         if (!isset($params['product_options']) ||

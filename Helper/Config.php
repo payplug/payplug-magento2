@@ -10,6 +10,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Exception\ConfigurationException;
@@ -19,7 +20,6 @@ use Payplug\Payplug;
 class Config
 {
     public const CONFIG_PATH = 'payplug_payments/general/';
-    public const LEGACY_CONFIG_PATH = 'payplug_payments/auth/';
     public const OAUTH_CONFIG_PATH = 'payplug_payments/oauth2/';
     public const APPLE_PAY_CONFIG_PATH = 'payment/payplug_payments_apple_pay/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
@@ -38,9 +38,24 @@ class Config
     public const APM_FILTERING_MODE_BILLING_ADDRESS = 'billing_address';
     public const MODULE_VERSION = '4.6.2';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
+    /**
+     * @var string|null
+     */
     private ?string $scope = null;
+    /**
+     * @var mixed|null
+     */
     private mixed $scopeId = null;
 
+    /**
+     * @param WriterInterface $configWriter
+     * @param System $systemConfigType
+     * @param ProductMetadataInterface $productMetadata
+     * @param StoreManagerInterface $storeManager
+     * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
+     * @param RequestInterface $request
+     * @param ScopeConfigInterface $scopeConfig
+     */
     public function __construct(
         private readonly WriterInterface $configWriter,
         private readonly System $systemConfigType,
@@ -52,6 +67,11 @@ class Config
     ) {
     }
 
+    /**
+     * Initialize scope data
+     *
+     * @return void
+     */
     public function initScopeData(): void
     {
         $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT;
@@ -74,36 +94,79 @@ class Config
         $this->scopeId = (int)$scopeId;
     }
 
-    public function getStandardPaymentMode(string $scope = ScopeInterface::SCOPE_WEBSITES, ?int $websiteId = null): ?string
-    {
+    /**
+     * Get the standard payment mode
+     *
+     * @param string $scope
+     * @param int|null $websiteId
+     * @return string|null
+     */
+    public function getStandardPaymentMode(
+        string $scope = ScopeInterface::SCOPE_WEBSITES,
+        ?int $websiteId = null
+    ): ?string {
         return (string)$this->getConfigValue('', $scope, $websiteId, self::PAYPLUG_PAYMENT_ACTION_CONFIG_PATH);
     }
 
+    /**
+     * Check if standard payment mode is deferred
+     *
+     * @return bool
+     * @throws NoSuchEntityException
+     */
     public function isStandardPaymentModeDeferred(): bool
     {
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
+        $standardMode = $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, (int)$websiteId);
 
-        return $this->getStandardPaymentMode(ScopeInterface::SCOPE_WEBSITES, (int)$websiteId) === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
+        return $standardMode === self::STANDARD_PAYMENT_AUTHORIZATION_ONLY;
     }
 
+    /**
+     * Get the email of the website owner
+     *
+     * @return string|null
+     * @throws NoSuchEntityException
+     */
     public function getWebsiteOwnerEmail(): ?string
     {
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
 
-        return (string)$this->getConfigValue('', ScopeInterface::SCOPE_WEBSITES, (int)$websiteId, self::EMAIL_WEBSITE_OWNER_CONFIG_PATH);
+        return (string)$this->getConfigValue(
+            '',
+            ScopeInterface::SCOPE_WEBSITES,
+            (int)$websiteId,
+            self::EMAIL_WEBSITE_OWNER_CONFIG_PATH
+        );
     }
 
+    /**
+     * Get the scope of the configuration
+     *
+     * @return string|null
+     */
     public function getConfigScope(): ?string
     {
         return $this->scope;
     }
 
+    /**
+     * Get the scope id of the configuration
+     *
+     * @return int|null
+     */
     public function getConfigScopeId(): ?int
     {
         return $this->scopeId;
     }
 
     /**
+     * Set the Payplug API key
+     *
+     * @param int|null $storeId
+     * @param bool $isSandbox
+     * @param string|null $scope
+     * @return void
      * @throws ConfigurationException
      */
     public function setPayplugApiKey(?int $storeId, bool $isSandbox, ?string $scope = ScopeInterface::SCOPE_STORE): void
@@ -115,6 +178,13 @@ class Config
         }
     }
 
+    /**
+     * Check if the module is connected to Payplug
+     *
+     * @param string|null $scope
+     * @param int|null $storeId
+     * @return bool
+     */
     public function isLegacyConnected(?string $scope = '', ?int $storeId = null): bool
     {
         $email = $this->getConfigValue('email', $scope, $storeId);
@@ -127,6 +197,13 @@ class Config
         return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
     }
 
+    /**
+     * Check if the module is connected to Payplug using OAuth2
+     *
+     * @param string|null $scope
+     * @param int|null $storeId
+     * @return bool
+     */
     public function isOauthConnected(?string $scope = '', ?int $storeId = null): bool
     {
         $email = $this->getConfigValue('email', $scope, $storeId, self::OAUTH_CONFIG_PATH);
@@ -139,8 +216,21 @@ class Config
         return !empty($email) && (empty($defaultEmail) || $email !== $defaultEmail);
     }
 
-    public function getApiKey(?bool $isSandbox, ?int $scopeId = null, ?string $scope = ScopeInterface::SCOPE_STORE): ?string
-    {
+    /**
+     * Get the API key to use with Payplug
+     *
+     * @param bool|null $isSandbox
+     * @param int|null $scopeId
+     * @param string|null $scope
+     * @return string|null
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function getApiKey(
+        ?bool $isSandbox,
+        ?int $scopeId = null,
+        ?string $scope = ScopeInterface::SCOPE_STORE
+    ): ?string {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
             $scopeId = $this->scopeId;
@@ -164,29 +254,59 @@ class Config
             }
         }
 
-        return $isSandbox ? $this->getConfigValue('test_api_key', $scope, $scopeId) : $this->getConfigValue('live_api_key', $scope, $scopeId);
+        return $isSandbox ? $this->getConfigValue('test_api_key', $scope, $scopeId)
+            : $this->getConfigValue('live_api_key', $scope, $scopeId);
     }
 
+    /**
+     * Get is sandbox mode is ON
+     *
+     * @param int|null $store
+     * @return bool
+     */
     public function getIsSandbox(?int $store = null): bool
     {
-        return (string)$this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store) === self::ENVIRONMENT_TEST;
+        $environmentMode = (string)$this->getConfigValue('environmentmode', ScopeInterface::SCOPE_STORE, $store);
+
+        return $environmentMode === self::ENVIRONMENT_TEST;
     }
 
+    /**
+     * Get if the integraded payment method is enabled
+     *
+     * @return bool
+     */
     public function isEmbedded(): bool
     {
         return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_EMBEDDED;
     }
 
+    /**
+     * Get if shipping apm filtering mode is enabled
+     *
+     * @return bool
+     */
     public function isShippingApmFilteringMode(): bool
     {
         return (string)$this->getConfigValue('apm_filtering_mode') === self::APM_FILTERING_MODE_SHIPPING_ADDRESS;
     }
 
+    /**
+     * Get if the payment page is integrated mode
+     *
+     * @return bool
+     */
     public function isIntegrated(): bool
     {
         return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_INTEGRATED;
     }
 
+    /**
+     * Get if OneClick mode is enabled
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
     public function isOneClick(?int $storeId = null): bool
     {
         return $this->getConfigValue('can_save_cards', ScopeInterface::SCOPE_STORE, $storeId) &&
@@ -198,18 +318,41 @@ class Config
             );
     }
 
+    /**
+     * Get module version
+     *
+     * @return string
+     */
     public function getModuleVersion(): string
     {
         return self::MODULE_VERSION;
     }
 
+    /**
+     * Get magento version
+     *
+     * @return string
+     */
     public function getMagentoVersion(): string
     {
         return $this->productMetadata->getVersion();
     }
 
-    public function getConfigValue(string $field, string $scope = ScopeInterface::SCOPE_STORE, ?int $scopeId = null, ?string $path = self::CONFIG_PATH): mixed
-    {
+    /**
+     * Get config value
+     *
+     * @param string $field
+     * @param string $scope
+     * @param int|null $scopeId
+     * @param string|null $path
+     * @return mixed
+     */
+    public function getConfigValue(
+        string $field,
+        string $scope = ScopeInterface::SCOPE_STORE,
+        ?int $scopeId = null,
+        ?string $path = self::CONFIG_PATH
+    ): mixed {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
             $scopeId = $this->scopeId;
@@ -222,8 +365,23 @@ class Config
         );
     }
 
-    public function setConfigValue(string $field, string $value, string $scope = ScopeInterface::SCOPE_STORE, ?int $scopeId = null, ?string $path = null): void
-    {
+    /**
+     * Set config value
+     *
+     * @param string $field
+     * @param string $value
+     * @param string $scope
+     * @param int|null $scopeId
+     * @param string|null $path
+     * @return void
+     */
+    public function setConfigValue(
+        string $field,
+        string $value,
+        string $scope = ScopeInterface::SCOPE_STORE,
+        ?int $scopeId = null,
+        ?string $path = null
+    ): void {
         if ($scopeId === null && $this->scopeId !== null) {
             $scope = $this->scope;
             $scopeId = $this->scopeId;
@@ -236,6 +394,11 @@ class Config
         $this->configWriter->save($path . $field, $value, $scope, $scopeId);
     }
 
+    /**
+     * Clear config
+     *
+     * @return void
+     */
     public function clearConfig(): void
     {
         $keys = [
@@ -349,20 +512,24 @@ class Config
             'mybank',
         ];
 
+        $paths = [
+            'payment/payplug_payments_%s/active',
+            'payment/payplug_payments_%s/title',
+            'payment/payplug_payments_%s/processing_order_status',
+            'payment/payplug_payments_%s/canceled_order_status',
+            'payment/payplug_payments_%s/allowspecific',
+            'payment/payplug_payments_%s/default_country',
+            'payment/payplug_payments_%s/sort_order',
+            'payplug_payments/general/%s_countries',
+            'payplug_payments/general/%s_min_amounts',
+            'payplug_payments/general/%s_max_amounts',
+            'payplug_payments/general/can_use_%s',
+        ];
+
         foreach ($pproMethods as $method) {
-            $keys = array_merge($keys, [
-                'payment/payplug_payments_' . $method . '/active',
-                'payment/payplug_payments_' . $method . '/title',
-                'payment/payplug_payments_' . $method . '/processing_order_status',
-                'payment/payplug_payments_' . $method . '/canceled_order_status',
-                'payment/payplug_payments_' . $method . '/allowspecific',
-                'payment/payplug_payments_' . $method . '/default_country',
-                'payment/payplug_payments_' . $method . '/sort_order',
-                'payplug_payments/general/' . $method . '_countries',
-                'payplug_payments/general/' . $method . '_min_amounts',
-                'payplug_payments/general/' . $method . '_max_amounts',
-                'payplug_payments/general/can_use_' . $method,
-            ]);
+            foreach ($paths as $path) {
+                $keys[] = sprintf($path, $method);
+            }
         }
 
         foreach ($keys as $key) {
@@ -371,6 +538,11 @@ class Config
         $this->systemConfigType->clean();
     }
 
+    /**
+     * Clear legacy auth config
+     *
+     * @return void
+     */
     public function clearLegacyAuthConfig(): void
     {
         $keys = [
@@ -389,8 +561,21 @@ class Config
         $this->systemConfigType->clean();
     }
 
-    public function getAmountsByCurrency(?string $isoCode, ?int $storeId, ?string $path, ?string $amountPrefix = ''): array|bool
-    {
+    /**
+     * Get amounts allowed by currency
+     *
+     * @param string|null $isoCode
+     * @param int|null $storeId
+     * @param string|null $path
+     * @param string|null $amountPrefix
+     * @return array|bool
+     */
+    public function getAmountsByCurrency(
+        ?string $isoCode,
+        ?int $storeId,
+        ?string $path,
+        ?string $amountPrefix = ''
+    ): array|bool {
         $minAmounts = [];
         $maxAmounts = [];
 
@@ -398,8 +583,18 @@ class Config
             $path = self::CONFIG_PATH;
         }
 
-        $minAmountsConfig = $this->getConfigValue($amountPrefix . 'min_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
-        $maxAmountsConfig = $this->getConfigValue($amountPrefix . 'max_amounts', ScopeInterface::SCOPE_STORE, $storeId, $path);
+        $minAmountsConfig = $this->getConfigValue(
+            $amountPrefix . 'min_amounts',
+            ScopeInterface::SCOPE_STORE,
+            $storeId,
+            $path
+        );
+        $maxAmountsConfig = $this->getConfigValue(
+            $amountPrefix . 'max_amounts',
+            ScopeInterface::SCOPE_STORE,
+            $storeId,
+            $path
+        );
 
         if (empty($minAmountsConfig) || empty($maxAmountsConfig) || !$isoCode) {
             return false;
@@ -432,8 +627,24 @@ class Config
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
     }
 
+    /**
+     * Get Apple Pay disallowed shipping methods
+     *
+     * @return array
+     */
     public function getApplePayDisallowedShippingMethods(): array
     {
-        return array_map('trim', explode(',', (string)$this->getConfigValue('excluded_shipping_method', ScopeInterface::SCOPE_STORE, null, self::APPLE_PAY_CONFIG_PATH)));
+        return array_map(
+            'trim',
+            explode(
+                ',',
+                (string)$this->getConfigValue(
+                    'excluded_shipping_method',
+                    ScopeInterface::SCOPE_STORE,
+                    null,
+                    self::APPLE_PAY_CONFIG_PATH
+                )
+            )
+        );
     }
 }

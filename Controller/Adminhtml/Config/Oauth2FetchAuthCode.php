@@ -24,6 +24,15 @@ class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
     public const OAUTH_CONFIG_FETCH_DATA = 'payplug_payments_admin/config/oauth2FetchClientData';
     public const OAUTH_CONFIG_FETCH_AUTH = 'payplug_payments_admin/config/oauth2FetchAuthCode';
 
+    /**
+     * @param RequestInterface $request
+     * @param UrlInterface $urlBuilder
+     * @param RedirectFactory $redirectFactory
+     * @param RawFactory $rawFactory
+     * @param Logger $logger
+     * @param AdminAuthSession $adminAuthSession
+     * @param Context $context
+     */
     public function __construct(
         private readonly RequestInterface $request,
         private readonly UrlInterface $urlBuilder,
@@ -36,6 +45,11 @@ class Oauth2FetchAuthCode extends Action implements HttpGetActionInterface
         parent::__construct($context);
     }
 
+    /**
+     * Fetch Auth Code from PayPlug Portal
+     *
+     * @return ResultInterface
+     */
     public function execute(): ResultInterface
     {
         $clientId = $this->request->getParam('client_id');

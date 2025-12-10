@@ -15,6 +15,8 @@ use Payplug\Payments\Model\Order\Payment;
 class Refund implements ClientInterface
 {
     /**
+     * @param RequestInterface $request
+     * @param MessageManagerInterface $messageManager
      * @param Logger $payplugLogger
      */
     public function __construct(
@@ -25,6 +27,10 @@ class Refund implements ClientInterface
     }
 
     /**
+     * Places request to PayPlug API
+     *
+     * @param TransferInterface $transferObject
+     * @return array
      * @throws Exception
      */
     public function placeRequest(TransferInterface $transferObject): array
