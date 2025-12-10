@@ -141,7 +141,6 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processGeneralConfig(array &$groups): void
     {
-        $fields = $groups['general']['fields'];
         $authFields = $fields = $groups['auth']['fields'];
 
         if (empty($fields['email']) && !empty($authFields['email'])) {
@@ -184,8 +183,8 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         if (!$this->payplugConfigConnected) {
-            unset($groups['general']['fields']['pwd']);
-            unset($groups['general']['fields']['email']);
+            unset($groups['auth']['fields']['pwd']);
+            unset($groups['auth']['fields']['email']);
             $this->saveConfig('connected', 0);
         }
         if (!$this->payplugConfigVerified && $isLive) {
