@@ -18,6 +18,15 @@ use Payplug\Payments\Service\GetCurrentOrder;
 
 class CancelFromButton implements HttpGetActionInterface
 {
+    /**
+     * @param Validator $formKeyValidator
+     * @param RequestInterface $request
+     * @param GetCurrentOrder $getCurrentOrder
+     * @param Data $payplugHelper
+     * @param Logger $logger
+     * @param JsonResultFactory $resultJsonFactory
+     * @param CheckoutSession $checkoutSession
+     */
     public function __construct(
         private readonly Validator $formKeyValidator,
         private readonly RequestInterface $request,
@@ -29,6 +38,11 @@ class CancelFromButton implements HttpGetActionInterface
     ) {
     }
 
+    /**
+     * Cancel
+     *
+     * @return Json
+     */
     public function execute(): Json
     {
         $formKeyValidation = $this->formKeyValidator->validate($this->request);

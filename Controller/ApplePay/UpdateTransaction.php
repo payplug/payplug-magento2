@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
+use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
@@ -14,16 +15,25 @@ use Payplug\Payments\Controller\Payment\AbstractPayment;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
+use Throwable;
 
 class UpdateTransaction extends AbstractPayment
 {
+    /**
+     * @param GetCurrentOrder $getCurrentOrder
+     * @param Context $context
+     * @param Session $checkoutSession
+     * @param OrderFactory $salesOrderFactory
+     * @param Logger $logger
+     * @param Data $payplugHelper
+     */
     public function __construct(
+        private readonly GetCurrentOrder $getCurrentOrder,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
         Logger $logger,
-        Data $payplugHelper,
-        protected GetCurrentOrder $getCurrentOrder
+        Data $payplugHelper
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -44,11 +54,14 @@ class UpdateTransaction extends AbstractPayment
             $order = $this->getCurrentOrder->execute();
             $token = $this->getRequest()->getParam('token');
             if (empty($token)) {
-                throw new \Exception('Could not retrieve token');
+                throw new Exception('Could not retrieve token');
             }
 
             $payplugPayment = $this->payplugHelper->getOrderPayment($order->getIncrementId());
-            $paymentObject = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
+            $paymentObject = $payplugPayment->retrieve(
+                $payplugPayment->getScopeId($order),
+                $payplugPayment->getScope($order)
+            );
             $metadatas = $paymentObject->metadata;
             $metadatas['ApplepayWorkflowType'] = 'checkout';
 
@@ -74,7 +87,7 @@ class UpdateTransaction extends AbstractPayment
             ]);
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->error('Could not update apple pay transaction', [
                 'message' => $e->getMessage(),
                 'exception' => $e,

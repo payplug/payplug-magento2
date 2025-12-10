@@ -56,6 +56,23 @@ use Throwable;
 
 class Data
 {
+    /**
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param OrderRepository $orderRepository
+     * @param PayplugOrderProcessingFactory $orderProcessingFactory
+     * @param OrderProcessingRepository $orderProcessingRepository
+     * @param OrderInstallmentPlanRepository $orderInstallmentPlanRepository
+     * @param GridInterface $salesGrid
+     * @param SearchCriteriaInterfaceFactory $searchCriteriaInterfaceFactory
+     * @param FilterBuilderFactory $filterBuilderFactory
+     * @param FilterGroupBuilderFactory $filterGroupBuilderFactory
+     * @param SortOrderBuilderFactory $sortOrderBuilderFactory
+     * @param OndemandHelper $ondemandHelper
+     * @param Config $payplugConfig
+     * @param MessageQueuePublisherInterface $messageQueuePublisher
+     * @param PayplugLogger $payplugLogger
+     * @param CartRepositoryInterface $cartRepository
+     */
     public function __construct(
         private readonly OrderPaymentRepository $orderPaymentRepository,
         private readonly OrderRepository $orderRepository,
@@ -76,6 +93,10 @@ class Data
     }
 
     /**
+     * Get Order Payment
+     *
+     * @param int|string $orderId
+     * @return Payment
      * @throws NoSuchEntityException
      */
     public function getOrderPayment(int|string $orderId): Payment
@@ -84,6 +105,10 @@ class Data
     }
 
     /**
+     * Get Order Payment by Payment ID
+     *
+     * @param int|string $paymentId
+     * @return Payment
      * @throws NoSuchEntityException
      */
     public function getOrderPaymentByPaymentId(int|string $paymentId): Payment
@@ -92,6 +117,10 @@ class Data
     }
 
     /**
+     * Get Order Installment Plan
+     *
+     * @param int|string $orderId
+     * @return OrderInstallmentPlan
      * @throws NoSuchEntityException
      */
     public function getOrderInstallmentPlan(int|string $orderId): OrderInstallmentPlan
@@ -99,6 +128,12 @@ class Data
         return $this->orderInstallmentPlanRepository->get($orderId, 'order_id');
     }
 
+    /**
+     * Get order last payment
+     *
+     * @param int|string $orderId
+     * @return Payment|null
+     */
     public function getOrderLastPayment(int|string $orderId): ?Payment
     {
         $orderPayments = $this->getOrderPayments($orderId);
@@ -107,6 +142,9 @@ class Data
     }
 
     /**
+     * Get order payments
+     *
+     * @param int|string $orderId
      * @return Payment[]
      */
     public function getOrderPayments(int|string $orderId): array
@@ -132,6 +170,14 @@ class Data
         return $result->getItems();
     }
 
+    /**
+     * Get Field filter
+     *
+     * @param string $field
+     * @param mixed $value
+     * @param string $type
+     * @return FilterGroup
+     */
     private function getFieldFilter(string $field, mixed $value, string $type = 'eq'): FilterGroup
     {
         /** @var Filter $filter */
@@ -151,6 +197,12 @@ class Data
         return $filterGroup;
     }
 
+    /**
+     * Can update payment
+     *
+     * @param OrderInterface $order
+     * @return bool
+     */
     public function canUpdatePayment(OrderInterface $order): bool
     {
         if ($order->getPayment() === false) {
@@ -217,6 +269,13 @@ class Data
         return true;
     }
 
+    /**
+     * Can capture payment
+     *
+     * @param OrderInterface|null $order
+     * @param CartInterface|null $quote
+     * @return bool
+     */
     public function canCaptureOnline(?OrderInterface $order = null, ?CartInterface $quote = null): bool
     {
         $payment = $order?->getPayment() ?? $quote?->getPayment();
@@ -224,6 +283,12 @@ class Data
         return (bool)$payment?->getAdditionalInformation('is_authorized');
     }
 
+    /**
+     * Can send new payment link
+     *
+     * @param OrderInterface $order
+     * @return bool
+     */
     public function canSendNewPaymentLink(OrderInterface $order): bool
     {
         if ($order->getPayment() === false) {
@@ -242,10 +307,15 @@ class Data
     }
 
     /**
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
+     * Update order status
+     *
+     * @param OrderInterface $order
+     * @param bool $save
+     * @return void
      * @throws AlreadyExistsException
      * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     public function updateOrderStatus(OrderInterface $order, bool $save = true): void
     {
@@ -338,12 +408,17 @@ class Data
     }
 
     /**
+     * Update order
+     *
+     * @param OrderInterface $order
+     * @param array $data
+     * @return OrderInterface
      * @throws AlreadyExistsException
+     * @throws DateMalformedStringException
      * @throws InputException
      * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws OrderAlreadyProcessingException
-     * @throws DateMalformedStringException
      */
     public function updateOrder(OrderInterface $order, array $data = []): OrderInterface
     {
@@ -359,8 +434,9 @@ class Data
             // Delete and recreate a new flag
             $this->orderProcessingRepository->delete($orderProcessing);
         } catch (NoSuchEntityException) {
-            // Order is not currently being processed
-            // Create a new flag to block a concurrent process
+            $this->payplugLogger->info(
+                'Order is not currently being processed. Create a new flag to block a concurrent process'
+            );
         }
 
         try {
@@ -404,6 +480,10 @@ class Data
     }
 
     /**
+     * Get Payment
+     *
+     * @param OrderInterface $order
+     * @return ResourcePayment
      * @throws NoSuchEntityException
      */
     public function getPayment(OrderInterface $order): ResourcePayment
@@ -413,6 +493,12 @@ class Data
         return $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
     }
 
+    /**
+     * Check payment failure and abort payment if needed
+     *
+     * @param OrderInterface $order
+     * @return void
+     */
     public function checkPaymentFailureAndAbortPayment(OrderInterface $order): void
     {
         try {
@@ -435,7 +521,12 @@ class Data
             if ($orderPayment === null) {
                 return;
             }
-            $payplugPayment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
+
+            $payplugPayment = $orderPayment->retrieve(
+                $orderPayment->getScopeId($order),
+                $orderPayment->getScope($order)
+            );
+
             if ($payplugPayment->failure
                 && $payplugPayment->failure->code
                 && strtolower($payplugPayment->failure->code ?? '') !== 'timeout'
@@ -457,14 +548,22 @@ class Data
     }
 
     /**
+     * Get Payment for Order
+     *
+     * @param OrderInterface $order
+     * @return Payment|null
      * @throws NoSuchEntityException
      */
     public function getPaymentForOrder(OrderInterface $order): ?Payment
     {
-        $storeId = $order->getStoreId();
         if ($order->getPayment()->getMethod() === InstallmentPlan::METHOD_CODE) {
             $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
-            $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
+
+            $installmentPlan = $orderInstallmentPlan->retrieve(
+                $orderInstallmentPlan->getScopeId($order),
+                $orderInstallmentPlan->getScope($order)
+            );
+
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -491,6 +590,12 @@ class Data
         return null;
     }
 
+    /**
+     * Can force order cancel
+     *
+     * @param OrderInterface $order
+     * @return bool
+     */
     public function canForceOrderCancel(OrderInterface $order): bool
     {
         $method = $order->getPayment()->getMethod();
@@ -510,9 +615,16 @@ class Data
     }
 
     /**
-     * @throws LocalizedException
-     * @throws OrderAlreadyProcessingException
+     * Force order cancel
+     *
+     * @param OrderInterface $order
+     * @return void
+     * @throws AlreadyExistsException
      * @throws DateMalformedStringException
+     * @throws InputException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws OrderAlreadyProcessingException
      */
     public function forceOrderCancel(OrderInterface $order): void
     {
@@ -550,7 +662,12 @@ class Data
     }
 
     /**
+     * Cancel order payment
+     *
+     * @param OrderInterface $order
+     * @return bool
      * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     public function cancelOrderPayment(OrderInterface $order): bool
     {
@@ -570,11 +687,16 @@ class Data
                 // Payment is already aborted, keep processing to cancel order
                 return true;
             }
-            throw new LocalizedException((string)__('An error occurred. Please try again.'));
+            throw new LocalizedException(__('An error occurred. Please try again.'));
         }
     }
 
     /**
+     * Cancel installment plan
+     *
+     * @param OrderInterface $order
+     * @param bool $cancelPayment
+     * @return void
      * @throws NoSuchEntityException
      */
     public function cancelInstallmentPlan(OrderInterface $order, bool $cancelPayment = false): void
@@ -582,7 +704,11 @@ class Data
         $storeId = $order->getStoreId();
         $orderInstallmentPlan = $this->getOrderInstallmentPlan($order->getIncrementId());
         if ($cancelPayment) {
-            $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
+            $installmentPlan = $orderInstallmentPlan->retrieve(
+                $orderInstallmentPlan->getScopeId($order),
+                $orderInstallmentPlan->getScope($order)
+            );
+
             foreach ($installmentPlan->schedule as $schedule) {
                 if (!empty($schedule->payment_ids) && is_array($schedule->payment_ids)) {
                     $paymentId = $schedule->payment_ids[0];
@@ -594,17 +720,26 @@ class Data
                         $orderPayment = $this->getOrderPaymentByPaymentId($paymentId);
                         $orderPayment->abort((int)$storeId);
                     } catch (NoSuchEntityException) {
-                        // Payment was not found - no need to abort it
+                        $this->payplugLogger->info('Payment was not found - no need to abort it');
                     }
                 }
             }
         }
         $orderInstallmentPlan->abort((int)$storeId);
-        $installmentPlan = $orderInstallmentPlan->retrieve($orderInstallmentPlan->getScopeId($order), $orderInstallmentPlan->getScope($order));
+
+        $installmentPlan = $orderInstallmentPlan->retrieve(
+            $orderInstallmentPlan->getScopeId($order),
+            $orderInstallmentPlan->getScope($order)
+        );
+
         $this->updateInstallmentPlanStatus($orderInstallmentPlan, $installmentPlan);
     }
 
     /**
+     * Cancel Standard Payment
+     *
+     * @param OrderInterface $order
+     * @return void
      * @throws NoSuchEntityException
      */
     public function cancelStandardPayment(OrderInterface $order): void
@@ -614,6 +749,10 @@ class Data
     }
 
     /**
+     * Is order validated
+     *
+     * @param OrderInterface $order
+     * @return bool
      * @throws NoSuchEntityException
      */
     public function isOrderValidated(OrderInterface $order): bool
@@ -642,9 +781,15 @@ class Data
     }
 
     /**
+     * Send new payment link
+     *
+     * @param OrderInterface $order
+     * @param array $paymentLinkData
+     * @return OrderInterface
      * @throws AlreadyExistsException
      * @throws DateMalformedStringException
      * @throws InputException
+     * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws OrderAlreadyProcessingException
      * @throws PaymentException
@@ -662,8 +807,9 @@ class Data
             // Delete and recreate a new flag
             $this->orderProcessingRepository->delete($orderProcessing);
         } catch (NoSuchEntityException) {
-            // Order is not currently being processed
-            // Create a new flag to block concurrent process
+            $this->payplugLogger->info(
+                'Order is not currently being processed. Create a new flag to block concurrent process'
+            );
         }
 
         try {
@@ -692,6 +838,12 @@ class Data
         return $order;
     }
 
+    /**
+     * Create Order Processing
+     *
+     * @param OrderInterface $order
+     * @return Processing
+     */
     private function createOrderProcessing(OrderInterface $order): Processing
     {
         $orderProcessing = $this->orderProcessingFactory->create();
@@ -703,6 +855,12 @@ class Data
         return $orderProcessing;
     }
 
+    /**
+     * Can abort installment plan
+     *
+     * @param OrderInterface $order
+     * @return bool
+     */
     public function canAbortInstallmentPlan(OrderInterface $order): bool
     {
         if ($order->getPayment() === false) {
@@ -716,6 +874,11 @@ class Data
         return true;
     }
 
+    /**
+     * Get Installment Plan statuses label
+     *
+     * @return string[]
+     */
     public function getInstallmentPlanStatusesLabel(): array
     {
         return [
@@ -726,6 +889,12 @@ class Data
         ];
     }
 
+    /**
+     * Is code a payplug payment
+     *
+     * @param string $code
+     * @return bool
+     */
     public function isCodePayplugPayment(string $code): bool
     {
         return in_array($code, [
@@ -743,6 +912,12 @@ class Data
         ]);
     }
 
+    /**
+     * Is code a payplug payment ppro
+     *
+     * @param string $code
+     * @return bool
+     */
     public function isCodePayplugPaymentPpro(string $code): bool
     {
         return in_array($code, [
@@ -752,6 +927,13 @@ class Data
         ]);
     }
 
+    /**
+     * Update installment plan status
+     *
+     * @param OrderInstallmentPlan $orderInstallmentPlan
+     * @param ResourceInstallmentPlan $installmentPlan
+     * @return void
+     */
     public function updateInstallmentPlanStatus(
         OrderInstallmentPlan $orderInstallmentPlan,
         ResourceInstallmentPlan $installmentPlan
@@ -770,13 +952,26 @@ class Data
         $this->orderInstallmentPlanRepository->save($orderInstallmentPlan);
     }
 
+    /**
+     * Refresh sales grid
+     *
+     * @param int|string $orderId
+     * @return void
+     */
     public function refreshSalesGrid(int|string $orderId): void
     {
         $this->salesGrid->refresh($orderId);
     }
 
     /**
+     * Update order payment
+     *
+     * @param OrderInterface $order
+     * @return void
+     * @throws AlreadyExistsException
+     * @throws InputException
      * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     private function updateOrderPayment(OrderInterface $order): void
     {
@@ -814,6 +1009,10 @@ class Data
     }
 
     /**
+     * Is payment failure
+     *
+     * @param OrderInterface $order
+     * @return bool
      * @throws NoSuchEntityException
      */
     private function isPaymentFailure(OrderInterface $order): bool
@@ -834,6 +1033,11 @@ class Data
     }
 
     /**
+     * Cancel order and invoice
+     *
+     * @param OrderInterface $order
+     * @param bool $checkPaymentStatus
+     * @return void
      * @throws AlreadyExistsException
      * @throws InputException
      * @throws LocalizedException
@@ -867,12 +1071,22 @@ class Data
         $this->orderRepository->save($order);
     }
 
+    /**
+     * Is Order pending
+     *
+     * @param OrderInterface $order
+     * @return bool
+     */
     public function isOrderPending(OrderInterface $order): bool
     {
         return in_array($order->getState(), [Order::STATE_PENDING_PAYMENT, Order::STATE_PAYMENT_REVIEW]);
     }
 
     /**
+     * Get standard deferred quote
+     *
+     * @param ResourcePayment $payment
+     * @return CartInterface|null
      * @throws NoSuchEntityException
      */
     public function getStandardDeferredQuote(ResourcePayment $payment): ?CartInterface
@@ -884,15 +1098,27 @@ class Data
         $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
         $quotePayment = $quote->getPayment();
 
-        if ($quotePayment->getMethod() === Standard::METHOD_CODE && $this->payplugConfig->isStandardPaymentModeDeferred()) {
+        if ($quotePayment->getMethod() === Standard::METHOD_CODE
+            && $this->payplugConfig->isStandardPaymentModeDeferred()
+        ) {
             return $quote;
         }
 
         return null;
     }
 
-    public function saveAutorizationInformationOnQuote(CartInterface $quote, ResourceInstallmentPlan|ResourcePayment $payment): void
-    {
+    /**
+     * Save Autorization Information on Quote
+     *
+     * @param CartInterface $quote
+     * @param ResourceInstallmentPlan|ResourcePayment $payment
+     * @return void
+     * @throws LocalizedException
+     */
+    public function saveAutorizationInformationOnQuote(
+        CartInterface $quote,
+        ResourceInstallmentPlan|ResourcePayment $payment
+    ): void {
         $quotePayment = $quote->getPayment();
         $quotePayment->setAdditionalInformation('is_authorized', true);
         $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
@@ -908,12 +1134,21 @@ class Data
         }
     }
 
+    /**
+     * Is Oney Pending
+     *
+     * @param ResourcePayment|null $paymentResource
+     * @return bool
+     */
     public function isOneyPending(?ResourcePayment $paymentResource): bool
     {
         if ($paymentResource && isset($paymentResource->payment_method)) {
             $paymentMethod = $paymentResource->payment_method;
 
-            if ($paymentResource->is_paid === false && isset($paymentMethod['is_pending']) && isset($paymentMethod['type'])) {
+            if ($paymentResource->is_paid === false
+                && isset($paymentMethod['is_pending'])
+                && isset($paymentMethod['type'])
+            ) {
                 return (str_contains($paymentMethod['type'], 'oney') && $paymentMethod['is_pending'] === true);
             }
         }

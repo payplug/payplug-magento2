@@ -17,6 +17,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Filter\LocalizedToNormalized;
 use Magento\Framework\Locale\ResolverInterface as LocaleResolverInterface;
 use Magento\Framework\Message\MessageInterface;
@@ -33,6 +34,25 @@ use Throwable;
 
 class CreateMockOrder implements HttpPostActionInterface
 {
+    /**
+     * @param JsonFactory $resultJsonFactory
+     * @param CheckoutSession $checkoutSession
+     * @param CartRepositoryInterface $cartRepository
+     * @param CartManagementInterface $cartManagement
+     * @param Logger $logger
+     * @param OrderRepositoryInterface $orderRepository
+     * @param CartInterfaceFactory $cartInterfaceFactory
+     * @param Validator $formKeyValidator
+     * @param RequestInterface $request
+     * @param GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods
+     * @param StoreManagerInterface $storeManager
+     * @param ProductRepositoryInterface $productRepository
+     * @param CartModel $cartModel
+     * @param LocaleResolverInterface $localeResolver
+     * @param RequestQuantityProcessor $requestQuantityProcessor
+     * @param EventManagerInterface $eventManager
+     * @param ResponseInterface $response
+     */
     public function __construct(
         private readonly JsonFactory $resultJsonFactory,
         private readonly CheckoutSession $checkoutSession,
@@ -55,8 +75,7 @@ class CreateMockOrder implements HttpPostActionInterface
     }
 
     /**
-     * Create a mock order from a cart to pay with ApplePay.
-     * Callable from a GET
+     * Create a mock order from a cart to pay with ApplePay. Callable from a GET
      */
     public function execute(): Json
     {
@@ -173,7 +192,7 @@ class CreateMockOrder implements HttpPostActionInterface
             $response['order_id'] = $orderId;
             $response['base_amount'] = $grandTotal - $shippingAmount;
             $response['merchantSession'] = $merchantSession;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->info(sprintf("%s %s", $e->getMessage(), $e->getTraceAsString()));
             $response['message'] = $e->getMessage();
         }
@@ -181,6 +200,13 @@ class CreateMockOrder implements HttpPostActionInterface
         return $result->setData($response);
     }
 
+    /**
+     * Get configuration
+     *
+     * @param string $field
+     * @return string|null
+     * @throws NoSuchEntityException
+     */
     private function getApplePayConfig(string $field): ?string
     {
         return $this->storeManager->getStore()->getConfig('payment/payplug_payments_apple_pay/' . $field);
@@ -190,7 +216,11 @@ class CreateMockOrder implements HttpPostActionInterface
      * Creates a new quote as a guest from the items in the session quote.
      * This ensures that we do not reuse any existing address IDs from the previous quote
      * which can lead to "invalid address id" errors for guest checkouts.
+     *
+     * @param CartInterface $sessionQuote
+     * @return CartInterface
      * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     private function createNewGuestQuoteFromSession(CartInterface $sessionQuote): CartInterface
     {
@@ -232,6 +262,13 @@ class CreateMockOrder implements HttpPostActionInterface
         return $newQuote;
     }
 
+    /**
+     * Update billing address
+     *
+     * @param CartInterface $quote
+     * @param array $appleBilling
+     * @return void
+     */
     private function updateQuoteBillingAddress(CartInterface $quote, array $appleBilling): void
     {
         $billingAddress = $quote->getBillingAddress();
@@ -258,6 +295,13 @@ class CreateMockOrder implements HttpPostActionInterface
         }
     }
 
+    /**
+     * Update shipping address
+     *
+     * @param CartInterface $quote
+     * @param array $appleShipping
+     * @return void
+     */
     private function updateQuoteShippingAddress(CartInterface $quote, array $appleShipping): void
     {
         $shippingAddress = $quote->getShippingAddress();

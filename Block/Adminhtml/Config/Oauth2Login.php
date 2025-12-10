@@ -9,7 +9,12 @@ use Magento\Framework\Data\Form\Element\AbstractElement;
 
 class Oauth2Login extends AbstractOauth2
 {
-    /** @noinspection PhpMissingParentCallCommonInspection */
+    /**
+     * Get button html
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
     protected function _getElementHtml(AbstractElement $element): string
     {
         /** @var Button $buttonBlock */
@@ -26,6 +31,12 @@ class Oauth2Login extends AbstractOauth2
         return $buttonBlock->setData($data)->toHtml();
     }
 
+    /**
+     * Render block HTML
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
     public function render(AbstractElement $element): string
     {
         if ($this->isEmailSetForCurrentScope()) {
