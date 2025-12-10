@@ -7,6 +7,8 @@ use Magento\Framework\DataObject\IdentityInterface;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Payments\Helper\Config;
 
 class InstallmentPlan extends AbstractModel implements IdentityInterface
@@ -157,6 +159,12 @@ class InstallmentPlan extends AbstractModel implements IdentityInterface
         return $this->setData(self::STATUS, $status);
     }
 
+    /**
+     * Get scope
+     *
+     * @param OrderInterface $order
+     * @return string
+     */
     public function getScope(OrderInterface $order): string
     {
         if ($order->getStoreId()) {
@@ -168,6 +176,12 @@ class InstallmentPlan extends AbstractModel implements IdentityInterface
         return ScopeInterfaceDefault::SCOPE_DEFAULT;
     }
 
+    /**
+     * Get scope ID
+     *
+     * @param OrderInterface $order
+     * @return int
+     */
     public function getScopeId(OrderInterface $order): int
     {
         if ($order->getStoreId()) {
@@ -184,9 +198,11 @@ class InstallmentPlan extends AbstractModel implements IdentityInterface
     /**
      * Retrive an installment plan
      *
-     * @param int|null $store
-     *
-     * @return \Payplug\Resource\InstallmentPlan
+     * @param int|string $store
+     * @param string|null $scope
+     * @return \Payplug\Resource\InstallmentPlan|null
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      */
     public function retrieve($store = null, ?string $scope = ScopeInterface::SCOPE_STORE)
     {

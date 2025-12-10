@@ -10,6 +10,13 @@ use Magento\Payment\Model\MethodInterface;
 
 class PayplugPayment extends Config
 {
+    /**
+     * Get the value of a configuration field.
+     *
+     * @param string $field
+     * @param int|string $storeId
+     * @return mixed|string|true|null
+     */
     public function getValue($field, $storeId = null)
     {
         if ($field === 'order_place_redirect_url') {

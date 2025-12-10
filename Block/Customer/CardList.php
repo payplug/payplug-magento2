@@ -6,6 +6,7 @@ namespace Payplug\Payments\Block\Customer;
 
 use Magento\Customer\Model\Session;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Payplug\Payments\Helper\Card;
@@ -13,6 +14,13 @@ use Payplug\Payments\Model\Customer\Card as CustomerCard;
 
 class CardList extends Template
 {
+    /**
+     * @param Context $context
+     * @param Session $customerSession
+     * @param Card $helper
+     * @param FormKey $formKey
+     * @param array $data
+     */
     public function __construct(
         Context $context,
         private Session $customerSession,
@@ -35,6 +43,9 @@ class CardList extends Template
 
     /**
      * Format card expiration date
+     *
+     * @param string $date
+     * @return string
      */
     public function getFormattedExpDate(string $date): string
     {
@@ -43,6 +54,10 @@ class CardList extends Template
 
     /**
      * Build delete card url
+     *
+     * @param int $customerCardId
+     * @return string
+     * @throws LocalizedException
      */
     public function getDeleteCardUrl(int $customerCardId): string
     {

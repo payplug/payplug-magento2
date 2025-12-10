@@ -2,6 +2,8 @@
 
 namespace Payplug\Payments\Helper;
 
+use DateMalformedStringException;
+use Exception;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Directory\Model\CountryFactory;
@@ -10,13 +12,22 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Locale\Resolver;
-use Magento\Quote\Model\Quote;
+use Magento\Payment\Helper\Data as PaymentDataHelper;
+use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
+use Payplug\Exception\ConnectionException;
+use Payplug\Exception\HttpException;
 use Payplug\Exception\PayplugException;
+use Payplug\Exception\UnexpectedAPIResponseException;
 use Payplug\OneySimulation;
+use Payplug\Payments\Gateway\Config\Oney as OneyConfig;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Api\Login;
@@ -27,11 +38,11 @@ use Payplug\Payments\Model\OneySimulation\Schedule;
 class Oney extends AbstractHelper
 {
     public const ALLOWED_OPERATIONS_BY_PAYMENT = [
-        \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE => [
+        OneyConfig::METHOD_CODE => [
             'x3_with_fees' => '3x',
             'x4_with_fees' => '4x',
         ],
-        \Payplug\Payments\Gateway\Config\OneyWithoutFees::METHOD_CODE => [
+        OneyWithoutFees::METHOD_CODE => [
             'x3_without_fees' => '3x',
             'x4_without_fees' => '4x',
         ],
@@ -40,120 +51,55 @@ class Oney extends AbstractHelper
     public const MAX_ITEMS = 1000;
 
     /**
-     * @var Config
-     */
-    private $payplugConfig;
-
-    /**
-     * @var StoreManagerInterface
-     */
-    private $storeManager;
-
-    /**
-     * @var PricingHelper
-     */
-    private $pricingHelper;
-
-    /**
-     * @var CountryFactory
-     */
-    private $countryFactory;
-
-    /**
-     * @var Resolver
-     */
-    private $localeResolver;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @var CheckoutSession
-     */
-    private $checkoutSession;
-
-    /**
-     * @var CustomerSession
-     */
-    private $customerSession;
-
-    /**
-     * @var \Magento\Payment\Helper\Data
-     */
-    private $paymentHelper;
-
-    /**
-     * @var Login
-     */
-    private $login;
-
-    /**
-     * @var WriterInterface
-     */
-    private $writer;
-
-    /**
      * @var AdapterInterface
      */
-    private $resourceConnection;
-
+    private AdapterInterface $resourceConnection;
     /**
-     * @var string
+     * @var string|null
      */
-    private $oneyMethod;
+    private ?string $oneyMethod = null;
 
     /**
-     * @param Context                      $context
-     * @param Config                       $payplugConfig
-     * @param StoreManagerInterface        $storeManager
-     * @param PricingHelper                $pricingHelper
-     * @param CountryFactory               $countryFactory
-     * @param Resolver                     $localeResolver
-     * @param Logger                       $logger
-     * @param CheckoutSession              $checkoutSession
-     * @param CustomerSession              $customerSession
-     * @param \Magento\Payment\Helper\Data $paymentHelper
-     * @param Login                        $login
-     * @param WriterInterface              $writer
-     * @param ResourceConnection           $resourceConnection
+     * @param Context $context
+     * @param Config $payplugConfig
+     * @param StoreManagerInterface $storeManager
+     * @param PricingHelper $pricingHelper
+     * @param CountryFactory $countryFactory
+     * @param Resolver $localeResolver
+     * @param Logger $logger
+     * @param CheckoutSession $checkoutSession
+     * @param CustomerSession $customerSession
+     * @param PaymentDataHelper $paymentHelper
+     * @param Login $login
+     * @param WriterInterface $writer
+     * @param ResourceConnection $resourceConnection
      */
     public function __construct(
         Context $context,
-        Config $payplugConfig,
-        StoreManagerInterface $storeManager,
-        PricingHelper $pricingHelper,
-        CountryFactory $countryFactory,
-        Resolver $localeResolver,
-        Logger $logger,
-        CheckoutSession $checkoutSession,
-        CustomerSession $customerSession,
-        \Magento\Payment\Helper\Data $paymentHelper,
-        Login $login,
-        WriterInterface $writer,
+        private readonly Config $payplugConfig,
+        private readonly StoreManagerInterface $storeManager,
+        private readonly PricingHelper $pricingHelper,
+        private readonly CountryFactory $countryFactory,
+        private readonly Resolver $localeResolver,
+        private readonly Logger $logger,
+        private readonly CheckoutSession $checkoutSession,
+        private readonly CustomerSession $customerSession,
+        private readonly PaymentDataHelper $paymentHelper,
+        private readonly Login $login,
+        private readonly WriterInterface $writer,
         ResourceConnection $resourceConnection
     ) {
         parent::__construct($context);
 
-        $this->payplugConfig = $payplugConfig;
-        $this->storeManager = $storeManager;
-        $this->pricingHelper = $pricingHelper;
-        $this->countryFactory = $countryFactory;
-        $this->localeResolver = $localeResolver;
-        $this->logger = $logger;
-        $this->checkoutSession = $checkoutSession;
-        $this->customerSession = $customerSession;
-        $this->paymentHelper = $paymentHelper;
-        $this->login = $login;
-        $this->writer = $writer;
         $this->resourceConnection = $resourceConnection->getConnection();
     }
 
     /**
-     * Check Oney availability
+     * Can display Oney payment method
      *
      * @return bool
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     public function canDisplayOney(): bool
     {
@@ -211,21 +157,22 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * Check if merchand has an italian PayPlug account
+     * Is merchand Italian
      *
      * @return bool
+     * @throws NoSuchEntityException
      */
-    public function isMerchandItalian()
+    public function isMerchandItalian(): bool
     {
         return $this->getMerchandCountry() === 'IT';
     }
 
     /**
-     * Get more info url
+     * Get More Info Url
      *
      * @return string
      */
-    public function getMoreInfoUrl()
+    public function getMoreInfoUrl(): string
     {
         return 'https://www.payplug.com/hubfs/ONEY/payplug-italy.pdf';
     }
@@ -235,7 +182,7 @@ class Oney extends AbstractHelper
      *
      * @return string
      */
-    public function getMoreInfoUrlWithoutFees()
+    public function getMoreInfoUrlWithoutFees(): string
     {
         return 'https://www.payplug.com/hubfs/ONEY/payplug-italy-no-fees.pdf';
     }
@@ -244,6 +191,7 @@ class Oney extends AbstractHelper
      * Get PayPlug merchand country
      *
      * @return mixed|string
+     * @throws NoSuchEntityException
      */
     private function getMerchandCountry()
     {
@@ -288,7 +236,7 @@ class Oney extends AbstractHelper
             );
 
             return $country;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error('Could not retrieve Payplug merchand country', [
                 'exception' => $e,
             ]);
@@ -334,9 +282,7 @@ class Oney extends AbstractHelper
      * @param int|null    $storeId
      * @param string|null $currency
      *
-     * @return bool
-     *
-     * @throws \Exception
+     * @throws Exception
      */
     private function validateAmount($amount, $storeId = null, $currency = null): bool
     {
@@ -344,7 +290,7 @@ class Oney extends AbstractHelper
         $amount = (int) round($amount * 100);
 
         if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
-            throw new \Exception(__(
+            throw new Exception(__(
                 'To pay with Oney, the total amount of your cart must be between %1 and %2.',
                 $this->pricingHelper->currency($amountsByCurrency['min_amount'] / 100, true, false),
                 $this->pricingHelper->currency($amountsByCurrency['max_amount'] / 100, true, false)
@@ -357,10 +303,11 @@ class Oney extends AbstractHelper
     /**
      * Get Oney available amounts
      *
-     * @param null|mixed  $storeId
+     * @param null|mixed $storeId
      * @param null|string $currency
      *
      * @return array|bool
+     * @throws NoSuchEntityException
      */
     public function getOneyAmounts($storeId = null, $currency = null)
     {
@@ -371,7 +318,12 @@ class Oney extends AbstractHelper
             $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
         }
 
-        return $this->payplugConfig->getAmountsByCurrency($currency, (int)$storeId, Config::ONEY_CONFIG_PATH, 'oney_' );
+        return $this->payplugConfig->getAmountsByCurrency(
+            $currency,
+            (int)$storeId,
+            Config::ONEY_CONFIG_PATH,
+            'oney_'
+        );
     }
 
     /**
@@ -382,7 +334,7 @@ class Oney extends AbstractHelper
      *
      * @return bool
      *
-     * @throws \Exception
+     * @throws Exception
      */
     private function validateCountry($countryCode, $throwException = true): bool
     {
@@ -404,7 +356,7 @@ class Oney extends AbstractHelper
                 $country = $this->countryFactory->create()->loadByCode($oneyCountryCode);
                 $countryNames[] = $country->getName($locale);
             }
-            throw new \Exception(__(
+            throw new Exception(__(
                 'Shipping and billing addresses must be both located in %1 to pay with Oney.',
                 implode(', ', $countryNames)
             ));
@@ -417,6 +369,8 @@ class Oney extends AbstractHelper
      * Get country for Oney
      *
      * @return string
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
      */
     private function getDefaultCountry(): string
     {
@@ -453,10 +407,8 @@ class Oney extends AbstractHelper
      * Get shipping method mapping for Oney
      *
      * @param string|null $shippingMethod
-     *
-     * @return array
      */
-    public function getShippingMethodMapping($shippingMethod = null)
+    public function getShippingMethodMapping($shippingMethod = null): array
     {
         if ($shippingMethod === null) {
             return [
@@ -474,19 +426,24 @@ class Oney extends AbstractHelper
     /**
      * Get Oney simulation for checkout
      *
-     * @param float  $amount
-     * @param string $billingCountry
-     * @param string $shippingCountry
-     * @param string $paymentMethod
-     *
+     * @param float|null $amount
+     * @param string|null $billingCountry
+     * @param string|null $shippingCountry
+     * @param string|null $paymentMethod
      * @return Result
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    public function getOneySimulationCheckout($amount, $billingCountry, $shippingCountry, $paymentMethod = null): Result
-    {
+    public function getOneySimulationCheckout(
+        ?float $amount,
+        ?string $billingCountry,
+        ?string $shippingCountry,
+        ?string $paymentMethod = null
+    ): Result {
         $qty = $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems());
         try {
             $this->oneyCheckoutValidation($billingCountry, $shippingCountry, $qty);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $simulationResult = new Result();
             $simulationResult->setSuccess(false);
             $simulationResult->setMessage($e->getMessage());
@@ -506,11 +463,9 @@ class Oney extends AbstractHelper
     /**
      * Count cart items
      *
-     * @param array|Quote\Item[] $items
-     *
-     * @return int
+     * @param array|QuoteItem[] $items
      */
-    public function getCartItemsCount($items)
+    public function getCartItemsCount($items): int
     {
         $count = 0;
         foreach ($items as $item) {
@@ -534,15 +489,15 @@ class Oney extends AbstractHelper
      * @param string $billingCountry
      * @param string $shippingCountry
      *
-     * @throws \Exception
+     * @throws Exception
      */
-    private function validateCheckoutCountries($billingCountry, $shippingCountry)
+    private function validateCheckoutCountries($billingCountry, $shippingCountry): void
     {
         if (!empty($billingCountry) && !empty($shippingCountry) && $billingCountry !== $shippingCountry) {
-            throw new \Exception(__('Shipping and billing adresses must be both in the same country.'));
+            throw new Exception(__('Shipping and billing adresses must be both in the same country.'));
         }
         if (!$this->validateCountry($billingCountry, false)) {
-            throw new \Exception(__('Unavailable for the specified country'));
+            throw new Exception(__('Unavailable for the specified country'));
         }
     }
 
@@ -551,12 +506,12 @@ class Oney extends AbstractHelper
      *
      * @param int $countItems
      *
-     * @throws \Exception
+     * @throws Exception
      */
-    private function validateItemsCount($countItems)
+    private function validateItemsCount($countItems): void
     {
         if ($countItems >= self::MAX_ITEMS) {
-            throw new \Exception(__('To pay with Oney, your cart must contain less than %1 items.', self::MAX_ITEMS));
+            throw new Exception(__('To pay with Oney, your cart must contain less than %1 items.', self::MAX_ITEMS));
         }
     }
 
@@ -568,17 +523,17 @@ class Oney extends AbstractHelper
      *
      * @return string
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function validateOneyOption($paymentMethod, $oneyOption)
     {
         if (empty($oneyOption)) {
-            throw new \Exception(__('Please select a payment option for Oney.'));
+            throw new Exception(__('Please select a payment option for Oney.'));
         }
 
         $oneyOptionKey = array_search($oneyOption, self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? []);
         if ($oneyOptionKey === false) {
-            throw new \Exception(__('Please select a valid payment option for Oney.'));
+            throw new Exception(__('Please select a valid payment option for Oney.'));
         }
 
         return $oneyOptionKey;
@@ -591,9 +546,9 @@ class Oney extends AbstractHelper
      * @param string $shippingCountry
      * @param int    $countItems
      *
-     * @throws \Exception
+     * @throws Exception
      */
-    public function oneyCheckoutValidation($billingCountry, $shippingCountry, $countItems)
+    public function oneyCheckoutValidation($billingCountry, $shippingCountry, $countItems): void
     {
         $this->validateCheckoutCountries($billingCountry, $shippingCountry);
         $this->validateItemsCount($countItems);
@@ -607,9 +562,9 @@ class Oney extends AbstractHelper
      * @param int|null    $storeId
      * @param string|null $currency
      *
-     * @throws \Exception
+     * @throws Exception
      */
-    public function oneyValidation($amount, $countryCode, $storeId = null, $currency = null)
+    public function oneyValidation($amount, $countryCode, $storeId = null, $currency = null): void
     {
         $this->validateAmount($amount, $storeId, $currency);
         $this->validateCountry($countryCode);
@@ -618,20 +573,21 @@ class Oney extends AbstractHelper
     /**
      * Get Oney simulation
      *
-     * @param float|null  $amount
+     * @param float|null $amount
      * @param string|null $countryCode
-     * @param int|null    $qty
-     * @param bool        $validationOnly
-     * @param string      $paymentMethod
-     *
+     * @param int|null $qty
+     * @param bool $validationOnly
+     * @param string|null $paymentMethod
      * @return Result
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
     public function getOneySimulation(
-        $amount = null,
-        $countryCode = null,
-        $qty = null,
-        $validationOnly = false,
-        $paymentMethod = null
+        ?float $amount = null,
+        ?string $countryCode = null,
+        ?int $qty = null,
+        bool $validationOnly = false,
+        ?string $paymentMethod = null
     ): Result {
         if ($amount === null) {
             $amount = $this->checkoutSession->getQuote()->getGrandTotal();
@@ -660,7 +616,7 @@ class Oney extends AbstractHelper
             $this->logger->error($e->__toString());
 
             return $this->getMockSimulationResult($paymentMethod);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $simulationResult = new Result();
             $simulationResult->setSuccess(false);
             $simulationResult->setMessage($e->getMessage());
@@ -677,7 +633,7 @@ class Oney extends AbstractHelper
      *
      * @return Result
      */
-    private function getMockSimulationResult($paymentMethod)
+    private function getMockSimulationResult($paymentMethod): Result
     {
         $simulationResult = new Result();
         $simulationResult->setSuccess(true);
@@ -699,11 +655,18 @@ class Oney extends AbstractHelper
     /**
      * Get Oney simulation
      *
-     * @param float  $amount
+     * @param float $amount
      * @param string $countryCode
      * @param string $paymentMethod
      *
      * @return Result
+     * @throws NoSuchEntityException
+     * @throws DateMalformedStringException
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
+     * @throws ConnectionException
+     * @throws HttpException
+     * @throws UnexpectedAPIResponseException
      */
     private function getSimulation($amount, $countryCode, $paymentMethod): Result
     {
@@ -762,12 +725,13 @@ class Oney extends AbstractHelper
      * Get available Oney method
      *
      * @return string
+     * @throws LocalizedException
      */
-    private function getOneyMethod()
+    private function getOneyMethod(): string
     {
         if ($this->oneyMethod === null) {
             $oneyMethods = [
-                \Payplug\Payments\Gateway\Config\Oney::METHOD_CODE,
+                OneyConfig::METHOD_CODE,
                 OneyWithoutFees::METHOD_CODE,
             ];
             $this->oneyMethod = '';

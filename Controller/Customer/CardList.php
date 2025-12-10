@@ -14,6 +14,11 @@ use Magento\Framework\View\Result\PageFactory;
 
 class CardList extends Action
 {
+    /**
+     * @param Context $context
+     * @param Session $customerSession
+     * @param PageFactory $pageFactory
+     */
     public function __construct(
         Context $context,
         private Session $customerSession,
