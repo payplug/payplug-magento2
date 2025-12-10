@@ -16,6 +16,11 @@ use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
 
 class HidePaymentMethodForRestrictedCountries implements ObserverInterface
 {
+    /**
+     * @param PayplugDataHelper $payplugDataHelper
+     * @param GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod
+     * @param ConfigHelper $configHelper
+     */
     public function __construct(
         private readonly PayplugDataHelper $payplugDataHelper,
         private readonly GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod,
@@ -23,6 +28,12 @@ class HidePaymentMethodForRestrictedCountries implements ObserverInterface
     ) {
     }
 
+    /**
+     * Hide payment method if shipping address is not in allowed countries
+     *
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(Observer $observer): void
     {
         /** @var CartInterface $quote */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Controller\ApplePay;
 
+use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
@@ -14,9 +15,18 @@ use Payplug\Payments\Controller\Payment\AbstractPayment;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
+use Throwable;
 
 class GetTransactionData extends AbstractPayment
 {
+    /**
+     * @param Context $context
+     * @param Session $checkoutSession
+     * @param OrderFactory $salesOrderFactory
+     * @param Logger $logger
+     * @param Data $payplugHelper
+     * @param GetCurrentOrder $getCurrentOrder
+     */
     public function __construct(
         Context $context,
         Session $checkoutSession,
@@ -47,7 +57,7 @@ class GetTransactionData extends AbstractPayment
             $order->getPayment()->unsAdditionalInformation('merchand_session');
 
             if (empty($merchandSession)) {
-                throw new \Exception('Could not retrieve merchand session');
+                throw new Exception('Could not retrieve merchand session');
             }
 
             $response->setData([
@@ -64,7 +74,7 @@ class GetTransactionData extends AbstractPayment
             $response->setData($responseParams);
 
             return $response;
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->error('Could not retrieve apple pay transaction data', [
                 'message' => $e->getMessage(),
                 'exception' => $e,

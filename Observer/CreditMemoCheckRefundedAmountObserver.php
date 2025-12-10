@@ -2,79 +2,49 @@
 
 namespace Payplug\Payments\Observer;
 
+use Exception;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
-use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
-use Magento\Store\Model\ScopeInterface;
-use Payplug\Exception\PayplugException;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Helper\Data;
-use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Logger\Logger as PayplugLogger;
 
 class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
 {
     /**
-     * @var Data
-     */
-    private $helper;
-
-    /**
-     * @var ManagerInterface
-     */
-    private $messageManager;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @var Http
-     */
-    private $request;
-
-    /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
-
-    /**
-     * @param Data             $helper
+     * @param Data $helper
      * @param ManagerInterface $messageManager
-     * @param Logger           $logger
-     * @param Http             $request
-     * @param OrderRepository  $orderRepository
+     * @param PayplugLogger $payplugLogger
+     * @param Http $request
+     * @param OrderRepository $orderRepository
      */
     public function __construct(
-        Data $helper,
-        ManagerInterface $messageManager,
-        Logger $logger,
-        Http $request,
-        OrderRepository $orderRepository
+        private readonly Data $helper,
+        private readonly ManagerInterface $messageManager,
+        private readonly PayplugLogger $payplugLogger,
+        private readonly Http $request,
+        private readonly OrderRepository $orderRepository
     ) {
-        $this->helper = $helper;
-        $this->messageManager = $messageManager;
-        $this->logger = $logger;
-        $this->request = $request;
-        $this->orderRepository = $orderRepository;
     }
 
     /**
-     * Check if refund can be created and its maximum amount
+     * Check if the credit memo amount is lower than the order total refunded
      *
      * @param EventObserver $observer
+     * @return void
      */
-    public function execute(EventObserver $observer)
+    public function execute(EventObserver $observer): void
     {
         // Online refunds are only available when creating a credit memo from an invoice
         if (!$this->request->getParam('invoice_id')) {
             return;
         }
+
         // We only need to display messages for new credit memos
         if ($this->request->getParam('creditmemo_id')) {
             return;
@@ -84,7 +54,10 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
             $order = $this->orderRepository->get($this->request->getParam('order_id'));
 
             $payplugPayment = $this->helper->getOrderPayment($order->getIncrementId());
-            $payment = $payplugPayment->retrieve($payplugPayment->getScopeId($order), $payplugPayment->getScope($order));
+            $payment = $payplugPayment->retrieve(
+                $payplugPayment->getScopeId($order),
+                $payplugPayment->getScope($order)
+            );
 
             if ($order->getPayment()->getMethod() === Oney::METHOD_CODE ||
                 $order->getPayment()->getMethod() === OneyWithoutFees::METHOD_CODE
@@ -117,12 +90,12 @@ class CreditMemoCheckRefundedAmountObserver implements ObserverInterface
             $this->messageManager->addErrorMessage(
                 sprintf(__('Some refunds were made directly in Payplug. Maximum refund amount is %s.'), $maximumAmount)
             );
-        } catch (NoSuchEntityException $e) {
-            // Could not retrieve payplug payment from order / Meaning payplug was not used for this order
-        } catch (PayplugException $e) {
-            $this->logger->error($e->__toString());
-        } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+        } catch (NoSuchEntityException) {
+            $this->payplugLogger->info(
+                'Could not retrieve payplug payment from order / Meaning payplug was not used for this order'
+            );
+        } catch (Exception $e) {
+            $this->payplugLogger->error($e->getMessage());
         }
     }
 }

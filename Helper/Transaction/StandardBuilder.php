@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
-use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Sales\Api\Data\OrderInterface;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
@@ -20,16 +19,27 @@ use Payplug\Payments\Logger\Logger;
 
 class StandardBuilder extends AbstractBuilder
 {
+    /**
+     * @param Card $cardHelper
+     * @param Context $context
+     * @param Config $payplugConfig
+     * @param Country $countryHelper
+     * @param Phone $phoneHelper
+     * @param Logger $logger
+     * @param FormKey $formKey
+     * @param UriHelper $uriHelper
+     */
     public function __construct(
+        private readonly Card $cardHelper,
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
         Phone $phoneHelper,
         Logger $logger,
         FormKey $formKey,
-        private Card $cardHelper
+        UriHelper $uriHelper
     ) {
-        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey);
+        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey, $uriHelper);
     }
 
     /**

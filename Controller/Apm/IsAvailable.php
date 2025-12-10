@@ -16,13 +16,21 @@ use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
 
 class IsAvailable extends Action
 {
+    /**
+     * @param JsonFactory $resultJsonFactory
+     * @param Config $configHelper
+     * @param GetAllowedCountriesPerPaymentMethod $allowedCountriesPerPaymentMethod
+     * @param CountryCollectionFactory $countryCollectionFactory
+     * @param Logger $logger
+     * @param Context $context
+     */
     public function __construct(
-        Context $context,
         private readonly JsonFactory $resultJsonFactory,
         private readonly Config $configHelper,
         private readonly GetAllowedCountriesPerPaymentMethod $allowedCountriesPerPaymentMethod,
         private readonly CountryCollectionFactory $countryCollectionFactory,
-        private readonly Logger $logger
+        private readonly Logger $logger,
+        Context $context
     ) {
         parent::__construct($context);
     }
@@ -72,7 +80,6 @@ class IsAvailable extends Action
                             implode(',', $countryNames)
                         );
                     }
-
 
                     $result->setData([
                         'success' => false,

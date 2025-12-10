@@ -11,6 +11,11 @@ use Payplug\Payments\Helper\Config;
 
 class Formjs extends Template
 {
+    /**
+     * @param Context $context
+     * @param Config $helper
+     * @param array $data
+     */
     public function __construct(
         Context $context,
         private Config $helper,

@@ -9,12 +9,22 @@ use Payplug\Payments\Helper\Config as PayplugConfigHelper;
 
 class GetAllowedCountriesPerPaymentMethod
 {
+    /**
+     * @param PayplugConfigHelper $payplugConfigHelper
+     * @param SerializerInterface $serializer
+     */
     public function __construct(
         private readonly PayplugConfigHelper $payplugConfigHelper,
         private readonly SerializerInterface $serializer
     ) {
     }
 
+    /**
+     * Get allowed countries per payment method
+     *
+     * @param string $paymentMethod
+     * @return array
+     */
     public function execute(string $paymentMethod): array
     {
         $paymentMethod = str_replace('payplug_payments_', '', $paymentMethod);

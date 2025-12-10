@@ -19,6 +19,16 @@ use Payplug\Payments\Model\Payment\ApplePay\ConfigProvider;
 
 abstract class AbstractButton extends Template
 {
+    /**
+     * @param ConfigProvider $configProvider
+     * @param Json $jsonSerializer
+     * @param StoreManagerInterface $storeManager
+     * @param CheckoutSession $checkoutSession
+     * @param ApplePay $applePayHelper
+     * @param ProductRepositoryInterface $productRepository
+     * @param Context $context
+     * @param array $data
+     */
     public function __construct(
         private readonly ConfigProvider $configProvider,
         private readonly Json $jsonSerializer,
@@ -32,6 +42,11 @@ abstract class AbstractButton extends Template
         parent::__construct($context, $data);
     }
 
+    /**
+     * Get ApplePay configuration
+     *
+     * @return array
+     */
     public function getConfig(): array
     {
         $config = $this->configProvider->getConfig();
@@ -41,11 +56,21 @@ abstract class AbstractButton extends Template
         return $applePayConfig;
     }
 
+    /**
+     * Get ApplePay configuration as JSON
+     *
+     * @return string
+     */
     public function getConfigJson(): string
     {
         return $this->jsonSerializer->serialize($this->getConfig());
     }
 
+    /**
+     * Check if quote has bundle product item
+     *
+     * @return bool
+     */
     public function quoteHasBundleProductItem(): bool
     {
         try {
@@ -63,6 +88,12 @@ abstract class AbstractButton extends Template
         return false;
     }
 
+    /**
+     * Get currency code
+     *
+     * @return string
+     * @throws NoSuchEntityException
+     */
     private function getCurrencyCode(): string
     {
         return $this->storeManager->getStore()->getCurrentCurrencyCode();

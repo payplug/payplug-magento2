@@ -39,8 +39,10 @@ $language = $block->getAdditionalData('language');
             <span><?= $escaper->escapeHtml(__('Mobile')) ?></span>
         </label>
         <div class="admin__field-control">
-            <input type="text" id="<?= $escaper->escapeHtmlAttr($code) ?>_sent_by_value" name="payment[sent_by_value]"
-                   title="<?= $escaper->escapeHtmlAttr(__('Mobile / Email')) ?>" class="admin__control-text required-entry"
+            <input type="text" id="<?= $escaper->escapeHtmlAttr($code) ?>_sent_by_value"
+                   name="payment[sent_by_value]"
+                   title="<?= $escaper->escapeHtmlAttr(__('Mobile / Email')) ?>"
+                   class="admin__control-text required-entry"
                    value="<?= /* @noEscape */ $block->getAdditionalData('sent_by_value') ?>"/>
         </div>
     </div>

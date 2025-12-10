@@ -12,6 +12,11 @@ use Payplug\Payments\Helper\Config;
 
 class IsAvailable extends Action
 {
+    /**
+     * @param Context $context
+     * @param JsonFactory $resultJsonFactory
+     * @param Config $configHelper
+     */
     public function __construct(
         Context $context,
         private JsonFactory $resultJsonFactory,

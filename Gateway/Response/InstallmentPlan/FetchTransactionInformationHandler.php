@@ -18,6 +18,15 @@ use Payplug\Payments\Service\CreateOrderInvoice;
 
 class FetchTransactionInformationHandler implements HandlerInterface
 {
+    /**
+     * @param SubjectReader $subjectReader
+     * @param Logger $payplugLogger
+     * @param PaymentFactory $payplugPaymentFactory
+     * @param OrderSender $orderSender
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param Data $payplugHelper
+     * @param MessageQueuePublisherInterface $messageQueuePublisher
+     */
     public function __construct(
         private readonly SubjectReader $subjectReader,
         private readonly Logger $payplugLogger,
@@ -29,6 +38,13 @@ class FetchTransactionInformationHandler implements HandlerInterface
     ) {
     }
 
+    /**
+     * Handle response
+     *
+     * @param array $handlingSubject
+     * @param array $response
+     * @return void
+     */
     public function handle(array $handlingSubject, array $response): void
     {
         $paymentDO = $this->subjectReader->readPayment($handlingSubject);
@@ -56,14 +72,16 @@ class FetchTransactionInformationHandler implements HandlerInterface
 
                     try {
                         $orderPayment = $this->orderPaymentRepository->get($paymentId, 'payment_id');
-                    } catch (NoSuchEntityException $e) {
-                        /** @var \Payplug\Payments\Model\Order\Payment $orderPayment */
+                    } catch (NoSuchEntityException) {
                         $orderPayment = $this->payplugPaymentFactory->create();
                         $orderPayment->setOrderId($order->getIncrementId());
                         $orderPayment->setPaymentId($paymentId);
                         $orderPayment->setIsSandbox(!$payplugInstallmentPlan->is_live);
                     }
-                    $payplugPayment = $orderPayment->retrieve($orderPayment->getScopeId($order), $orderPayment->getScope($order));
+                    $payplugPayment = $orderPayment->retrieve(
+                        $orderPayment->getScopeId($order),
+                        $orderPayment->getScope($order)
+                    );
 
                     if ($payplugPayment->is_paid && !$orderPayment->isInstallmentPlanPaymentProcessed()) {
                         $this->sendOrderEmail($order);
@@ -84,7 +102,10 @@ class FetchTransactionInformationHandler implements HandlerInterface
                             $order->setState(Order::STATE_PROCESSING);
                         }
 
-                        $this->messageQueuePublisher->publish(CreateOrderInvoice::MESSAGE_QUEUE_TOPIC, (int)$order->getId());
+                        $this->messageQueuePublisher->publish(
+                            CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                            (int)$order->getId()
+                        );
                         $this->payplugLogger->info(
                             sprintf(
                                 '%s: "%s" message published for order %s.',

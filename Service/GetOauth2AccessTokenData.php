@@ -20,6 +20,14 @@ class GetOauth2AccessTokenData
     private const CACHE_KEY = 'payplug_oauth2_access_token_data';
     private const EXPIRATION_THRESHOLD = 10;
 
+    /**
+     * @param ReinitableConfigInterface $scopeConfig
+     * @param JsonValidator $jsonValidator
+     * @param SerializerInterface $serializer
+     * @param EncryptorInterface $encryptor
+     * @param CacheInterface $cache
+     * @param GetOauth2ClientData $getOauth2ClientData
+     */
     public function __construct(
         private readonly ReinitableConfigInterface $scopeConfig,
         private readonly JsonValidator $jsonValidator,
@@ -31,6 +39,11 @@ class GetOauth2AccessTokenData
     }
 
     /**
+     * Get the access token data from cache or generate a new one if needed
+     *
+     * @param int|null $websiteId
+     * @param bool $forceNenewal
+     * @return array|null
      * @throws LocalizedException
      */
     public function execute(
@@ -61,6 +74,10 @@ class GetOauth2AccessTokenData
     }
 
     /**
+     * Regenerate the access token data
+     *
+     * @param int|null $websiteId
+     * @return array
      * @throws LocalizedException
      */
     private function regenerate(?int $websiteId = null): array
@@ -97,6 +114,13 @@ class GetOauth2AccessTokenData
         return $newAccessTokenData;
     }
 
+    /**
+     * Get config value
+     *
+     * @param string $path
+     * @param int|null $websiteId
+     * @return mixed
+     */
     private function getConfigValue(string $path, ?int $websiteId = null)
     {
         return $this->scopeConfig->getValue(
@@ -106,6 +130,12 @@ class GetOauth2AccessTokenData
         );
     }
 
+    /**
+     * Get current environment mode
+     *
+     * @param int|null $websiteId
+     * @return mixed
+     */
     private function getCurrentEnvMode(?int $websiteId = null)
     {
         return $this->getConfigValue(

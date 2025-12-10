@@ -13,6 +13,11 @@ use Payplug\Payments\Helper\Config;
 
 class Logout extends Field
 {
+    /**
+     * @param Context $context
+     * @param Config $helper
+     * @param array $data
+     */
     public function __construct(
         Context $context,
         private Config $helper,

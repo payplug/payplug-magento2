@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Payplug\Payments\Block\Adminhtml\Config;
 
 use Magento\Backend\Block\Template\Context;
-use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Store\Model\ScopeInterface;
@@ -13,18 +12,36 @@ use Payplug\Payments\Helper\Config;
 
 class LegacyAuthInfo extends Field
 {
+    /**
+     * @param Config $helper
+     * @param Context $context
+     * @param array $data
+     */
     public function __construct(
+        private readonly Config $helper,
         Context $context,
-        private Config $helper,
         array $data = []
     ) {
         parent::__construct($context, $data);
     }
 
+    /**
+     * Retrieve element HTML markup
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
     protected function _getElementHtml(AbstractElement $element): string
     {
-        $isLegacyConnected = $this->helper->isLegacyConnected(ScopeInterface::SCOPE_WEBSITE, (int)$this->_request->getParam('website'));
-        $isOauthConnected = $this->helper->isOauthConnected(ScopeInterface::SCOPE_WEBSITE, (int)$this->_request->getParam('website'));
+        $isLegacyConnected = $this->helper->isLegacyConnected(
+            ScopeInterface::SCOPE_WEBSITE,
+            (int)$this->_request->getParam('website')
+        );
+
+        $isOauthConnected = $this->helper->isOauthConnected(
+            ScopeInterface::SCOPE_WEBSITE,
+            (int)$this->_request->getParam('website')
+        );
 
         if ($isLegacyConnected) {
             $message = __('Connected with <strong>%1</strong>', $this->helper->getConfigValue('email'));

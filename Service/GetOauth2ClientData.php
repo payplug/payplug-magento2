@@ -14,6 +14,12 @@ use Payplug\Payments\Helper\Config as ConfigHelper;
 
 class GetOauth2ClientData
 {
+    /**
+     * @param ReinitableConfigInterface $scopeConfig
+     * @param JsonValidator $jsonValidator
+     * @param SerializerInterface $serializer
+     * @param EncryptorInterface $encryptor
+     */
     public function __construct(
         private readonly ReinitableConfigInterface $scopeConfig,
         private readonly JsonValidator $jsonValidator,
@@ -22,6 +28,13 @@ class GetOauth2ClientData
     ) {
     }
 
+    /**
+     * Get the oauth client data from config
+     *
+     * @param string $currentEnvMode
+     * @param int|null $websiteId
+     * @return array|null
+     */
     public function execute(string $currentEnvMode, ?int $websiteId = null): ?array
     {
         $encryptedClientDataValue = $this->scopeConfig->getValue(

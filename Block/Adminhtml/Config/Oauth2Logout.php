@@ -20,6 +20,17 @@ use Payplug\Payments\Service\GetOauth2ClientData;
 
 class Oauth2Logout extends AbstractOauth2
 {
+    /**
+     * @param ScopeConfigInterface $scopeConfig
+     * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
+     * @param State $appState
+     * @param TimezoneInterface $timezone
+     * @param GetOauth2ClientData $getOauth2ClientData
+     * @param ConfigDataCollectionFactory $configDatacollection
+     * @param Context $context
+     * @param array $data
+     * @param SecureHtmlRenderer|null $secureRenderer
+     */
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
@@ -39,7 +50,12 @@ class Oauth2Logout extends AbstractOauth2
         );
     }
 
-    /** @noinspection PhpMissingParentCallCommonInspection */
+    /**
+     * Retrieve element HTML markup
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
     protected function _getElementHtml(AbstractElement $element): string
     {
         /** @var Button $buttonBlock  */
@@ -93,6 +109,12 @@ HTML;
         return $info . '<br>' . $buttonBlock->setData($data)->toHtml();
     }
 
+    /**
+     * Render html
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
     public function render(AbstractElement $element): string
     {
         if (!$this->getEmailValue()) {
@@ -102,6 +124,11 @@ HTML;
         return parent::render($element);
     }
 
+    /**
+     * Get email value
+     *
+     * @return string|null
+     */
     private function getEmailValue(): ?string
     {
 
@@ -114,6 +141,11 @@ HTML;
         );
     }
 
+    /**
+     * Get access token data
+     *
+     * @return array|null
+     */
     private function getAccessTokenData(): ?array
     {
         try {
@@ -123,11 +155,21 @@ HTML;
         }
     }
 
+    /**
+     * Get current website
+     *
+     * @return int|null
+     */
     private function getCurrentWebsite(): ?int
     {
         return (int)$this->getRequest()->getParam('website') ?: null;
     }
 
+    /**
+     * Is developer mode
+     *
+     * @return bool
+     */
     private function isDeveloperMode(): bool
     {
         return $this->appState->getMode() === State::MODE_DEVELOPER;

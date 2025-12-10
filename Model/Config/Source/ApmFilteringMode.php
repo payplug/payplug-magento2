@@ -9,6 +9,11 @@ use Payplug\Payments\Helper\Config;
 
 class ApmFilteringMode implements OptionSourceInterface
 {
+    /**
+     * Get available APM filtering modes
+     *
+     * @return array[]
+     */
     public function toOptionArray(): array
     {
         return [

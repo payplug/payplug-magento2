@@ -10,6 +10,9 @@ class SalesInvoiceViewContext extends SalesViewContext
 {
     /**
      * Add Payplug update payment button on admin invoice view
+     *
+     * @param View $subject
+     * @return void
      */
     public function beforeSetLayout(View $subject): void
     {

@@ -6,11 +6,16 @@ namespace Payplug\Payments\Plugin\Adminhtml\Widget;
 
 use Magento\Backend\Block\Widget\Form\Container;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Order;
 use Payplug\Payments\Helper\Data;
 
 class SalesViewContext
 {
+    /**
+     * @param Data $payplugHelper
+     * @param FormKey $formKey
+     */
     public function __construct(
         private Data $payplugHelper,
         private FormKey $formKey
@@ -19,6 +24,11 @@ class SalesViewContext
 
     /**
      * Add PayPlug links to admin order view
+     *
+     * @param Order $order
+     * @param Container $subject
+     * @return void
+     * @throws LocalizedException
      */
     protected function addPayplugLinks(Order $order, Container $subject): void
     {

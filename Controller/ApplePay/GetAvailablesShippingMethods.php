@@ -18,6 +18,16 @@ use Payplug\Payments\Service\GetQuoteApplePayAvailableMethods;
 
 class GetAvailablesShippingMethods implements HttpPostActionInterface
 {
+    /**
+     * @param RequestInterface $request
+     * @param JsonFactory $resultJsonFactory
+     * @param Logger $logger
+     * @param Validator $formKeyValidator
+     * @param AddressFactory $addressFactory
+     * @param CheckoutSession $checkoutSession
+     * @param CartRepositoryInterface $cartRepository
+     * @param GetQuoteApplePayAvailableMethods $getCurrentQuoteAvailableMethods
+     */
     public function __construct(
         private readonly RequestInterface $request,
         private readonly JsonFactory $resultJsonFactory,
@@ -32,7 +42,6 @@ class GetAvailablesShippingMethods implements HttpPostActionInterface
 
     /**
      * Give Available shipping methods datas for Given ApplePayPaymentContact address data
-     *
      */
     public function execute(): Json
     {

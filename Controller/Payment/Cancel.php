@@ -17,6 +17,16 @@ use Payplug\Payments\Service\GetCurrentOrder;
 
 class Cancel extends AbstractPayment
 {
+    /**
+     * @param Validator $formKeyValidator
+     * @param RequestInterface $request
+     * @param GetCurrentOrder $getCurrentOrder
+     * @param Context $context
+     * @param Session $checkoutSession
+     * @param OrderFactory $salesOrderFactory
+     * @param Logger $logger
+     * @param Data $payplugHelper
+     */
     public function __construct(
         private readonly Validator $formKeyValidator,
         private readonly RequestInterface $request,
@@ -30,6 +40,11 @@ class Cancel extends AbstractPayment
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
 
+    /**
+     * Cancel payment
+     *
+     * @return Redirect
+     */
     public function execute(): Redirect
     {
         $formKeyValidation = $this->formKeyValidator->validate($this->request);
@@ -64,6 +79,11 @@ class Cancel extends AbstractPayment
         }
     }
 
+    /**
+     * Get result redirect
+     *
+     * @return Redirect
+     */
     private function getResultRedirect(): Redirect
     {
         $resultRedirect = $this->resultRedirectFactory->create();
@@ -76,5 +96,4 @@ class Cancel extends AbstractPayment
 
         return $resultRedirect;
     }
-
 }

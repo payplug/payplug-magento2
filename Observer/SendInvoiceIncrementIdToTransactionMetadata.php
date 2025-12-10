@@ -16,6 +16,11 @@ use Payplug\Payments\Logger\Logger as PayplugLogger;
 
 class SendInvoiceIncrementIdToTransactionMetadata implements ObserverInterface
 {
+    /**
+     * @param PayplugDataHelper $payplugDataHelper
+     * @param PayplugLogger $payplugLogger
+     * @param OrderRepositoryInterface $orderRepository
+     */
     public function __construct(
         private readonly PayplugDataHelper $payplugDataHelper,
         private readonly PayplugLogger $payplugLogger,
@@ -23,6 +28,12 @@ class SendInvoiceIncrementIdToTransactionMetadata implements ObserverInterface
     ) {
     }
 
+    /**
+     * Send invoice increment id to transaction metadata
+     *
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(Observer $observer): void
     {
         /** @var InvoiceInterface $invoice */

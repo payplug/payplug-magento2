@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Observer;
 
+use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\DataObject;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Payment\Model\Method\Adapter;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Store\Model\ScopeInterface;
@@ -21,18 +24,31 @@ use Payplug\Payments\Model\Api\Login;
 
 class StandardAvailabilityObserver implements ObserverInterface
 {
+    /**
+     * @param Config $payplugConfig
+     * @param Data $payplugHelper
+     * @param Login $login
+     * @param Logger $logger
+     * @param UriHelper $uriHelper
+     */
     public function __construct(
-        private Config $payplugConfig,
-        private Data $payplugHelper,
-        private Login $login,
-        private Logger $logger
+        private readonly Config $payplugConfig,
+        private readonly Data $payplugHelper,
+        private readonly Login $login,
+        private readonly Logger $logger,
+        private readonly UriHelper $uriHelper
     ) {
     }
 
     /**
      * Check if PayPlug payment can be used on quote
+     *
+     * @param Observer $observer
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    public function execute(Observer $observer)
+    public function execute(Observer $observer): void
     {
         /** @var CartInterface $quote */
         $quote = $observer->getData('quote');
@@ -78,7 +94,13 @@ class StandardAvailabilityObserver implements ObserverInterface
         }
 
         $currency = $quote->getCurrency()->getQuoteCurrencyCode();
-        $amountsByCurrency = $this->payplugConfig->getAmountsByCurrency($currency, (int)$quote->getStoreId(), $path, $prefix);
+        $amountsByCurrency = $this->payplugConfig->getAmountsByCurrency(
+            $currency,
+            (int)$quote->getStoreId(),
+            $path,
+            $prefix
+        );
+
         if ($amountsByCurrency === false) {
             $checkResult->setData('is_available', false);
             return;
@@ -135,12 +157,14 @@ class StandardAvailabilityObserver implements ObserverInterface
                 ]);
             }
 
-            $merchandDomain = parse_url($this->payplugConfig->getConfigValue(
+            $baseUrl = $this->payplugConfig->getConfigValue(
                 'base_url',
                 ScopeInterface::SCOPE_STORE,
                 $storeId,
                 'web/secure/'
-            ), PHP_URL_HOST);
+            );
+            $merchandDomain = $this->uriHelper->parse($baseUrl)->getHost();
+
             if (!in_array($merchandDomain, $onboardDomains)) {
                 $this->logger->error('Payplug ApplePay is not available for this domain. ' .
                     'It will be hidden from available payment methods in checkout.', [

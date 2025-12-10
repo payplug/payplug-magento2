@@ -13,6 +13,12 @@ use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 
 abstract class AbstractOauth2 extends Field
 {
+    /**
+     * @param ConfigDataCollectionFactory $configDatacollection
+     * @param Context $context
+     * @param array $data
+     * @param SecureHtmlRenderer|null $secureRenderer
+     */
     public function __construct(
         private readonly ConfigDataCollectionFactory $configDatacollection,
         Context $context,
@@ -22,11 +28,22 @@ abstract class AbstractOauth2 extends Field
         parent::__construct($context, $data, $secureRenderer);
     }
 
-    protected function _isInheritCheckboxRequired($element)
+    /**
+     * Return false to hide inherit checkbox
+     *
+     * @param mixed $element
+     * @return false
+     */
+    protected function _isInheritCheckboxRequired($element): bool
     {
         return false;
     }
 
+    /**
+     * Is email set for current scope
+     *
+     * @return bool
+     */
     protected function isEmailSetForCurrentScope(): bool
     {
         $websiteId = $this->getRequest()->getParam('website');

@@ -25,9 +25,25 @@ use Payplug\Exception\PayplugException;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use RuntimeException;
+use Throwable;
 
 class UpdateCartOrder implements HttpPostActionInterface
 {
+    /**
+     * @param RequestInterface $request
+     * @param JsonFactory $resultJsonFactory
+     * @param Logger $logger
+     * @param Data $payplugHelper
+     * @param OrderRepositoryInterface $orderRepository
+     * @param OrderAddressRepositoryInterface $orderAddressRepository
+     * @param LocaleResolver $localeResolver
+     * @param Validator $formKeyValidator
+     * @param CartRepositoryInterface $cartRepository
+     * @param DataObjectHelper $dataObjectHelper
+     * @param QuoteAddressToOrder $quoteAddressToOrder
+     * @param CustomerSession $customerSession
+     * @param CheckoutSession $checkoutSession
+     */
     public function __construct(
         private readonly RequestInterface $request,
         private readonly JsonFactory $resultJsonFactory,
@@ -138,7 +154,7 @@ class UpdateCartOrder implements HttpPostActionInterface
                 'exception' => $e,
             ]);
             return $response;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->error('Exception: Could not update apple pay transaction', [
                 'message' => $e->getMessage(),
                 'exception' => $e,
@@ -149,6 +165,10 @@ class UpdateCartOrder implements HttpPostActionInterface
 
     /**
      * Convert an order address to a payplug address array
+     *
+     * @param OrderInterface $order
+     * @param bool $isBilling
+     * @return array
      */
     public function getPayplugAddressArray(OrderInterface $order, bool $isBilling): array
     {
@@ -190,6 +210,11 @@ class UpdateCartOrder implements HttpPostActionInterface
 
     /**
      * Update the Order's billing/shipping addresses
+     *
+     * @param OrderInterface $order
+     * @param array $applePayBilling
+     * @param array $applePayShipping
+     * @return void
      */
     private function updateOrderAddresses(OrderInterface $order, array $applePayBilling, array $applePayShipping): void
     {
@@ -228,7 +253,11 @@ class UpdateCartOrder implements HttpPostActionInterface
     }
 
     /**
-     * Fill an address object with Apple Pay data
+     * Set the Payplug API key
+     *
+     * @param OrderAddressInterface $address
+     * @param array $applePayData
+     * @return void
      */
     private function fillAddressData(OrderAddressInterface $address, array $applePayData): void
     {
@@ -255,6 +284,13 @@ class UpdateCartOrder implements HttpPostActionInterface
         }
     }
 
+    /**
+     * Update the Order's shipping method'
+     *
+     * @param OrderInterface $order
+     * @param string $selectedShippingMethod
+     * @return void
+     */
     private function updateOrderShippingMethod(OrderInterface $order, string $selectedShippingMethod): void
     {
         $quoteId = $order->getQuoteId();

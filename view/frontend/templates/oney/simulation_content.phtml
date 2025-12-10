@@ -3,14 +3,18 @@
 declare(strict_types=1);
 
 use Magento\Framework\Escaper;
-use Magento\Framework\Pricing\Helper\Data;
 use Payplug\Payments\Block\Oney\Simulation;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\ViewModel\Oney as OneyViewHelper;
 
 /**
  * @var Escaper $escaper
  * @var Simulation $block
+ * @var OneyViewHelper $oneyViewHelper
  */
+
+$oneyViewHelper = $block->getData('oneyViewHelper');
+
 $hasError = false;
 $oneySimulation = $block->getOneySimulation();
 $message = $oneySimulation->getMessage();
@@ -18,7 +22,6 @@ if (!$oneySimulation->getSuccess() || !empty($message)) {
     $hasError = true;
 }
 $isOneyWithoutFees = $oneySimulation->getMethod() === OneyWithoutFees::METHOD_CODE;
-$pricingHelper = $this->helper(Data::class);
 ?>
 <?php if ($hasError): ?>
     <p class="oneyPopin_error"><?= /* @noEscape */ $message; ?></p>
@@ -58,7 +61,7 @@ $pricingHelper = $this->helper(Data::class);
                     <span><b><?= $escaper->escapeHtml(__('For an amount of:')); ?></b></span>
                     <span>
                         <b>
-                            <?= /* @noEscape */ $pricingHelper->currency($oneySimulation->getAmount(), true, false); ?>
+                            <?= /* @noEscape */ $oneyViewHelper->currency($oneySimulation->getAmount()); ?>
                         </b>
                     </span>
                 </li>
@@ -66,7 +69,7 @@ $pricingHelper = $this->helper(Data::class);
                     <span><?= $escaper->escapeHtml(__('Contribution:')); ?></span>
                     <span>
                         <b>
-                            <?= /* @noEscape */ $pricingHelper->currency($option->getFirstDeposit(), true, false); ?>
+                            <?= /* @noEscape */ $oneyViewHelper->currency($option->getFirstDeposit()); ?>
                         </b>
                     </span>
                 </li>
@@ -74,8 +77,9 @@ $pricingHelper = $this->helper(Data::class);
                     <li>
                         <small>
                             (<?= $escaper->escapeHtml(__('Financing cost:')); ?>
-                            <b><?= /* @noEscape */ $pricingHelper->currency($option->getCost(), true, false); ?></b>
-                            <?= $escaper->escapeHtml(__('TAEG:')); ?> <b><?= /* @noEscape */ $option->getRate(); ?>%</b>)
+                            <b><?= /* @noEscape */ $oneyViewHelper->currency($option->getCost()); ?></b>
+                            <?= $escaper->escapeHtml(__('TAEG:')); ?>
+                            <b><?= /* @noEscape */ $option->getRate(); ?>%</b>)
                         </small>
                     </li>
                 <?php endif; ?>
@@ -84,7 +88,7 @@ $pricingHelper = $this->helper(Data::class);
                         <span><?= $escaper->escapeHtml(__(sprintf('Installment %d:', $i + 1))); ?></span>
                         <span>
                             <b>
-                                <?= /* @noEscape */ $pricingHelper->currency($schedule->getAmount(), true, false); ?>
+                                <?= /* @noEscape */ $oneyViewHelper->currency($schedule->getAmount()); ?>
                             </b>
                         </span>
                     </li>
@@ -94,7 +98,7 @@ $pricingHelper = $this->helper(Data::class);
                         <span><b><?= $escaper->escapeHtml(__('Total cost:')); ?></b></span>
                         <span>
                             <b>
-                                <?= /* @noEscape */ $pricingHelper->currency($option->getTotalAmount(), true, false); ?>
+                                <?= /* @noEscape */ $oneyViewHelper->currency($option->getTotalAmount()); ?>
                             </b>
                         </span>
                     </li>
@@ -102,7 +106,7 @@ $pricingHelper = $this->helper(Data::class);
                     <li>
                         <small>
                             (<?= $escaper->escapeHtml(__('Financing cost:')); ?>
-                            <b><?= /* @noEscape */ $pricingHelper->currency(0, true, false); ?></b>
+                            <b><?= /* @noEscape */ $oneyViewHelper->currency(0); ?></b>
                             <?= $escaper->escapeHtml(__('TAEG:')); ?> <b>0%</b>)
                         </small>
                     </li>
@@ -118,8 +122,8 @@ $pricingHelper = $this->helper(Data::class);
         $minAmount = $oneyAmounts['min_amount'] / 100;
         $maxAmount = $oneyAmounts['max_amount'] / 100;
     }
-    $minAmount = $pricingHelper->currency($minAmount, true, false);
-    $maxAmount = $pricingHelper->currency($maxAmount, true, false);
+    $minAmount = $oneyViewHelper->currency($minAmount);
+    $maxAmount = $oneyViewHelper->currency($maxAmount);
     $legalOney = 'Financing offer with mandatory deposit reserved for private individual between %1 and %2. ' .
         'Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. ' .
         'Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - ' .
