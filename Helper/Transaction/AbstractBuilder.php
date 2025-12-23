@@ -20,6 +20,7 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 abstract class AbstractBuilder extends AbstractHelper
 {
@@ -31,6 +32,7 @@ abstract class AbstractBuilder extends AbstractHelper
      * @param Logger $logger
      * @param FormKey $formKey
      * @param UriHelper $uriHelper
+     * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
      */
     public function __construct(
         Context $context,
@@ -39,7 +41,8 @@ abstract class AbstractBuilder extends AbstractHelper
         protected Phone $phoneHelper,
         protected Logger $logger,
         protected FormKey $formKey,
-        protected UriHelper $uriHelper
+        protected UriHelper $uriHelper,
+        private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
     ) {
         parent::__construct($context);
     }
@@ -276,14 +279,17 @@ abstract class AbstractBuilder extends AbstractHelper
         $paymentData['hosted_payment'] = [
             'return_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
                 '_secure'  => true,
-                'quote_id' => $quoteId,
+                'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
                 '_nosid' => true,
+                'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getCustomAfterSuccessUrl(),
+                'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getCustomAfterFailureUrl(),
             ]),
             'cancel_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/cancel', [
                 '_secure'  => true,
-                'quote_id' => $quoteId,
+                'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
                 '_nosid' => true,
-                'form_key' => $this->formKey->getFormKey() ?: ''
+                'form_key' => $this->formKey->getFormKey() ?: '',
+                'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getCustomAfterCancelUrl(),
             ]),
         ];
 

@@ -1,0 +1,19 @@
+.button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    border: 0 none;
+    text-align: center;
+    background-color: white;
+    transition: opacity 0.3s cubic-bezier(.4,0,.2,1);
+}
+
+.button:hover {
+    cursor: pointer;
+    opacity: .9;
+}

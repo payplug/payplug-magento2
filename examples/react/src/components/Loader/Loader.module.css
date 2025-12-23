@@ -1,0 +1,13 @@
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    background-color: #212123;
+    z-index: 10;
+}
+
+.loader {
+    position: relative;
+    margin: auto;
+    z-index: 20;
+}
