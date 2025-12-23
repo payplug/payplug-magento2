@@ -1,0 +1,206 @@
+{
+	"info": {
+		"_postman_id": "7dba8eff-17cb-4924-8ee7-ea91c1c0247a",
+		"name": "PAYPLUG",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23063269",
+		"_collection_link": "https://winter-star-942567.postman.co/workspace/PAYPLUG~7922e901-5bc3-4af7-9192-946134609b4a/collection/23063269-7dba8eff-17cb-4924-8ee7-ea91c1c0247a?action=share&source=collection_link&creator=23063269"
+	},
+	"item": [
+		{
+			"name": "1 - Create Cart (GUEST)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = JSON.parse(pm.response.text());",
+							"pm.globals.set(\"cart_id\", jsonData.data.createGuestCart.cart.id);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "graphql",
+					"graphql": {
+						"query": "mutation {\n  createGuestCart {\n      cart {\n          id\n      }\n  }\n}\n"
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2 - Add Product to Cart",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "graphql",
+					"graphql": {
+						"query": "mutation (\n    $cartId: String!\n    $cartItems: [CartItemInput!]!\n) {\n    addProductsToCart(\n        cartId: $cartId\n        cartItems: $cartItems\n    ) {\n        user_errors {\n            message\n            code\n        }\n        cart {\n            itemsV2 {\n                items {\n                    product {\n                        name\n                        sku\n                    }\n                    quantity\n                }\n            }\n        }\n    }\n}\n",
+						"variables": "{\n    \"cartId\": \"{{cart_id}}\",\n    \"cartItems\": [\n        {\n            \"sku\": \"{{sku}}\",\n            \"quantity\": 1\n        }\n    ]\n}"
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3 - Assign email to Cart",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "graphql",
+					"graphql": {
+						"query": "mutation (\n    $cartId: String!\n    $email: String!\n) {\n    setGuestEmailOnCart(input: {\n        cart_id: $cartId\n        email: $email\n    }) {\n        cart {\n            email\n        }\n    }\n}\n",
+						"variables": "{\n    \"cartId\": \"{{cart_id}}\",\n    \"email\": \"john.doe@domain.tld\"\n}"
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4 - Set Shipping Address",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "graphql",
+					"graphql": {
+						"query": "mutation (\n    $address: CartAddressInput!\n) {\n    setShippingAddressesOnCart(\n        input: {\n            cart_id: \"{{cart_id}}\"\n            shipping_addresses: [\n                {\n                    address: $address\n                }\n            ]\n        }\n    ) {\n        cart {\n            shipping_addresses {\n                firstname\n                lastname\n                company\n                street\n                city\n                region {\n                    code\n                    label\n                }\n                postcode\n                telephone\n                country {\n                    code\n                    label\n                }\n                selected_shipping_method {\n                    carrier_code\n                    carrier_title\n                    method_code\n                    method_title\n                }\n            }\n        }\n    }\n}\n",
+						"variables": "{\n    \"address\": {\n        \"firstname\": \"John\",\n        \"lastname\": \"Doe\",\n        \"company\": \"My Company\",\n        \"street\": [\"Adresse 1\", \"Adresse 2\"],\n        \"city\": \"Paris\",\n        \"postcode\": \"75000\",\n        \"country_code\": \"FR\",\n        \"telephone\": \"0606060606\"\n    }\n}"
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5 - Set Shipping Method",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "graphql",
+					"graphql": {
+						"query": "mutation (\n    $cartId: String!\n    $carrierCode: String!\n    $methodCode: String!\n) {\n  setShippingMethodsOnCart(input: {\n    cart_id: $cartId\n    shipping_methods: [\n      {\n        carrier_code: $carrierCode\n        method_code: $methodCode\n      }\n    ]\n    }) {\n        cart {\n            shipping_addresses {\n                selected_shipping_method {\n                    carrier_code\n                    method_code\n                    carrier_title\n                    method_title\n                }\n            }\n        }\n    }\n}\n",
+						"variables": "{\n    \"cartId\": \"{{cart_id}}\",\n    \"carrierCode\": \"freeshipping\",\n    \"methodCode\": \"freeshipping\"\n}"
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6 - Set Billing Address",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "graphql",
+					"graphql": {
+						"query": "mutation {\n    setBillingAddressOnCart(\n        input: {\n            cart_id: \"{{cart_id}}\"\n            billing_address: {\n                same_as_shipping: true\n            }\n        }\n    ) {\n        cart {\n            billing_address {\n                firstname\n                lastname\n                company\n                street\n                city\n                postcode\n                telephone\n                country {\n                    code\n                    label\n                }\n            }\n        }\n    }\n}\n",
+						"variables": ""
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7 - Set Payment Method + Place order",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "graphql",
+					"graphql": {
+						"query": "mutation (\n    $inputPaymentMethod: SetPaymentMethodOnCartInput!\n    $inputPlaceOrder: PlaceOrderInput!\n) {\n    setPaymentMethodOnCart(input: $inputPaymentMethod) {\n        cart {\n            selected_payment_method {\n                code\n                title\n            }\n        }\n    },\n    placeOrder(input: $inputPlaceOrder) {\n        orderV2 {\n            number\n            token\n            payment_methods {\n                name\n                type\n                additional_data {\n                    name\n                    value\n                }\n            }\n        }\n        errors {\n            message\n            code\n        }\n    }\n}\n\n",
+						"variables": "{\n    \"inputPaymentMethod\" : {\n        \"cart_id\": \"{{cart_id}}\",\n        \"payment_method\": {\n            \"code\": \"payplug_payments_standard\"\n        }\n    },\n    \"inputPlaceOrder\": {\n        \"cart_id\": \"{{cart_id}}\",\n        \"payplug_after_success_url\": \"https://www.domain.tld/payment-after-success\",\n        \"payplug_after_failure_url\": \"https://www.domain.tld/payment-after-failure\",\n        \"payplug_after_cancel_url\": \"https://www.domain.tld/payment-after-cancel\"\n    }\n}"
+					}
+				},
+				"url": {
+					"raw": "{{url}}",
+					"host": [
+						"{{url}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "sku",
+			"value": ""
+		},
+		{
+			"key": "url",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

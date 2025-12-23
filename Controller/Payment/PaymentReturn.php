@@ -58,10 +58,24 @@ class PaymentReturn extends AbstractPayment
      */
     public function execute()
     {
-        $resultRedirect = $this->resultRedirectFactory->create();
+        $resultSuccessRedirect = $this->resultRedirectFactory->create();
+        $customAfterSuccessUrl = $this->_request->getParam('afterSuccessUrl');
 
-        $redirectUrlSuccess = 'checkout/onepage/success';
-        $redirectUrlCart = 'checkout/cart';
+        if ($customAfterSuccessUrl) {
+            $resultSuccessRedirect->setUrl($customAfterSuccessUrl);
+        } else {
+            $resultSuccessRedirect->setPath('checkout/onepage/success');
+        }
+
+        $resultFailureRedirect = $this->resultRedirectFactory->create();
+        $customAfterFailureUrl = $this->_request->getParam('afterFailureUrl');
+
+        if ($customAfterFailureUrl) {
+            $resultFailureRedirect->setUrl($customAfterFailureUrl);
+        } else {
+            $resultFailureRedirect->setPath('checkout/cart');
+        }
+
         try {
             $order = $this->getCurrentOrder->execute();
             $lastIncrementId = $order->getIncrementId();
@@ -83,10 +97,10 @@ class PaymentReturn extends AbstractPayment
                 if ($payment->failure) {
                     $this->prepareErrorOnPayment($order);
 
-                    return $resultRedirect->setPath($redirectUrlCart);
+                    return $resultFailureRedirect;
                 }
 
-                return $resultRedirect->setPath($redirectUrlSuccess);
+                return $resultSuccessRedirect;
             }
 
             /**
@@ -104,7 +118,7 @@ class PaymentReturn extends AbstractPayment
                     $this->payplugHelper->saveAutorizationInformationOnQuote($standardDeferredQuote, $payment);
                 }
 
-                return $resultRedirect->setPath($redirectUrlSuccess);
+                return $resultSuccessRedirect;
             }
 
             if (!$payment->is_paid
@@ -113,20 +127,20 @@ class PaymentReturn extends AbstractPayment
             ) {
                 $this->prepareErrorOnPayment($order);
 
-                return $resultRedirect->setPath($redirectUrlCart);
+                return $resultFailureRedirect;
             }
 
             if (!$order->getId()) {
                 $this->logger->error(sprintf('Could not retrieve order with id %s', $lastIncrementId));
 
-                return $resultRedirect->setPath($redirectUrlSuccess);
+                return $resultSuccessRedirect;
             }
 
             $this->payplugHelper->checkPaymentFailureAndAbortPayment($order);
             $order = $this->payplugHelper->updateOrder($order);
 
             if ($this->payplugHelper->isOrderValidated($order)) {
-                return $resultRedirect->setPath($redirectUrlSuccess);
+                return $resultSuccessRedirect;
             } else {
                 return $this->resultFactory
                     ->create(ResultFactory::TYPE_FORWARD)
@@ -138,16 +152,16 @@ class PaymentReturn extends AbstractPayment
         } catch (PayplugException $e) {
             $this->logger->error($e->__toString());
 
-            return $resultRedirect->setPath($redirectUrlSuccess);
+            return $resultSuccessRedirect;
         } catch (OrderAlreadyProcessingException $e) {
             // Order is already being processed (by IPN or admin update button)
             // Redirect to success page
             // No need to log as it is not an error case
-            return $resultRedirect->setPath($redirectUrlSuccess);
+            return $resultSuccessRedirect;
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
 
-            return $resultRedirect->setPath($redirectUrlSuccess);
+            return $resultSuccessRedirect;
         }
     }
 

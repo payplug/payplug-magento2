@@ -21,6 +21,7 @@ use Payplug\Payments\Helper\OndemandOptions;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Order\Payment;
+use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class OndemandBuilder extends AbstractBuilder
 {
@@ -33,6 +34,7 @@ class OndemandBuilder extends AbstractBuilder
      * @param Logger $logger
      * @param FormKey $formKey
      * @param UriHelper $uriHelper
+     * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
      */
     public function __construct(
         private readonly OndemandOptions $onDemandHelper,
@@ -42,9 +44,19 @@ class OndemandBuilder extends AbstractBuilder
         Phone $phoneHelper,
         Logger $logger,
         FormKey $formKey,
-        UriHelper $uriHelper
+        UriHelper $uriHelper,
+        PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
     ) {
-        parent::__construct($context, $payplugConfig, $countryHelper, $phoneHelper, $logger, $formKey, $uriHelper);
+        parent::__construct(
+            $context,
+            $payplugConfig,
+            $countryHelper,
+            $phoneHelper,
+            $logger,
+            $formKey,
+            $uriHelper,
+            $placeOrderExtraParamsRegistry
+        );
     }
 
     /**

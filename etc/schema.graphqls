@@ -1,0 +1,5 @@
+input PlaceOrderInput {
+    payplug_after_success_url: String @doc(description: "Set Payplug Payment Success URL")
+    payplug_after_failure_url: String @doc(description: "Set Payplug Payment Failure URL")
+    payplug_after_cancel_url: String @doc(description: "Set Payplug After Cancel URL")
+}
