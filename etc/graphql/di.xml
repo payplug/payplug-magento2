@@ -1,0 +1,9 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\SalesGraphQl\Model\Order\OrderPayments">
+        <plugin name="payplug_payments_add_payment_additional_data" type="Payplug\Payments\Plugin\AddPaymentAdditionalData"/>
+    </type>
+    <type name="Magento\QuoteGraphQl\Model\Resolver\PlaceOrder">
+        <plugin name="payplug_payments_set_place_order_extra_params" type="Payplug\Payments\Plugin\SetPlaceOrderExtraParams"/>
+    </type>
+</config>
