@@ -303,7 +303,7 @@ class UpdateCartOrder implements HttpPostActionInterface
         }
 
         $quote->getShippingAddress()->setShippingMethod($selectedShippingMethod);
-        $quote->getShippingAddress()->setCollectShippingRates(true)->collectShippingRates();
+        $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->setTotalsCollectedFlag(false);
         $quote->collectTotals();
 
