@@ -116,7 +116,7 @@ define([
 
             if (this.getSelectedCardId() !== '') {
                 fullScreenLoader.stopLoader();
-                lightboxOnSuccessAction.execute(true);
+                redirectOnSuccessAction.execute();
                 return;
             }
 
