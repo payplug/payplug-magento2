@@ -28,6 +28,11 @@
                     <source_model>Payplug\Payments\Model\Config\Source\ApmFilteringMode</source_model>
                     <tooltip><![CDATA[<strong>Filter by Shipping Address (Recommended):</strong> The customer only sees the payment methods available for their shipping country. The transaction metadata is based on this same address.<br><br><strong>Validate by Billing Address:</strong> The customer sees all payment methods. The payment is blocked with an error if their final billing country is not compatible. The submitted metadata is always accurate.]]></tooltip>
                 </field>
+                <field id="custom_metadata" translate="label tooltip" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Custom Payplug metadata</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\CustomMetadata</source_model>
+                    <tooltip><![CDATA[The metadata is added in addition to the existing Payplug metadata]]></tooltip>
+                </field>
                 <field id="test_api_key"/>
                 <field id="live_api_key"/>
                 <field id="min_amounts"/>
