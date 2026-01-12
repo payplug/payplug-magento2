@@ -42,6 +42,7 @@
 "Credit Card Payment Mode","Modo de pago con tarjeta de crédito"
 "Credit card","Tarjeta de crédito"
 "Custom Payplug Payments status",Custom Payplug Payments status
+"Custom Payplug metadata","Metadatos personalizados de Payplug"
 "Date","Date"
 "Default Country","País predeterminado"
 "Delete this card","Borrar"
@@ -170,6 +171,7 @@
 "The email address is incorrect.","Correo electrónico inválido."
 "The email and/or password was not correct.","El correo y/o contraseña no son correctas."
 "The installment plan cannot be aborted for this order.","The installment plan cannot be aborted for this order."
+"The metadata is added in addition to the existing Payplug metadata","Los metadatos se añaden además de los metadatos existentes de Payplug"
 "The payment cannot be updated for this order.","The payment cannot be updated for this order."
 "The payment is not available for the TEST mode.","The payment is not available for the TEST mode."
 "The payment is suspected to be a fraud (e.g. payment with a stolen card).","The payment is suspected to be a fraud (e.g. payment with a stolen card)."
