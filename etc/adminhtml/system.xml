@@ -32,6 +32,11 @@
                     <label>Payplug URLs generation</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Store</source_model>
                 </field>
+                <field id="custom_metadata" translate="label tooltip" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Custom Payplug metadata</label>
+                    <source_model>Payplug\Payments\Model\Config\Source\CustomMetadata</source_model>
+                    <tooltip><![CDATA[The metadata is added in addition to the existing Payplug metadata]]></tooltip>
+                </field>
                 <field id="test_api_key"/>
                 <field id="live_api_key"/>
                 <field id="min_amounts"/>

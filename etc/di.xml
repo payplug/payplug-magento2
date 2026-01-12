@@ -1204,4 +1204,9 @@
     </type>
 
     <preference for="Payplug\Payments\Api\Data\RefundRequestInterface" type="Payplug\Payments\Model\Data\RefundRequest"/>
+
+    <type name="Magento\Quote\Api\CartManagementInterface">
+        <plugin name="payplug_payments_send_custom_metadata_after_place_order"
+                type="Payplug\Payments\Plugin\SendCustomMetadataAfterPlaceOrder"/>
+    </type>
 </config>
