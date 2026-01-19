@@ -3,6 +3,7 @@
 The goal of this project is to provide a proof of concept of a Payplug payment implemented with a React.js application and a Magento 2 instance.
 
 ## Prerequisites
+* Magento 2.4.7 or higher
 * Copy and paste `.env.example` to a `.env` file
 * Complete configurations from the `.env` file
 

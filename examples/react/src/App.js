@@ -14,14 +14,16 @@ function App() {
 
   return (
     <div className="App">
-      <Header />
+      <Header></Header>
       <main className="App-content">
-        {loading ? <Loader /> : null}
+        {loading ? <Loader></Loader> : null}
         <PaymentButtons
           onStandardPayment={payWithStandard}
           onAmexPayment={payWithAmex}
-        />
-        <ErrorMessage message={error} />
+        >
+        </PaymentButtons>
+        <ErrorMessage message={error}>
+        </ErrorMessage>
       </main>
     </div>
   );
