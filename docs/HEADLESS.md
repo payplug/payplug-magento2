@@ -2,6 +2,16 @@
 
 This documentation describes how to use Payplug standard card payment with a headless application.
 
+## Prerequisites
+
+> **Disclaimer:**  
+> The Payplug module will only work with the **redirected option**.
+>
+> So please set the `Payment Page` option to `Redirected` for it to work :
+>```bash
+>bin/magento config:set payplug_payments/general/payment_page redirected
+>```
+
 ## Developments
 
 Payplug can work very well in a headless setup with only a few small adjustments.
