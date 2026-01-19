@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<ruleset name="Paypmag2 Module">
+    <description>PHP CodeSniffer configuration for Paypmag2 Module</description>
+    
+    <!-- Exclude examples/react folder from PHP Code Sniffer -->
+    <exclude-pattern>examples/react/</exclude-pattern>
+</ruleset>
