@@ -6,7 +6,26 @@ import {
   MAGENTO_FAIL_URL,
 } from '../config';
 
-export const PLACE_ORDER = gql`
+const PLACE_ORDER_VERSION = process.env.REACT_APP_PLACE_ORDER_VERSION || '2';
+
+// Version 1 query - legacy order structure
+const PLACE_ORDER_V1 = gql`
+  mutation placeOrder($input: PlaceOrderInput!) {
+    placeOrder(input: $input) {
+      order {
+        order_number
+        payplug_redirect_url
+      }
+      errors {
+        message
+        code
+      }
+    }
+  }
+`;
+
+// Version 2 query - new orderV2 structure
+const PLACE_ORDER_V2 = gql`
   mutation placeOrder($input: PlaceOrderInput!) {
     placeOrder(input: $input) {
       orderV2 {
@@ -27,6 +46,8 @@ export const PLACE_ORDER = gql`
   }
 `;
 
+export const PLACE_ORDER = PLACE_ORDER_VERSION === '1' ? PLACE_ORDER_V1 : PLACE_ORDER_V2;
+
 export async function placeOrder(client, cartId) {
   try {
     const { data } = await client.mutate({
@@ -41,7 +62,6 @@ export async function placeOrder(client, cartId) {
       },
     });
 
-    // Check for GraphQL errors in the response
     if (data?.placeOrder?.errors && data.placeOrder.errors.length > 0) {
       const errorMessages = data.placeOrder.errors
         .map((err) => err.message || err.code)
@@ -51,7 +71,6 @@ export async function placeOrder(client, cartId) {
 
     return data.placeOrder;
   } catch (error) {
-    // Re-throw with more context if it's not already a formatted error
     if (error.message && error.message.includes('Order placement failed')) {
       throw error;
     }
