@@ -515,6 +515,8 @@ class Config
             'satispay',
             'ideal',
             'mybank',
+            'bizum',
+            'wero'
         ];
 
         $paths = [

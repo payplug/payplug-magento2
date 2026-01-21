@@ -39,6 +39,8 @@ use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\Ideal;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Mybank;
+use Payplug\Payments\Gateway\Config\Bizum;
+use Payplug\Payments\Gateway\Config\Wero;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
@@ -262,6 +264,14 @@ class Data
                 Order::STATE_PAYMENT_REVIEW
             ],
             Mybank::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Bizum::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Wero::METHOD_CODE => [
                 Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
@@ -914,6 +924,8 @@ class Data
             Satispay::METHOD_CODE,
             Ideal::METHOD_CODE,
             Mybank::METHOD_CODE,
+            Bizum::METHOD_CODE,
+            Wero::METHOD_CODE
         ]);
     }
 
@@ -929,6 +941,8 @@ class Data
             Satispay::METHOD_CODE,
             Ideal::METHOD_CODE,
             Mybank::METHOD_CODE,
+            Bizum::METHOD_CODE,
+            Wero::METHOD_CODE
         ]);
     }
 
