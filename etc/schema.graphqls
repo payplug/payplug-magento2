@@ -3,3 +3,7 @@ input PlaceOrderInput {
     payplug_after_failure_url: String @doc(description: "Set Payplug Payment Failure URL")
     payplug_after_cancel_url: String @doc(description: "Set Payplug After Cancel URL")
 }
+
+type Order {
+    payplug_redirect_url: String @resolver(class: "\\Payplug\\Payments\\Model\\GraphQL\\Resolver\\GetPaymentRedirectUrl")
+}
