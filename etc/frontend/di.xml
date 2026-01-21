@@ -4,69 +4,17 @@
         <arguments>
             <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_standard_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Standard\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_installment_plan_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\InstallmentPlan\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_oney_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Oney\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_oney_without_fees_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\OneyWithoutFees\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_bancontact_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Bancontact\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_apple_pay_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\ApplePay\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_amex_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Amex\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_satispay_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Satispay\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_ideal_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Ideal\ConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
                 <item name="payplug_payments_mybank_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Mybank\ConfigProvider</item>
+                <item name="payplug_payments_bizum_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Bizum\ConfigProvider</item>
+                <item name="payplug_payments_wero_config_provider" xsi:type="object">Payplug\Payments\Model\Payment\Wero\ConfigProvider</item>
             </argument>
         </arguments>
     </type>

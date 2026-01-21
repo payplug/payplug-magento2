@@ -15,16 +15,18 @@ class Phone extends AbstractHelper
      *
      * @param string $phone
      * @param string $country
-     *
+     * @param bool $checkRegion
      * @return array|null
      */
-    public function getPhoneInfo($phone, $country)
+    public function getPhoneInfo(string $phone, string $country, bool $checkRegion = false): ?array
     {
         try {
             $phoneNumberUtil = PhoneNumberUtil::getInstance();
             $phoneNumber = $phoneNumberUtil->parse($phone, $country);
 
-            if (!$phoneNumberUtil->isValidNumber($phoneNumber)) {
+            if (($checkRegion === true && $phoneNumberUtil->isValidNumberForRegion($phoneNumber, $country) === false)
+                || $phoneNumberUtil->isValidNumber($phoneNumber) === false
+            ) {
                 return null;
             }
 

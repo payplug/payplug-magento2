@@ -15,6 +15,19 @@ use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Payplug\Payments\Gateway\Config\Amex as AmexConfig;
+use Payplug\Payments\Gateway\Config\ApplePay as ApplePayConfig;
+use Payplug\Payments\Gateway\Config\Bancontact as BancontactConfig;
+use Payplug\Payments\Gateway\Config\Bizum as BizumConfig;
+use Payplug\Payments\Gateway\Config\Ideal as IdealConfig;
+use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
+use Payplug\Payments\Gateway\Config\Mybank as MyBankConfig;
+use Payplug\Payments\Gateway\Config\Ondemand as OndemandConfig;
+use Payplug\Payments\Gateway\Config\Oney as OneyConfig;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees as OneyWithoutFeesConfig;
+use Payplug\Payments\Gateway\Config\Satispay as SatispayConfig;
+use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
+use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
 use Payplug\Payments\Service\GetOauth2ClientData;
@@ -97,46 +110,54 @@ class PaymentConfigObserver implements ObserverInterface
             return;
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_standard')) {
+        if ($this->canProcessSection($postParams, StandardConfig::METHOD_CODE)) {
             $this->processStandardConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_installment_plan')) {
+        if ($this->canProcessSection($postParams, InstallmentPlanConfig::METHOD_CODE)) {
             $this->processInstallmentPlanConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_ondemand')) {
+        if ($this->canProcessSection($postParams, OndemandConfig::METHOD_CODE)) {
             $this->processOndemandConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_oney') ||
-            $this->canProcessSection($postParams, 'payplug_payments_oney_without_fees')
+        if ($this->canProcessSection($postParams, OneyConfig::METHOD_CODE) ||
+            $this->canProcessSection($postParams, OneyWithoutFeesConfig::METHOD_CODE)
         ) {
-            $this->processOneyConfig($postParams['groups']);
+            $this->processOneyConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_bancontact')) {
+        if ($this->canProcessSection($postParams, BancontactConfig::METHOD_CODE)) {
             $this->processBancontactConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_apple_pay')) {
+        if ($this->canProcessSection($postParams, ApplePayConfig::METHOD_CODE)) {
             $this->processApplePayConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_amex')) {
+        if ($this->canProcessSection($postParams, AmexConfig::METHOD_CODE)) {
             $this->processAmexConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_satispay')) {
+        if ($this->canProcessSection($postParams, SatispayConfig::METHOD_CODE)) {
             $this->processSatispayConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_ideal')) {
+        if ($this->canProcessSection($postParams, IdealConfig::METHOD_CODE)) {
             $this->processIdealConfig($groups);
         }
 
-        if ($this->canProcessSection($postParams, 'payplug_payments_mybank')) {
+        if ($this->canProcessSection($postParams, MyBankConfig::METHOD_CODE)) {
             $this->processMybankConfig($groups);
+        }
+
+        if ($this->canProcessSection($postParams, BizumConfig::METHOD_CODE)) {
+            $this->processBizumConfig($groups);
+        }
+
+        if ($this->canProcessSection($postParams, WeroConfig::METHOD_CODE)) {
+            $this->processWeroConfig($groups);
         }
 
         $this->setPostAndParamGroups($groups);
@@ -331,10 +352,10 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processStandardConfig(array &$groups): void
     {
-        $fields = $groups['payplug_payments_standard']['fields'];
+        $fields = $groups[StandardConfig::METHOD_CODE]['fields'];
 
         $this->helper->initScopeData();
-        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_standard');
+        $this->validatePayplugConnection($fields, $groups, StandardConfig::METHOD_CODE);
 
         if (!empty($fields['one_click']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -350,7 +371,7 @@ class PaymentConfigObserver implements ObserverInterface
                 $permissions = $this->getAccountPermissions($apiKey);
 
                 if (empty($permissions['can_save_cards'])) {
-                    $groups['payplug_payments_standard']['fields']['one_click']['value'] = 0;
+                    $groups[StandardConfig::METHOD_CODE]['fields']['one_click']['value'] = 0;
                     if ($environmentMode == Config::ENVIRONMENT_LIVE) {
                         $this->messageManager->addErrorMessage(
                             __('Only Premium accounts can use one click in LIVE mode.')
@@ -369,10 +390,10 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processInstallmentPlanConfig(array &$groups): void
     {
-        $fields = $groups['payplug_payments_installment_plan']['fields'];
+        $fields = $groups[InstallmentPlanConfig::METHOD_CODE]['fields'];
 
         $this->helper->initScopeData();
-        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_installment_plan');
+        $this->validatePayplugConnection($fields, $groups, InstallmentPlanConfig::METHOD_CODE);
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -388,7 +409,7 @@ class PaymentConfigObserver implements ObserverInterface
                 $permissions = $this->getAccountPermissions($apiKey);
 
                 if (empty($permissions['can_create_installment_plan'])) {
-                    $groups['payplug_payments_installment_plan']['fields']['active']['value'] = 0;
+                    $groups[InstallmentPlanConfig::METHOD_CODE]['fields']['active']['value'] = 0;
                     if ($environmentMode == Config::ENVIRONMENT_LIVE) {
                         $this->messageManager->addErrorMessage(
                             __('Only Premium accounts can use installment plan in LIVE mode.')
@@ -402,11 +423,11 @@ class PaymentConfigObserver implements ObserverInterface
             $errorMessage = __('The amount must be between €4 and €20,000.');
             if ($fields['threshold']['value'] < 4) {
                 $this->messageManager->addErrorMessage($errorMessage);
-                $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 4;
+                $groups[InstallmentPlanConfig::METHOD_CODE]['fields']['threshold']['value'] = 4;
             }
             if ($fields['threshold']['value'] > 20000) {
                 $this->messageManager->addErrorMessage($errorMessage);
-                $groups['payplug_payments_installment_plan']['fields']['threshold']['value'] = 20000;
+                $groups[InstallmentPlanConfig::METHOD_CODE]['fields']['threshold']['value'] = 20000;
             }
         }
     }
@@ -419,10 +440,10 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processOndemandConfig(array &$groups): void
     {
-        $fields = $groups['payplug_payments_ondemand']['fields'];
+        $fields = $groups[OndemandConfig::METHOD_CODE]['fields'];
 
         $this->helper->initScopeData();
-        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_ondemand');
+        $this->validatePayplugConnection($fields, $groups, OndemandConfig::METHOD_CODE);
     }
 
     /**
@@ -435,8 +456,8 @@ class PaymentConfigObserver implements ObserverInterface
     private function processOneyConfig(array &$groups): void
     {
         $oneyGroups = [
-            'payplug_payments_oney' => [],
-            'payplug_payments_oney_without_fees' => [],
+            OneyConfig::METHOD_CODE => [],
+            OneyWithoutFeesConfig::METHOD_CODE => [],
         ];
 
         $bothActive = true;
@@ -645,10 +666,10 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processApplePayConfig(array &$groups): void
     {
-        $fields = $groups['payplug_payments_apple_pay']['fields'];
+        $fields = $groups[ApplePayConfig::METHOD_CODE]['fields'];
 
         $this->helper->initScopeData();
-        $this->validatePayplugConnection($fields, $groups, 'payplug_payments_apple_pay');
+        $this->validatePayplugConnection($fields, $groups, ApplePayConfig::METHOD_CODE);
 
         if (!empty($fields['active']['value'])) {
             $environmentMode = $this->getConfig('environmentmode');
@@ -662,7 +683,7 @@ class PaymentConfigObserver implements ObserverInterface
             } else {
                 $permissions = $this->getAccountPermissions($apiKey);
                 if (empty($permissions['can_use_apple_pay'])) {
-                    $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
+                    $groups[ApplePayConfig::METHOD_CODE]['fields']['active']['value'] = 0;
                     $message = 'You don\'t have access to this feature yet. ' .
                         'To activate Apple Pay, please contact %1 and activate the LIVE mode.';
                     if ($environmentMode == Config::ENVIRONMENT_LIVE) {
@@ -674,7 +695,7 @@ class PaymentConfigObserver implements ObserverInterface
                         'support@payplug.com'
                     ));
                 } elseif ($environmentMode == Config::ENVIRONMENT_TEST) {
-                    $groups['payplug_payments_apple_pay']['fields']['active']['value'] = 0;
+                    $groups[ApplePayConfig::METHOD_CODE]['fields']['active']['value'] = 0;
                     $message = 'Apple Pay is unavailable in TEST mode. ' .
                         'Please switch your Payplug plugin to LIVE mode to activate it.';
                     $this->messageManager->addErrorMessage(__($message));
@@ -770,6 +791,52 @@ class PaymentConfigObserver implements ObserverInterface
             ),
             __(
                 'MyBank is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Bizum configuration
+     *
+     * @param array $groups
+     * @return void
+     */
+    private function processBizumConfig(array &$groups): void
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'bizum',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate Bizum, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new'
+            ),
+            __(
+                'Bizum is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+    }
+
+    /**
+     * Handle Wero configuration
+     *
+     * @param array $groups
+     * @return void
+     */
+    private function processWeroConfig(array &$groups): void
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'wero',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate Wero, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new'
+            ),
+            __(
+                'Wero is unavailable in TEST mode. ' .
                 'Please switch your Payplug plugin to LIVE mode to activate it.'
             )
         );
@@ -1089,6 +1156,7 @@ class PaymentConfigObserver implements ObserverInterface
     {
         if (!array_key_exists($apiKey, $this->permissions)) {
             $result = $this->login->getAccount($apiKey);
+
             if (!$result['status']) {
                 $this->messageManager->addErrorMessage(__($result['message']));
                 $this->permissions[$apiKey] = [];
@@ -1200,6 +1268,8 @@ class PaymentConfigObserver implements ObserverInterface
             'satispay',
             'ideal',
             'mybank',
+            'bizum',
+            'wero'
         ];
         foreach ($pproMethods as $method) {
             $jsonAnswer['permissions']['can_use_' . $method] = $jsonAnswer['payment_methods'][$method]['enabled']

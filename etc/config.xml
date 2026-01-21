@@ -288,6 +288,56 @@
                 <can_use_checkout>1</can_use_checkout>
                 <can_use_internal>0</can_use_internal>
             </payplug_payments_mybank>
+            <payplug_payments_bizum>
+                <active>0</active>
+                <title>Pay with Bizum</title>
+                <processing_order_status>processing</processing_order_status>
+                <canceled_order_status>canceled</canceled_order_status>
+                <allowspecific>0</allowspecific>
+                <sort_order>0</sort_order>
+                <default_country>ES</default_country>
+                <model>PayplugPaymentBizumFacade</model>
+                <payment_action>authorize_capture</payment_action>
+                <invoice_on_payment>1</invoice_on_payment>
+                <is_gateway>1</is_gateway>
+                <order_status>pending</order_status>
+                <can_order>1</can_order>
+                <can_authorize>0</can_authorize>
+                <can_capture>1</can_capture>
+                <can_fetch_transaction_information>1</can_fetch_transaction_information>
+                <can_capture_partial>0</can_capture_partial>
+                <can_void>0</can_void>
+                <can_cancel>1</can_cancel>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <can_use_internal>0</can_use_internal>
+            </payplug_payments_bizum>
+            <payplug_payments_wero>
+                <active>0</active>
+                <title>Pay with Wero</title>
+                <processing_order_status>processing</processing_order_status>
+                <canceled_order_status>canceled</canceled_order_status>
+                <allowspecific>0</allowspecific>
+                <sort_order>0</sort_order>
+                <default_country>FR</default_country>
+                <model>PayplugPaymentWeroFacade</model>
+                <payment_action>authorize_capture</payment_action>
+                <invoice_on_payment>1</invoice_on_payment>
+                <is_gateway>1</is_gateway>
+                <order_status>pending</order_status>
+                <can_order>1</can_order>
+                <can_authorize>0</can_authorize>
+                <can_capture>1</can_capture>
+                <can_fetch_transaction_information>1</can_fetch_transaction_information>
+                <can_capture_partial>0</can_capture_partial>
+                <can_void>0</can_void>
+                <can_cancel>1</can_cancel>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <can_refund>1</can_refund>
+                <can_use_checkout>1</can_use_checkout>
+                <can_use_internal>0</can_use_internal>
+            </payplug_payments_wero>
         </payment>
         <payplug_payments>
             <general>
@@ -305,6 +355,8 @@
                 <ideal_countries_override>["NL"]</ideal_countries_override>
                 <mybank_countries_override>["IT"]</mybank_countries_override>
                 <satispay_countries_override>["IT"]</satispay_countries_override>
+                <bizum_countries_override>["ES"]</bizum_countries_override>
+                <wero_countries_override>["BE","FR","DE","NL","AT"]</wero_countries_override>
             </general>
         </payplug_payments>
     </default>
