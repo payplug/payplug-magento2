@@ -32,6 +32,9 @@ use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 abstract class AbstractBuilder extends AbstractHelper
 {
+    protected const NEED_PHONE_NUMBER_REGION_CHECK = false;
+    protected const IS_MOBILE_PHONE_NUMBER_REQUIRED = false;
+    protected const MOBILE_PHONE_NUMBER_WHITELIST = [];
     private const RETURN_URL_SCOPE_FIELD = 'return_url_scope';
     private const RETURN_URL_SCOPE_GLOBAL_VALUE = 'global_store';
 
@@ -171,6 +174,7 @@ abstract class AbstractBuilder extends AbstractHelper
      * @param array $allowedCountries
      * @param string $defaultCountry
      * @return array
+     * @throws LocalizedException
      */
     private function buildAddressData(
         object $address,
@@ -197,16 +201,33 @@ abstract class AbstractBuilder extends AbstractHelper
             $country = $defaultCountry;
         }
 
-        $phoneResult = $this->phoneHelper->getPhoneInfo($address->getTelephone(), $address->getCountryId());
+        $needPhoneNumberRegionCheck = $this->isPhoneNumberRegionCheckRequired();
+        $phoneResult = $this->phoneHelper->getPhoneInfo(
+            $address->getTelephone(),
+            $address->getCountryId(),
+            $needPhoneNumberRegionCheck
+        );
+
+        if ($phoneResult === null && $needPhoneNumberRegionCheck === true) {
+            $message = __('For this payment method, please choose a valid phone number for your country');
+            throw new LocalizedException($message);
+        }
+
         $mobile = null;
         $landline = null;
+
         if (is_array($phoneResult)) {
             if ($phoneResult['landline']) {
                 $landline = $phoneResult['phone'];
             }
-            if ($phoneResult['mobile']) {
+            if ($phoneResult['mobile'] || $this->isMobilePhoneNumberWhiteListed($phoneResult['phone'])) {
                 $mobile = $phoneResult['phone'];
             }
+        }
+
+        if ($mobile === null && $this->isMobilePhoneNumberRequired() === true) {
+            $message = __('For this payment method, please provide a mobile phone number');
+            throw new LocalizedException($message);
         }
 
         $prefix = strtolower($address->getPrefix() ?? '');
@@ -374,5 +395,36 @@ abstract class AbstractBuilder extends AbstractHelper
         );
 
         return $returnUrlScope === self::RETURN_URL_SCOPE_GLOBAL_VALUE;
+    }
+
+    /**
+     * Need phone number region check
+     *
+     * @return bool
+     */
+    private function isPhoneNumberRegionCheckRequired(): bool
+    {
+        return static::NEED_PHONE_NUMBER_REGION_CHECK;
+    }
+
+    /**
+     * Need mobile phone number
+     *
+     * @return bool
+     */
+    private function isMobilePhoneNumberRequired(): bool
+    {
+        return static::IS_MOBILE_PHONE_NUMBER_REQUIRED;
+    }
+
+    /**
+     * Is mobile phone number white listed
+     *
+     * @param string $phoneNumber
+     * @return bool
+     */
+    private function isMobilePhoneNumberWhiteListed(string $phoneNumber): bool
+    {
+        return in_array($phoneNumber, static::MOBILE_PHONE_NUMBER_WHITELIST);
     }
 }
