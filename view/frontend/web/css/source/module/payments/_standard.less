@@ -1,3 +1,9 @@
+// /**
+//  * Payplug - https://www.payplug.com/
+//  * Copyright © Payplug. All rights reserved.
+//  * See LICENSE for license details.
+//  */
+
 //
 //  Common
 //  _____________________________________________
@@ -7,28 +13,28 @@
         width: @pp-payment-integrated-form__width;
         padding-left: @pp-payment-integrated-form__padding-left;
         margin-bottom: @pp-payment-integrated-form__margin-bottom;
-    
+
         .schemes-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 10px;
             margin-top: 20px;
-    
+
             .card-title {
                 color: #555D64;
                 font-size: 14px;
                 font-weight: 700;
                 text-transform: uppercase;
             }
-    
+
             .schemes {
                 .scheme {
                     &:hover {
                         cursor: pointer;
                     }
-    
-                    input {    
+
+                    input {
                         ~ .icon {
                             display: inline-block;
                             width: 33px;
@@ -36,32 +42,32 @@
                             background-repeat: no-repeat;
                             background-size: contain;
                         }
-    
+
                         &[value="visa"] {
                             ~ .icon {
                                 background-image: url('Payplug_Payments::images/standard/visa-dark.svg');
                             }
-    
+
                             &:checked ~ .icon {
                                 background-image: url('Payplug_Payments::images/standard/visa.svg');
                             }
                         }
-    
+
                         &[value="mastercard"] {
                             ~ .icon {
                                 background-image: url('Payplug_Payments::images/standard/mastercard-dark.svg');
                             }
-    
+
                             &:checked ~ .icon {
                                 background-image: url('Payplug_Payments::images/standard/mastercard.svg');
                             }
                         }
-    
+
                         &[value="cb"] {
                             ~ .icon {
                                 background-image: url('Payplug_Payments::images/standard/cb-dark.svg');
                             }
-    
+
                             &:checked ~ .icon {
                                 background-image: url('Payplug_Payments::images/standard/cb.svg');
                             }
@@ -71,7 +77,7 @@
                             + span {
                                 background-image: url('Payplug_Payments::images/icons/postepay-dark.svg');
                             }
-    
+
                             &:checked + span {
                                 background-image: url('Payplug_Payments::images/icons/postepay.svg');
                             }
@@ -80,14 +86,14 @@
                 }
             }
         }
-    
+
         .input-container {
             position: relative;
             height: 40px;
             width: calc(@pp-payment-integrated-form__width - 16px - 50px);
             padding: 0 16px 0 50px;
             border: 1px solid @oney-color6;
-    
+
             &::before {
                 content: "";
                 position: absolute;
@@ -98,7 +104,7 @@
                 background: #95999e 50% no-repeat;
                 background-size: 100% auto;
             }
-    
+
             + .error-container {
                 .invalid-field,
                 .empty-field {
@@ -106,11 +112,11 @@
                     color: #E91932;
                 }
             }
-    
+
             &.error-invalid,
             &.error-empty {
                 border: 1px solid #E91932;
-    
+
                 & + .error-container {
                     .invalid-field,
                     .empty-field {
@@ -119,75 +125,75 @@
                 }
             }
         }
-    
+
         .cardholder-input-container::before {
             mask-image: url('Payplug_Payments::images/icons/account.svg');
             -webkit-mask-image: url('Payplug_Payments::images/icons/account.svg');
         }
-    
+
         .pan-input-container::before {
             mask-image: url('Payplug_Payments::images/icons/card.svg');
             -webkit-mask-image: url('Payplug_Payments::images/icons/card.svg');
         }
-    
+
         .exp-input-container::before {
             mask-image: url('Payplug_Payments::images/icons/calendar.svg');
             -webkit-mask-image: url('Payplug_Payments::images/icons/calendar.svg');
         }
-    
+
         .cvv-input-container::before {
             mask-image: url('Payplug_Payments::images/icons/lock.svg');
             -webkit-mask-image: url('Payplug_Payments::images/icons/lock.svg');
         }
-    
+
         .exp-cvv-container {
             display: flex;
             gap: @pp-payment-integrated-form-cvv__gap;
             justify-content: space-between;
             margin-top: 10px;
-    
+
             > div {
                 width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap);
-    
+
                 .input-container {
                     width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap - 16px - 50px);
                 }
             }
         }
-    
+
         .transaction-secured,
         .policy {
             font-size: 14px;
             line-height: 21px;
             margin-top: 20px;
         }
-    
+
         .transaction-secured {
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 10px;
             color: #212225;
-    
+
             img {
                 height: 16px;
             }
         }
-    
+
         .policy {
             text-align: center;
-    
+
             a {
                 display: block;
                 color: #909192;
                 text-decoration: underline;
             }
         }
-    
+
         .save-card-container {
             margin-top: 10px;
         }
-    
+
         .message {
             margin-top: 20px;
         }

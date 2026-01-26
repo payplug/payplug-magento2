@@ -1,3 +1,9 @@
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
 define([
     'mage/translate',
     'Payplug_Payments/js/view/payment/method-renderer/oney-payment-renderer'
