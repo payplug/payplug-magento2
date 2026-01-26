@@ -1,3 +1,11 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <type name="Payplug\Payments\Logger\Handler">
         <arguments>
@@ -1032,6 +1040,12 @@
     </type>
     <type name="Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation">
         <plugin name="payplug_payment_capture_standard_deferred_payment" type="Payplug\Payments\Plugin\CaptureStandardDeferredPayment" sortOrder="20"/>
+    </type>
+
+    <type name="Payplug\Payments\ViewModel\PayplugIcons">
+        <arguments>
+            <argument name="iconPathPrefix" xsi:type="string">Payplug_Payments::images</argument>
+        </arguments>
     </type>
 
     <preference for="Payplug\Payments\Api\Data\RefundRequestInterface" type="Payplug\Payments\Model\Data\RefundRequest"/>

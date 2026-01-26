@@ -1,0 +1,70 @@
+<?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Payplug\Payments\Block\ApplePay\ProductButton;
+use Magento\Framework\Escaper;
+
+/**
+ * @var Escaper $escaper
+ * @var ProductButton $block
+ * @var HyvaCsp $hyvaCsp
+ * @var ViewModelRegistry $viewModels
+ */
+?>
+
+<?= $block->getChildHtml('button.apple.pay.script') ?>
+
+<script>
+    'use strict';
+
+    function initApplePayProduct () {
+        return {
+            applePayConfig: <?= /* @noEscape */ $block->getConfigJson(); ?>,
+            productFinalPrice: <?= /* @noEscape */ $block->getCurrentProduct()->getFinalPrice(); ?>,
+            isVirtual: <?= $block->getCurrentProduct()->isVirtual() ? 'true' : 'false'; ?>,
+            workflowType: 'product'
+        }
+    }
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>
+
+<div x-data="productButtonApplePay"
+     class="pp-apple-pay-button mt-4 text-right"
+     @private-content-loaded.window="productButtonApplePayPrivateContentLoadedWindow">
+    <apple-pay-button
+        buttonstyle="black"
+        type="pay"
+        @click="productButtonApplePayClick"
+        x-show="isVisible"
+        x-cloak>
+    </apple-pay-button>
+</div>
+
+<script>
+    function productButtonApplePay() {
+        return Object.assign(
+            {...initApplePay(), ...initApplePayProduct()},
+            {
+                ['productButtonApplePayClick'](event) {return this.initApplePaySession()},
+                ['productButtonApplePayPrivateContentLoadedWindow'](event) {
+                    return this.onPrivateContentLoaded(this.$event.detail.data)
+                },
+            }
+        )
+    }
+
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('productButtonApplePay', productButtonApplePay)
+    }, {once: true});
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>

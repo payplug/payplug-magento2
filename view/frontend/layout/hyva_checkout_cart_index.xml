@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <remove src="Payplug_Payments::js/oney.js"/>
+    </head>
+    <body>
+        <referenceBlock name="payplug-payments-product-oney-wrapper"
+                        template="Payplug_Payments::oney/hyva-simulation_wrapper_checkout.phtml">
+            <arguments>
+                <argument name="container_css_classes" xsi:type="string">-mt-6 mb-8</argument>
+            </arguments>
+        </referenceBlock>
+
+        <referenceBlock name="payplug-payments-product-oney-simulation" template="Payplug_Payments::oney/hyva-simulation.phtml">
+            <block name="simulation-loading" as="loading" template="Hyva_Theme::ui/loading.phtml" />
+            <arguments>
+                <argument name="popin_position" xsi:type="string">
+                    bottom
+                </argument>
+            </arguments>
+        </referenceBlock>
+
+        <referenceBlock name="checkout.cart.methods.button.apple.pay"
+                        template="Payplug_Payments::cart/hyva-button-apple-pay.phtml">
+            <block name="button.apple.pay.script" template="Payplug_Payments::js/hyva-button-apple-pay.phtml" />
+        </referenceBlock>
+
+        <move element="payplug-payments-product-oney-wrapper"
+              destination="checkout.cart.totals.container"
+              after="-" />
+
+        <move element="checkout.cart.methods.button.apple.pay"
+              destination="checkout.cart.methods"
+              after="-" />
+
+        <referenceContainer name="before.body.end">
+            <block name="payplug.checkout.index.script.standard"
+                   template="Payplug_Payments::oney/hyva-simulation-csp-js.phtml"
+            />
+            <block name="payplug.checkout.index.script.simulation.content"
+                   template="Payplug_Payments::oney/hyva-simulation_content-csp-js.phtml"
+            />
+        </referenceContainer>
+    </body>
+</page>

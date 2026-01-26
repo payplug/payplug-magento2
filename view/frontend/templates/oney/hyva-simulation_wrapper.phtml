@@ -1,0 +1,29 @@
+<?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+declare(strict_types=1);
+
+use Hyva\CheckoutPayplug\ViewModel\OneyDisplayer;
+use Hyva\Theme\Model\ViewModelRegistry;
+use Magento\Catalog\Block\Product\View;
+
+/** @var View $block */
+$price = $block->getProduct()->getFinalPrice(1);
+/** @var ViewModelRegistry $viewModels */
+/** @var OneyDisplayer $oneyDisplayer */
+$oneyDisplayer = $viewModels->require(OneyDisplayer::class);
+$containerCssClasses = $block->getContainerCssClasses();
+?>
+
+<?php if ($oneyDisplayer->canDisplayOney()): ?>
+    <div class="oney-wrapper oney-product <?= $escaper->escapeHtmlAttr($containerCssClasses); ?>">
+        <?= $block->getChildBlock('payplug-payments-product-oney-simulation')
+                ->setAmount($price)
+                ->toHtml();
+        ?>
+</div>
+<?php endif; ?>

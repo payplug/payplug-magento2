@@ -1,0 +1,456 @@
+<?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\Escaper;
+
+/**
+ * @var Escaper $escaper
+ * @var HyvaCsp $hyvaCsp
+ * @var ViewModelRegistry $viewModels
+ */
+?>
+
+<script>
+    'use strict';
+
+    function initApplePay() {
+        return {
+            allowedShippingMethods: 'payplug_payments/applePay/GetAvailablesShippingMethods',
+            createMockOrder: 'payplug_payments/applePay/createMockOrder',
+            updateCartOrder: 'payplug_payments/applePay/updateCartOrder',
+            cancelUrl: 'payplug_payments/applePay/cancelFromButton',
+            returnUrl: 'payplug_payments/payment/paymentReturn',
+            isVisible: false,
+            isVirtual: false,
+            workflowType: 'shopping-cart',
+            init() {
+                this.clearOrderData();
+
+                this.loadApplePayApi().then(async () => {
+                    this.isVisible = this.getApplePayAvailability();
+                });
+            },
+            initApplePaySession() {
+                this.clearOrderData();
+
+                const config = this.getApplePayConfig();
+
+                this.config = config;
+                this.merchandName = config.merchand_name;
+                this.shippingAmount = config.shipping_amount || 0;
+                this.shippingMethod = null;
+                const applePayIsAvailable = this.getApplePayAvailability();
+
+                if (!applePayIsAvailable) {
+                    return null;
+                }
+
+                const versionNumber = this.getApplePayVersion();
+                const sessionRequest = this.getPaymentRequest();
+
+                this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
+                this.afterPlaceOrder();
+            },
+            getApplePayConfig() {
+                let config = {};
+
+                if (this.workflowType === 'product') {
+                    this.baseAmount = this.productFinalPrice;
+                    config = this.applePayConfig;
+                } else if (this.workflowType === 'shopping-cart') {
+                    const totalsData = window?.checkoutConfig?.totalsData;
+                    this.baseAmount = totalsData?.base_subtotal_with_discount;
+                    const currency = totalsData?.quote_currency_code;
+                    const applePayConfig = window?.checkoutConfig?.payment?.payplug_payments_apple_pay || {};
+
+                    config = { ...applePayConfig, currency };
+                }
+
+                return config;
+            },
+            loadApplePayApi() {
+                return new Promise(resolve => {
+                    const script = document.createElement('script');
+                    script.type = 'text/javascript';
+                    script.src =  '<?= $escaper->escapeJs('https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js') ?>';
+                    script.async = true;
+                    script.onload = resolve;
+                    document.head.appendChild(script);
+                });
+            },
+            onPrivateContentLoaded(data) {
+                this.baseAmount = data.cart.subtotalAmount;
+            },
+            getApplePayAvailability() {
+                return window.ApplePaySession && ApplePaySession.canMakePayments();
+            },
+            getApplePayVersion() {
+                if (ApplePaySession.supportsVersion(14)) {
+                    return 14;
+                }
+                if (ApplePaySession.supportsVersion(3)) {
+                    return 3;
+                }
+
+                return 1;
+            },
+            getPaymentRequest() {
+                const {
+                    domain,
+                    locale,
+                    merchand_name: merchandName,
+                    currency
+                } = this.config;
+
+                let paymentRequest = {
+                    countryCode: locale.slice(-2),
+                    currencyCode: currency,
+                    merchantCapabilities: ['supports3DS'],
+                    supportedNetworks: ['cartesBancaires', 'visa', 'masterCard'],
+                    supportedTypes: ['debit', 'credit'],
+                    total: {
+                        label: merchandName,
+                        type: 'final',
+                        amount: this.baseAmount
+                    },
+                    applicationData: btoa(JSON.stringify({
+                        'apple_pay_domain': domain
+                    })),
+                    requiredBillingContactFields: [
+                        "postalAddress",
+                        "name"
+                    ]
+                };
+
+                if (this.isVirtual === true) {
+                    paymentRequest.requiredShippingContactFields = [
+                        "phone",
+                        "email"
+                    ];
+                } else {
+                    paymentRequest.requiredShippingContactFields = [
+                        "postalAddress",
+                        "name",
+                        "phone",
+                        "email"
+                    ];
+                }
+
+                return paymentRequest;
+            },
+            getTotalAmount() {
+                return parseFloat(this.baseAmount) + parseFloat(this.shippingAmount);
+            },
+            afterPlaceOrder() {
+                this.bindOnCompleteMethod();
+                this.bindMarchantValidation();
+                this.bindPaymentAuthorization();
+                this.bindShippingMethodSelected();
+                this.bindShippingContactSelected();
+                this.bindPaymentCancel();
+                this.applePaySession.begin();
+            },
+            bindOnCompleteMethod() {
+                this.applePaySession.onpaymentmethodselected = () => {
+                    const updated = {
+                        "newTotal": {
+                            "label": this.merchandName,
+                            "amount": this.getTotalAmount(),
+                            "type": "final"
+                        }
+                    };
+
+                    this.applePaySession.completePaymentMethodSelection(updated);
+                };
+            },
+            bindMarchantValidation() {
+                const self = this;
+
+                this.applePaySession.onvalidatemerchant = async event => {
+                    const eventData = {
+                        isTrusted: event.isTrusted,
+                        validationURL: event.validationURL,
+                        type: event.type,
+                    };
+
+                    let formData = new FormData();
+
+                    if (this.workflowType === 'product') {
+                        const form = document.getElementById('product_addtocart_form');
+                        formData = new FormData(form);
+                    }
+
+                    formData.set('btoaevent',  btoa(JSON.stringify(eventData)));
+
+                    fetch(BASE_URL + this.createMockOrder + '?form_key=' + (document.cookie.match(/form_key=([^;]+)/)?.[1] || ''), {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(response => {
+                        if (response.error) {
+                            self.cancelPayplugPaymentWithAbort();
+                        } else {
+                            try {
+                                if (self.workflowType === 'product') {
+                                    self.invalidateMiniCart(true);
+                                    self.baseAmount = response.base_amount;
+                                }
+
+                                self.orderId = response.order_id;
+                                self.applePaySession.completeMerchantValidation(response.merchantSession);
+                            } catch (e) {
+                                self.cancelPayplugPaymentWithAbort();
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        self.cancelPayplugPaymentWithAbort();
+                    });
+                };
+            },
+            // To be removed after the updateCartOrder Content-type replacement
+            // https://payplug-prod.atlassian.net/browse/MAG-557
+            formatUpdateCartOrderFetchData(event) {
+                const formData = new URLSearchParams();
+
+                if (!event?.payment?.token) {
+                    throw new Error('Invalid Apple Pay event: missing payment token');
+                }
+
+                function appendFields (prefix, obj, fields) {
+                    fields.forEach(field => {
+                        const value = obj && obj[field] !== undefined && obj[field] !== null ? obj[field] : '';
+                        formData.append(`${prefix}[${field}]`, value);
+                    });
+                }
+
+                function appendAddressLines (prefix, contact) {
+                    if (contact && Array.isArray(contact.addressLines)) {
+                        contact.addressLines.forEach(line => {
+                            formData.append(`${prefix}[addressLines][]`, line);
+                        });
+                    }
+                }
+
+                const paymentData = event.payment.token.paymentData || {};
+                const paymentDataHeader = paymentData.header || {};
+                appendFields('token[paymentData]', paymentData, ['data', 'signature', 'version']);
+                appendFields('token[paymentData][header]', paymentDataHeader, [
+                    'transactionId', 'publicKeyHash', 'applicationData', 'ephemeralPublicKey'
+                ]);
+
+                const paymentMethod = event.payment.token.paymentMethod || {};
+                appendFields('token[paymentMethod]', paymentMethod, ['displayName', 'network', 'type']);
+
+                formData.append('token[transactionIdentifier]', event.payment.token.transactionIdentifier || '');
+
+                const billing = event.payment.billingContact || {};
+                appendAddressLines('billing', billing);
+                appendFields('billing', billing, [
+                    'administrativeArea', 'country', 'countryCode', 'familyName', 'givenName',
+                    'locality', 'phoneticFamilyName', 'phoneticGivenName', 'postalCode',
+                    'subAdministrativeArea', 'subLocality'
+                ]);
+
+                const shipping = event.payment.shippingContact || {};
+                appendAddressLines('shipping', shipping);
+                appendFields('shipping', shipping, [
+                    'administrativeArea', 'country', 'countryCode', 'emailAddress', 'familyName',
+                    'givenName', 'locality', 'phoneNumber', 'phoneticFamilyName', 'phoneticGivenName',
+                    'postalCode', 'subAdministrativeArea', 'subLocality'
+                ]);
+
+                formData.append('shipping_method', this.shippingMethod || '');
+                formData.append('order_id', this.orderId);
+                formData.append('workflowType', this.workflowType);
+
+                return formData;
+            },
+            bindPaymentAuthorization() {
+                const self = this;
+
+                this.applePaySession.onpaymentauthorized = event => {
+                    try {
+                        if (!event?.payment?.token) {
+                            console.error('Invalid Apple Pay event: missing payment token');
+                            self.cancelPayplugPaymentWithFailure();
+                            return;
+                        }
+
+                        const formData = this.formatUpdateCartOrderFetchData(event);
+
+                        fetch(BASE_URL + this.updateCartOrder + '?form_key=' + (document.cookie.match(/form_key=([^;]+)/)?.[1] || ''), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                            },
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(response => {
+                            if (response.error === true) {
+                                self.cancelPayplugPaymentWithFailure();
+                            } else {
+                                self.applePaySession.completePayment({
+                                    "status": ApplePaySession.STATUS_SUCCESS
+                                });
+
+                                self.invalidateMiniCart();
+                                window.location.replace(BASE_URL + this.returnUrl);
+                            }
+                        })
+                        .catch(() => {
+                            self.cancelPayplugPaymentWithFailure();
+                        });
+                    } catch (e) {
+                        self.cancelPayplugPaymentWithFailure();
+                    }
+                };
+            },
+            bindShippingMethodSelected() {
+                this.applePaySession.onshippingmethodselected = shippingEvent => {
+                    if (typeof shippingEvent === 'undefined') {
+                        return;
+                    }
+
+                    this.shippingMethod = shippingEvent.shippingMethod.identifier;
+                    this.shippingAmount = shippingEvent.shippingMethod.amount;
+
+                    const updated = {
+                        "newTotal": {
+                            "label": this.merchandName,
+                            "amount": this.getTotalAmount(),
+                            "type": "final",
+                            "paymentTiming": "immediate",
+                        }
+                    }
+
+                    this.applePaySession.completeShippingMethodSelection(updated);
+                };
+            },
+            // To be removed after the allowedShippingMethods Content-type replacement
+            // https://payplug-prod.atlassian.net/browse/MAG-557
+            toFormUrlEncoded(obj) {
+                return Object.keys(obj)
+                            .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key] ?? ''))
+                            .join('&');
+            },
+            bindShippingContactSelected() {
+                const self = this;
+
+                this.applePaySession.onshippingcontactselected = async shippingContactEvent => {
+                    let contact = shippingContactEvent.shippingContact;
+
+                    if (contact?.countryCode) {
+                        contact.countryCode = contact.countryCode.toUpperCase();
+                    }
+
+                    const formKey = (document.cookie.match('(^|;)\\s*form_key\\s*=\\s*([^;]+)') || [])[2] || '';
+                    const url = BASE_URL + this.allowedShippingMethods + '?form_key=' + formKey;
+                    const data = shippingContactEvent.shippingContact;
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'Accept': 'application/json'
+                        },
+                        body: this.toFormUrlEncoded(data)
+                    })
+                    .then(response => response.json())
+                    .then(response => {
+                        if (response.error) {
+                            self.cancelPayplugPaymentWithAbort();
+                        } else {
+                            try {
+                                let errors = [];
+
+                                if (response.methods.length === 0) {
+                                    const applePayError = new ApplePayError(
+                                        'shippingContactInvalid',
+                                        'postalAddress',
+                                        '<?= $escaper->escapeJs(__('Delivery unavailable to this address')) ?>'
+                                    );
+
+                                    errors.push(applePayError);
+                                }
+
+                                const updated = {
+                                    "errors": errors,
+                                    "newTotal": {
+                                        "label": self.merchandName,
+                                        "amount": self.getTotalAmount(),
+                                        "type": "final"
+                                    },
+                                    "newShippingMethods": response.methods
+                                };
+                                self.applePaySession.completeShippingContactSelection(updated);
+                            } catch (e) {
+                                self.cancelPayplugPaymentWithAbort();
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        self.cancelPayplugPaymentWithAbort();
+                    });
+                };
+            },
+            bindPaymentCancel() {
+                this.applePaySession.oncancel = () => {
+                    this.cancelPayplugPayment();
+                };
+            },
+            clearOrderData() {
+                this.orderId = null;
+                this.baseAmount = 0;
+                this.shippingAmount = 0;
+                this.shippingMethod = null;
+            },
+            invalidateMiniCart (withReload = false) {
+                hyva.setCookie('mage-cache-sessid', '', -1, true);
+
+                if (withReload) {
+                    window.dispatchEvent(new Event('reload-customer-section-data'));
+                }
+            },
+            cancelPayplugPaymentWithAbort() {
+                this.cancelPayplugPayment();
+                this.applePaySession.abort();
+            },
+            cancelPayplugPaymentWithFailure() {
+                this.cancelPayplugPayment();
+                this.applePaySession.completePayment({
+                    "status": ApplePaySession.STATUS_FAILURE
+                });
+            },
+            cancelPayplugPayment() {
+                if (this.orderId) {
+                    const url = BASE_URL + this.cancelUrl + '?form_key=' + (document.cookie.match(/form_key=([^;]+)/) || [])[1];
+
+                    fetch(url, { method: 'GET', credentials: 'same-origin' })
+                        .finally(() => {
+                            this.invalidateMiniCart(true);
+                        });
+                }
+
+                window.dispatchMessages([
+                    {
+                        type: "error",
+                        text: "<?= $escaper->escapeHtmlAttr(__('The transaction was aborted and your card has not been charged')) ?>"
+                    }
+                ], 2000);
+            }
+        };
+    }
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>

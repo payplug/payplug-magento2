@@ -1,0 +1,199 @@
+<?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\ViewModel\HeroiconsSolid;
+use Magento\Framework\Escaper;
+use Magento\Framework\Pricing\Helper\Data;
+use Payplug\Payments\Block\Oney\Simulation;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\ViewModel\PayplugIcons;
+
+/** @var Escaper $escaper */
+/** @var Simulation $block */
+
+$oneySimulation = $block->getOneySimulation();
+$message = $oneySimulation->getMessage();
+$isOneyWithoutFees = $oneySimulation->getMethod() === OneyWithoutFees::METHOD_CODE;
+$pricingHelper = $this->helper(Data::class);
+
+/** @var HeroiconsSolid $heroicons */
+$heroicons = $viewModels->require(HeroiconsSolid::class);
+
+/** @var PayplugIcons $viewModels */
+$icons = $viewModels->require(PayplugIcons::class);
+?>
+<div x-data="checkoutOneySimulationContent">
+
+<?php if (!$oneySimulation->getSuccess() || !empty($message)): ?>
+    <p class="error text-sm text-primary">
+        <?= /* @noEscape */ $message; ?>
+    </p>
+<?php else: ?>
+    <button type="button"
+            class="hidden lg:inline-block absolute top-4 right-4"
+            @click="checkoutOneySimulationContentClick14">
+        <span class="sr-only"><?= $block->escapeHtml(__('Close')); ?></span>
+        <?= $heroicons->xHtml('text-oney', 30, 30, ['aria-hidden' => 'true']); ?>
+    </button>
+
+    <?php // Title ?>
+    <div class="mb-5 text-oney text-lg uppercase leading-6">
+        <span class="sr-only">
+            <?= $block->escapeHtml(__('Oney')); ?>
+        </span>
+        <?= $icons->renderHtml('oney', '', 116, 36, ['aria-hidden' => 'true']); ?>
+
+        <?php if ($isOneyWithoutFees): ?>
+            <?= /* @noEscape */ __(
+                'Pay %1without fees%2 %3by card%4',
+                '<span class="underline">',
+                '</span>',
+                '<span class="block font-bold">',
+                '</span>'
+            ); ?>
+        <?php else: ?>
+            <?= /* @noEscape */ __('Pay %1by card%2', '<span class="font-bold">', '</span>'); ?>
+        <?php endif; ?>
+    </div>
+
+    <?php // Tab navigation ?>
+    <div>
+        <ul role="tablist"
+            aria-label="<?= $block->escapeHtmlAttr(__('Payment type tabs')); ?>"
+            class="mb-4">
+            <li>
+                <button type="button"
+                        class="flex w-full py-1.5 px-4 text-sm font-semibold border border-oney bg-oney-lighter"
+                        :class="checkoutOneySimulationContentClass15"
+                        id="tab-3x"
+                        aria-controls="panel-3x"
+                        :aria-selected="checkoutOneySimulationContentAriaSelected16"
+                        role="tab"
+                        tabindex="0"
+                        @click="checkoutOneySimulationContentClick17">
+                    <?= $block->escapeHtml(__('Payment in %1', '3x')); ?>
+                </button>
+            </li>
+            <li class="relative -top-[1px]">
+                <button type="button"
+                        class="flex w-full py-1.5 px-4 text-sm font-semibold border border-oney bg-oney-lighter"
+                        :class="checkoutOneySimulationContentClass18"
+                        id="tab-4x"
+                        aria-controls="panel-4x"
+                        :aria-selected="checkoutOneySimulationContentAriaSelected19"
+                        role="tab"
+                        tabindex="0"
+                        @click="checkoutOneySimulationContentClick20">
+                    <?= $block->escapeHtml(__('Payment in %1', '4x')); ?>
+                </button>
+            </li>
+        </ul>
+
+        <?php foreach ($oneySimulation->getOptions() as $option): ?>
+            <div x-show="checkoutOneySimulationContentShow21" data-hyvacsp1="<?= /* @noEscape */ $option->getType(); ?>"
+                 role="tabpanel"
+                 id="panel-<?= /* @noEscape */ $option->getType(); ?>"
+                 aria-labelledby="tab-<?= /* @noEscape */ $option->getType(); ?>"
+                 tabindex="0"
+                 x-cloak>
+                <ul class="space-y-0.5 text-primary text-xs">
+                    <li class="flex justify-between">
+                        <span class="font-bold text-sm">
+                            <?= $block->escapeHtml(__('For an amount of:')); ?>
+                        </span>
+                        <span class="font-bold">
+                            <?= /* @noEscape */ $pricingHelper->currency($oneySimulation->getAmount(), true, false); ?>
+                        </span>
+                    </li>
+                    <li class="flex justify-between mt-0">
+                        <span><?= $block->escapeHtml(__('Contribution:')); ?></span>
+                        <span class="font-bold">
+                            <?= /* @noEscape */ $pricingHelper->currency($option->getFirstDeposit(), true, false); ?>
+                        </span>
+                    </li>
+                    <?php if (!$isOneyWithoutFees): ?>
+                        <li class="flex justify-between">
+                            <small>
+                                (<?= $block->escapeHtml(__('Financing cost:')); ?>
+                                <?= /* @noEscape */ $pricingHelper->currency($option->getCost(), true, false); ?>
+                                <?= $block->escapeHtml(__('TAEG:')); ?> <?= /* @noEscape */ $option->getRate(); ?>%)
+                            </small>
+                        </li>
+                    <?php endif; ?>
+                    <?php foreach ($option->getSchedules() as $i => $schedule): ?>
+                        <li class="flex justify-between">
+                            <span><?= $block->escapeHtml(__(sprintf('Installment %d:', $i + 1))); ?></span>
+                            <span class="font-bold">
+                                <?= /* @noEscape */ $pricingHelper->currency($schedule->getAmount(), true, false); ?>
+                            </span>
+                        </li>
+                    <?php endforeach; ?>
+                    <?php if (!$isOneyWithoutFees): ?>
+                        <li class="flex justify-between">
+                            <span><?= $block->escapeHtml(__('Total cost:')); ?></b></span>
+                            <span>
+                                <?= /* @noEscape */ $pricingHelper->currency($option->getTotalAmount(), true, false); ?>
+                            </span>
+                        </li>
+                    <?php else: ?>
+                        <li class="!mt-4">
+                            <small class="text-[10px] text-primary leading-3">
+                                (<?= $block->escapeHtml(__('Financing cost:')); ?>
+                                <span class="text-black font-bold">
+                                    <?= /* @noEscape */ $pricingHelper->currency(0, true, false); ?>
+                                </span>
+                                <?= $block->escapeHtml(__('TAEG:')); ?>
+                                <span class="text-black font-bold">0%</span>)
+                            </small>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+        <?php endforeach; ?>
+    </div>
+
+    <?php
+        $oneyAmounts = $block->getOneyAmounts();
+        $minAmount = 100;
+        $maxAmount = 3000;
+
+        if (is_array($oneyAmounts)) {
+            $minAmount = $oneyAmounts['min_amount'] / 100;
+            $maxAmount = $oneyAmounts['max_amount'] / 100;
+        }
+
+        $minAmount = $pricingHelper->currency($minAmount, true, false);
+        $maxAmount = $pricingHelper->currency($maxAmount, true, false);
+    ?>
+
+    <?php // Legal ?>
+    <p class="border-t border-t-oney pt-2 mt-2 text-gray-600 text-[10px] leading-3">
+        <?= /* @noEscape */ __("Financing offer with mandatory deposit reserved for private individual between %1 and %2. Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 www.orias.fr Correspondance : CS 60 006 - 59895 Lille Cedex - <a href=\"http://www.oney.fr\" class=\"text-oney font-bold\" target=\"_blank\">www.oney.fr</a>", $minAmount, $maxAmount); ?>
+        <?php if ($block->isMerchandItalian()): ?>
+            <span class="block">
+                <?php if (!$isOneyWithoutFees): ?>
+                <a href="<?= $block->escapeUrl($block->getMoreInfoUrl()); ?>"
+                   class="text-oney font-bold underline"
+                   target="_blank"
+                   download>
+                    <?= $block->escapeHtml(__('More info')); ?>
+                </a>
+                <?php else: ?>
+                <a href="<?= $block->escapeUrl($block->getMoreInfoUrlWithoutFees()); ?>"
+                   class="text-oney font-bold underline"
+                   target="_blank"
+                   download>
+                    <?= $block->escapeHtml(__('More info')); ?>
+                </a>
+                <?php endif; ?>
+            </span>
+        <?php endif; ?>
+    </p>
+<?php endif; ?>
+</div>

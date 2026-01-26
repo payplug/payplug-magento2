@@ -1,0 +1,158 @@
+<?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+/** @var HyvaCsp $hyvaCsp */
+?>
+
+<script>
+    function oneySimulation() {
+        return Object.assign(
+            {},
+            {
+                ['initOneySimulation']() {
+                    var hasError = this.$el.dataset.hyvacsp1;
+
+                    function getProductId() {
+                        const product = document.querySelector('[name="product"]');
+                        return product !== null && product.value;
+                    }
+
+                    function oneySimulation() {
+                        return {
+                            isEnabled: !hasError,
+                            isLoading: false,
+                            popinContent: '',
+                            quantityHasChanged: true,
+                            popinIsVisible: false,
+                            paymentType: '3x',
+                            init() {
+                                this.isLoading = true;
+                                
+                                this.getPaymentSimulations()
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        this.isEnabled = !data.html.includes('error');
+                                        this.isLoading = false;
+                                    });
+                            },
+                            handleClick() {
+                                if (this.quantityHasChanged && !this.popinIsVisible) {
+                                    this.isLoading = true;
+
+                                    this.getPaymentSimulations()
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            this.popinContent = data.html;
+                                            this.isLoading = false;
+                                            this.popinIsVisible = true;
+                                        });
+                                } else {
+                                    this.popinIsVisible = !this.popinIsVisible;
+                                }
+
+                                this.quantityHasChanged = false;
+                            },
+                            getPaymentSimulations() {
+                                const formData = this.getFormData();
+                                const body = new URLSearchParams(formData);
+                                return fetch(`${BASE_URL}/payplug_payments/oney/simulation`+ '?form_key=' + hyva.getFormKey(), {
+                                    method: 'post',
+                                    body,
+                                    headers: {'contentType': 'application/x-www-form-urlencoded', 'accept': 'application/json'}
+                                });
+                            },
+                            getFormData() {
+                                let formData = {
+                                    form_key: hyva.getFormKey()
+                                };
+
+                                if (document.querySelector('.oney-product') === null) {
+                                    return formData;
+                                }
+
+                                const product = document.querySelector('[name="product"]');
+
+                                if (document.querySelector('[name="product"]') !== null) {
+                                    formData.product = product.value;
+                                    formData.qty = document.querySelector('[name="qty"]').value;
+                                    let productOptions = [];
+                                    let configurableAttributes = document.querySelector('.super-attribute-select');
+
+                                    if (configurableAttributes) {
+                                        configurableAttributes.forEach(function (value, index) {
+                                            let configurableAttribute = $(value);
+
+                                            productOptions.push({
+                                                attribute: configurableAttribute.data('attr-name'),
+                                                value: configurableAttribute.value
+                                            });
+                                        });
+                                    }
+
+                                    formData.product_options = productOptions;
+                                }
+
+                                return formData;
+                            },
+                            eventListeners: {
+                                [`@update-qty-${getProductId()}.window`](event) {
+                                    this.isLoading = true;
+
+                                    this.getPaymentSimulations()
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            this.isEnabled = !data.html.includes('error');
+                                            this.quantityHasChanged = true;
+                                            this.isLoading = false;
+                                        });
+                                }
+                            }
+                        };
+                    }
+
+                    window.oneySimulation = oneySimulation
+                },
+            }
+        )
+    }
+    
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('oneySimulation', oneySimulation)
+    }, {once: true});
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>
+
+<script>
+    function checkoutOneySimulation() {
+        return Object.assign(
+            oneySimulation(),
+            {
+                ['oneyButtonClass']() { return this.isEnabled ? 'text-oney' : 'text-gray-400' },
+                ['oneyPopinClass']() { return this.isEnabled ? 'border-oney after:border-oney' : 'border-gray-400 after:border-gray-400' },
+                ['clickHandler'](event) { return this.handleClick() },
+                ['closePopinHandler'](event) { return this.popinIsVisible = false },
+            }
+        )
+    }
+
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('checkoutOneySimulation', checkoutOneySimulation)
+    }, {once: true});
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>

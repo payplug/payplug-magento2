@@ -1,0 +1,78 @@
+<?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Payplug\Payments\Block\Oney\Simulation;
+use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\ViewModel\PayplugIcons;
+
+/** @var Escaper $escaper */
+/** @var Simulation $block */
+
+$oneySimulation = $block->getOneySimulation(true);
+$isOneyWithoutFees = $oneySimulation->getMethod() === OneyWithoutFees::METHOD_CODE;
+$isItalianStore = $block->isItalianStore();
+$hasError = (int)!$oneySimulation->getSuccess();
+
+// {String} : 'top' (default) | 'bottom'
+$popinPosition = $block->getPopinPosition() ?? 'top';
+
+/** @var PayplugIcons $viewModels */
+$icons = $viewModels->require(PayplugIcons::class);
+?>
+
+<div x-data="oneySimulation"
+     x-init="initOneySimulation" 
+     data-hyvacsp1="<?= $hasError ?>"></div>
+<div x-data="checkoutOneySimulation"
+     x-bind="eventListeners"
+     class="relative flex flex-col gap-4 lg:gap-0">
+     <?= $block->getChildHtml('loading') ?>
+
+    <?php // Button ?>
+    <button type="button"
+            @click="clickHandler"
+            class="inline-flex items-center justify-end"
+            :class="oneyButtonClass()">
+        <span class="uppercase text-sm font-bold">
+            <?= $block->escapeHtml(__('Or pay in')); ?>
+        </span>
+        <span class="inline-flex items-center">
+            <?php if ($isOneyWithoutFees): ?>
+                <span class="sr-only">
+                    <?= $block->escapeHtml(__('3x 4x Oney without fees')); ?>
+                </span>
+                <?= $isItalianStore
+                    ? $icons->renderHtml('oney/3x4x-it-without-fees-black', 'ml-2', 196, 23, ['aria-hidden' => 'true'])
+                    : $icons->renderHtml('oney/3x4x-without-fees-black', 'ml-2', 170, 23, ['aria-hidden' => 'true']);
+                ?>
+            <?php else: ?>
+                <span class="sr-only">
+                    <?= $block->escapeHtml(__('3x 4x Oney')); ?>
+                </span>
+                <?= $icons->renderHtml('oney/3x4x-black', 'ml-2', 110, 23, ['aria-hidden' => 'true']); ?>
+            <?php endif; ?>
+            <span class="sr-only">
+                <?= $block->escapeHtml(__('?')); ?>
+            </span>
+            <?= $icons->renderHtml('icons/tooltip', 'ml-1', 14, 14, ['aria-hidden' => 'true']); ?>
+        </span>
+    </button>
+
+    <?php // Popin ?>
+    <div class="lg:absolute lg:right-60 lg:transform <?= $popinPosition === 'top' ? 'lg:-translate-y-9' : 'lg:translate-y-8 lg:bottom-0' ?> lg:-translate-x-8 lg:w-[350px] p-4 bg-white border-2
+                after:hidden lg:after:block after:absolute after:w-6 after:h-6
+                after:transform after:translate-x-2/4 <?= $popinPosition === 'top' ? 'lg:after:top-0 after:translate-y-8' : 'after:bottom-0 after:-translate-y-8' ?> after:rotate-45
+                after:bg-white after:border-l-0 after:border-b-0 after:border-2 after:border-solid after:-right-0.5"
+         :class="oneyPopinClass"
+         x-show="popinIsVisible"
+         x-html="popinContent"
+         @click.away="closePopinHandler"
+         x-cloak></div>
+</div>

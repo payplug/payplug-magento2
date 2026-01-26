@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="product.info.button.apple.pay" template="Hyva_CheckoutPayplug::product/button-apple-pay.phtml">
+            <block name="button.apple.pay.script" template="Hyva_CheckoutPayplug::js/button-apple-pay.phtml" />
+        </referenceBlock>
+
+        <move element="product.info.button.apple.pay" destination="product.info.additional" before="-" />
+
+        <referenceBlock name="product.info.options.wrapper.bottom" remove="true" />
+    </body>
+</page>

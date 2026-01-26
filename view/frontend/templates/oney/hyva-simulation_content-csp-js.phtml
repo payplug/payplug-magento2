@@ -1,0 +1,43 @@
+<?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+/** @var HyvaCsp $hyvaCsp */
+?>
+
+<script>
+    function checkoutOneySimulationContent() {
+        return Object.assign(
+            {},
+            {
+                ['checkoutOneySimulationContentAriaSelected16']() {return this.paymentType === '3x'},
+                ['checkoutOneySimulationContentAriaSelected19']() {return this.paymentType === '4x'},
+                ['checkoutOneySimulationContentClass15']() {return this.paymentType === '3x' ? 'bg-oney-lighter text-gray-600' : 'bg-white text-gray-400'},
+                ['checkoutOneySimulationContentClass18']() {return this.paymentType === '4x' ? 'bg-oney-lighter text-gray-600' : 'bg-white text-gray-400'},
+                ['checkoutOneySimulationContentClick14'](event) {return this.popinIsVisible = false},
+                ['checkoutOneySimulationContentClick17'](event) {return this.paymentType = '3x'},
+                ['checkoutOneySimulationContentClick20'](event) {return this.paymentType = '4x'},
+                ['checkoutOneySimulationContentShow21']() {return this.paymentType === `${this.$el.dataset.hyvacsp1}`},
+            }
+        )
+    }
+
+    window.addEventListener('alpine:init', () => {
+        Alpine.data('checkoutOneySimulationContent', checkoutOneySimulationContent)
+    }, {once: true});
+</script>
+
+<?php $hyvaCsp->registerInlineScript() ?>
