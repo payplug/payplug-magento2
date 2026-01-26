@@ -1,4 +1,11 @@
 <?xml version="1.0"?>
+<!--
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="controller_action_predispatch_adminhtml_system_config">
         <observer name="payplug_paymetns_display_notice" instance="Payplug\Payments\Observer\DisplayNoticeObserver" />
