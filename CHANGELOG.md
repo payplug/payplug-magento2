@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.2](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.2) - 2026-01-26
+
+### Features
+
+- Fix exception when selecting PayPlug payment method in checkout (e.g., Hyvä Checkout) (MAG-590)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.6.1...v4.6.2)**
+
+### Fixed
+
+- Fix exception when selecting PayPlug payment method in checkout (e.g., Hyvä Checkout) [#339](https://github.com/payplug/payplug-magento2/pull/339)
+
 ## [4.6.1](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.1) - 2025-12-24
 
 ### Features
@@ -17,8 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Anonymize personal data logged by Payplug module (MAG-581)
 - Enable REDIRECT mode for integrated payment 3DS validation (MAG-584)
 - Fix unclear error message in Legacy connection mode (MAG-585)
-- Fix exception when selecting PayPlug payment method in checkout (e.g., Hyvä Checkout) (MAG-590)
-- Fix PayPlug payment status mismatch in Authorization-only mode (MAG-593)
 - Fix module 4.6.0 incompatibility with Magento 2.4.8-p3 (MAG-598)
 - Fix forced captures attempted 10 minutes after authorization expiration (MAG-599)
 
@@ -37,8 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix error when configuring Payplug on a specific website scope [#317](https://github.com/payplug/payplug-magento2/pull/317)
 - Fix OAuth2 login redirection blank page during Unified Auth process [#328](https://github.com/payplug/payplug-magento2/pull/328)
 - Fix unclear error message in Legacy connection mode [#326](https://github.com/payplug/payplug-magento2/pull/326)
-- Fix exception when selecting PayPlug payment method in checkout (e.g., Hyvä Checkout) [#339](https://github.com/payplug/payplug-magento2/pull/339)
-- Fix PayPlug payment status mismatch in Authorization-only mode (MAG-593) [#337](https://github.com/payplug/payplug-magento2/pull/337)
 - Fix module 4.6.0 incompatibility with Magento 2.4.8-p3 [#340](https://github.com/payplug/payplug-magento2/pull/340)
 - Fix forced captures attempted 10 minutes after authorization expiration [#341](https://github.com/payplug/payplug-magento2/pull/341)
 
