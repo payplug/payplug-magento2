@@ -1,3 +1,9 @@
+// /**
+//  * Payplug - https://www.payplug.com/
+//  * Copyright © Payplug. All rights reserved.
+//  * See LICENSE for license details.
+//  */
+
 //
 //  Common
 //  _____________________________________________
@@ -9,15 +15,15 @@
         //  _____________________________________________
 
         &-product {
-            *, 
-            ::before, 
+            *,
+            ::before,
             ::after {
                 box-sizing: border-box;
             }
 
             margin-bottom: 15px;
         }
-        
+
         &Logo {
             background: 50% no-repeat;
             background-size: 100%;
@@ -450,19 +456,19 @@
         //  _____________________________________________
 
         &Payment {
-            *, 
-            ::before, 
+            *,
+            ::before,
             ::after {
                 box-sizing: border-box;
             }
 
             max-height: 90px;
             overflow: hidden;
-    
+
             &-disabled {
                 max-height: none;
             }
-    
+
             &-open {
                 max-height: 10000vh;
                 margin-bottom: 15px;
@@ -483,29 +489,29 @@
                 text-align: left;
                 background: none;
                 border: none;
-    
+
                 .oneyPayment-disabled & {
                     padding: 8px 15px;
                     color: @oney-color7;
                     cursor: default;
-    
+
                     &:hover {
                         background: @oney-color2;
                     }
                 }
-    
+
                 &:hover {
                     background: @oney-color3;
-    
+
                     .oneyPayment-open & {
                         background: @oney-color2;
                     }
                 }
-    
+
                 &:focus {
                     outline: 0;
                 }
-    
+
                 &:after {
                     align-items: center;
                     color: @oney-color9;
@@ -518,25 +524,25 @@
                     right: 7px;
                     top: 50%;
                     width: 30px;
-    
+
                     .oneyPayment-disabled & {
                         display: none;
                     }
                 }
             }
-    
+
             &_label {
                 display: flex;
                 flex-direction: column;
                 line-height: 1.3em;
             }
-    
+
             &_error {
                 font-size: 14px;
                 font-style: italic;
                 font-weight: 400;
             }
-    
+
             &_logo {
                 background-size: 110%;
                 display: block;
@@ -544,7 +550,7 @@
                 margin: 0 15px 0 0;
                 max-width: 100%;
                 width: 165px;
-    
+
                 .oneyPayment-disabled & {
                     background-image: url('Payplug_Payments::images/oney/3x4x-alt.svg');
                     .oney-without-fees & {
@@ -552,14 +558,14 @@
                     }
                 }
             }
-    
+
             &_cta {
                 display: flex;
                 justify-content: center;
                 margin: 0 0 30px;
                 width: 100%;
             }
-    
+
             &_button {
                 background: @oney-color15;
                 border: none;
@@ -567,7 +573,7 @@
                 font-size: 15px;
                 height: 50px;
                 width: 254px;
-    
+
                 &-disabled {
                     background: @oney-color7;
                 }
@@ -584,7 +590,7 @@
                 width: 100px;
             }
         }
-        
+
         &Option {
             cursor: pointer;
 
@@ -650,7 +656,7 @@
                 width: 100%;
                 padding: 30px 16px;
                 border: 1px solid @oney-color6;
-    
+
                 //  Oney Detail
                 ul {
                     display: flex;
@@ -662,7 +668,7 @@
                     font-size: 15px;
                     font-weight: 600;
                     color: @oney-color11;
-    
+
                     li {
                         display: flex;
                         flex-wrap: wrap;
@@ -670,22 +676,22 @@
                         padding: 0 0 16px;
                         line-height: 21px;
                         border-bottom: 1px solid @oney-color6;
-    
+
                         & + li {
                             padding: 16px 0;
                         }
-    
+
                         &:last-child {
                             border: none;
                             margin: auto 0 0;
                             padding: 16px 0 0;
                         }
-    
+
                         span {
                             display: flex;
                             font-weight: 600;
                             max-width: 50%;
-    
+
                             &:first-child {
                                 font-weight: 500;
                             }
@@ -914,7 +920,7 @@
             margin: 0 8px 30px;
             padding: 30px;
             border: 1px solid @oney-color6;
-    
+
             // Fake background color
             &::after {
                 content: "";
@@ -928,19 +934,19 @@
                 box-shadow: 0px -5px 10px 5px @oney-color1 inset;
                 background-color: @oney-color15;
             }
-    
+
             &:hover {
                 border-color: @oney-color15;
-    
+
                 &:after {
                     opacity: 1;
                 }
             }
-    
+
             &-selected {
                 background-color: fade(@oney-color15, 15);
                 border-color: @oney-color15;
-    
+
                 &:after {
                     opacity: 1;
                 }
