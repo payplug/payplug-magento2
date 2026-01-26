@@ -1,4 +1,9 @@
 <?php
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
 
 namespace Payplug\Payments\Model\NewPaymentLink;
 
@@ -48,7 +53,7 @@ class DataProvider extends \Magento\Ui\DataProvider\AbstractDataProvider
         array $data = []
     ) {
         parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
-        
+
         $this->registry = $registry;
         $this->payplugHelper = $payplugHelper;
         $this->collection = $collection;

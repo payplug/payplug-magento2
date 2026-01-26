@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
-
+<!--
+/**
+ * Payplug - https://www.payplug.com/
+ * Copyright © Payplug. All rights reserved.
+ * See LICENSE for license details.
+ */
+-->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
     <group id="payplug">
         <job name="payplug_payments_auto_capture_deferred_payments" instance="Payplug\Payments\Cron\AutoCaptureDeferredPayments" method="execute">

@@ -1,3 +1,7 @@
+# Payplug - https://www.payplug.com/
+# Copyright © Payplug. All rights reserved.
+# See LICENSE for license details.
+
 input PlaceOrderInput {
     payplug_after_success_url: String @doc(description: "Set Payplug Payment Success URL")
     payplug_after_failure_url: String @doc(description: "Set Payplug Payment Failure URL")
