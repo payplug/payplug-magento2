@@ -202,6 +202,7 @@
 "The email address is incorrect.","The email address is invalid."
 "The email and/or password was not correct.","The email and/or password is incorrect."
 "The installment plan cannot be aborted for this order.","The installment plan cannot be aborted for this order."
+"The order amount is now %1 according to the selected shipping method","The order amount is now %1 according to the selected shipping method"
 "The order has been updated without being canceled because its payment has been validated.","The order has been updated without being canceled because its payment has been validated."
 "The payment cannot be updated for this order.","The payment cannot be updated for this order."
 "The payment is not available for the TEST mode.","The payment is not available for the TEST mode."
