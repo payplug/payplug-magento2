@@ -11,6 +11,7 @@ namespace Payplug\Payments\Controller\Payment;
 
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
+use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
@@ -25,6 +26,7 @@ use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
+use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
@@ -59,7 +61,7 @@ class PaymentReturn extends AbstractPayment
     /**
      * Handle return from PayPlug payment page
      *
-     * @return Redirect|ResultInterface|Json
+     * @return Redirect|ResultInterface|Json|ResponseInterface
      */
     public function execute()
     {
@@ -97,6 +99,18 @@ class PaymentReturn extends AbstractPayment
                 $orderPaymentModel->getScopeId($order),
                 $orderPaymentModel->getScope($order)
             );
+
+            if ($order->getPayment()?->getMethod() === WeroConfig::METHOD_CODE
+                && !$payment->is_paid && !$payment->failure
+            ) {
+                /**
+                 * Wero does not provide any failure code to payplug when the user aborts payment
+                 * So Payplug Redirect to PaymentReturn by default
+                 * Here is a workaround to forward to Cancel action
+                 */
+                $this->_forward('cancel');
+                return $this->getResponse();
+            }
 
             if ($isInstallment) {
                 if ($payment->failure) {
