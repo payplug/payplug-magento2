@@ -145,7 +145,10 @@ class CreateMockOrder implements HttpPostActionInterface
 
             if ($newQuote->isVirtual() === false) {
                 $this->updateQuoteShippingAddress($newQuote, $placeholderAddress);
-                $newQuote->getShippingAddress()->setCollectShippingRates(true)->collectShippingRates();
+
+                $newQuote->getShippingAddress()->setCollectShippingRates(true);
+                $newQuote->setTotalsCollectedFlag(false);
+
                 $this->cartRepository->save($newQuote);
 
                 $availableShippingMethods = $this->getCurrentQuoteAvailableMethods->execute((int)$newQuote->getId());

@@ -168,6 +168,7 @@
 "The email address is incorrect.","Correo electrónico inválido."
 "The email and/or password was not correct.","El correo y/o contraseña no son correctas."
 "The installment plan cannot be aborted for this order.","The installment plan cannot be aborted for this order."
+"The order amount is now %1 according to the selected shipping method","El importe del pedido es ahora %1 según el método de envío seleccionado"
 "The payment cannot be updated for this order.","The payment cannot be updated for this order."
 "The payment is not available for the TEST mode.","The payment is not available for the TEST mode."
 "The payment is suspected to be a fraud (e.g. payment with a stolen card).","The payment is suspected to be a fraud (e.g. payment with a stolen card)."
