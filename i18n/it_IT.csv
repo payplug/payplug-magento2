@@ -204,6 +204,7 @@
 "The email address is incorrect.","L'indirizzo email non é valido"
 "The email and/or password was not correct.","L'indirizzo mail e/o la password sono errati."
 "The installment plan cannot be aborted for this order.","Il pagamento frazionato non puo' essere interrotto per questo ordine"
+"The order amount is now %1 according to the selected shipping method","L'importo dell’ordine è ora %1 in base al metodo di spedizione selezionato."
 "The order has been updated without being canceled because its payment has been validated.","L'ordine è stato aggiornato, senza essere annullato, poiché il pagamento è stato convalidato."
 "The payment cannot be updated for this order.","Il pagamento non puo' essere aggiornato per questo ordine"
 "The payment is not available for the TEST mode.","Il pagamento non è disponibile in modalità TEST."

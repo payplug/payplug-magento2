@@ -315,7 +315,18 @@ class UpdateCartOrder implements HttpPostActionInterface
             $this->quoteAddressToOrder->convert($quote->getShippingAddress())
         );
 
-        $order->setShippingMethod($selectedShippingMethod);
+
+        $order->setData('shipping_method', $selectedShippingMethod);
         $this->orderRepository->save($order);
+
+        $origGrandTotal = (float)$order->getOrigData('grand_total');
+        $newGrandTotal = (float)$order->getGrandTotal();
+
+        if ($newGrandTotal !== $origGrandTotal) {
+            $order->addCommentToStatusHistory((string)__(
+                'The order amount is now %1 according to the selected shipping method',
+                $order->getBaseCurrency()->formatTxt($newGrandTotal)
+            ));
+        }
     }
 }
