@@ -87,7 +87,7 @@ class Info extends BaseInfo
             $status = __('Partially Refunded');
         } elseif ($payment->is_paid) {
             $status = __('Paid');
-        } elseif ($payment->authorization->authorized_at) {
+        } elseif ($payment->authorization?->authorized_at) {
             $status = __('Authorized');
         }
 
