@@ -17,6 +17,7 @@ use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Url\DecoderInterface as UrlDecoderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
+use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
@@ -69,7 +70,13 @@ class Cancel extends AbstractPayment
                 $orderPaymentModel->getScope($order)
             );
 
-            if (empty($payment->failure->code) || $payment->failure->code !== 'canceled') {
+            if ($order->getPayment()?->getMethod() !== WeroConfig::METHOD_CODE
+                && (empty($payment->failure->code) || $payment->failure->code !== 'canceled')
+            ) {
+                /**
+                 * Redirect to the cart without any other operation or message
+                 * Except for Wero method, as Wero does not provide any failure code when the user aborts payment
+                 */
                 return $this->getResultRedirect();
             }
 
