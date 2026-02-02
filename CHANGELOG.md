@@ -14,19 +14,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix type casting for total amount and split count in installment plan generation (MAG-539)
 - Fix undefined index error in PaymentConfigObserver (MAG-597)
 - Fix double shipping rate calculation on configurable product (MAG-608)
+- Update React components declaration to avoid PHP CS errors (MAG-617)
+- Add GraphQL resolver for retrieving Payplug payment redirect URL on GraphQL Order type (V1) for Magento 2.4.6 compatibility (MAG-621)
+- Update ApplePay order handling to reflect shipping method changes and add relevant order comment (MAG-629)
+- Add null safe operator for `authorized_at` to prevent potential null reference error (MAG-628)
 
 **[View diff](https://github.com/payplug/payplug-magento2/compare/v4.6.2...v4.6.3)**
 
 ### Added
 
-- Add full Magento Coding Standard ruleset compliance (MAG-601) [2f4ce644](https://github.com/payplug/payplug-magento2/commit/ae8a2f29ae2c418bb87c47ed963dafad0bbaa909)
-- Add React headless payment app example (MAG-549) [ae8a2f29](https://github.com/payplug/payplug-magento2/commit/2f4ce644adc96d5064a546f156293b61fef33750)
+- Add full Magento Coding Standard ruleset compliance (MAG-601) [#ae4a9a48](https://github.com/payplug/payplug-magento2/commit/ae4a9a48026a1aa5135a64d4def3fe76e535ec04)
+- Add React headless payment app example (MAG-549) [#8c342895](https://github.com/payplug/payplug-magento2/commit/8c34289593549c7953ac2a86927c1d81caaf6bb9)
+- Update React components declaration to avoid PHP CS errors (MAG-617) [#9998c7c9](https://github.com/payplug/payplug-magento2/commit/9998c7c904f1d87b3f6a686173c7d96451673f80)
+- Add GraphQL resolver for retrieving Payplug payment redirect URL on GraphQL Order type (V1) for Magento 2.4.6 compatibility (MAG-621) [#f886d4c3](https://github.com/payplug/payplug-magento2/commit/f886d4c3235266b689569dc698d2a709b0f70fb5)
 
 ### Fixed
 
-- Fix type casting for total amount and split count in installment plan generation (MAG-539) [0e61ddf7](https://github.com/payplug/payplug-magento2/commit/0e61ddf79cc661cd97c306a5b8c4bca22ba14d19)
-- Fix undefined index error in PaymentConfigObserver (MAG-597) [#b2166750](https://github.com/payplug/payplug-magento2/commit/b2166750dad757dab15b84c5f32b6588244a1cfe)
-- Fix double shipping rate calculation on configurable product (MAG-608) [#7d74ac6e](https://github.com/payplug/payplug-magento2/commit/7d74ac6e55d069e0b4b6d350c252331c91e719d3)
+- Fix type casting for total amount and split count in installment plan generation (MAG-539) [#a7152128](https://github.com/payplug/payplug-magento2/commit/a7152128e56818d6a12f5aef47379dd81d4ce382)
+- Fix undefined index error in PaymentConfigObserver (MAG-597) [#807de5db](https://github.com/payplug/payplug-magento2/commit/807de5dba8444858b57bce7037e28c774f9099d1)
+- Fix double shipping rate calculation on configurable product (MAG-608) [#89f16080](https://github.com/payplug/payplug-magento2/commit/89f160809bdc2e7fa51552d2cb5e96b183510e5b)
+- Fix ApplePay order handling to reflect shipping method changes and add relevant order comment (MAG-629) [#e0f1b726](https://github.com/payplug/payplug-magento2/commit/e0f1b7268d119d67d1ea86202517a214066befc1)
+- Add null safe operator for `authorized_at` to prevent potential null reference error (MAG-628) [#8b4d4040](https://github.com/payplug/payplug-magento2/commit/8b4d40406da96410067853e1afde32b353cab929)
 
 ## [4.6.2](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.2) - 2026-01-26
 
