@@ -3,17 +3,29 @@
 declare(strict_types=1);
 
 use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
-use Payplug\Payments\Block\Formjs;
+use Payplug\Payments\ViewModel\UrlProvider;
 
 /**
  * @var Escaper $escaper
- * @var Formjs $block
+ * @var Template $block
  * @var SecureHtmlRenderer $secureRenderer
  */
+
+/** @var UrlProvider $urlProvider */
+$urlProvider = $block->getData('urlProviderViewModel');
 ?>
-<?php foreach ($block->getJsUrls() as $url): ?>
-    <?= /* @noEscape */ $secureRenderer->renderTag('script', ['src' => $escaper->escapeUrl($url)], '', false); ?>
-<?php endforeach; ?>
-<?php $scriptContent = 'window.PAYPLUG_DOMAIN = \'' . $escaper->escapeUrl($block->getPayplugSecureUrl()) . '\';' ?>
+<?php if ($urlProvider->isApplePayEnabled()) : ?>
+    <?= /* @noEscape */ $secureRenderer->renderTag('script', ['src' => $escaper->escapeUrl($urlProvider->getApplePaySdkUrl())], '', false); ?>
+<?php endif; ?>
+<?php $scriptContent = <<<JS
+window.PAYPLUG_DOMAIN = '{$escaper->escapeJs($urlProvider->getPayplugSecureUrl())}';
+require.config({
+    paths: {
+        payplugIntegrated: '{$escaper->escapeJs($urlProvider->getPayplugIntegratedPaymentJsUrl())}'
+    }
+});
+JS;
+?>
 <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptContent, false); ?>
