@@ -9,7 +9,11 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceBlock name="head.components">
-            <block class="Payplug\Payments\Block\Formjs" name="payplug_payments_formjs" template="Payplug_Payments::checkout/formjs.phtml"/>
+            <block name="payplug_payments_formjs" template="Payplug_Payments::checkout/formjs.phtml">
+                <arguments>
+                    <argument name="urlProviderViewModel" xsi:type="object">Payplug\Payments\ViewModel\UrlProvider</argument>
+                </arguments>
+            </block>
         </referenceBlock>
         <referenceBlock name="checkout.root">
             <arguments>
