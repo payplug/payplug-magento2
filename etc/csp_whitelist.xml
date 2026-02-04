@@ -12,8 +12,6 @@
             <values>
                 <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
                 <value id="payplug-apple-pay" type="host">https://applepay.cdn-apple.com</value>
-                <value id="payplug-api-qa" type="host">api-qa.payplug.com</value>
-                <value id="payplug-cdn-qa" type="host">cdn-qa.payplug.com</value>
                 <value id="payplug-api" type="host">api.payplug.com</value>
                 <value id="payplug-cdn" type="host">cdn.payplug.com</value>
             </values>
