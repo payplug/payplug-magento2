@@ -141,7 +141,7 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private function processGeneralConfig(array &$groups): void
     {
-        $authFields = $fields = $groups['auth']['fields'];
+        $authFields = $fields = array_merge($groups['general']['fields'], $groups['auth']['fields']);
 
         if (empty($fields['email']) && !empty($authFields['email'])) {
             $fields['email'] = $authFields['email'];
