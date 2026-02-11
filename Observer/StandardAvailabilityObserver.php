@@ -22,6 +22,7 @@ use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -86,6 +87,10 @@ class StandardAvailabilityObserver implements ObserverInterface
         if (empty($apiKey)) {
             $checkResult->setData('is_available', false);
 
+            return;
+        }
+
+        if ($adapter->getCode() === Standard::METHOD_CODE && $this->payplugConfig->isHostedFieldsActive() === true) {
             return;
         }
 

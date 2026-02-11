@@ -11,7 +11,8 @@ use Throwable;
 class UrlProvider implements ArgumentInterface
 {
     private const SECURE_URL = 'https://secure.payplug.com';
-    private const INTEGRATED_PAYMENT_JS_URL = 'https://cdn.payplug.com/js/integrated-payment/v1/index';
+    private const INTEGRATED_PAYMENT_JS_PATH = 'https://cdn.payplug.com/js/integrated-payment/v1/index';
+    private const HF_PAYMENT_JS_PATH = 'https://js.dalenys.com/hosted-fields/v2.2.0/hosted-fields.min';
     private const APPLEPAY_SDK_URL = 'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
     private const PAYPLUG_RETAIL_BASE_CURRENCY_CODE = 'EUR';
 
@@ -42,7 +43,17 @@ class UrlProvider implements ArgumentInterface
      */
     public function getPayplugIntegratedPaymentJsUrl(): string
     {
-        return self::INTEGRATED_PAYMENT_JS_URL;
+        return self::INTEGRATED_PAYMENT_JS_PATH;
+    }
+
+    /**
+     * Get Payplug integrated payment js url
+     *
+     * @return string
+     */
+    public function getPayplugHostedFieldsJsUrl(): string
+    {
+        return self::HF_PAYMENT_JS_PATH;
     }
 
     /**
