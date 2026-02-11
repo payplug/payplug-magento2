@@ -36,9 +36,7 @@ require(
 
         var linkedFields = [
             'payplug_payments_auth_email',
-            'payplug_payments_auth_pwd',
-            'payplug_payments_general_environmentmode',
-            'payplug_payments_general_page'
+            'payplug_payments_auth_pwd'
         ];
 
         if ($('payplug_payments_can_override_default') !== null) {

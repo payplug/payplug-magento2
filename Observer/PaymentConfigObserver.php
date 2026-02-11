@@ -942,9 +942,7 @@ class PaymentConfigObserver implements ObserverInterface
         }
         $fieldsRequiredForInit = [
             'email',
-            'pwd',
-            'environmentmode',
-            'payment_page',
+            'pwd'
         ];
         if (!$this->payplugConfigConnected) {
             // To connect on website level, all fields must be provided
@@ -957,6 +955,10 @@ class PaymentConfigObserver implements ObserverInterface
                 }
                 if (isset($groups['general']['fields'][$field])) {
                     unset($groups['general']['fields'][$field]);
+                }
+
+                if (isset($groups['auth']['fields'][$field])) {
+                    unset($groups['auth']['fields'][$field]);
                 }
             }
             $this->messageManager->addErrorMessage(

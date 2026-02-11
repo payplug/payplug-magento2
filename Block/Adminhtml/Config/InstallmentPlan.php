@@ -7,16 +7,19 @@
 
 namespace Payplug\Payments\Block\Adminhtml\Config;
 
-class InstallmentPlan extends \Magento\Config\Block\System\Config\Form\Fieldset
+use Magento\Config\Block\System\Config\Form\Fieldset;
+use Magento\Framework\Data\Form\Element\AbstractElement;
+
+class InstallmentPlan extends Fieldset
 {
     /**
      * Render details on InstallmentPlan split options
      *
-     * @param \Magento\Framework\Data\Form\Element\AbstractElement $element
+     * @param AbstractElement $element
      *
      * @return string
      */
-    public function render(\Magento\Framework\Data\Form\Element\AbstractElement $element)
+    public function render(AbstractElement $element)
     {
         $extraElements =
             '<div id="payplug_payments_installment_plan_2" style="display: none;">' .

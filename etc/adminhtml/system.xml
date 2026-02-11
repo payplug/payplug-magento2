@@ -65,7 +65,7 @@
                 <label>PayPlug Payments - Standard Auth</label>
                 <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Login</frontend_model>
                 <field id="info" translate="label" type="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\LegacyAuthInfo</frontend_model>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\LegacyAuthInfo</frontend_model>
                     <label>Status</label>
                 </field>
                 <field id="email" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -80,30 +80,62 @@
                     <config_path>payplug_payments/general/pwd</config_path>
                 </field>
                 <field id="connect" translate="label" type="button" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Login</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\LegacyLogin</frontend_model>
+                    <label/>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\LegacyLogin</frontend_model>
                 </field>
                 <field id="account_details" translate="label" type="button" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Disconnect</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Logout</frontend_model>
+                    <label/>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\Logout</frontend_model>
                 </field>
             </group>
-            <group id="oauth2" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
+            <group id="oauth2" translate="label" type="text comment" sortOrder="30" showInDefault="1" showInWebsite="1">
                 <label>PayPlug Payments - Oauth2</label>
                 <comment>Already activated our new secure authentication? Simply connect your Payplug account above to continue.</comment>
                 <field id="login_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
-                    <label>Login</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2Login</frontend_model>
+                    <label/>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\Oauth2Login</frontend_model>
                     <comment>Don't have a Payplug account? Create one.</comment>
                 </field>
                 <field id="logout_btn" translate="label comment" type="button" sortOrder="20" showInDefault="1" showInWebsite="1">
                     <label>Connection state</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2Logout</frontend_model>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\Oauth2Logout</frontend_model>
                     <comment>Need to use old login / password authentication mode ? Please disconnect Oauth2 connection</comment>
                 </field>
                 <field id="email"/>
                 <field id="client_data"/>
                 <field id="access_token_data"/>
+            </group>
+            <group id="dalenys_gm" translate="label" type="text comment" sortOrder="40" showInDefault="1" showInWebsite="1">
+                <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Dalenys</frontend_model>
+                <comment>You need to connect to Payplug, with standard or Oauth2 authentication before configure Dalenys GM</comment>
+                <label>PayPlug Payments - Dalenys GM</label>
+                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable Dalenys GM</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="api_key" translate="label" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>API Key</label>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                    <validate>required-entry no-whitespace</validate>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="api_key_id" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>API Key ID</label>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                    <validate>required-entry no-whitespace</validate>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="identifier" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Identifier</label>
+                    <depends>
+                        <field id="active">1</field>
+                    </depends>
+                    <validate>required-entry no-whitespace</validate>
+                </field>
             </group>
         </section>
         <section id="payment" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
