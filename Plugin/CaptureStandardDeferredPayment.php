@@ -19,9 +19,12 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation;
 use Payplug\Payments\Gateway\Config\Standard;
+use Payplug\Payments\Helper\Config as PayplugConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Order\Payment;
 use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Service\BuildHostedFieldsParamsHash;
 
 class CaptureStandardDeferredPayment
 {
@@ -31,13 +34,17 @@ class CaptureStandardDeferredPayment
      * @param ManagerInterface $eventManager
      * @param OrderPaymentRepository $orderPaymentRepository
      * @param OrderRepositoryInterface $orderRepository
+     * @param PayplugConfig $payplugConfig
+     * @param BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash
      */
     public function __construct(
         private readonly Data $data,
         private readonly Logger $logger,
         private readonly ManagerInterface $eventManager,
         private readonly OrderPaymentRepository $orderPaymentRepository,
-        private readonly OrderRepositoryInterface $orderRepository
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly PayplugConfig $payplugConfig,
+        private readonly BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash,
     ) {
     }
 
@@ -98,30 +105,59 @@ class CaptureStandardDeferredPayment
                 $payplugPayment->getScope($order)
             );
 
-            $updatedPayplugPaymentResource = $payplugPaymentResource->capture();
+            if ($payplugPayment->isHostedFieldsPayment() === true) {
+                $payload = [
+                    'method' => 'capture',
+                    'params' => [
+                        'IDENTIFIER' => $this->payplugConfig->getHostedFieldsIdentifier(),
+                        'OPERATIONTYPE' => 'capture',
+                        'TRANSACTIONID' => $payplugPaymentId,
+                        'ORDERID' => $order->getIncrementId(),
+                        'DESCRIPTION' => 'Order #' . $order->getIncrementId(),
+                        'VERSION' => Payment::HOSTED_FIELDS_PARAMS_VERSION,
+                    ],
+                ];
 
-            if ($updatedPayplugPaymentResource) {
-                $orderPayment->setBaseAmountPaidOnline(
-                    (float)$orderPayment->getAdditionalInformation('authorized_amount') / 100
+                $payload['params']['HASH'] = $this->buildHostedFieldsParamsHash->execute(
+                    $payload['params'],
+                    BuildHostedFieldsParamsHash::SEPARATOR_ACCOUNT_KEY
                 );
-                $orderPayment->setLastTransId($payplugPaymentId);
-                $orderPayment->setAdditionalInformation('is_paid', true);
-                $orderPayment->setAdditionalInformation('was_deferred', true);
-                $invoice->setIsPaid(true);
-                $invoice->setTransactionId($payplugPaymentId);
 
-                $order->addCommentToStatusHistory(sprintf(
-                    'Payment of %s %s successfully captured and paid on Payplug at %s.',
-                    (int)($updatedPayplugPaymentResource->amount) / 100,
-                    $updatedPayplugPaymentResource->currency,
-                    date('Y-m-d H:i:s', $updatedPayplugPaymentResource->paid_at),
-                ), Order::STATE_PROCESSING);
-
-                $this->orderRepository->save($order);
+                $payplugPaymentResource->capture(null, $payload);
+                $updatedPayplugPaymentResource = $payplugPayment->retrieve(
+                    $payplugPayment->getScopeId($order),
+                    $payplugPayment->getScope($order)
+                );
+            } else {
+                $updatedPayplugPaymentResource = $payplugPaymentResource->capture();
             }
+
+            $isPaid = (bool) $updatedPayplugPaymentResource->is_paid ?? false;
+
+            if ($isPaid === false) {
+                throw new LocalizedException(__('Could not capture payment'));
+            }
+
+            $orderPayment->setBaseAmountPaidOnline(
+                (float)$orderPayment->getAdditionalInformation('authorized_amount') / 100
+            );
+            $orderPayment->setLastTransId($payplugPaymentId);
+            $orderPayment->setAdditionalInformation('is_paid', true);
+            $orderPayment->setAdditionalInformation('was_deferred', true);
+            $invoice->setIsPaid(true);
+            $invoice->setTransactionId($payplugPaymentId);
+
+            $order->addCommentToStatusHistory(sprintf(
+                'Payment of %s %s successfully captured and paid on Payplug at %s.',
+                (int)($updatedPayplugPaymentResource->amount) / 100,
+                $updatedPayplugPaymentResource->currency,
+                date('Y-m-d H:i:s', $updatedPayplugPaymentResource->paid_at),
+            ), Order::STATE_PROCESSING);
+
+            $this->orderRepository->save($order);
         } catch (Exception $e) {
             $invoice->setIsPaid(false);
-            $this->logger->info($e->getMessage());
+            $this->logger->error($e->getMessage());
             // If the connection fail when trying to capture the order, then we do not want the invoice to be created.
             throw new Exception($e->getMessage());
         }

@@ -21,46 +21,47 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Exception\ConfigurationNotSetException;
+use Payplug\Payment as PaymentHelper;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Logger\Logger as PayplugLogger;
+use Payplug\Payments\Model\ResourceModel\Order\Payment as PayplugOrderPayment;
+use Payplug\Payments\Service\BuildHostedFieldsParamsHash;
 use Payplug\Resource\Payment as ResourcePayment;
 use Payplug\Resource\Refund;
 
 class Payment extends AbstractModel implements IdentityInterface
 {
     public const CACHE_TAG = 'payplug_payments_order_payment';
-
     public const ORDER_ID = 'order_id';
-
     public const PAYMENT_ID = 'payment_id';
-
     public const IS_SANDBOX = 'is_sandbox';
-
+    public const IS_HOSTED_FIELDS_PAYMENT = 'is_hosted_fields_payment';
     public const IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED = 'is_installment_plan_payment_processed';
-
     public const SENT_BY = 'sent_by';
-
     public const SENT_BY_VALUE = 'sent_by_value';
-
     public const LANGUAGE = 'language';
-
     public const DESCRIPTION = 'description';
-
     public const SENT_BY_SMS = 'SMS';
     public const SENT_BY_EMAIL = 'EMAIL';
+    public const HOSTED_FIELDS_PARAMS_VERSION = '3.0';
 
     /**
+     * @param Config $payplugConfig
+     * @param BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash
+     * @param PayplugLogger $payplugLogger
      * @param Context $context
      * @param Registry $registry
-     * @param Config $payplugConfig
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
      * @throws LocalizedException
      */
     public function __construct(
+        private readonly Config $payplugConfig,
+        private readonly BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash,
+        private readonly PayplugLogger $payplugLogger,
         Context $context,
         Registry $registry,
-        private Config $payplugConfig,
         ?AbstractResource $resource = null,
         ?AbstractDb $resourceCollection = null,
         array $data = []
@@ -73,7 +74,7 @@ class Payment extends AbstractModel implements IdentityInterface
      */
     protected function _construct()
     {
-        $this->_init(\Payplug\Payments\Model\ResourceModel\Order\Payment::class);
+        $this->_init(PayplugOrderPayment::class);
     }
 
     /**
@@ -87,7 +88,7 @@ class Payment extends AbstractModel implements IdentityInterface
         $isProcessing = (!$resourcePayment->is_paid && empty($resourcePayment->failure));
 
         if ($isProcessing && isset($resourcePayment->id)) {
-            $this->_logger->info(sprintf('Payment payment_id %s is still processing.', $resourcePayment->id));
+            $this->payplugLogger->info(sprintf('Payment payment_id %s is still processing.', $resourcePayment->id));
         }
 
         return $isProcessing;
@@ -156,6 +157,25 @@ class Payment extends AbstractModel implements IdentityInterface
     public function setIsSandbox(bool $isSandbox): self
     {
         return $this->setData(self::IS_SANDBOX, $isSandbox);
+    }
+
+    /**
+     * Get is Hosted fields payment
+     */
+    public function isHostedFieldsPayment(): bool
+    {
+        return (bool)$this->_getData(self::IS_HOSTED_FIELDS_PAYMENT);
+    }
+
+    /**
+     * Set is Hosted Fields Payment
+     *
+     * @param bool $isHostedFieldsPayment
+     * @return self
+     */
+    public function setIsHostedFieldsPayment(bool $isHostedFieldsPayment): self
+    {
+        return $this->setData(self::IS_HOSTED_FIELDS_PAYMENT, $isHostedFieldsPayment);
     }
 
     /**
@@ -294,15 +314,63 @@ class Payment extends AbstractModel implements IdentityInterface
      *
      * @param int|null $store
      * @param string|null $scope
-     * @return ResourcePayment
+     * @return ResourcePayment|null
      * @throws ConfigurationException
      * @throws ConfigurationNotSetException
+     * @throws LocalizedException
      */
-    public function retrieve(?int $store = null, ?string $scope = ScopeInterface::SCOPE_STORE): ResourcePayment
+    public function retrieve(?int $store = null, ?string $scope = ScopeInterface::SCOPE_STORE): ?ResourcePayment
     {
         $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox(), $scope);
 
-        return \Payplug\Payment::retrieve($this->getPaymentId());
+        if ($this->isHostedFieldsPayment() === false) {
+            return PaymentHelper::retrieve($this->getPaymentId());
+        }
+
+        $hostedFieldsIdentifier = $this->payplugConfig->getHostedFieldsIdentifier();
+
+        if ($hostedFieldsIdentifier === null) {
+            throw new LocalizedException(__('An error occurred while processing the order.'));
+        }
+
+        $columns = [
+            'IDENTIFIER',
+            'DATE',
+            'TRANSACTIONID',
+            'ORDERID',
+            'OPERATIONTYPE',
+            'AMOUNT',
+            'CURRENCY',
+            'EXECCODE',
+            'CARDTYPE',
+            'CARDCOUNTRY',
+            '3DSECURE',
+            'CARDCODE',
+            'CARDVALIDITYDATE',
+            'TRANSACTION EXPIRATION DATE',
+            'ALIAS',
+            'AUTHORIZEDBY',
+            'CAPTUREDBY',
+            'REFUNDEDBY',
+            'REFUNDED'
+        ];
+
+        $payload = [
+            'method' => 'getTransactions',
+            'params' => [
+                'IDENTIFIER' => $hostedFieldsIdentifier,
+                'ORDERID' => $this->getOrderId(),
+                'VERSION' => self::HOSTED_FIELDS_PARAMS_VERSION,
+                'COLUMNS' => implode(';', $columns),
+            ]
+        ];
+
+        $payload['params']['HASH'] = $this->buildHostedFieldsParamsHash->execute(
+            $payload['params'],
+            BuildHostedFieldsParamsHash::SEPARATOR_ACCOUNT_KEY
+        );
+
+        return PaymentHelper::retrieve($payload, null, true);
     }
 
     /**
@@ -314,10 +382,67 @@ class Payment extends AbstractModel implements IdentityInterface
      * @return Refund
      * @throws ConfigurationException
      * @throws ConfigurationNotSetException
+     * @throws LocalizedException
      */
     public function makeRefund(float $amount, ?array $metadata, ?int $store = null): Refund
     {
+        $this->payplugLogger->info(sprintf(
+            'Refunding payment %s for order %s.',
+            $this->getPaymentId(),
+            $this->getOrderId()
+        ));
+
+        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
+
         $payplugPayment = $this->retrieve($store);
+
+        if ($this->isHostedFieldsPayment() === true) {
+            $transactionType = (string) ($payplugPayment->object ?? '');
+
+            switch ($transactionType) {
+                case 'payment':
+                    $transactionIdToRefund = $this->getPaymentId();
+                    break;
+                case 'authorization':
+                    $captureTransactionIds = (array) ($payplugPayment->captureTransactionIds ?? []);
+                    $captureTransactionCount = count($captureTransactionIds);
+
+                    if ($captureTransactionCount === 0) {
+                        throw new LocalizedException(__('No capture found for this payment. Cannot refund.'));
+                    }
+
+                    if ($captureTransactionCount > 1) {
+                        throw new LocalizedException(__('Multiple captures found for this payment. Cannot refund.'));
+                    }
+
+                    $transactionIdToRefund = $captureTransactionIds[0];
+                    break;
+                default:
+                    throw new LocalizedException(__('Invalid transaction type. Cannot refund.'));
+            }
+
+            $payload = [
+                'method' => 'refund',
+                'id' => $transactionIdToRefund,
+                'params' => [
+                    'IDENTIFIER' => $this->payplugConfig->getHostedFieldsIdentifier(),
+                    'OPERATIONTYPE' => 'refund',
+                    'TRANSACTIONID' => $transactionIdToRefund,
+                    'ORDERID' => $this->getOrderId(),
+                    'AMOUNT' => (int) ($amount * 100),
+                    'DESCRIPTION' => 'Order #' . $this->getOrderId(),
+                    'VERSION' => Payment::HOSTED_FIELDS_PARAMS_VERSION,
+                ],
+            ];
+
+            $payload['params']['HASH'] = $this->buildHostedFieldsParamsHash->execute(
+                $payload['params'],
+                BuildHostedFieldsParamsHash::SEPARATOR_ACCOUNT_KEY
+            );
+
+            /** @noinspection PhpIncompatibleReturnTypeInspection */
+            return \Payplug\Refund::create($payload, null, null, true);
+        }
 
         if (!empty($payplugPayment->metadata)) {
             $metadata = (array) $metadata;
@@ -334,8 +459,6 @@ class Payment extends AbstractModel implements IdentityInterface
             'metadata' => $metadata
         ];
 
-        $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
-
         return \Payplug\Refund::create($this->getPaymentId(), $data);
     }
 
@@ -351,7 +474,7 @@ class Payment extends AbstractModel implements IdentityInterface
     {
         $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
 
-        return \Payplug\Payment::abort($this->getPaymentId());
+        return PaymentHelper::abort($this->getPaymentId());
     }
 
     /**

@@ -11,6 +11,7 @@ use Magento\Payment\Gateway\Validator\AbstractValidator;
 use Magento\Payment\Gateway\ConfigInterface;
 use Magento\Payment\Gateway\Validator\ResultInterfaceFactory;
 use Magento\Store\Model\ScopeInterface;
+use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Config;
 
 class CurrencyValidator extends AbstractValidator
@@ -51,6 +52,15 @@ class CurrencyValidator extends AbstractValidator
      */
     public function validate(array $validationSubject)
     {
+        $isHostedFieldActive = $this->payplugConfig->isHostedFieldsActive();
+
+        if ($this->config instanceof Standard && $isHostedFieldActive === true) {
+            return $this->createResult(
+                true,
+                ['status' => 200]
+            );
+        }
+
         $allowedCurrency = $this->payplugConfig->getConfigValue(
             'currencies',
             ScopeInterface::SCOPE_STORE,

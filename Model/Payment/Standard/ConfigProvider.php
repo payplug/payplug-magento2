@@ -70,6 +70,9 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
                     'is_integrated' => $this->payplugConfig->isIntegrated(),
+                    'is_hosted_fields_active' => $this->payplugConfig->isHostedFieldsActive(),
+                    'hosted_fields_api_key_id' => $this->payplugConfig->getHostedFieldsApiKeyId(),
+                    'hosted_fields_api_key' => $this->payplugConfig->getHostedFieldsApiKey(),
                     'is_one_click' => $this->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
@@ -131,7 +134,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      */
     public function getSelectedCardId()
     {
-        if (!$this->isOneClick()) {
+        if ($this->isOneClick() === false || $this->payplugConfig->isHostedFieldsActive() === true) {
             return '';
         }
 
@@ -141,7 +144,9 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         if ($lastCardId === 0) {
             return '';
         }
+
         $customerCardsForCurrentContext = $this->payplugCardHelper->getCardsByCustomer($customerId);
+
         foreach ($customerCardsForCurrentContext as $card) {
             if ($card->getCustomerCardId() === $lastCardId) {
                 return $lastCardId;
