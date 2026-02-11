@@ -308,6 +308,57 @@ class Config
     }
 
     /**
+     * Get if the payment page is hosted fields mode
+     *
+     * @return bool
+     */
+    public function isHostedFieldsActive(): bool
+    {
+        $isHostedFieldsActive = (bool) $this->getConfigValue(
+            'active',
+            ScopeInterface::SCOPE_STORE,
+            null,
+            'payplug_payments/hostedfields/'
+        );
+
+        return $this->isIntegrated() === true && $isHostedFieldsActive === true;
+    }
+
+    /**
+     * Get Hosted Fields API Key ID
+     *
+     * @return string|null
+     */
+    public function getHostedFieldsApiKeyId(): ?string
+    {
+        $apiKeyId = $this->getConfigValue(
+            'api_key_id',
+            ScopeInterface::SCOPE_STORE,
+            null,
+            'payplug_payments/hostedfields/'
+        );
+
+        return (string) $apiKeyId ?: null;
+    }
+
+    /**
+     * Get Hosted Fields API Key
+     *
+     * @return string|null
+     */
+    public function getHostedFieldsApiKey(): ?string
+    {
+        $apiKey = $this->getConfigValue(
+            'api_key',
+            ScopeInterface::SCOPE_STORE,
+            null,
+            'payplug_payments/hostedfields/'
+        );
+
+        return (string) $apiKey ?: null;
+    }
+
+    /**
      * Get if OneClick mode is enabled
      *
      * @param int|null $storeId
