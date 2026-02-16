@@ -19,12 +19,14 @@ use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
+use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class Cancel extends AbstractPayment
 {
     /**
      * @param RequestInterface $request
      * @param GetCurrentOrder $getCurrentOrder
+     * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
      * @param Context $context
      * @param Session $checkoutSession
      * @param OrderFactory $salesOrderFactory
@@ -34,6 +36,7 @@ class Cancel extends AbstractPayment
     public function __construct(
         private readonly RequestInterface $request,
         private readonly GetCurrentOrder $getCurrentOrder,
+        private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
@@ -104,6 +107,7 @@ class Cancel extends AbstractPayment
         if ($redirectToReferer == 1) {
             $resultRedirect->setRefererUrl();
         } elseif ($afterCancelUrl) {
+            $afterCancelUrl = $this->placeOrderExtraParamsRegistry->getDecodedUrl($afterCancelUrl);
             $resultRedirect->setUrl($afterCancelUrl);
         } else {
             $resultRedirect->setPath('checkout/cart');

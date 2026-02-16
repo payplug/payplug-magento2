@@ -9,8 +9,21 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Service;
 
+use Magento\Framework\Url\EncoderInterface;
+use Magento\Framework\Url\DecoderInterface;
+
 class PlaceOrderExtraParamsRegistry
 {
+    /**
+     * @param EncoderInterface $encoder
+     * @param DecoderInterface $decoder
+     */
+    public function __construct(
+        private readonly EncoderInterface $encoder,
+        private readonly DecoderInterface $decoder
+    ) {
+    }
+
     /**
      * @var string|null
      */
@@ -113,5 +126,27 @@ class PlaceOrderExtraParamsRegistry
     public function setCustomAfterCancelUrl(?string $afterCancelUrl): void
     {
         $this->customAfterCancelUrl = $afterCancelUrl;
+    }
+
+    /**
+     * Get encoded URL.
+     *
+     * @param string $url
+     * @return string
+     */
+    public function getEncodedUrl(string $url): string
+    {
+        return $this->encoder->encode($url);
+    }
+
+    /**
+     * Get decoded URL.
+     *
+     * @param string $url
+     * @return string
+     */
+    public function getDecodedUrl(string $url): string
+    {
+        return $this->decoder->decode($url);
     }
 }

@@ -13,6 +13,7 @@ use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\UrlInterface;
 use Magento\Payment\Gateway\Data\AddressAdapterInterface;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
@@ -21,6 +22,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order\Address;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\Store as StoreModel;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Phone;
@@ -29,6 +31,9 @@ use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 abstract class AbstractBuilder extends AbstractHelper
 {
+    private const RETURN_URL_SCOPE_FIELD = 'return_url_scope';
+    private const RETURN_URL_SCOPE_GLOBAL_VALUE = 'global_store';
+
     /**
      * @param Context $context
      * @param Config $payplugConfig
@@ -269,32 +274,44 @@ abstract class AbstractBuilder extends AbstractHelper
     public function buildPaymentData($order, InfoInterface $payment, CartInterface $quote): array
     {
         $quoteId = $quote->getId();
-        $storeId = $order->getStoreId();
+        $storeId = (int) $order->getStoreId();
 
-        $isSandbox = $this->payplugConfig->getIsSandbox((int)$storeId);
+        $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
+        $scopeIdForUrlBuilder = $this->getUrlBuilderScopeId($storeId);
+        $typeForUrlBuilder = $this->getUrlBuilderType($storeId);
 
         $paymentData = [];
         $paymentData['notification_url'] = $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
+            '_scope' => $scopeIdForUrlBuilder,
+            '_type' => $typeForUrlBuilder,
             'ipn_store_id' => $storeId,
             'ipn_sandbox'  => (int)$isSandbox,
             '_nosid' => true,
         ]);
         $paymentData['force_3ds'] = false;
 
+        $afterSuccessUrl = $this->placeOrderExtraParamsRegistry->getCustomAfterSuccessUrl();
+        $afterFailureUrl = $this->placeOrderExtraParamsRegistry->getCustomAfterFailureUrl();
+        $afterCancelUrl = $this->placeOrderExtraParamsRegistry->getCustomAfterCancelUrl();
+
         $paymentData['hosted_payment'] = [
             'return_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
+                '_scope' => $scopeIdForUrlBuilder,
+                '_type' => $typeForUrlBuilder,
                 '_secure'  => true,
                 'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
                 '_nosid' => true,
-                'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getCustomAfterSuccessUrl(),
-                'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getCustomAfterFailureUrl(),
+                'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getEncodedUrl($afterSuccessUrl),
+                'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getEncodedUrl($afterFailureUrl),
             ]),
             'cancel_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/cancel', [
+                '_scope' => $scopeIdForUrlBuilder,
+                '_type' => $typeForUrlBuilder,
                 '_secure'  => true,
                 'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
                 '_nosid' => true,
                 'form_key' => $this->formKey->getFormKey() ?: '',
-                'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getCustomAfterCancelUrl(),
+                'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getEncodedUrl($afterCancelUrl),
             ]),
         ];
 
@@ -322,5 +339,44 @@ abstract class AbstractBuilder extends AbstractHelper
         $transaction['email'] = $maskedEmail;
 
         return array_diff_key($transaction, array_flip(['billing', 'shipping']));
+    }
+
+    /**
+     * Get scope id for url builder
+     *
+     * @param int $storeId
+     * @return int
+     */
+    private function getUrlBuilderScopeId(int $storeId): int
+    {
+        return $this->isReturnUrlGobalScope($storeId) ? StoreModel::DEFAULT_STORE_ID : $storeId;
+    }
+
+    /**
+     * Get type for url builder
+     *
+     * @param int $storeId
+     * @return string|null
+     */
+    private function getUrlBuilderType(int $storeId): ?string
+    {
+        return $this->isReturnUrlGobalScope($storeId) ? UrlInterface::URL_TYPE_WEB : null;
+    }
+
+    /**
+     * Check if the return url scope is global
+     *
+     * @param int $storeId
+     * @return bool
+     */
+    private function isReturnUrlGobalScope(int $storeId): bool
+    {
+        $returnUrlScope = $this->payplugConfig->getConfigValue(
+            self::RETURN_URL_SCOPE_FIELD,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+
+        return $returnUrlScope === self::RETURN_URL_SCOPE_GLOBAL_VALUE;
     }
 }
