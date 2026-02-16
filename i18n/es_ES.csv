@@ -60,6 +60,7 @@
 "Financing cost:","Financing cost:"
 "Financing offer with mandatory deposit reserved for private individual between %1 and %2. Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 www.orias.fr Correspondance : CS 60 006 - 59895 Lille Cedex - www.oney.fr","Financing offer with mandatory deposit reserved for private individual between %1 and %2. Providing Oney acceptation. You have 14 days to renounce this offer after the subscription. Oney Bank - SA capital of 51 286 585€ - 34 Avenue de Flandre 59170 Croix - 546 380 197 RCS Lille Métropole - n° Orias 07 023 261 www.orias.fr Correspondance : CS 60 006 - 59895 Lille Cedex - www.oney.fr"
 "For an amount of:","For an amount of:"
+"Global Store (Admin/Default)","Ámbito global (Admin/Predeterminado)"
 "In 30 days","In 30 days"
 "In 60 days","In 60 days"
 "In 90 days","In 90 days"
@@ -90,6 +91,7 @@
 "Only Premium accounts can use installment plan in LIVE mode.","Only Premium accounts can use installment plan in LIVE mode."
 "Only Premium accounts can use one click in LIVE mode.","Esta opción está sólo disponible para cuentas Premium."
 "Or pay in","Or pay in"
+"Order Store (Automatic)","Tienda del pedido (Automático)"
 "Order is currently being processed.","Order is currently being processed."
 "Order payment was successfully updated.","Order payment was successfully updated."
 "Other","Other"
@@ -128,6 +130,7 @@
 "Payplug Payment Method","Payment Method"
 "Payplug Payments Installment plan status",Payplug Payments Installment plan status
 "Payplug Payments Section",Payplug Payments Section
+"Payplug URLs generation","Generación de URLs de Payplug"
 "Pending Review","Pending Review"
 "Place Order","Place Order"
 "Please confirm that Oney's legal notice have been added to your general terms and conditions.","Please confirm that Oney's legal notice have been added to your general terms and conditions."
