@@ -302,6 +302,7 @@
                 <environmentmode>test</environmentmode>
                 <payment_page>integrated</payment_page>
                 <apm_filtering_mode>shipping_address</apm_filtering_mode>
+                <ipn_url_scope>order_store</ipn_url_scope>
                 <connected>0</connected>
                 <verified>0</verified>
                 <use_live_mode>1</use_live_mode>
