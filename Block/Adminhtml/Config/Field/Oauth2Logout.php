@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Payplug\Payments\Block\Adminhtml\Config;
+namespace Payplug\Payments\Block\Adminhtml\Config\Field;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
@@ -122,6 +122,8 @@ HTML;
      */
     public function render(AbstractElement $element): string
     {
+        $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
+
         if (!$this->getEmailValue()) {
             return '';
         }

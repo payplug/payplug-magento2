@@ -58,17 +58,17 @@ class Login extends Fieldset
 
         $legacyConnected = $this->helper->isLegacyConnected(
             ScopeInterface::SCOPE_WEBSITE,
-            $this->request->getParam('website')
+            (int)$this->request->getParam('website')
         );
         $oauthConnected = $this->helper->isOauthConnected(
             ScopeInterface::SCOPE_WEBSITE,
-            $this->request->getParam('website')
+            (int)$this->request->getParam('website')
         );
 
         $isVerified = $this->helper->getConfigValue(
             'verified',
             ScopeInterface::SCOPE_WEBSITE,
-            $this->request->getParam('website')
+            (int)$this->request->getParam('website')
         );
 
         $connexionFields = ['payplug_payments_auth_email', 'payplug_payments_auth_connect'];
