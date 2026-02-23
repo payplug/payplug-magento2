@@ -243,7 +243,7 @@ class Config
 
         if ($this->isOauthConnected($scope, $scopeId)) {
             $websiteId = $scopeId;
-            if ($scope === ScopeInterface::SCOPE_STORE) {
+            if (in_array($scope, [ScopeInterface::SCOPE_STORE, ScopeInterface::SCOPE_STORES], true)) {
                 $websiteId = $this->storeManager->getStore($scopeId)->getWebsiteId();
             }
             if ($scope === ScopeConfigInterface::SCOPE_TYPE_DEFAULT) {
