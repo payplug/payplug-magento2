@@ -7,12 +7,14 @@
 
 declare(strict_types=1);
 
-namespace Payplug\Payments\Block\Adminhtml\Config;
+namespace Payplug\Payments\Block\Adminhtml\Config\Field;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Config\Block\System\Config\Form\Field;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\Store;
 use Payplug\Payments\Helper\Config;
 
 class LegacyAuthInfo extends Field
@@ -48,14 +50,38 @@ class LegacyAuthInfo extends Field
             (int)$this->_request->getParam('website')
         );
 
+        $isDefaultLegacyConnected = (bool) $this->helper->getConfigValue(
+            'email',
+            ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            Store::DEFAULT_STORE_ID
+        );
+
         if ($isLegacyConnected) {
             $message = __('Connected with <strong>%1</strong>', $this->helper->getConfigValue('email'));
         } elseif ($isOauthConnected) {
             $message = __('Connected with OAuth2 Authentication');
+        } elseif ($isDefaultLegacyConnected) {
+            $message = __(
+                'Connected with <strong>%1</strong> in default scope',
+                $this->helper->getConfigValue('email')
+            );
         } else {
             $message = __('Not connected');
         }
 
         return  $message->render();
+    }
+
+    /**
+     * Render block HTML
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
+    public function render(AbstractElement $element): string
+    {
+        $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
+
+        return parent::render($element);
     }
 }

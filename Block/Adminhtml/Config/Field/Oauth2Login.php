@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Payplug\Payments\Block\Adminhtml\Config;
+namespace Payplug\Payments\Block\Adminhtml\Config\Field;
 
 use Magento\Backend\Block\Widget\Button;
 use Magento\Framework\Data\Form\Element\AbstractElement;
@@ -44,6 +44,8 @@ class Oauth2Login extends AbstractOauth2
      */
     public function render(AbstractElement $element): string
     {
+        $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
+
         if ($this->isEmailSetForCurrentScope()) {
             return '';
         }

@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Payplug\Payments\Block\Adminhtml\Config;
+namespace Payplug\Payments\Block\Adminhtml\Config\Field;
 
 use Magento\Backend\Block\Widget\Button;
 use Magento\Config\Block\System\Config\Form\Field;
@@ -34,5 +34,18 @@ class LegacyLogin extends Field
         ];
 
         return $buttonBlock->setData($data)->toHtml();
+    }
+
+    /**
+     * Render block HTML
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
+    public function render(AbstractElement $element): string
+    {
+        $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
+
+        return parent::render($element);
     }
 }

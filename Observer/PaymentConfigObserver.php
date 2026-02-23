@@ -191,8 +191,6 @@ class PaymentConfigObserver implements ObserverInterface
         $this->payplugConfigConnected = $this->helper->isLegacyConnected();
         $this->payplugConfigVerified = (bool)$this->getConfig('verified');
 
-        $this->checkWebsiteScopeData($groups, $fields);
-
         // Determine which kind of config is this call
         $isInit = false;
         $isLive = false;
@@ -859,73 +857,6 @@ class PaymentConfigObserver implements ObserverInterface
 
             $groups[$fieldGroup]['fields']['active']['value'] = 0;
         }
-    }
-
-    /**
-     * Handle PayPlug configuration save on website level
-     *
-     * @param array $groups
-     * @param array $fields
-     * @return void
-     */
-    private function checkWebsiteScopeData(array &$groups, array &$fields): void
-    {
-        if ($this->helper->getConfigScope() != 'websites') {
-            return;
-        }
-        $fieldsRequiredForInit = [
-            'email',
-            'pwd',
-            'environmentmode',
-            'payment_page',
-        ];
-        if (!$this->payplugConfigConnected) {
-            // To connect on website level, all fields must be provided
-            if ($this->checkRequiredFields($fieldsRequiredForInit, $fields)) {
-                return;
-            }
-            foreach ($fieldsRequiredForInit as $field) {
-                if (isset($fields[$field]['value'])) {
-                    unset($fields[$field]['value']);
-                }
-                if (isset($groups['general']['fields'][$field])) {
-                    unset($groups['general']['fields'][$field]);
-                }
-            }
-            $this->messageManager->addErrorMessage(
-                __('All fields must be defined when trying to connect at website level.')
-            );
-
-            return;
-        }
-        // Once connected on website level, the only way to use global configuration is to disconnect
-        foreach ($fieldsRequiredForInit as $field) {
-            if (isset($fields[$field]['inherit'])) {
-                unset($groups['general']['fields'][$field]);
-            }
-        }
-    }
-
-    /**
-     * Check if all required fields are set
-     *
-     * @param array $fieldsRequiredForInit
-     * @param array $fields
-     * @return bool
-     */
-    private function checkRequiredFields(array $fieldsRequiredForInit, array $fields): bool
-    {
-        foreach ($fieldsRequiredForInit as $field) {
-            if (isset($fields[$field]['value'])) {
-                foreach ($fieldsRequiredForInit as $fieldCheck) {
-                    if (!isset($fields[$fieldCheck]['value']) && !isset($fields[$fieldCheck]['inherit'])) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
     }
 
     /**
