@@ -58,7 +58,7 @@
                 <label>PayPlug Payments - Standard Auth</label>
                 <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Login</frontend_model>
                 <field id="info" translate="label" type="label" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\LegacyAuthInfo</frontend_model>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\LegacyAuthInfo</frontend_model>
                     <label>Status</label>
                 </field>
                 <field id="email" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -73,25 +73,25 @@
                     <config_path>payplug_payments/general/pwd</config_path>
                 </field>
                 <field id="connect" translate="label" type="button" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Login</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\LegacyLogin</frontend_model>
+                    <label/>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\LegacyLogin</frontend_model>
                 </field>
                 <field id="account_details" translate="label" type="button" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Disconnect</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Logout</frontend_model>
+                    <label/>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\Logout</frontend_model>
                 </field>
             </group>
-            <group id="oauth2" translate="label" type="text comment" sortOrder="20" showInDefault="1" showInWebsite="1">
+            <group id="oauth2" translate="label" type="text comment" sortOrder="30" showInDefault="1" showInWebsite="1">
                 <label>PayPlug Payments - Oauth2</label>
                 <comment>Already activated our new secure authentication? Simply connect your Payplug account above to continue.</comment>
                 <field id="login_btn" translate="label comment" type="button" sortOrder="10" showInDefault="1" showInWebsite="1">
-                    <label>Login</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2Login</frontend_model>
+                    <label/>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\Oauth2Login</frontend_model>
                     <comment>Don't have a Payplug account? Create one.</comment>
                 </field>
                 <field id="logout_btn" translate="label comment" type="button" sortOrder="20" showInDefault="1" showInWebsite="1">
                     <label>Connection state</label>
-                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Oauth2Logout</frontend_model>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\Oauth2Logout</frontend_model>
                     <comment>Need to use old login / password authentication mode ? Please disconnect Oauth2 connection</comment>
                 </field>
                 <field id="email"/>
