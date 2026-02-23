@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Payplug - https://www.payplug.com/
  * Copyright © Payplug. All rights reserved.
  * See LICENSE for license details.
@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace Payplug\Payments\Block\Adminhtml\Config;
+namespace Payplug\Payments\Block\Adminhtml\Config\Field;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Button;
@@ -47,7 +47,7 @@ class Logout extends Field
 
         $data = [
             'id' => 'payplug_payments_disconnectUrl',
-            'label' => $element->getLabel(),
+            'label' => __('Disconnect'),
             'onclick' => "setLocation('" . $this->getButtonUrl() . "')"
         ];
 
@@ -76,5 +76,18 @@ class Logout extends Field
         $parameters['form_key'] = $this->formKey->getFormKey() ?: '';
 
         return $this->getUrl('payplug_payments_admin/config/logout', $parameters);
+    }
+
+    /**
+     * Render block HTML
+     *
+     * @param AbstractElement $element
+     * @return string
+     */
+    public function render(AbstractElement $element): string
+    {
+        $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
+
+        return parent::render($element);
     }
 }
