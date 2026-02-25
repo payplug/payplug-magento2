@@ -93,6 +93,7 @@
 "Invalid expiration date.","Invalid expiration date."
 "Invalid mobile number %1 for country %2","Invalid mobile number %1 for country %2"
 "Invalid sent by option: %1","Sending failed by %1"
+"Invoice is created","Invoice is created"
 "Invoice on payment validation","Invoice after payment"
 "Italian","Italian"
 "Language","Language"

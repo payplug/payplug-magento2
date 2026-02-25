@@ -93,6 +93,7 @@
 "Invalid expiration date.","Data di scadenza non valida."
 "Invalid mobile number %1 for country %2","Numero di cellulare %1 non valido per il Paese %2"
 "Invalid sent by option: %1","Invio non riuscito per %1"
+"Invoice is created","La fattura è stata creata"
 "Invoice on payment validation","Fatturazione post pagamento"
 "Italian","Italiano"
 "Language","Lingua"

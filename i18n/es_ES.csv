@@ -77,6 +77,7 @@
 "Invalid Name and/or Last Name.","Invalid Name and/or Last Name."
 "Invalid card number.","Invalid card number."
 "Invalid expiration date.","Invalid expiration date."
+"Invoice is created","La factura ha sido creada"
 "Invoice on payment validation","Invoice on payment validation"
 "Mandatory field.","Mandatory field."
 "Mode","Modo"

@@ -68,14 +68,14 @@ class CheckPayment extends AbstractPayment
         );
 
         if ((!empty($payment->failure) || (!$payment->is_paid && $payment->paid_at === null))
-            && !$isAuthorizedDeferred) {
+            && !$isAuthorizedDeferred
+        ) {
             $order->setStatus(Order::STATE_CANCELED);
-            $this->payplugHelper->updateOrder($order, ['status' => Order::STATE_CANCELED]);
-            $data = [
+            $this->payplugHelper->updateOrder($order, Order::STATE_CANCELED);
+            $response->setData([
                 "error" => true,
                 'message' => __('The transaction was aborted and your card has not been charged'),
-            ];
-            $response->setData($data);
+            ]);
 
             return $response;
         }

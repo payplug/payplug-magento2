@@ -9,10 +9,12 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Service;
 
+use Magento\Framework\App\Area;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Invoice;
+use Magento\Store\Model\App\Emulation as AppEmulation;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
 use Throwable;
@@ -24,10 +26,12 @@ class CreateOrderInvoice
     /**
      * @param OrderRepositoryInterface $orderRepository
      * @param PayplugLogger $payplugLogger
+     * @param AppEmulation $appEmulation
      */
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepository,
-        private readonly PayplugLogger $payplugLogger
+        private readonly PayplugLogger $payplugLogger,
+        private readonly AppEmulation $appEmulation
     ) {
     }
 
@@ -90,10 +94,15 @@ class CreateOrderInvoice
             $payment->setBaseAmountPaidOnline($order->getBaseGrandTotal());
 
             $order->setState(Order::STATE_PROCESSING);
-            $order->addStatusToHistory(
-                $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING),
-                __('Invoice is created.') . ' ' . __('Transaction ID: "%1"', $transactionId)
-            );
+
+            $defaultStatus = $order->getConfig()->getStateDefaultStatus(Order::STATE_PROCESSING);
+
+            $storeId = (int) $order->getStoreId();
+            $this->appEmulation->startEnvironmentEmulation($storeId, Area::AREA_FRONTEND, true);
+            $comment = __('Invoice is created') . '. ' . __('Transaction ID: "%1"', $transactionId);
+            $this->appEmulation->stopEnvironmentEmulation();
+
+            $order->addStatusToHistory($defaultStatus, $comment);
 
             $this->payplugLogger->info(
                 sprintf(
