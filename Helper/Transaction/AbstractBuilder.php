@@ -13,6 +13,7 @@ use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\UrlInterface;
 use Magento\Payment\Gateway\Data\AddressAdapterInterface;
 use Magento\Payment\Gateway\Data\OrderAdapterInterface;
@@ -270,6 +271,7 @@ abstract class AbstractBuilder extends AbstractHelper
      * @param CartInterface $quote
      *
      * @return array
+     * @throws LocalizedException
      */
     public function buildPaymentData($order, InfoInterface $payment, CartInterface $quote): array
     {
@@ -280,42 +282,36 @@ abstract class AbstractBuilder extends AbstractHelper
         $scopeIdForUrlBuilder = $this->getUrlBuilderScopeId($storeId);
         $typeForUrlBuilder = $this->getUrlBuilderType($storeId);
 
-        $paymentData = [];
-        $paymentData['notification_url'] = $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
-            '_scope' => $scopeIdForUrlBuilder,
-            '_type' => $typeForUrlBuilder,
-            'ipn_store_id' => $storeId,
-            'ipn_sandbox'  => (int)$isSandbox,
-            '_nosid' => true,
-        ]);
-        $paymentData['force_3ds'] = false;
-
-        $afterSuccessUrl = $this->placeOrderExtraParamsRegistry->getCustomAfterSuccessUrl();
-        $afterFailureUrl = $this->placeOrderExtraParamsRegistry->getCustomAfterFailureUrl();
-        $afterCancelUrl = $this->placeOrderExtraParamsRegistry->getCustomAfterCancelUrl();
-
-        $paymentData['hosted_payment'] = [
-            'return_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
+        return [
+            'force_3ds' => false,
+            'notification_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
                 '_scope' => $scopeIdForUrlBuilder,
                 '_type' => $typeForUrlBuilder,
-                '_secure'  => true,
-                'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
+                'ipn_store_id' => $storeId,
+                'ipn_sandbox'  => (int)$isSandbox,
                 '_nosid' => true,
-                'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getEncodedUrl($afterSuccessUrl),
-                'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getEncodedUrl($afterFailureUrl),
             ]),
-            'cancel_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/cancel', [
-                '_scope' => $scopeIdForUrlBuilder,
-                '_type' => $typeForUrlBuilder,
-                '_secure'  => true,
-                'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
-                '_nosid' => true,
-                'form_key' => $this->formKey->getFormKey() ?: '',
-                'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getEncodedUrl($afterCancelUrl),
-            ]),
+            'hosted_payment' => [
+                'return_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
+                    '_scope' => $scopeIdForUrlBuilder,
+                    '_type' => $typeForUrlBuilder,
+                    '_secure'  => true,
+                    'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
+                    '_nosid' => true,
+                    'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterSuccessUrl(),
+                    'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterFailureUrl(),
+                ]),
+                'cancel_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/cancel', [
+                    '_scope' => $scopeIdForUrlBuilder,
+                    '_type' => $typeForUrlBuilder,
+                    '_secure'  => true,
+                    'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
+                    '_nosid' => true,
+                    'form_key' => $this->formKey->getFormKey() ?: '',
+                    'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterCancelUrl(),
+                ]),
+            ]
         ];
-
-        return $paymentData;
     }
 
     /**
