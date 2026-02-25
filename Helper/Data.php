@@ -426,7 +426,7 @@ class Data
      * Update order
      *
      * @param OrderInterface $order
-     * @param array $data
+     * @param string|null $overrideStatus
      * @return OrderInterface
      * @throws AlreadyExistsException
      * @throws DateMalformedStringException
@@ -435,7 +435,7 @@ class Data
      * @throws NoSuchEntityException
      * @throws OrderAlreadyProcessingException
      */
-    public function updateOrder(OrderInterface $order, array $data = []): OrderInterface
+    public function updateOrder(OrderInterface $order, ?string $overrideStatus = null): OrderInterface
     {
         $this->payplugLogger->info(sprintf('%s: Updating Order %s.', __METHOD__, $order->getId()));
         try {
@@ -468,24 +468,25 @@ class Data
                 return $order;
             }
 
-            $this->updateOrderPayment($order);
             $this->updateOrderStatus($order);
 
-            if (!empty($data)) {
-                if (!empty($data['status'])) {
-                    $order->setStatus($data['status']);
-                    $this->payplugLogger->info(
-                        sprintf(
-                            '%s: Forcing status %s on the order %s.',
-                            __METHOD__,
-                            $data['status'],
-                            $order->getId()
-                        )
-                    );
-                }
+            if ($overrideStatus !== null) {
+                $order->setStatus($overrideStatus);
+                $this->payplugLogger->info(
+                    sprintf(
+                        '%s: Forcing status %s on the order %s.',
+                        __METHOD__,
+                        $overrideStatus,
+                        $order->getId()
+                    )
+                );
             }
 
             $this->orderRepository->save($order);
+
+            // Update order payment after order save, to avoid wrong total due amount
+            $this->updateOrderPayment($order);
+
             $this->refreshSalesGrid($order->getId());
         } finally {
             $this->orderProcessingRepository->delete($orderProcessing);
