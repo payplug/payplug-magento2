@@ -165,7 +165,7 @@ define([
                                         fullScreenLoader.stopLoader();
 
                                         if (res.error === true) {
-                                            window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
+                                            window.location.replace(url.build('payplug_payments/payment/paymentReturn') + '?failure_message=' + res.message);
                                         } else {
                                             window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
                                         }
@@ -175,7 +175,7 @@ define([
 
                             fullScreenLoader.stopLoader();
                         } else {
-                            window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
+                            window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
                         }
                     }
                 }
