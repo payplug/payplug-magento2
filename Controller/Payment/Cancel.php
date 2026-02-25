@@ -14,19 +14,19 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Url\DecoderInterface as UrlDecoderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
-use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class Cancel extends AbstractPayment
 {
     /**
      * @param RequestInterface $request
      * @param GetCurrentOrder $getCurrentOrder
-     * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+     * @param UrlDecoderInterface $urlDecoder
      * @param Context $context
      * @param Session $checkoutSession
      * @param OrderFactory $salesOrderFactory
@@ -36,7 +36,7 @@ class Cancel extends AbstractPayment
     public function __construct(
         private readonly RequestInterface $request,
         private readonly GetCurrentOrder $getCurrentOrder,
-        private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
+        private readonly UrlDecoderInterface $urlDecoder,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
@@ -107,7 +107,7 @@ class Cancel extends AbstractPayment
         if ($redirectToReferer == 1) {
             $resultRedirect->setRefererUrl();
         } elseif ($afterCancelUrl) {
-            $afterCancelUrl = $this->placeOrderExtraParamsRegistry->getDecodedUrl($afterCancelUrl);
+            $afterCancelUrl = $this->urlDecoder->decode($afterCancelUrl);
             $resultRedirect->setUrl($afterCancelUrl);
         } else {
             $resultRedirect->setPath('checkout/cart');

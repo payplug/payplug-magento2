@@ -19,6 +19,7 @@ use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Url\DecoderInterface as UrlDecoderInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
@@ -30,7 +31,6 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
-use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class PaymentReturn extends AbstractPayment
 {
@@ -43,7 +43,7 @@ class PaymentReturn extends AbstractPayment
      * @param Config $config
      * @param CartRepositoryInterface $cartRepository
      * @param GetCurrentOrder $getCurrentOrder
-     * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+     * @param UrlDecoderInterface $urlDecoder
      */
     public function __construct(
         Context $context,
@@ -54,7 +54,7 @@ class PaymentReturn extends AbstractPayment
         protected Config $config,
         protected CartRepositoryInterface $cartRepository,
         protected GetCurrentOrder $getCurrentOrder,
-        private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+        private readonly UrlDecoderInterface $urlDecoder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -70,7 +70,7 @@ class PaymentReturn extends AbstractPayment
         $customAfterSuccessUrl = $this->_request->getParam('afterSuccessUrl');
 
         if ($customAfterSuccessUrl) {
-            $customAfterSuccessUrl = $this->placeOrderExtraParamsRegistry->getDecodedUrl($customAfterSuccessUrl);
+            $customAfterSuccessUrl = $this->urlDecoder->decode($customAfterSuccessUrl);
             $resultSuccessRedirect->setUrl($customAfterSuccessUrl);
         } else {
             $resultSuccessRedirect->setPath('checkout/onepage/success');
@@ -80,7 +80,7 @@ class PaymentReturn extends AbstractPayment
         $customAfterFailureUrl = $this->_request->getParam('afterFailureUrl');
 
         if ($customAfterFailureUrl) {
-            $customAfterFailureUrl = $this->placeOrderExtraParamsRegistry->getDecodedUrl($customAfterFailureUrl);
+            $customAfterFailureUrl = $this->urlDecoder->decode($customAfterFailureUrl);
             $resultFailureRedirect->setUrl($customAfterFailureUrl);
         } else {
             $resultFailureRedirect->setPath('checkout/cart');

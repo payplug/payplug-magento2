@@ -10,17 +10,14 @@ declare(strict_types=1);
 namespace Payplug\Payments\Service;
 
 use Magento\Framework\Url\EncoderInterface;
-use Magento\Framework\Url\DecoderInterface;
 
 class PlaceOrderExtraParamsRegistry
 {
     /**
      * @param EncoderInterface $encoder
-     * @param DecoderInterface $decoder
      */
     public function __construct(
-        private readonly EncoderInterface $encoder,
-        private readonly DecoderInterface $decoder
+        private readonly EncoderInterface $encoder
     ) {
     }
 
@@ -66,13 +63,17 @@ class PlaceOrderExtraParamsRegistry
     }
 
     /**
-     * Get custom after success URL.
+     * Get encoded custom after success URL.
      *
      * @return string|null
      */
-    public function getCustomAfterSuccessUrl(): ?string
+    public function getEncodedCustomAfterSuccessUrl(): ?string
     {
-        return $this->customAfterSuccessUrl;
+        if ($this->customAfterSuccessUrl === null) {
+            return null;
+        }
+
+        return $this->encoder->encode($this->customAfterSuccessUrl);
     }
 
     /**
@@ -87,13 +88,17 @@ class PlaceOrderExtraParamsRegistry
     }
 
     /**
-     * Get custom after failure URL.
+     * Get encoded custom after failure URL.
      *
      * @return string|null
      */
-    public function getCustomAfterFailureUrl(): ?string
+    public function getEncodedCustomAfterFailureUrl(): ?string
     {
-        return $this->customAfterFailureUrl;
+        if ($this->customAfterFailureUrl === null) {
+            return null;
+        }
+
+        return $this->encoder->encode($this->customAfterFailureUrl);
     }
 
     /**
@@ -108,13 +113,17 @@ class PlaceOrderExtraParamsRegistry
     }
 
     /**
-     * Get custom after cancel URL.
+     * Get encoded custom after cancel URL.
      *
      * @return string|null
      */
-    public function getCustomAfterCancelUrl(): ?string
+    public function getEncodedCustomAfterCancelUrl(): ?string
     {
-        return $this->customAfterCancelUrl;
+        if ($this->customAfterCancelUrl === null) {
+            return null;
+        }
+
+        return $this->encoder->encode($this->customAfterCancelUrl);
     }
 
     /**
@@ -126,27 +135,5 @@ class PlaceOrderExtraParamsRegistry
     public function setCustomAfterCancelUrl(?string $afterCancelUrl): void
     {
         $this->customAfterCancelUrl = $afterCancelUrl;
-    }
-
-    /**
-     * Get encoded URL.
-     *
-     * @param string $url
-     * @return string
-     */
-    public function getEncodedUrl(string $url): string
-    {
-        return $this->encoder->encode($url);
-    }
-
-    /**
-     * Get decoded URL.
-     *
-     * @param string $url
-     * @return string
-     */
-    public function getDecodedUrl(string $url): string
-    {
-        return $this->decoder->decode($url);
     }
 }
