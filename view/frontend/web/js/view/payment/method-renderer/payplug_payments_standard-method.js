@@ -36,6 +36,9 @@ define([
             template: 'Payplug_Payments/payment/payplug_payments_standard',
             tracks: { cards: true }
         },
+        paymentReturn: 'payplug_payments/payment/paymentReturn',
+        checkPayment: 'payplug_payments/payment/checkPayment',
+        standard: 'payplug_payments/payment/standard',
         redirectAfterPlaceOrder: false,
         cards: [],
         sessionCardId: 'payplug-payments-card-id',
@@ -131,8 +134,12 @@ define([
 
             fullScreenLoader.startLoader();
 
+            const standardUrl = url.build(this.standard) + '?should_redirect=0&integrated=1';
+            const paymentReturnUrl = url.build(this.paymentReturn);
+            const checkPaymentUrl = url.build(this.checkPayment);
+
             $.ajax({
-                url: url.build('payplug_payments/payment/standard') + '?should_redirect=0&integrated=1',
+                url: standardUrl,
                 type: 'GET',
                 dataType: 'json',
                 success: function (response) {
@@ -157,7 +164,7 @@ define([
 
                             self.integratedApi.onCompleted(function () {
                                 $.ajax({
-                                    url: url.build('payplug_payments/payment/checkPayment'),
+                                    url: checkPaymentUrl,
                                     type: 'GET',
                                     dataType: 'json',
                                     data: { payment_id: response.payment_id },
@@ -165,9 +172,9 @@ define([
                                         fullScreenLoader.stopLoader();
 
                                         if (res.error === true) {
-                                            window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
+                                            window.location.replace(paymentReturnUrl + '?failure_message=' + res.message);
                                         } else {
-                                            window.location.replace(url.build('payplug_payments/payment/paymentReturn'));
+                                            window.location.replace(paymentReturnUrl);
                                         }
                                     }
                                 });
@@ -175,7 +182,7 @@ define([
 
                             fullScreenLoader.stopLoader();
                         } else {
-                            window.location.replace(url.build('payplug_payments/payment/cancel') + '?form_key=' + $.cookie('form_key'));
+                            window.location.replace(paymentReturnUrl);
                         }
                     }
                 }
