@@ -19,10 +19,11 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
 use Payplug\Payments\Helper\Config as ConfigHelper;
+use Payplug\Payments\Logger\Logger as PayplugLogger;
 
 class GetOauth2AccessTokenData
 {
-    private const CACHE_KEY = 'payplug_oauth2_access_token_data';
+    private const CACHE_KEY_PREFIX = 'payplug_oauth2_access_token_data';
     private const EXPIRATION_THRESHOLD = 10;
 
     /**
@@ -32,6 +33,7 @@ class GetOauth2AccessTokenData
      * @param EncryptorInterface $encryptor
      * @param CacheInterface $cache
      * @param GetOauth2ClientData $getOauth2ClientData
+     * @param PayplugLogger $payplugLogger
      */
     public function __construct(
         private readonly ReinitableConfigInterface $scopeConfig,
@@ -39,7 +41,8 @@ class GetOauth2AccessTokenData
         private readonly SerializerInterface $serializer,
         private readonly EncryptorInterface $encryptor,
         private readonly CacheInterface $cache,
-        private readonly GetOauth2ClientData $getOauth2ClientData
+        private readonly GetOauth2ClientData $getOauth2ClientData,
+        private readonly PayplugLogger $payplugLogger
     ) {
     }
 
@@ -55,7 +58,8 @@ class GetOauth2AccessTokenData
         ?int $websiteId = null,
         bool $forceNenewal = false
     ): ?array {
-        $encryptedAccessTokenData = $this->cache->load(self::CACHE_KEY);
+        $cacheKey = $this->getCacheKey($websiteId);
+        $encryptedAccessTokenData = $this->cache->load($cacheKey);
 
         if ($forceNenewal === true || !$encryptedAccessTokenData) {
             return $this->regenerate($websiteId);
@@ -114,9 +118,23 @@ class GetOauth2AccessTokenData
         $encryptedValue = $this->encryptor->encrypt($value);
         $ttl = $validityPeriod - self::EXPIRATION_THRESHOLD;
 
-        $this->cache->save($encryptedValue, self::CACHE_KEY, [], $ttl);
+        $cacheKey = $this->getCacheKey($websiteId);
+        $this->cache->save($encryptedValue, $cacheKey, [], $ttl);
+
+        $this->payplugLogger->info(sprintf('Renegerate Oauth2 access token - Cache key %s ', $cacheKey));
 
         return $newAccessTokenData;
+    }
+
+    /**
+     * Get cache key
+     *
+     * @param int|null $websiteId
+     * @return string
+     */
+    private function getCacheKey(?int $websiteId = null): string
+    {
+        return self::CACHE_KEY_PREFIX . '_' . ($websiteId ?? 0);
     }
 
     /**
