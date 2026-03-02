@@ -16,9 +16,6 @@ class BizumBuilder extends ApmBuilder
 {
     protected const NEED_PHONE_NUMBER_REGION_CHECK = true;
     protected const IS_MOBILE_PHONE_NUMBER_REQUIRED = true;
-    protected const MOBILE_PHONE_NUMBER_WHITELIST = [
-        '+34700000000'
-    ];
 
     /**
      * @inheritdoc

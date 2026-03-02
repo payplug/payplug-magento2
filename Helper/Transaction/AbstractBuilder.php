@@ -375,7 +375,7 @@ abstract class AbstractBuilder extends AbstractHelper
      * @param string $phoneNumber
      * @return bool
      */
-    private function isMobilePhoneNumberWhiteListed(string $phoneNumber): bool
+    public function isMobilePhoneNumberWhiteListed(string $phoneNumber): bool
     {
         return in_array($phoneNumber, static::MOBILE_PHONE_NUMBER_WHITELIST);
     }
