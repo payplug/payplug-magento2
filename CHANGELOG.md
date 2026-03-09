@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.6.3](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.3) - 2026-02-11
+## [4.6.3](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.3) - 2026-03-09
 
 ### Features
 
@@ -19,16 +19,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update ApplePay order handling to reflect shipping method changes and add relevant order comment (MAG-629)
 - Add null safe operator for `authorized_at` to prevent potential null reference error (MAG-628)
 - Add Payplug Copyright comments (MAG-615)
+- Update failure redirect URL to improve error handling and pass failure msg (MAG-656)
+- Refactor cache key logic to support website-specific OAuth2 access token caching (MAG-665)
+- Add customizable URL scope option for return/cancel success redirects and encode base64 all custom return urls (MAG-646)
+- Refactor custom return URL encoding logic on place order (MAG-655)
+- Fix website scope legacy login and refactor config fields behavior (MAG-650)
+- Handle additional store scope type during OAuth connection validation (MAG-647)
 
 **[View diff](https://github.com/payplug/payplug-magento2/compare/v4.6.2...v4.6.3)**
+
+### Changed
+
+- Refactor custom return URL encoding logic on place order (MAG-655) [#4aec1a07](https://github.com/payplug/payplug-magento2/commit/4aec1a07db77bda498a6e515bd69d91866383359)
+- Update React components declaration to avoid PHP CS errors (MAG-617) [#9998c7c9](https://github.com/payplug/payplug-magento2/commit/9998c7c904f1d87b3f6a686173c7d96451673f80)
 
 ### Added
 
 - Add full Magento Coding Standard ruleset compliance (MAG-601) [#ae4a9a48](https://github.com/payplug/payplug-magento2/commit/ae4a9a48026a1aa5135a64d4def3fe76e535ec04)
 - Add React headless payment app example (MAG-549) [#8c342895](https://github.com/payplug/payplug-magento2/commit/8c34289593549c7953ac2a86927c1d81caaf6bb9)
-- Update React components declaration to avoid PHP CS errors (MAG-617) [#9998c7c9](https://github.com/payplug/payplug-magento2/commit/9998c7c904f1d87b3f6a686173c7d96451673f80)
 - Add GraphQL resolver for retrieving Payplug payment redirect URL on GraphQL Order type (V1) for Magento 2.4.6 compatibility (MAG-621) [#f886d4c3](https://github.com/payplug/payplug-magento2/commit/f886d4c3235266b689569dc698d2a709b0f70fb5)
 - Add Payplug Copyright comments (MAG-615) [#90990a4a](https://github.com/payplug/payplug-magento2/commit/90990a4aba8530509ea13580db2dd6eb761ef300)
+- Add customizable URL scope option for return/cancel success redirects and encode base64 all custom return urls (MAG-646) [#a0418795](https://github.com/payplug/payplug-magento2/commit/a0418795960d19070e9b6d8da761377b28016050)
 
 ### Fixed
 
@@ -37,6 +48,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix double shipping rate calculation on configurable product (MAG-608) [#89f16080](https://github.com/payplug/payplug-magento2/commit/89f160809bdc2e7fa51552d2cb5e96b183510e5b)
 - Fix ApplePay order handling to reflect shipping method changes and add relevant order comment (MAG-629) [#e0f1b726](https://github.com/payplug/payplug-magento2/commit/e0f1b7268d119d67d1ea86202517a214066befc1)
 - Add null safe operator for `authorized_at` to prevent potential null reference error (MAG-628) [#8b4d4040](https://github.com/payplug/payplug-magento2/commit/8b4d40406da96410067853e1afde32b353cab929)
+- Update failure redirect URL to improve error handling and pass failure msg (MAG-656) [#14d91ead](https://github.com/payplug/payplug-magento2/commit/14d91ead1439c3877c27b016d9f79accf0f1fc5f)
+- Refactor cache key logic to support website-specific OAuth2 access token caching (MAG-665) [#2cdc5dc6](https://github.com/payplug/payplug-magento2/commit/2cdc5dc6420c4f274a557347b49b797c955e509d)
+- Fix website scope legacy login and refactor config fields behavior (MAG-650) [#1ea1877f](https://github.com/payplug/payplug-magento2/commit/1ea1877f5d6ef18c2a59051ea1dd5f7baec8478e)
+- Handle additional store scope type during OAuth connection validation (MAG-647) [#1e9cae78](https://github.com/payplug/payplug-magento2/commit/1e9cae7883f9dfb57e382accdf55237112bbde45)
 
 ## [4.6.2](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.2) - 2026-01-26
 
