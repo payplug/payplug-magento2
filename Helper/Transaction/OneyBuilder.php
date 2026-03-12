@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
-use DateMalformedStringException;
 use Exception;
 use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\Context;
@@ -25,6 +24,7 @@ use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Oney;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetCartContextForTransaction;
 use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class OneyBuilder extends AbstractBuilder
@@ -39,6 +39,7 @@ class OneyBuilder extends AbstractBuilder
      * @param FormKey $formKey
      * @param UriHelper $uriHelper
      * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+     * @param GetCartContextForTransaction $getCartContextForTransaction
      */
     public function __construct(
         private readonly Oney $oneyHelper,
@@ -49,7 +50,8 @@ class OneyBuilder extends AbstractBuilder
         Logger $logger,
         FormKey $formKey,
         UriHelper $uriHelper,
-        PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+        PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
+        GetCartContextForTransaction $getCartContextForTransaction
     ) {
         parent::__construct(
             $context,
@@ -59,7 +61,8 @@ class OneyBuilder extends AbstractBuilder
             $logger,
             $formKey,
             $uriHelper,
-            $placeOrderExtraParamsRegistry
+            $placeOrderExtraParamsRegistry,
+            $getCartContextForTransaction
         );
     }
 
@@ -159,93 +162,6 @@ class OneyBuilder extends AbstractBuilder
     }
 
     /**
-     * Get shipping method
-     *
-     * @param CartInterface $quote
-     *
-     * @return string|null
-     */
-    private function getShippingMethod(CartInterface $quote): ?string
-    {
-        return $quote->isVirtual() ? null : $quote->getShippingAddress()->getShippingMethod();
-    }
-
-    /**
-     * Build cart data
-     *
-     * @param OrderInterface|OrderAdapterInterface $order
-     * @param CartInterface $quote
-     * @return array
-     *
-     * @throws LocalizedException|DateMalformedStringException
-     */
-    private function buildCartContext($order, CartInterface $quote): array
-    {
-        $shippingMethod = $this->getShippingMethod($quote);
-        $shippingMapping = $this->oneyHelper->getShippingMethodMapping($shippingMethod);
-
-        $brand = sprintf(
-            '%s - %s - %s',
-            $quote->getStore()->getWebsite()->getName(),
-            $quote->getStore()->getGroup()->getName(),
-            $quote->getStore()->getName()
-        );
-        $deliveryLabel = $brand;
-        if ($shippingMethod !== null) {
-            $deliveryLabel = $quote->getShippingAddress()->getShippingDescription();
-        }
-        $deliveryDate = new \DateTime();
-        if ($shippingMapping['period'] > 0) {
-            $deliveryDate->modify(sprintf('+ %d days', $shippingMapping['period']));
-        }
-        $deliveryDate = $deliveryDate->format('Y-m-d');
-        $deliveryType = $shippingMapping['type'];
-
-        $products = [];
-        /** @var OrderItemInterface $item */
-        foreach ($order->getItems() as $item) {
-            if ($item->isDeleted() || $item->getHasChildren()) {
-                continue;
-            }
-
-            $parentItem = null;
-            if ($item->getProductType() === 'simple' &&
-                $item->getParentItem() &&
-                $item->getParentItem()->getProductType() === 'configurable'
-            ) {
-                $parentItem = $item->getParentItem();
-            }
-
-            if (!isset($products[$item->getSku()])) {
-                $unitPrice = $item->getPriceInclTax();
-                if ($parentItem !== null) {
-                    $unitPrice = $parentItem->getPriceInclTax();
-                }
-                $products[$item->getSku()] = [
-                    'delivery_label' => $deliveryLabel,
-                    'delivery_type' => $deliveryType,
-                    'brand' => $brand,
-                    'merchant_item_id' => $item->getSku(),
-                    'name' => $item->getName(),
-                    'expected_delivery_date' => $deliveryDate,
-                    'total_amount' => 0,
-                    'price' => (int) round($unitPrice * 100),
-                    'quantity' => 0
-                ];
-            }
-            $price = $item->getRowTotalInclTax();
-            if ($parentItem !== null) {
-                $price = $parentItem->getRowTotalInclTax();
-            }
-            $products[$item->getSku()]['total_amount'] += (int) round($price * 100);
-            $products[$item->getSku()]['quantity'] += (int) $item->getQtyOrdered();
-        }
-        $products = array_values($products);
-
-        return ['payment_context' => ['cart' => $products]];
-    }
-
-    /**
      * @inheritdoc
      *
      * @throws LocalizedException
@@ -254,7 +170,6 @@ class OneyBuilder extends AbstractBuilder
     {
         $customerData = parent::buildCustomerData($order, $payment, $quote);
 
-        $companyName = null;
         if ($order->getShippingAddress() !== null) {
             $companyName = $order->getShippingAddress()->getCompany();
             if (empty($companyName)) {
@@ -310,6 +225,6 @@ class OneyBuilder extends AbstractBuilder
         );
         $paymentData['payment_method'] = 'oney_' . $oneyOption;
 
-        return array_merge($paymentData, $this->buildCartContext($order, $quote));
+        return array_merge($paymentData, $this->getCartContextForTransaction->execute($order, $quote));
     }
 }

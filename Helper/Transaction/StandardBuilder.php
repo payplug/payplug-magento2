@@ -21,6 +21,7 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetCartContextForTransaction;
 use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class StandardBuilder extends AbstractBuilder
@@ -35,6 +36,7 @@ class StandardBuilder extends AbstractBuilder
      * @param FormKey $formKey
      * @param UriHelper $uriHelper
      * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+     * @param GetCartContextForTransaction $getCartContextForTransaction
      */
     public function __construct(
         private readonly Card $cardHelper,
@@ -45,7 +47,8 @@ class StandardBuilder extends AbstractBuilder
         Logger $logger,
         FormKey $formKey,
         UriHelper $uriHelper,
-        PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+        PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
+        GetCartContextForTransaction $getCartContextForTransaction
     ) {
         parent::__construct(
             $context,
@@ -55,7 +58,8 @@ class StandardBuilder extends AbstractBuilder
             $logger,
             $formKey,
             $uriHelper,
-            $placeOrderExtraParamsRegistry
+            $placeOrderExtraParamsRegistry,
+            $getCartContextForTransaction
         );
     }
 

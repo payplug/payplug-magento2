@@ -6,9 +6,12 @@
  * See LICENSE for license details.
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="payment_method_is_active">
         <observer name="payplug_restrict_payment_method_by_country_webapi"
-                  instance="Payplug\Payments\Observer\HidePaymentMethodForRestrictedCountries"  />
+                  instance="Payplug\Payments\Observer\HidePaymentMethodForRestrictedCountries"/>
+        <observer name="payplug_payments_disable_satispay_payment_method_webapi"
+                  instance="Payplug\Payments\Observer\DisableScalapayOutsideSubtotalRange"/>
     </event>
 </config>

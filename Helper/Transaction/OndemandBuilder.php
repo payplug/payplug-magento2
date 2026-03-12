@@ -14,11 +14,8 @@ use Laminas\Validator\EmailAddress;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\PaymentException;
-use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\CartInterface;
-use Magento\Quote\Model\Quote;
-use Magento\Sales\Api\Data\OrderInterface;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Ondemand;
@@ -26,6 +23,7 @@ use Payplug\Payments\Helper\OndemandOptions;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Order\Payment;
+use Payplug\Payments\Service\GetCartContextForTransaction;
 use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class OndemandBuilder extends AbstractBuilder
@@ -40,6 +38,7 @@ class OndemandBuilder extends AbstractBuilder
      * @param FormKey $formKey
      * @param UriHelper $uriHelper
      * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+     * @param GetCartContextForTransaction $getCartContextForTransaction
      */
     public function __construct(
         private readonly OndemandOptions $onDemandHelper,
@@ -50,7 +49,8 @@ class OndemandBuilder extends AbstractBuilder
         Logger $logger,
         FormKey $formKey,
         UriHelper $uriHelper,
-        PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
+        PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
+        GetCartContextForTransaction $getCartContextForTransaction
     ) {
         parent::__construct(
             $context,
@@ -60,7 +60,8 @@ class OndemandBuilder extends AbstractBuilder
             $logger,
             $formKey,
             $uriHelper,
-            $placeOrderExtraParamsRegistry
+            $placeOrderExtraParamsRegistry,
+            $getCartContextForTransaction
         );
     }
 
