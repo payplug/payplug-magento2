@@ -21,7 +21,6 @@ use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Url\DecoderInterface as UrlDecoderInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
@@ -43,7 +42,6 @@ class PaymentReturn extends AbstractPayment
      * @param Logger $logger
      * @param Data $payplugHelper
      * @param Config $config
-     * @param CartRepositoryInterface $cartRepository
      * @param GetCurrentOrder $getCurrentOrder
      * @param UrlDecoderInterface $urlDecoder
      */
@@ -53,9 +51,8 @@ class PaymentReturn extends AbstractPayment
         OrderFactory $salesOrderFactory,
         Logger $logger,
         Data $payplugHelper,
-        protected Config $config,
-        protected CartRepositoryInterface $cartRepository,
-        protected GetCurrentOrder $getCurrentOrder,
+        private readonly Config $config,
+        private readonly GetCurrentOrder $getCurrentOrder,
         private readonly UrlDecoderInterface $urlDecoder
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
@@ -138,8 +135,7 @@ class PaymentReturn extends AbstractPayment
             ) {
                 if ($this->payplugHelper->canUpdatePayment($order)) {
                     $this->payplugHelper->updateOrder($order);
-                    $standardDeferredQuote = $this->payplugHelper->getStandardDeferredQuote($payment);
-                    $this->payplugHelper->saveAutorizationInformationOnQuote($standardDeferredQuote, $payment);
+                    $this->payplugHelper->saveAutorizationInformation($order, $payment);
                 }
 
                 return $resultSuccessRedirect;
