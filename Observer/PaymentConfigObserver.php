@@ -33,6 +33,7 @@ use Payplug\Payments\Gateway\Config\OneyWithoutFees as OneyWithoutFeesConfig;
 use Payplug\Payments\Gateway\Config\Satispay as SatispayConfig;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
+use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
 use Payplug\Payments\Service\GetOauth2ClientData;
@@ -163,6 +164,10 @@ class PaymentConfigObserver implements ObserverInterface
 
         if ($this->canProcessSection($postParams, WeroConfig::METHOD_CODE)) {
             $this->processWeroConfig($groups);
+        }
+
+        if ($this->canProcessSection($postParams, ScalapayConfig::METHOD_CODE)) {
+            $this->processScalapayConfig($groups);
         }
 
         $this->setPostAndParamGroups($groups);
@@ -846,6 +851,45 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
+     * Handle Scalapay configuration
+     *
+     * @param array $groups
+     * @return void
+     */
+    private function processScalapayConfig(array &$groups): void
+    {
+        $this->processLiveOnlyMethod(
+            $groups,
+            'scalapay',
+            __(
+                'You don\'t have access to this feature yet. ' .
+                'To activate Scalapay, please fill in the following form: ' .
+                'https://support.payplug.com/hc/en-gb/requests/new'
+            ),
+            __(
+                'Scalapay is unavailable in TEST mode. ' .
+                'Please switch your Payplug plugin to LIVE mode to activate it.'
+            )
+        );
+
+        $this->helper->initScopeData();
+
+        $fields = $groups[ScalapayConfig::METHOD_CODE]['fields'];
+        $this->validatePayplugConnection($fields, $groups, ScalapayConfig::METHOD_CODE);
+
+        $minAmount = 20;
+        $maxAmount = 2000;
+
+        if (isset($fields['min_threshold']['value']) && $fields['min_threshold']['value'] < $minAmount) {
+            $groups[ScalapayConfig::METHOD_CODE]['fields']['min_threshold']['value'] = $minAmount;
+        }
+
+        if (isset($fields['max_threshold']['value']) && $fields['max_threshold']['value'] > $maxAmount) {
+            $groups[InstallmentPlanConfig::METHOD_CODE]['fields']['max_threshold']['value'] = $maxAmount;
+        }
+    }
+
+    /**
      * Is PayPlug account connected
      *
      * @return bool
@@ -1205,7 +1249,8 @@ class PaymentConfigObserver implements ObserverInterface
             'ideal',
             'mybank',
             'bizum',
-            'wero'
+            'wero',
+            'scalapay'
         ];
         foreach ($pproMethods as $method) {
             $jsonAnswer['permissions']['can_use_' . $method] = $jsonAnswer['payment_methods'][$method]['enabled']

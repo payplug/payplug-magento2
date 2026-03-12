@@ -17,7 +17,6 @@ use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Url\DecoderInterface as UrlDecoderInterface;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
-use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
@@ -65,32 +64,26 @@ class Cancel extends AbstractPayment
                 $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
             }
 
-            $payment = $orderPaymentModel->retrieve(
+            $payplugPayment = $orderPaymentModel->retrieve(
                 $orderPaymentModel->getScopeId($order),
                 $orderPaymentModel->getScope($order)
             );
 
-            if ($order->getPayment()?->getMethod() !== WeroConfig::METHOD_CODE
-                && (empty($payment->failure->code) || $payment->failure->code !== 'canceled')
-            ) {
-                /**
-                 * Redirect to the cart without any other operation or message
-                 * Except for Wero method, as Wero does not provide any failure code when the user aborts payment
-                 */
-                return $this->getResultRedirect();
+            $payplugFailureCode = $payplugPayment->failure->code ?? null;
+
+            if ($payplugFailureCode === 'canceled') {
+                /** Cancel order if payment is known to be really canceled from API */
+                $this->payplugHelper->cancelOrderAndInvoice($order);
             }
 
-            $this->payplugHelper->cancelOrderAndInvoice($order);
+            $this->getCheckout()->restoreQuote();
 
             $failureMessage = $this->_request->getParam(
                 'failure_message',
                 __('The transaction was aborted and your card has not been charged')
             );
-            if (!empty($failureMessage)) {
-                $this->messageManager->addErrorMessage($failureMessage);
-            }
 
-            $this->getCheckout()->restoreQuote();
+            $this->messageManager->addErrorMessage($failureMessage);
 
             return $this->getResultRedirect();
         } catch (Exception $e) {

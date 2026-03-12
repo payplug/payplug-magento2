@@ -200,7 +200,7 @@
 "Technical error while processing the payment.","A technical error occurred while processing the payment."
 "The Apple Pay payment is not available for the TEST mode.","The Apple Pay payment is not available for the TEST mode."
 "The Bancontact payment feature is not available for the TEST mode.","The Bancontact payment feature is not available for the TEST mode."
-"The amount must be between €100 and €3,000.","The amount must be between €100 and €3,000."
+"The amount must be between %1 and %2.","The amount must be between %1 and %2."
 "The amount must be between €4 and €20,000.","The amount must be between €4 and €20,000."
 "The automatic refund is not available from your back-office. Please contact support@payplug.com","The automatic refund is not available from your back-office. Please contact support@payplug.com"
 "The card data is not correct (card number, expiry date or CVV).","The card data is incorrect (card number, expiry date, or CVV)."

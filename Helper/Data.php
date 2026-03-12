@@ -46,6 +46,7 @@ use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Gateway\Config\Satispay;
+use Payplug\Payments\Gateway\Config\Scalapay;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Gateway\Config\Wero;
 use Payplug\Payments\Helper\Ondemand as OndemandHelper;
@@ -272,6 +273,10 @@ class Data
                 Order::STATE_PAYMENT_REVIEW
             ],
             Wero::METHOD_CODE => [
+                Order::STATE_PENDING_PAYMENT,
+                Order::STATE_PAYMENT_REVIEW
+            ],
+            Scalapay::METHOD_CODE => [
                 Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
             ],
@@ -974,7 +979,8 @@ class Data
             Ideal::METHOD_CODE,
             Mybank::METHOD_CODE,
             Bizum::METHOD_CODE,
-            Wero::METHOD_CODE
+            Wero::METHOD_CODE,
+            Scalapay::METHOD_CODE
         ]);
     }
 

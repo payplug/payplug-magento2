@@ -29,6 +29,7 @@ class Config
     public const APPLE_PAY_CONFIG_PATH = 'payment/payplug_payments_apple_pay/';
     public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
+    public const SCALAPAY_CONFIG_PATH = 'payment/payplug_payments_scalapay/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
     public const EMAIL_WEBSITE_OWNER_CONFIG_PATH = 'trans_email/ident_general/email';
     public const ENVIRONMENT_TEST = 'test';
@@ -516,7 +517,8 @@ class Config
             'ideal',
             'mybank',
             'bizum',
-            'wero'
+            'wero',
+            'scalapay'
         ];
 
         $paths = [
@@ -527,6 +529,8 @@ class Config
             'payment/payplug_payments_%s/allowspecific',
             'payment/payplug_payments_%s/default_country',
             'payment/payplug_payments_%s/sort_order',
+            'payment/payplug_payments_%s/min_threshold',
+            'payment/payplug_payments_%s/max_threshold',
             'payplug_payments/general/%s_countries',
             'payplug_payments/general/%s_min_amounts',
             'payplug_payments/general/%s_max_amounts',
