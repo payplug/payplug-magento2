@@ -23,8 +23,6 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
 use Magento\Store\Model\ScopeInterface;
@@ -38,14 +36,13 @@ use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Data\RefundRequestFactory;
 use Payplug\Payments\Service\CreateOrderRefund;
 use Payplug\Resource\InstallmentPlan;
-use Payplug\Resource\Payment;
+use Payplug\Resource\Payment as PaymentResource;
 use Payplug\Resource\Refund;
 
 class Ipn extends AbstractPayment
 {
     /**
      * @param Config $payplugConfig
-     * @param CartRepositoryInterface $cartRepository
      * @param FetchTransactionInformationHandler $fetchTransactionInformationHandler
      * @param PaymentReturn $paymentReturn
      * @param MessageQueuePublisherInterface $messageQueuePublisher
@@ -59,7 +56,6 @@ class Ipn extends AbstractPayment
      */
     public function __construct(
         private readonly Config $payplugConfig,
-        private readonly CartRepositoryInterface $cartRepository,
         private readonly FetchTransactionInformationHandler $fetchTransactionInformationHandler,
         private readonly PaymentReturn $paymentReturn,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
@@ -111,7 +107,7 @@ class Ipn extends AbstractPayment
 
             $resource = Notification::treat($body);
 
-            if ($resource instanceof Payment) {
+            if ($resource instanceof PaymentResource) {
                 $this->processPayment($response, $resource);
 
                 return $response;
@@ -203,20 +199,24 @@ class Ipn extends AbstractPayment
      * Process ipn payment call
      *
      * @param Raw $response
-     * @param Payment $resource
+     * @param PaymentResource $paymentResource
      * @return void
      * @throws LocalizedException
      */
-    private function processPayment(Raw $response, Payment $resource): void
+    private function processPayment(Raw $response, PaymentResource $paymentResource): void
     {
         $this->logger->info('This is a payment call.');
-        $payment = $resource;
-        $this->logger->info('Payment ID : ' . $payment->id);
+        $this->logger->info('Payment ID : ' . $paymentResource->id);
 
-        $orderIncrementId = $payment->metadata['Order'];
+        $orderIncrementId = $paymentResource->metadata['Order'] ?? '';
 
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
+
+        if ($order->getId() === null) {
+            $this->logger->info('Order not found for ' . $orderIncrementId);
+            return;
+        }
 
         try {
             $this->payplugHelper->getOrderInstallmentPlan((string)$order->getIncrementId());
@@ -231,12 +231,9 @@ class Ipn extends AbstractPayment
             $this->logger->info('Processing payment IPN for orders not linked to an installment plan');
         }
 
-        $standardDeferredQuote = $this->getStandardDeferredPayment($payment);
-        if (!$payment->is_paid) {
+        if (!$paymentResource->is_paid) {
             // If we are actually reviewing a standard deferred payment not yet captured
-            if ($standardDeferredQuote) {
-                $this->payplugHelper->saveAutorizationInformationOnQuote($standardDeferredQuote, $payment);
-            }
+            $this->payplugHelper->saveAutorizationInformation($order, $paymentResource);
 
             $this->logger->info('Transaction was not paid.');
         }
@@ -245,49 +242,33 @@ class Ipn extends AbstractPayment
          * If this is a standard deferred payment captured, we try saving the customer card after the Capture IPN
          * (Only doable after payment)
          */
-        if ($standardDeferredQuote && $payment->is_paid) {
+        $orderPayment = $order->getPayment();
+
+        if ($orderPayment === null) {
+            $this->logger->info('Order Payment not found for Order IncrementID ' . $orderIncrementId);
+            return;
+        }
+
+        $isAuthorizedOnly = $this->paymentReturn->isAuthorizedOnlyStandardPaymentFromMethod($orderPayment->getMethod());
+
+        if ($isAuthorizedOnly === true && $paymentResource->is_paid) {
             $this->fetchTransactionInformationHandler->saveCustomerCard(
-                $payment,
-                $standardDeferredQuote->getCustomerId(),
-                $standardDeferredQuote->getStoreId()
+                $paymentResource,
+                $order->getCustomerId(),
+                $order->getStoreId()
             );
         }
 
-        $anomymizedPaymentObject = clone $payment;
-        $anomymizedPaymentObject->__set('billing', null);
-        $anomymizedPaymentObject->__set('shipping', null);
+        $anomymizedPaymentResource = clone $paymentResource;
+        $anomymizedPaymentResource->__set('billing', null);
+        $anomymizedPaymentResource->__set('shipping', null);
 
         $this->logger->info('Gathering payment details...', [
-            'details' => var_export($anomymizedPaymentObject, true),
+            'details' => var_export($anomymizedPaymentResource, true),
         ]);
         $this->logger->info('Order state current: ' . $order->getState());
 
         $this->processOrder($response, $order);
-    }
-
-    /**
-     * In case of deferred payment, the payplug object contain a ID Quote
-     *
-     * So we check wether it's one or not by retrieving the real quote object.
-     *
-     * @param Payment $payment
-     * @return Quote|null
-     * @throws NoSuchEntityException
-     */
-    private function getStandardDeferredPayment(Payment $payment): ?Quote
-    {
-        if (!$payment->metadata['ID Quote']) {
-            return null;
-        }
-
-        /** @var Quote $quote */
-        $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
-        $quotePayment = $quote->getPayment();
-        if ($this->paymentReturn->isAuthorizedOnlyStandardPaymentFromMethod($quotePayment->getMethod())) {
-            return $quote;
-        }
-
-        return null;
     }
 
     /**
@@ -299,8 +280,6 @@ class Ipn extends AbstractPayment
      */
     private function processOrder(Raw $response, Order $order): void
     {
-        $responseCode = null;
-        $responseDetail = null;
         if ($this->payplugHelper->canUpdatePayment($order)) {
             try {
                 $this->payplugHelper->checkPaymentFailureAndAbortPayment($order);
@@ -326,9 +305,7 @@ class Ipn extends AbstractPayment
             $responseDetail = '200 IPN already received.';
         }
 
-        if ($responseCode !== null) {
-            $response->setStatusHeader($responseCode, null, $responseDetail);
-        }
+        $response->setStatusHeader($responseCode, null, $responseDetail);
     }
 
     /**

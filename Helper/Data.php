@@ -24,29 +24,30 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Exception\HttpException;
+use Payplug\Exception\UndefinedAttributeException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\Amex;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Gateway\Config\Bancontact;
+use Payplug\Payments\Gateway\Config\Bizum;
 use Payplug\Payments\Gateway\Config\Ideal;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Mybank;
-use Payplug\Payments\Gateway\Config\Bizum;
-use Payplug\Payments\Gateway\Config\Wero;
 use Payplug\Payments\Gateway\Config\Ondemand;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Gateway\Config\Satispay;
 use Payplug\Payments\Gateway\Config\Standard;
-use Payplug\Payments\Helper\Config as PayplugConfig;
+use Payplug\Payments\Gateway\Config\Wero;
 use Payplug\Payments\Helper\Ondemand as OndemandHelper;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
 use Payplug\Payments\Model\Order\InstallmentPlan as OrderInstallmentPlan;
@@ -54,17 +55,19 @@ use Payplug\Payments\Model\Order\Payment;
 use Payplug\Payments\Model\Order\Processing;
 use Payplug\Payments\Model\Order\ProcessingFactory as PayplugOrderProcessingFactory;
 use Payplug\Payments\Model\OrderInstallmentPlanRepository;
-use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Model\OrderPaymentRepository as PayplugOrderPaymentRepository;
 use Payplug\Payments\Model\OrderProcessingRepository;
 use Payplug\Payments\Service\CreateOrderInvoice;
 use Payplug\Resource\InstallmentPlan as ResourceInstallmentPlan;
 use Payplug\Resource\Payment as ResourcePayment;
+use Payplug\Resource\PaymentAuthorization;
 use Throwable;
 
 class Data
 {
     /**
-     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param PayplugOrderPaymentRepository $payplugOrderPaymentRepository
+     * @param OrderPaymentRepositoryInterface $orderPaymentRepository
      * @param OrderRepository $orderRepository
      * @param PayplugOrderProcessingFactory $orderProcessingFactory
      * @param OrderProcessingRepository $orderProcessingRepository
@@ -75,13 +78,12 @@ class Data
      * @param FilterGroupBuilderFactory $filterGroupBuilderFactory
      * @param SortOrderBuilderFactory $sortOrderBuilderFactory
      * @param OndemandHelper $ondemandHelper
-     * @param Config $payplugConfig
      * @param MessageQueuePublisherInterface $messageQueuePublisher
      * @param PayplugLogger $payplugLogger
-     * @param CartRepositoryInterface $cartRepository
      */
     public function __construct(
-        private readonly OrderPaymentRepository $orderPaymentRepository,
+        private readonly PayplugOrderPaymentRepository $payplugOrderPaymentRepository,
+        private readonly OrderPaymentRepositoryInterface $orderPaymentRepository,
         private readonly OrderRepository $orderRepository,
         private readonly PayplugOrderProcessingFactory $orderProcessingFactory,
         private readonly OrderProcessingRepository $orderProcessingRepository,
@@ -92,10 +94,8 @@ class Data
         private readonly FilterGroupBuilderFactory $filterGroupBuilderFactory,
         private readonly SortOrderBuilderFactory $sortOrderBuilderFactory,
         private readonly OndemandHelper $ondemandHelper,
-        private readonly PayplugConfig $payplugConfig,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
-        private readonly PayplugLogger $payplugLogger,
-        private readonly CartRepositoryInterface $cartRepository
+        private readonly PayplugLogger $payplugLogger
     ) {
     }
 
@@ -108,7 +108,7 @@ class Data
      */
     public function getOrderPayment(int|string $orderId): Payment
     {
-        return $this->orderPaymentRepository->get($orderId, 'order_id');
+        return $this->payplugOrderPaymentRepository->get($orderId, 'order_id');
     }
 
     /**
@@ -120,7 +120,7 @@ class Data
      */
     public function getOrderPaymentByPaymentId(int|string $paymentId): Payment
     {
-        return $this->orderPaymentRepository->get($paymentId, 'payment_id');
+        return $this->payplugOrderPaymentRepository->get($paymentId, 'payment_id');
     }
 
     /**
@@ -172,7 +172,7 @@ class Data
 
         $criteria->setSortOrders([$sortOrder]);
 
-        $result = $this->orderPaymentRepository->getList($criteria);
+        $result = $this->payplugOrderPaymentRepository->getList($criteria);
 
         return $result->getItems();
     }
@@ -287,15 +287,59 @@ class Data
     /**
      * Can capture payment
      *
-     * @param OrderInterface|null $order
-     * @param CartInterface|null $quote
+     * @param OrderInterface $order
      * @return bool
      */
-    public function canCaptureOnline(?OrderInterface $order = null, ?CartInterface $quote = null): bool
+    public function canCaptureOnline(OrderInterface $order): bool
     {
-        $payment = $order?->getPayment() ?? $quote?->getPayment();
+        $orderPayment = $order->getPayment();
 
-        return (bool)$payment?->getAdditionalInformation('is_authorized');
+        if ($orderPayment === null) {
+            return false;
+        }
+
+        $isAuthorized = $orderPayment->getAdditionalInformation('is_authorized');
+
+        if ($isAuthorized !== null) {
+            return (bool) $isAuthorized;
+        }
+
+        /**
+         * Double-check with API when the `is_authorized` flag is not set (possibly because of missing IPN)
+         */
+        $payplugPaymentId = $orderPayment->getAdditionalInformation('payplug_payment_id');
+
+        if ($payplugPaymentId === null) {
+            return false;
+        }
+
+        try {
+            $payplugOrderPayment = $this->payplugOrderPaymentRepository->get($payplugPaymentId, 'payment_id');
+
+            $payplugResourcePayment = $payplugOrderPayment->retrieve(
+                $payplugOrderPayment->getScopeId($order),
+                $payplugOrderPayment->getScope($order)
+            );
+        } catch (Throwable) {
+            return false;
+        }
+
+        try {
+            $isPaid = (bool) $payplugResourcePayment->__get('is_paid');
+
+            /** @var PaymentAuthorization $autorization */
+            $autorization = $payplugResourcePayment->__get('authorization');
+        } catch (UndefinedAttributeException) {
+            return false;
+        }
+
+        $autorizedAmount = (float) ($autorization->authorized_amount ?? null);
+
+        if ($autorizedAmount > 0 && $isPaid === false) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -501,8 +545,10 @@ class Data
      * @param OrderInterface $order
      * @return ResourcePayment
      * @throws NoSuchEntityException
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      */
-    public function getPayment(OrderInterface $order): ResourcePayment
+    public function getPaymentResource(OrderInterface $order): ResourcePayment
     {
         $orderPayment = $this->getPaymentForOrder($order);
 
@@ -568,6 +614,8 @@ class Data
      *
      * @param OrderInterface $order
      * @return Payment|null
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      * @throws NoSuchEntityException
      */
     public function getPaymentForOrder(OrderInterface $order): ?Payment
@@ -590,7 +638,7 @@ class Data
                     try {
                         return $this->getOrderPaymentByPaymentId($paymentId);
                     } catch (NoSuchEntityException) {
-                        $orderPayment = $this->orderPaymentRepository->create();
+                        $orderPayment = $this->payplugOrderPaymentRepository->create();
                         $orderPayment->setPaymentId($paymentId);
                         $orderPayment->setOrderId($order->getId());
                         $orderPayment->setIsSandbox($orderInstallmentPlan->isSandbox());
@@ -1103,52 +1151,31 @@ class Data
     }
 
     /**
-     * Get standard deferred quote
+     * Save Autorization Information on order payment
      *
-     * @param ResourcePayment $payment
-     * @return CartInterface|null
-     * @throws NoSuchEntityException
-     */
-    public function getStandardDeferredQuote(ResourcePayment $payment): ?CartInterface
-    {
-        if (!$payment->metadata['ID Quote']) {
-            return null;
-        }
-
-        $quote = $this->cartRepository->get($payment->metadata['ID Quote']);
-        $quotePayment = $quote->getPayment();
-
-        if ($quotePayment->getMethod() === Standard::METHOD_CODE
-            && $this->payplugConfig->isStandardPaymentModeDeferred()
-        ) {
-            return $quote;
-        }
-
-        return null;
-    }
-
-    /**
-     * Save Autorization Information on Quote
-     *
-     * @param CartInterface $quote
+     * @param OrderInterface $order
      * @param ResourceInstallmentPlan|ResourcePayment $payment
      * @return void
-     * @throws LocalizedException
      */
-    public function saveAutorizationInformationOnQuote(
-        CartInterface $quote,
+    public function saveAutorizationInformation(
+        OrderInterface $order,
         ResourceInstallmentPlan|ResourcePayment $payment
     ): void {
-        $quotePayment = $quote->getPayment();
-        $quotePayment->setAdditionalInformation('is_authorized', true);
-        $quotePayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
-        $quotePayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
-        $quotePayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
-        $quotePayment->setAdditionalInformation('payplug_payment_id', $payment->id);
+        $orderPayment = $order->getPayment();
+
+        if ($orderPayment === null) {
+            return;
+        }
+
+        $orderPayment->setAdditionalInformation('is_authorized', true);
+        $orderPayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
+        $orderPayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
+        $orderPayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
+        $orderPayment->setAdditionalInformation('payplug_payment_id', $payment->id);
 
         try {
-            $this->cartRepository->save($quote);
-            $this->payplugLogger->info('Autorization informations saved on quote');
+            $this->orderPaymentRepository->save($orderPayment);
+            $this->payplugLogger->info('Autorization informations saved on order payment');
         } catch (Throwable $e) {
             $this->payplugLogger->error($e->getMessage());
         }
