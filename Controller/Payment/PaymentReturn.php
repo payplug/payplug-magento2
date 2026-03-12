@@ -26,8 +26,9 @@ use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
-use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
+use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
+use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -35,6 +36,11 @@ use Payplug\Payments\Service\GetCurrentOrder;
 
 class PaymentReturn extends AbstractPayment
 {
+    public const PAYMENT_METHODS_WITH_NO_CANCEL_FAILURE_SUPPORT = [
+        WeroConfig::METHOD_CODE,
+        ScalapayConfig::METHOD_CODE
+    ];
+
     /**
      * @param Context $context
      * @param Session $checkoutSession
@@ -102,11 +108,12 @@ class PaymentReturn extends AbstractPayment
                 $orderPaymentModel->getScope($order)
             );
 
-            if ($order->getPayment()?->getMethod() === WeroConfig::METHOD_CODE
-                && !$payment->is_paid && !$payment->failure
-            ) {
+            $paymentMethod = $order->getPayment()?->getMethod();
+
+            if (!$this->isMethodSupportingCancelFailureCode($paymentMethod)
+                && !$payment->is_paid && !$payment->failure) {
                 /**
-                 * Wero does not provide any failure code to payplug when the user aborts payment
+                 * Some payment methods do not provide any failure code to payplug when the user aborts payment
                  * So Payplug Redirect to PaymentReturn by default
                  * Here is a workaround to forward to Cancel action
                  */
@@ -232,5 +239,16 @@ class PaymentReturn extends AbstractPayment
     public function isAuthorizedOnlyStandardPaymentFromMethod(?string $method): bool
     {
         return $method === StandardConfig::METHOD_CODE && $this->config->isStandardPaymentModeDeferred();
+    }
+
+    /**
+     * Check if the payment method is supporting cancel return
+     *
+     * @param string $paymentMethod
+     * @return bool
+     */
+    private function isMethodSupportingCancelFailureCode(string $paymentMethod): bool
+    {
+        return !in_array($paymentMethod, PaymentReturn::PAYMENT_METHODS_WITH_NO_CANCEL_FAILURE_SUPPORT);
     }
 }
