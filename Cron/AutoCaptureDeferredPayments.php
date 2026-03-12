@@ -18,7 +18,6 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\MailException;
 use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use Magento\Quote\Model\ResourceModel\Quote\Payment\CollectionFactory;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\InvoiceManagementInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
@@ -38,7 +37,6 @@ class AutoCaptureDeferredPayments
      * @param TimezoneInterface $timezone
      * @param Logger $logger
      * @param OrderPaymentRepositoryInterface $paymentRepository
-     * @param CollectionFactory $quotePaymentCollectionFactory
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param OrderRepositoryInterface $orderRepository
      * @param InvoiceManagementInterface $invoiceService
@@ -52,7 +50,6 @@ class AutoCaptureDeferredPayments
         private readonly TimezoneInterface $timezone,
         private readonly Logger $logger,
         private readonly OrderPaymentRepositoryInterface $paymentRepository,
-        private readonly CollectionFactory $quotePaymentCollectionFactory,
         private readonly SearchCriteriaBuilder $searchCriteriaBuilder,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly InvoiceManagementInterface $invoiceService,
@@ -73,75 +70,51 @@ class AutoCaptureDeferredPayments
     {
         $this->logger->info('Running the AutoCaptureDeferredPayments cron');
 
-        // All the invoiceable order will populate this array
-        $orderToInvoiceIds = [];
-
         /**
          * Get all the order payment that are not paid and using the payplug standard deferred
          * (sales_order_payment table)
          */
-        $searchOrderPaymentCriteria = $this->searchCriteriaBuilder
+        $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('method', Standard::METHOD_CODE)
             ->addFilter('base_amount_paid', null, 'null')
             ->addFilter('additional_information', '%is_deferred_payment%', 'like')
             ->addFilter('additional_information', '%fail_to_capture%', 'nlike')
+            ->addFilter('additional_information', '%is_authorized%', 'like')
             ->create();
-        $ordersPayments = $this->paymentRepository->getList($searchOrderPaymentCriteria)->getItems();
 
-        // We map the quote and order ids together
-        $quotePaymentsToOrderPayments = [];
-        foreach ($ordersPayments as $orderPayment) {
-            $quoteId = $orderPayment->getAdditionalInformation('quote_id');
-            /** @noinspection PhpIllegalArrayKeyTypeInspection */
-            $quotePaymentsToOrderPayments[$quoteId] = $orderPayment->getParentId();
-        }
-
-        // As the authorization date is saved on the quote payment object, we load them (quote_payment table)
-        $quotePaymentCollection = $this->quotePaymentCollectionFactory->create();
-        $quotePayments = $quotePaymentCollection
-            ->addFieldToSelect('*')
-            ->addFieldToFilter('quote_id', ['in' => array_keys($quotePaymentsToOrderPayments)])
-            ->addFieldToFilter('additional_information', ['like' => '%is_authorized%'])
-            ->getItems();
+        $orderPayments = $this->paymentRepository->getList($searchCriteria)->getItems();
 
         /** Don't use timezone to perform UTC+0 comparison */
         $currentDateTime = $this->timezone->date(null, null, false);
         $authorizationValidationDateTime = $this->timezone->date(null, null, false);
 
-        // Using the quotePayment additionnal info we filter on the authorization date exceeding or equal to 6 days
-        foreach ($quotePayments as $quotePayment) {
-            // Unix timestamp
-            $authorizedAtTimestamp = $quotePayment->getAdditionalInformation('authorized_at');
+        // Using the Prder Payment additionnal info we filter on the authorization date exceeding or equal to 6 days
+        foreach ($orderPayments as $orderPayment) {
+            $authorizedAtTimestamp = $orderPayment->getAdditionalInformation('authorized_at');
 
             if ($authorizedAtTimestamp === null) {
                 continue;
             }
 
-            $authorizationValidationDateTime->setTimestamp($authorizedAtTimestamp);
+            $authorizationValidationDateTime->setTimestamp((int) $authorizedAtTimestamp);
             $authorizationValidationDateTime->modify('-2 hours'); // add tolerance for this time calculation
             $difference = $currentDateTime->diff($authorizationValidationDateTime);
 
-            if ($difference->days >= AutoCaptureDeferredPayments::FORCED_CAPTURE_DELAY_IN_DAYS) {
-                // We add the order id to the array of the invoiceables ones
-                $orderId = $quotePaymentsToOrderPayments[$quotePayment->getQuoteId()];
-                $message = 'The order id %s has been validated for %s days and still is not captured.';
-                $message .= 'It was flagged as capturable.';
-                $this->logger->info(sprintf(
-                    $message,
-                    $orderId,
-                    $difference->days
-                ));
-                $orderToInvoiceIds[] = $orderId;
+            if ($difference->days < AutoCaptureDeferredPayments::FORCED_CAPTURE_DELAY_IN_DAYS) {
+                continue;
             }
-        }
 
-        // We get all the invoiceables orders and we capture them
-        $searchOrderCriteria = $this->searchCriteriaBuilder
-            ->addFilter('entity_id', $orderToInvoiceIds, 'in')
-            ->create();
-        $orders = $this->orderRepository->getList($searchOrderCriteria)->getItems();
+            // We add the order id to the array of the invoiceables ones
+            $message = 'The order increment id %s has been validated for %s days and still is not captured.';
+            $message .= 'It was flagged as capturable.';
+            $order = $orderPayment->getOrder();
 
-        foreach ($orders as $order) {
+            $this->logger->info(sprintf(
+                $message,
+                $order->getIncrementId(),
+                $difference->days
+            ));
+
             $this->createInvoiceAndCapture($order);
         }
 

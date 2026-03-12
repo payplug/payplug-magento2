@@ -58,18 +58,25 @@ class CaptureStandardDeferredPayment
         if (count($args) < 2) {
             return $proceed(...$args);
         }
+
         /** @var OrderPaymentInterface $magentoPayment */
         $magentoPayment = $args[0];
+
+        if ($magentoPayment->getMethod() !== Standard::METHOD_CODE) {
+            return $proceed(...$args);
+        }
+
         /** @var InvoiceInterface $invoice */
         $invoice = $args[1];
         $orderId = $magentoPayment->getOrder()->getId();
         $order = $orderId ? $this->orderRepository->get($orderId) : $magentoPayment->getOrder();
-        $quote = $this->quoteRepository->get($order->getQuoteId());
-        $quotePayment = $quote->getPayment();
-        if ($magentoPayment->getMethod() !== Standard::METHOD_CODE
-            || !$this->data->canCaptureOnline(null, $quote)) {
+
+        if ($this->data->canCaptureOnline($order) === false) {
             return $proceed(...$args);
         }
+
+        $quote = $this->quoteRepository->get($order->getQuoteId());
+        $quotePayment = $quote->getPayment();
 
         $this->eventManager->dispatch(
             'sales_order_payment_capture',
