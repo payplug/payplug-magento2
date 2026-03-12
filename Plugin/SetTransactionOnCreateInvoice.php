@@ -11,7 +11,6 @@ namespace Payplug\Payments\Plugin;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation;
@@ -32,13 +31,11 @@ class SetTransactionOnCreateInvoice
      * @param PayplugDataHelper $payplugDataHelper
      * @param PayplugOrderPaymentRepository $orderPaymentRepository
      * @param PayplugLogger $payplugLogger
-     * @param CartRepositoryInterface $cartRepository
      */
     public function __construct(
         private readonly PayplugDataHelper $payplugDataHelper,
         private readonly PayplugOrderPaymentRepository $orderPaymentRepository,
-        private readonly PayplugLogger $payplugLogger,
-        private readonly CartRepositoryInterface $cartRepository,
+        private readonly PayplugLogger $payplugLogger
     ) {
     }
 
@@ -65,10 +62,9 @@ class SetTransactionOnCreateInvoice
     ): OrderPaymentInterface {
         $order = $orderPayment->getOrder();
         $lastTransId = $orderPayment->getLastTransId();
-        $quote = $this->cartRepository->get($order->getQuoteId());
 
         if (!$this->payplugDataHelper->isCodePayplugPayment($orderPayment->getMethod())
-            || $this->payplugDataHelper->canCaptureOnline(null, $quote)
+            || $this->payplugDataHelper->canCaptureOnline($order)
         ) {
             return $proceed($orderPayment, $invoice, $operationMethod);
         }

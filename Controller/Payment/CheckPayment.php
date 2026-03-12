@@ -60,7 +60,7 @@ class CheckPayment extends AbstractPayment
             throw new LocalizedException(__('Could not retrieve payment id for integrated payment'));
         }
 
-        $payment = $this->payplugHelper->getPayment($order);
+        $payment = $this->payplugHelper->getPaymentResource($order);
         $isAuthorizedDeferred = (
             !empty($payment->authorization)
             && (int)$payment->authorization->authorized_amount > 0
