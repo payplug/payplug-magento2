@@ -14,16 +14,20 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Redirect;
+use Magento\Framework\Data\Form\FormKey\Validator as FormKeyValidator;
 use Magento\Framework\Url\DecoderInterface as UrlDecoderInterface;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
-use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
+use Throwable;
 
 class Cancel extends AbstractPayment
 {
     /**
+     * @param FormKeyValidator $formKeyValidator
      * @param RequestInterface $request
      * @param GetCurrentOrder $getCurrentOrder
      * @param UrlDecoderInterface $urlDecoder
@@ -34,6 +38,7 @@ class Cancel extends AbstractPayment
      * @param Data $payplugHelper
      */
     public function __construct(
+        private readonly FormKeyValidator $formKeyValidator,
         private readonly RequestInterface $request,
         private readonly GetCurrentOrder $getCurrentOrder,
         private readonly UrlDecoderInterface $urlDecoder,
@@ -55,28 +60,16 @@ class Cancel extends AbstractPayment
     {
         try {
             $order = $this->getCurrentOrder->execute();
+            $orderFromSession = $this->checkoutSession->getLastRealOrder();
+            $isFormKeyValidated = $this->formKeyValidator->validate($this->request);
 
-            $lastIncrementId = $order->getIncrementId();
-
-            if ($order->getPayment()->getMethod() === InstallmentPlanConfig::METHOD_CODE) {
-                $orderPaymentModel = $this->payplugHelper->getOrderInstallmentPlan((string)$lastIncrementId);
-            } else {
-                $orderPaymentModel = $this->payplugHelper->getOrderPayment((string)$lastIncrementId);
+            if ($this->payplugHelper->isPaymentFailure($order) === true) {
+                /** Strict validation regardless of order origin (session or query parameter) */
+                $this->cancelAndRollback($order);
+            } elseif ($isFormKeyValidated === true && $orderFromSession->getStatus() === Order::STATE_PENDING_PAYMENT) {
+                /** Fallback validation using order from the checkout session only */
+                $this->cancelAndRollback($orderFromSession);
             }
-
-            $payplugPayment = $orderPaymentModel->retrieve(
-                $orderPaymentModel->getScopeId($order),
-                $orderPaymentModel->getScope($order)
-            );
-
-            $payplugFailureCode = $payplugPayment->failure->code ?? null;
-
-            if ($payplugFailureCode === 'canceled') {
-                /** Cancel order if payment is known to be really canceled from API */
-                $this->payplugHelper->cancelOrderAndInvoice($order);
-            }
-
-            $this->getCheckout()->restoreQuote();
 
             $failureMessage = $this->_request->getParam(
                 'failure_message',
@@ -114,5 +107,23 @@ class Cancel extends AbstractPayment
         }
 
         return $resultRedirect;
+    }
+
+    /**
+     * Cancel order/invoice, and rollback cart
+     *
+     * @param OrderInterface $order
+     * @return void
+     */
+    private function cancelAndRollback(OrderInterface $order): void
+    {
+        try {
+            $this->payplugHelper->cancelOrderAndInvoice($order);
+        } catch (Throwable) {
+            $this->logger->error(sprintf('Could not cancel order ID %1', $order->getId()));
+        }
+
+        $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+        $this->checkoutSession->restoreQuote();
     }
 }
