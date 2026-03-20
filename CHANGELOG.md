@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.0) - 2026-xx-xx
+
+### ⚠ ACTION REQUIRED
+
+This notice applies only to the **Standard payment method using authorization only mode**.
+
+Authorization metadata storage on order payments has been improved.
+
+**Impact:**  
+If you rely on the `AutoCaptureDeferredPayments` CRON for automatic capture, some orders created in the last 7 days prior to upgrading to this version may have inconsistent authorization data, potentially preventing captures.
+
+**Required action:**  
+You must run a data realignment to synchronize authorization metadata from quote payments to order payments for the past 10 days:
+
+```
+bin/magento payplug:migrate-authorization-metadata
+```
+
+Failure to perform this action may result in missed captures, especially if no manual capture is performed via the Magento backend or API.
+
 ## [4.6.3](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.3) - 2026-03-09
 
 ### Features
