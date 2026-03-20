@@ -26,9 +26,9 @@ use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
+use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
-use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -205,6 +205,8 @@ class PaymentReturn extends AbstractPayment
     public function prepareErrorOnPayment(OrderInterface $order): void
     {
         $this->payplugHelper->cancelOrderAndInvoice($order);
+        $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+        $this->checkoutSession->restoreQuote();
 
         $failureMessage = $this->_request->getParam(
             'failure_message',
@@ -214,8 +216,6 @@ class PaymentReturn extends AbstractPayment
         if (!empty($failureMessage)) {
             $this->messageManager->addErrorMessage($failureMessage);
         }
-
-        $this->getCheckout()->restoreQuote();
     }
 
     /**
@@ -223,6 +223,7 @@ class PaymentReturn extends AbstractPayment
      *
      * @param OrderInterface|null $order
      * @return bool
+     * @throws NoSuchEntityException
      */
     public function isAuthorizedOnlyStandardPayment(?OrderInterface $order): bool
     {

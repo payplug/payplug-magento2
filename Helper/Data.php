@@ -1087,9 +1087,11 @@ class Data
      *
      * @param OrderInterface $order
      * @return bool
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
      * @throws NoSuchEntityException
      */
-    private function isPaymentFailure(OrderInterface $order): bool
+    public function isPaymentFailure(OrderInterface $order): bool
     {
         if ($order->getPayment()->getMethod() == InstallmentPlan::METHOD_CODE) {
             $payment = $this->getOrderInstallmentPlan($order->getIncrementId());
