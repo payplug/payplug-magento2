@@ -24,12 +24,14 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
 use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
+use Magento\Framework\Model\AbstractModel;
+use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
+use Magento\Sales\Model\Service\OrderService;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Exception\HttpException;
@@ -81,6 +83,7 @@ class Data
      * @param OndemandHelper $ondemandHelper
      * @param MessageQueuePublisherInterface $messageQueuePublisher
      * @param PayplugLogger $payplugLogger
+     * @param OrderService $orderService
      */
     public function __construct(
         private readonly PayplugOrderPaymentRepository $payplugOrderPaymentRepository,
@@ -96,7 +99,8 @@ class Data
         private readonly SortOrderBuilderFactory $sortOrderBuilderFactory,
         private readonly OndemandHelper $ondemandHelper,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
-        private readonly PayplugLogger $payplugLogger
+        private readonly PayplugLogger $payplugLogger,
+        private readonly OrderService $orderService
     ) {
     }
 
@@ -1127,21 +1131,24 @@ class Data
             return;
         }
 
-        // Manually execute Payment::cancelInvoiceAndRegisterCancellation, which is protected
-        $orderInvoice = null;
-        foreach ($order->getInvoiceCollection() as $invoice) {
-            if ($invoice->getState() == Invoice::STATE_OPEN
-                && $invoice->load($invoice->getId())
-            ) {
-                $orderInvoice = $invoice;
+        $invoiceCollection = $order->getInvoiceCollection();
+
+        if ($invoiceCollection->count() > 0) {
+            /** @var InvoiceInterface $invoice */
+            foreach ($invoiceCollection as $invoice) {
+                $invoice->cancel();
+
+                if ($invoice instanceof AbstractModel) {
+                    $order->addRelatedObject($invoice);
+                }
             }
+
+            $this->orderRepository->save($order);
         }
-        if ($orderInvoice instanceof Order\Invoice) {
-            $orderInvoice->cancel();
-            $order->addRelatedObject($orderInvoice);
-        }
-        $order->registerCancellation('Payplug payment was not successfull.', false);
-        $this->updateOrderStatus($order, false);
+
+        $this->orderService->cancel($order->getEntityId());
+
+        $order->addCommentToStatusHistory(__('Payplug payment was not successfull.'));
         $this->orderRepository->save($order);
     }
 
