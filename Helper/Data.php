@@ -1063,6 +1063,7 @@ class Data
 
         if (count($order->getInvoiceCollection()) > 0 && !$isInstallmentPlan) {
             $order->getPayment()->update();
+            $this->orderRepository->save($order);
 
             return;
         }
