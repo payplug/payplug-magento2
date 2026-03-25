@@ -94,9 +94,11 @@ class Result extends DataObject
      *
      * @return float|null
      */
-    public function getAmount()
+    public function getAmount(): ?float
     {
-        return $this->_getData(self::KEY_AMOUNT);
+        $amount = $this->_getData(self::KEY_AMOUNT);
+
+        return $amount !== null ? (float) $amount : null;
     }
 
     /**
