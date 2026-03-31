@@ -9,10 +9,10 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Plugin;
 
+use Exception;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
@@ -29,7 +29,6 @@ class CaptureStandardDeferredPayment
      * @param Data $data
      * @param Logger $logger
      * @param ManagerInterface $eventManager
-     * @param CartRepositoryInterface $quoteRepository
      * @param OrderPaymentRepository $orderPaymentRepository
      * @param OrderRepositoryInterface $orderRepository
      */
@@ -37,7 +36,6 @@ class CaptureStandardDeferredPayment
         private readonly Data $data,
         private readonly Logger $logger,
         private readonly ManagerInterface $eventManager,
-        private readonly CartRepositoryInterface $quoteRepository,
         private readonly OrderPaymentRepository $orderPaymentRepository,
         private readonly OrderRepositoryInterface $orderRepository
     ) {
@@ -52,6 +50,7 @@ class CaptureStandardDeferredPayment
      * @return OrderPaymentInterface
      * @throws LocalizedException
      * @throws NoSuchEntityException
+     * @throws Exception
      */
     public function aroundExecute(ProcessInvoiceOperation $subject, callable $proceed, ...$args): OrderPaymentInterface
     {
@@ -59,28 +58,25 @@ class CaptureStandardDeferredPayment
             return $proceed(...$args);
         }
 
-        /** @var OrderPaymentInterface $magentoPayment */
-        $magentoPayment = $args[0];
+        /** @var OrderPaymentInterface $orderPayment */
+        $orderPayment = $args[0];
 
-        if ($magentoPayment->getMethod() !== Standard::METHOD_CODE) {
+        if ($orderPayment->getMethod() !== Standard::METHOD_CODE) {
             return $proceed(...$args);
         }
 
         /** @var InvoiceInterface $invoice */
         $invoice = $args[1];
-        $orderId = $magentoPayment->getOrder()->getId();
-        $order = $orderId ? $this->orderRepository->get($orderId) : $magentoPayment->getOrder();
+        $orderId = $orderPayment->getOrder()->getId();
+        $order = $orderId ? $this->orderRepository->get($orderId) : $orderPayment->getOrder();
 
         if ($this->data->canCaptureOnline($order) === false) {
             return $proceed(...$args);
         }
 
-        $quote = $this->quoteRepository->get($order->getQuoteId());
-        $quotePayment = $quote->getPayment();
-
         $this->eventManager->dispatch(
             'sales_order_payment_capture',
-            ['payment' => $magentoPayment, 'invoice' => $invoice]
+            ['payment' => $orderPayment, 'invoice' => $invoice]
         );
 
         if ($invoice->getIsPaid()) {
@@ -89,46 +85,47 @@ class CaptureStandardDeferredPayment
             );
         }
 
-        $payplugPaymentId = $magentoPayment->getAdditionalInformation('payplug_payment_id');
+        $payplugPaymentId = $orderPayment->getAdditionalInformation()['payplug_payment_id'] ?? null;
 
         if (!$payplugPaymentId) {
-            return $magentoPayment;
+            return $orderPayment;
         }
 
         try {
             $payplugPayment = $this->orderPaymentRepository->get($payplugPaymentId, 'payment_id');
-            $paymentCapture = $payplugPayment->retrieve(
+            $payplugPaymentResource = $payplugPayment->retrieve(
                 $payplugPayment->getScopeId($order),
                 $payplugPayment->getScope($order)
             );
-            $paymentObject = $paymentCapture->capture();
 
-            if ($paymentObject) {
-                $magentoPayment->setBaseAmountPaidOnline(
-                    (float)$quotePayment->getAdditionalInformation('authorized_amount') / 100
+            $updatedPayplugPaymentResource = $payplugPaymentResource->capture();
+
+            if ($updatedPayplugPaymentResource) {
+                $orderPayment->setBaseAmountPaidOnline(
+                    (float)$orderPayment->getAdditionalInformation('authorized_amount') / 100
                 );
-                $magentoPayment->setLastTransId($payplugPaymentId);
-                $magentoPayment->setAdditionalInformation('is_paid', true);
-                $magentoPayment->setAdditionalInformation('was_deferred', true);
+                $orderPayment->setLastTransId($payplugPaymentId);
+                $orderPayment->setAdditionalInformation('is_paid', true);
+                $orderPayment->setAdditionalInformation('was_deferred', true);
                 $invoice->setIsPaid(true);
                 $invoice->setTransactionId($payplugPaymentId);
 
                 $order->addCommentToStatusHistory(sprintf(
                     'Payment of %s %s successfully captured and paid on Payplug at %s.',
-                    (int)($paymentObject->amount) / 100,
-                    $paymentObject->currency,
-                    date('Y-m-d H:i:s', $paymentObject->paid_at),
+                    (int)($updatedPayplugPaymentResource->amount) / 100,
+                    $updatedPayplugPaymentResource->currency,
+                    date('Y-m-d H:i:s', $updatedPayplugPaymentResource->paid_at),
                 ), Order::STATE_PROCESSING);
 
                 $this->orderRepository->save($order);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $invoice->setIsPaid(false);
             $this->logger->info($e->getMessage());
             // If the connection fail when trying to capture the order, then we do not want the invoice to be created.
-            throw new \Exception($e->getMessage());
+            throw new Exception($e->getMessage());
         }
 
-        return $magentoPayment;
+        return $orderPayment;
     }
 }
