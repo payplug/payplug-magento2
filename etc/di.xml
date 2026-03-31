@@ -1290,4 +1290,11 @@
         <plugin name="payplug_payments_send_custom_metadata_after_place_order"
                 type="Payplug\Payments\Plugin\SendCustomMetadataAfterPlaceOrder"/>
     </type>
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="payplug_payments_migrate_metadata_from_quote_to_order" xsi:type="object">Payplug\Payments\Console\Command\MigrateAuthorizationMetadata</item>
+            </argument>
+        </arguments>
+    </type>
 </config>
