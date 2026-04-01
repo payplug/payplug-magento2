@@ -1001,7 +1001,8 @@ class Data
             Ideal::METHOD_CODE,
             Mybank::METHOD_CODE,
             Bizum::METHOD_CODE,
-            Wero::METHOD_CODE
+            Wero::METHOD_CODE,
+            Scalapay::METHOD_CODE
         ]);
     }
 
