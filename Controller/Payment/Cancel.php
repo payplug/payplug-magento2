@@ -63,7 +63,7 @@ class Cancel extends AbstractPayment
             $orderFromSession = $this->checkoutSession->getLastRealOrder();
             $isFormKeyValidated = $this->formKeyValidator->validate($this->request);
 
-            if ($this->payplugHelper->isPaymentFailure($order) === true) {
+            if ($order !== null && $this->payplugHelper->isPaymentFailure($order) === true) {
                 /** Strict validation regardless of order origin (session or query parameter) */
                 $this->cancelAndRollback($order);
             } elseif ($isFormKeyValidated === true && $orderFromSession->getStatus() === Order::STATE_PENDING_PAYMENT) {
