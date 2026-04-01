@@ -60,18 +60,21 @@ class DisableScalapayOutsideSubtotalRange implements ObserverInterface
         $minAmount = (float) ($minAmount / 100);
         $maxAmount = (float) ($maxAmount / 100);
 
-        $minThresholdAmount = (float) $this->configHelper->getConfigValue(
+        $minThresholdAmount = $this->configHelper->getConfigValue(
             'min_threshold',
             ScopeInterface::SCOPE_STORE,
             $quote->getStoreId(),
             ConfigHelper::SCALAPAY_CONFIG_PATH
         );
-        $maxThresholdAmount = (float) $this->configHelper->getConfigValue(
+        $maxThresholdAmount = $this->configHelper->getConfigValue(
             'max_threshold',
             ScopeInterface::SCOPE_STORE,
             $quote->getStoreId(),
             ConfigHelper::SCALAPAY_CONFIG_PATH
         );
+
+        $minThresholdAmount = $minThresholdAmount ? (float) $minThresholdAmount : $minAmount;
+        $maxThresholdAmount = $maxThresholdAmount ? (float) $maxThresholdAmount : $maxAmount;
 
         $finalMinAmount = max($minAmount, $minThresholdAmount);
         $finalMaxAmount = min($maxAmount, $maxThresholdAmount);

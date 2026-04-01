@@ -41,17 +41,8 @@ class HidePaymentMethodForRestrictedCountries implements ObserverInterface
      */
     public function execute(Observer $observer): void
     {
-        /** @var CartInterface $quote */
-        $quote = $observer->getEvent()->getData('quote');
-
-        if ($quote === null) {
-            return;
-        }
-
         /** @var MethodAdapter $methodAdapter */
         $methodAdapter = $observer->getEvent()->getData('method_instance');
-        /** @var DataObject $checkResult */
-        $checkResult = $observer->getEvent()->getData('result');
         $paymentMethod = $methodAdapter->getCode();
 
         if ($this->payplugDataHelper->isCodePayplugPaymentPpro($paymentMethod) === false
@@ -64,9 +55,18 @@ class HidePaymentMethodForRestrictedCountries implements ObserverInterface
             return;
         }
 
+        /** @var CartInterface $quote */
+        $quote = $observer->getEvent()->getData('quote');
+
+        if ($quote === null) {
+            return;
+        }
+
         $allowedCountryIds = $this->getAllowedCountriesPerPaymentMethod->execute($paymentMethod);
 
         if (!in_array($quote->getShippingAddress()->getCountryId(), $allowedCountryIds)) {
+            /** @var DataObject $checkResult */
+            $checkResult = $observer->getEvent()->getData('result');
             $checkResult->setData('is_available', false);
         }
     }
