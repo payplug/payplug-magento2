@@ -322,6 +322,7 @@ abstract class AbstractBuilder extends AbstractHelper
                     '_secure'  => true,
                     'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
                     '_nosid' => true,
+                    'form_key' => $this->formKey->getFormKey() ?: '',
                     'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterSuccessUrl(),
                     'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterFailureUrl(),
                 ]),
