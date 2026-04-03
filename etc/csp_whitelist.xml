@@ -14,6 +14,7 @@
                 <value id="payplug-apple-pay" type="host">https://applepay.cdn-apple.com</value>
                 <value id="payplug-api" type="host">api.payplug.com</value>
                 <value id="payplug-cdn" type="host">cdn.payplug.com</value>
+                <value id="dalenys-js" type="host">js.dalenys.com</value>
             </values>
         </policy>
         <policy id="style-src">
@@ -36,6 +37,12 @@
         <policy id="img-src">
             <values>
                 <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
+                <value id="dalenys-all" type="host">*.dalenys.com</value>
+            </values>
+        </policy>
+        <policy id="form-action">
+            <values>
+                <value id="dalenys-all" type="host">*.dalenys.com</value>
             </values>
         </policy>
     </policies>

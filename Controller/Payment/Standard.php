@@ -13,7 +13,6 @@ use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
-use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey;
@@ -52,10 +51,10 @@ class Standard extends AbstractPayment
     /**
      * Retrieve PayPlug Standard payment url
      *
-     * @return Redirect|ResultInterface|Json
+     * @return ResultInterface
      * @throws LocalizedException
      */
-    public function execute()
+    public function execute(): ResultInterface
     {
         $shouldRedirect = $this->getRequest()->getParam('should_redirect', true);
 
@@ -72,11 +71,14 @@ class Standard extends AbstractPayment
 
         try {
             $order = $this->getCurrentOrder->execute();
+
+            /** @var String $url */
             $url = $order->getPayment()->getAdditionalInformation('payment_url');
             $order->getPayment()->unsAdditionalInformation('payment_url');
-            $isPaid = (bool)$order->getPayment()->getAdditionalInformation('is_paid', false);
+            $isPaid = (bool) $order->getPayment()->getAdditionalInformation('is_paid');
             $order->getPayment()->unsAdditionalInformation('is_paid');
-            if ($isPaid) {
+
+            if ($isPaid === true) {
                 $response->setData([
                     'is_paid' => true,
                     'error' => false,
@@ -85,7 +87,7 @@ class Standard extends AbstractPayment
                 return $response;
             }
 
-            if ($this->getRequest()->getParam('integrated')) {
+            if ($this->getRequest()->getParam('has_payment_form')) {
                 $paymentId = $order->getPayment()->getAdditionalInformation('payplug_payment_id');
                 $order->getPayment()->unsAdditionalInformation('payplug_payment_id');
 
@@ -94,6 +96,7 @@ class Standard extends AbstractPayment
                 }
                 $response->setData([
                     'payment_id' => $paymentId,
+                    'url' => $url,
                     'error' => false,
                 ]);
 

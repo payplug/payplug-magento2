@@ -9,24 +9,23 @@
 //  _____________________________________________
 
 & when (@media-common = true) {
-    .form-integrated {
+    .payment-form {
         width: @pp-payment-integrated-form__width;
         padding-left: @pp-payment-integrated-form__padding-left;
         margin-bottom: @pp-payment-integrated-form__margin-bottom;
 
+        .card-title {
+            color: #555D64;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
         .schemes-container {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 10px;
-            margin-top: 20px;
-
-            .card-title {
-                color: #555D64;
-                font-size: 14px;
-                font-weight: 700;
-                text-transform: uppercase;
-            }
 
             .schemes {
                 .scheme {
@@ -87,18 +86,27 @@
             }
         }
 
+        .pan-container {
+            position: relative;
+
+            #brand-container {
+                position: absolute;
+                width: calc(100% - 5px);
+                top: 5px;
+            }
+        }
+
         .input-container {
             position: relative;
             height: 40px;
-            width: calc(@pp-payment-integrated-form__width - 16px - 50px);
-            padding: 0 16px 0 50px;
+            padding: 0 16px 0 40px;
             border: 1px solid @oney-color6;
 
             &::before {
                 content: "";
                 position: absolute;
                 top: 20%;
-                left: 16px;
+                left: 10px;
                 width: 24px;
                 height: 24px;
                 background: #95999e 50% no-repeat;
@@ -131,6 +139,22 @@
             -webkit-mask-image: url('Payplug_Payments::images/icons/account.svg');
         }
 
+        .cardholder-input-container {
+            margin-bottom: 20px;
+        }
+
+        .hosted-fields-invalid-state {
+            border: 1px solid red;
+        }
+
+        .hosted-fields-valid-state {
+            border: 1px solid green;
+        }
+
+        .pan-input-container[class*="hosted-fields-"]:not(.hosted-fields-empty-state) {
+            padding-right: 70px;
+        }
+
         .pan-input-container::before {
             mask-image: url('Payplug_Payments::images/icons/card.svg');
             -webkit-mask-image: url('Payplug_Payments::images/icons/card.svg');
@@ -153,11 +177,7 @@
             margin-top: 10px;
 
             > div {
-                width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap);
-
-                .input-container {
-                    width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap - 16px - 50px);
-                }
+                width: 100%;
             }
         }
 
@@ -203,7 +223,7 @@
         &.after-cards {
             margin-top: -(@indent__base);
 
-            .form-integrated {
+            .payment-form {
                 padding-left: 40px;
             }
         }
@@ -267,7 +287,7 @@
 //  _____________________________________________
 
 .media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
-    .form-integrated {
+    .payment-form {
         padding-left: 0;
     }
 
@@ -275,7 +295,7 @@
         &.after-cards {
             margin-top: 0;
 
-            .form-integrated {
+            .payment-form {
                 padding-left: @pp-payment-integrated-form__padding-left;
             }
         }

@@ -17,10 +17,10 @@
             data-bind="
                 attr: {
                     'id': getCode()
-                }, 
-                value: getCode(), 
-                checked: isChecked, 
-                click: selectPaymentMethod, 
+                },
+                value: getCode(),
+                checked: isChecked,
+                click: selectPaymentMethod,
                 visible: isRadioButtonVisible()
             ">
         <label class="label" data-bind="attr: {'for': getCode()}">
@@ -66,24 +66,32 @@
             data-bind="
                 css: {
                     'after-cards': canDisplayCards()
-                }, 
-                afterRender: initIntegratedForm()
+                },
+                afterRender: initPaymentForm()
             ">
-            <div class="form-integrated"
-                data-bind="visible: canDisplayIntegratedForm">
-                <div class="cardholder-input-container input-container"></div>
-                <div class="error-container">
-                    <div class="invalid-field">
-                        <!-- ko i18n: 'Invalid Name and/or Last Name.' --><!-- /ko -->
-                    </div>
-                    <div class="empty-field">
-                        <!-- ko i18n: 'Mandatory field.' --><!-- /ko -->
+            <div class="payment-form"
+                data-bind="visible: canDisplayPaymentForm">
+                <div data-bind="visible: isIntegratedPayment">
+                    <div class="cardholder-input-container input-container"></div>
+                    <div class="error-container">
+                        <div class="invalid-field">
+                            <!-- ko i18n: 'Invalid Name and/or Last Name.' --><!-- /ko -->
+                        </div>
+                        <div class="empty-field">
+                            <!-- ko i18n: 'Mandatory field.' --><!-- /ko -->
+                        </div>
                     </div>
                 </div>
-                <div class="schemes-container">
+
+                <div class="card-title" data-bind="visible: isHostedFieldsPayment">
+                    <!-- ko i18n: 'Your card' --><!-- /ko -->
+                </div>
+
+                <div class="schemes-container" data-bind="visible: isIntegratedPayment">
                     <div class="card-title">
                         <!-- ko i18n: 'Your card' --><!-- /ko -->
                     </div>
+
                     <div class="schemes">
                         <label class="scheme" title="CB">
                             <input type="radio"
@@ -120,18 +128,21 @@
                         </label>
                     </div>
                 </div>
-                <div class="pan-input-container input-container"></div>
-                <div class="error-container">
-                    <div class="invalid-field">
-                        <!-- ko i18n: 'Invalid card number.' --><!-- /ko -->
-                    </div>
-                    <div class="empty-field">
-                        <!-- ko i18n: 'Mandatory field.' --><!-- /ko -->
+                <div class="pan-container">
+                    <div id="brand-container" data-bind="visible: isHostedFieldsPayment"></div>
+                    <div id="pan-input-container" class="pan-input-container input-container"></div>
+                    <div class="error-container">
+                        <div class="invalid-field">
+                            <!-- ko i18n: 'Invalid card number.' --><!-- /ko -->
+                        </div>
+                        <div class="empty-field">
+                            <!-- ko i18n: 'Mandatory field.' --><!-- /ko -->
+                        </div>
                     </div>
                 </div>
                 <div class="exp-cvv-container">
                     <div>
-                        <div class="exp-input-container input-container"></div>
+                        <div id="exp-input-container" class="exp-input-container input-container"></div>
                         <div class="error-container">
                             <div class="invalid-field">
                                 <!-- ko i18n: 'Invalid expiration date.' --><!-- /ko -->
@@ -142,7 +153,7 @@
                         </div>
                     </div>
                     <div>
-                        <div class="cvv-input-container input-container"></div>
+                        <div id="cvv-input-container" class="cvv-input-container input-container"></div>
                         <div class="error-container">
                             <div class="invalid-field">
                                 <!-- ko i18n: 'Invalid CVV.' --><!-- /ko -->
@@ -178,7 +189,7 @@
                 <div class="policy">
                     <a data-bind="
                         attr: {
-                            href: $t('payplug-integrated-privacy-policy-link'), 
+                            href: $t('payplug-integrated-privacy-policy-link'),
                             title: $t('Privacy Policy'), target: '_blank'
                         }
                     ">
@@ -189,7 +200,7 @@
         </div>
         <!--/ko-->
 
-        <!-- ko if: !canDisplayIntegratedForm() -->
+        <!-- ko if: !canDisplayPaymentForm() -->
         <!-- ko foreach: getRegion('messages') -->
         <!-- ko template: getTemplate() --><!-- /ko -->
         <!--/ko-->
@@ -204,7 +215,7 @@
             <!-- ko template: getTemplate() --><!-- /ko -->
             <!--/ko-->
         </div>
-        
+
         <div class="actions-toolbar">
             <div class="primary">
                 <button class="action primary checkout"
