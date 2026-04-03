@@ -28,7 +28,8 @@ $urlProvider = $block->getData('urlProviderViewModel');
 window.PAYPLUG_DOMAIN = '{$escaper->escapeJs($urlProvider->getPayplugSecureUrl())}';
 require.config({
     paths: {
-        payplugIntegrated: '{$escaper->escapeJs($urlProvider->getPayplugIntegratedPaymentJsUrl())}'
+        payplugIntegrated: '{$escaper->escapeJs($urlProvider->getPayplugIntegratedPaymentJsUrl())}',
+        payplugHostedFields: '{$escaper->escapeJs($urlProvider->getPayplugHostedFieldsJsUrl())}'
     }
 });
 JS;
