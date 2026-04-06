@@ -5,18 +5,23 @@ namespace Payplug\Payments\ViewModel;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\View\Element\Block\ArgumentInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Throwable;
 
 class UrlProvider implements ArgumentInterface
 {
     private const SECURE_URL = 'https://secure.payplug.com';
     private const INTEGRATED_PAYMENT_JS_URL = 'https://cdn.payplug.com/js/integrated-payment/v1/index';
     private const APPLEPAY_SDK_URL = 'https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js';
+    private const PAYPLUG_RETAIL_BASE_CURRENCY_CODE = 'EUR';
 
     /**
      * @param ScopeConfigInterface $scopeConfig
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
-        private readonly ScopeConfigInterface $scopeConfig
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly StoreManagerInterface $storeManager
     ) {
     }
 
@@ -47,6 +52,16 @@ class UrlProvider implements ArgumentInterface
      */
     public function isApplePayEnabled(): bool
     {
+        try {
+            $baseCurrencyCode = $this->storeManager->getWebsite()->getBaseCurrencyCode();
+        } catch (Throwable) {
+            return false;
+        }
+
+        if ($baseCurrencyCode !== self::PAYPLUG_RETAIL_BASE_CURRENCY_CODE) {
+            return false;
+        }
+
         return $this->scopeConfig->isSetFlag('payment/payplug_payments_apple_pay/active', ScopeInterface::SCOPE_STORE);
     }
 
