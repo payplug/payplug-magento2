@@ -27,11 +27,12 @@ use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherIn
 use Magento\Framework\Model\AbstractModel;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
+use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\ResourceModel\GridInterface;
-use Magento\Sales\Model\Service\OrderService;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Exception\HttpException;
@@ -83,7 +84,8 @@ class Data
      * @param OndemandHelper $ondemandHelper
      * @param MessageQueuePublisherInterface $messageQueuePublisher
      * @param PayplugLogger $payplugLogger
-     * @param OrderService $orderService
+     * @param OrderManagementInterface $orderManagement
+     * @param OrderStatusHistoryInterfaceFactory $orderStatusHistoryFactory
      */
     public function __construct(
         private readonly PayplugOrderPaymentRepository $payplugOrderPaymentRepository,
@@ -100,7 +102,8 @@ class Data
         private readonly OndemandHelper $ondemandHelper,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
         private readonly PayplugLogger $payplugLogger,
-        private readonly OrderService $orderService
+        private readonly OrderManagementInterface $orderManagement,
+        private readonly OrderStatusHistoryInterfaceFactory $orderStatusHistoryFactory
     ) {
     }
 
@@ -1149,10 +1152,12 @@ class Data
             $this->orderRepository->save($order);
         }
 
-        $this->orderService->cancel($order->getEntityId());
+        $this->orderManagement->cancel($order->getEntityId());
 
-        $order->addCommentToStatusHistory(__('Payplug payment was not successfull.'));
-        $this->orderRepository->save($order);
+        $orderStatusHistory = $this->orderStatusHistoryFactory->create();
+        $orderStatusHistory->setComment(__('Payplug payment was not successfull.'));
+
+        $this->orderManagement->addComment($order->getEntityId(), $orderStatusHistory);
     }
 
     /**
