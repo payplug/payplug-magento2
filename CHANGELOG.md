@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.7.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.0) - 2026-xx-xx
+## [4.7.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.0) - 2026-04-10
 
 ### ⚠ ACTION REQUIRED
 
@@ -24,6 +24,56 @@ bin/magento payplug:migrate-authorization-metadata
 ```
 
 Failure to perform this action may result in missed captures, especially if no manual capture is performed via the Magento backend or API.
+
+### Features
+
+- Redirect 3D Secure for OneClick option (MAG-613)
+- Add quote retrieval logic to TransactionDataBuilder with enhanced error handling (MAG-618)
+- Add Bizum and Wero payment methods (MAG-603)
+- Handle Wero cancel operation (forward from PaymentReturn to Cancel action) (MAG-603)
+- Add custom metadata field to config and integrate metadata plugin in order placement process (MAG-612)
+- Add multilingual translations including OAuth2 and Standard Auth labels (MAG-623)
+- Create invoice message queue after order status is updated (MAG-652)
+- Remove bizum whitelisted phone from codebase (MAG-666)
+- Fix duplicate authorization when capturing with missing authorization flag (MAG-672)
+- Add Scalapay payment method (MAG-661)
+- Replace the iDEAL logo with the co-branded iDEAL/Wero version (MAG-619)
+- Enable coupon code rollback by using OrderService cancellation (MAG-682)
+- Add headless compatibility for cart rollback on Cancel / Payment Return (MAG-677)
+- Add CLI to migrate authorization metadata from quote to order (MAG-683)
+- Fix Scalapay country restriction logic (MAG-687)
+- Fix cart rollback with Scalapay user cancellation (MAG-690)
+- Change Scalapay payment title to reflect 3x/4x option (MAG-696)
+- Fix order status persisting as “Pending Payment” after successful order cancellation (MAG-694)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.6.3...v4.7.0)**
+
+### Added
+
+- Add quote retrieval logic to TransactionDataBuilder with enhanced error handling (MAG-618) [#7b3a0fbe](https://github.com/payplug/payplug-magento2/commit/7b3a0fbe264d5b7200c7375940e381b78c28b54a)
+- Add Bizum and Wero payment methods (MAG-603) [#cbae5396](https://github.com/payplug/payplug-magento2/commit/cbae5396410fd59984c207650dbf4fb5468cd4e6)
+- Handle Wero cancel operation (forward from PaymentReturn to Cancel action) (MAG-603) [#5892d8b3](https://github.com/payplug/payplug-magento2/commit/5892d8b3ecd2bab62524dbb8db870957d7d43c1c)
+- Add custom metadata field to config and integrate metadata plugin in order placement process (MAG-612) [#fa857bb2](https://github.com/payplug/payplug-magento2/commit/fa857bb25f6124e181258ecd25a6ce235f9f9781)
+- Add multilingual translations including OAuth2 and Standard Auth labels (MAG-623) [#5d278de8](https://github.com/payplug/payplug-magento2/commit/5d278de8da27bd0a1ed9262cdb6438c67a057f6a)
+- Add Scalapay payment method (MAG-661) [#664c13c6](https://github.com/payplug/payplug-magento2/commit/664c13c626bbafe952a6982ba29f02edb4aa5262)
+- Add headless compatibility for cart rollback on Cancel / Payment Return (MAG-677) [#15037601](https://github.com/payplug/payplug-magento2/commit/15037601192a368ee22e115f3fd7e0741ff0cd6a)
+- Add CLI to migrate authorization metadata from quote to order (MAG-683) [#13dd906d](https://github.com/payplug/payplug-magento2/commit/13dd906de878ab7a2d82990fb471bf892b22d115)
+
+### Changed
+
+- Redirect 3D Secure for OneClick option (MAG-613) [#7f71ef6d](https://github.com/payplug/payplug-magento2/commit/7f71ef6db9d7fb8f7c5e8de6cda96efa2c7c06cc)
+- Remove bizum whitelisted phone from codebase (MAG-666) [#dd87742f](https://github.com/payplug/payplug-magento2/commit/dd87742ff46600ae2e182e88174437319d5463e8)
+- Replace the iDEAL logo with the co-branded iDEAL/Wero version (MAG-619) [#50701821](https://github.com/payplug/payplug-magento2/commit/507018218fe4e4030994367988b931432684c9df)
+- Change Scalapay payment title to reflect 3x/4x option (MAG-696) [#59d2e99b](https://github.com/payplug/payplug-magento2/commit/59d2e99b82bd8cdb89e922a589f3b42989775f4d)
+
+### Fixed
+
+- Create invoice message queue after order status is updated (MAG-652) [#e9e47658](https://github.com/payplug/payplug-magento2/commit/e9e4765847c49db915129aa0f84ba212a337bd9f)
+- Fix duplicate authorization when capturing with missing authorization flag (MAG-672) [#e9e47658](https://github.com/payplug/payplug-magento2/commit/0f49f6921d913eae6a3736dbc1a68c151dabf3ee)
+- Fix coupon code rollback by using OrderService cancellation (MAG-682) [#1beb43d3](https://github.com/payplug/payplug-magento2/commit/1beb43d36fc0a4d310fc80c2533697901d860f54)
+- Fix Scalapay country restriction logic (MAG-687) [#b1dcd985](https://github.com/payplug/payplug-magento2/commit/b1dcd9853e5b1f25204fd3cc730f0244b3919de7)
+- Fix cart rollback with Scalapay user cancellation (MAG-690) [#ebcd1225](https://github.com/payplug/payplug-magento2/commit/ebcd122535103332ef8fbc0d2cb9f6b04634d2be)
+- Fix order status persisting as “Pending Payment” after successful order cancellation (MAG-694) [#71188022](https://github.com/payplug/payplug-magento2/commit/7118802257a712b8a7ee753729d8a36a825231f1)
 
 ## [4.6.3](https://github.com/payplug/payplug-magento2/releases/tag/v4.6.3) - 2026-03-09
 
