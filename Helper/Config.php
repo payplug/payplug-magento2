@@ -14,6 +14,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\ScopeInterface;
@@ -61,6 +62,7 @@ class Config
      * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
      * @param RequestInterface $request
      * @param ScopeConfigInterface $scopeConfig
+     * @param EncryptorInterface $encryptor
      */
     public function __construct(
         private readonly WriterInterface $configWriter,
@@ -69,7 +71,8 @@ class Config
         private readonly StoreManagerInterface $storeManager,
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
         private readonly RequestInterface $request,
-        private readonly ScopeConfigInterface $scopeConfig
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly EncryptorInterface $encryptor
     ) {
     }
 
@@ -356,6 +359,44 @@ class Config
         );
 
         return (string) $apiKey ?: null;
+    }
+
+    /**
+     * Get Hosted Fields Identifier
+     *
+     * @return string|null
+     */
+    public function getHostedFieldsIdentifier(): ?string
+    {
+        $identifier = $this->getConfigValue(
+            'identifier',
+            ScopeInterface::SCOPE_STORE,
+            null,
+            'payplug_payments/hostedfields/'
+        );
+
+        return (string) $identifier ?: null;
+    }
+
+    /**
+     * Get Hosted Fields Account Key
+     *
+     * @return string|null
+     */
+    public function getHostedFieldsAccountKey(): ?string
+    {
+        $encryptedAccountKey = $this->getConfigValue(
+            'account_key',
+            ScopeInterface::SCOPE_STORE,
+            null,
+            'payplug_payments/hostedfields/'
+        );
+
+        if ($encryptedAccountKey === null) {
+            return null;
+        }
+
+        return $this->encryptor->decrypt($encryptedAccountKey);
     }
 
     /**

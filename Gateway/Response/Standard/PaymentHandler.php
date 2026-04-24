@@ -13,6 +13,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Payment\Gateway\Response\HandlerInterface;
 use Magento\Sales\Model\Order\Payment;
+use Payplug\Payments\Api\Data\OrderPaymentInterface;
 use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Order\PaymentFactory;
@@ -63,6 +64,10 @@ class PaymentHandler implements HandlerInterface
                     'payment_url',
                     $payplugPayment->hosted_payment ? $payplugPayment->hosted_payment->payment_url : ''
                 );
+
+                $paymentUrlPostParams = $payplugPayment->hosted_payment->payment_url_post_params ?? null;
+                $payment->setAdditionalInformation('payment_url_post_params', $paymentUrlPostParams ?: '');
+
                 $isPaid = 0;
             }
 
@@ -86,10 +91,16 @@ class PaymentHandler implements HandlerInterface
             $payment->setIsTransactionClosed(false);
             $payment->setShouldCloseParentTransaction(false);
 
+            $isHostedFieldsPayment = (bool) $payment->getAdditionalInformation(OrderPaymentInterface::HF_PAYMENT_KEY);
+
             $orderPayment = $this->payplugPaymentFactory->create();
             $orderPayment->setOrderId($order->getIncrementId());
             $orderPayment->setPaymentId($payplugPayment->id);
-            $orderPayment->setIsSandbox(!$payplugPayment->is_live);
+            $orderPayment->setIsHostedFieldsPayment($isHostedFieldsPayment);
+
+            $isLive = $isHostedFieldsPayment || ($payplugPayment->is_live ?? false);
+
+            $orderPayment->setIsSandbox($isLive === false);
 
             $this->orderPaymentRepository->save($orderPayment);
         }

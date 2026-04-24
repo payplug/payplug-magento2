@@ -133,13 +133,19 @@ class Info extends BaseInfo
             ];
         }
 
+        $createdAt = $payment->created_at;
+
+        if (is_string($createdAt)) {
+            $createdAt = strtotime($createdAt);
+        }
+
         return array_merge([
             'Payplug Payment ID' => $payment->id,
             'Status' => $status,
             'Amount' => $amount,
-            'Paid at' => date('d/m/Y H:i', $payment->created_at),
+            'Paid at' => date('d/m/Y H:i', $createdAt),
         ], $methodLines, [
-            'Mode' => $payment->is_live ? __('PayPlug LIVE mode') : __('PayPlug TEST mode'),
+            'Mode' => $payment->is_live === false ? __('PayPlug TEST mode') : __('PayPlug LIVE mode'),
         ]);
     }
 }

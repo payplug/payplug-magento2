@@ -18,6 +18,7 @@
     </event>
     <event name="payment_method_assign_data_payplug_payments_standard">
         <observer name="payplug_payments_standard_gateway_data_assign" instance="Payplug\Payments\Observer\PaymentDataAssignObserver" />
+        <observer name="payplug_payments_standard_hosted_fields_data_assign" instance="Payplug\Payments\Observer\SetHostedFieldsAdditionalInformation" />
     </event>
     <event name="payment_method_is_active">
         <observer name="payplug_payments_standard_is_available" instance="Payplug\Payments\Observer\StandardAvailabilityObserver" />

@@ -94,9 +94,13 @@ class Standard extends AbstractPayment
                 if (empty($paymentId)) {
                     throw new Exception('Could not retrieve payment id for integrated payment');
                 }
+
+                $urlPostParams = $order->getPayment()->getAdditionalInformation('payment_url_post_params');
+
                 $response->setData([
                     'payment_id' => $paymentId,
                     'url' => $url,
+                    'url_post_params' => $urlPostParams,
                     'error' => false,
                 ]);
 

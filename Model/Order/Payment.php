@@ -21,37 +21,33 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Exception\ConfigurationNotSetException;
+use Payplug\Payment as PaymentHelper;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Service\BuildHostedFieldsParamsHash;
 use Payplug\Resource\Payment as ResourcePayment;
 use Payplug\Resource\Refund;
 
 class Payment extends AbstractModel implements IdentityInterface
 {
     public const CACHE_TAG = 'payplug_payments_order_payment';
-
     public const ORDER_ID = 'order_id';
-
     public const PAYMENT_ID = 'payment_id';
-
     public const IS_SANDBOX = 'is_sandbox';
-
+    public const IS_HOSTED_FIELDS_PAYMENT = 'is_hosted_fields_payment';
     public const IS_INSTALLMENT_PLAN_PAYMENT_PROCESSED = 'is_installment_plan_payment_processed';
-
     public const SENT_BY = 'sent_by';
-
     public const SENT_BY_VALUE = 'sent_by_value';
-
     public const LANGUAGE = 'language';
-
     public const DESCRIPTION = 'description';
-
     public const SENT_BY_SMS = 'SMS';
     public const SENT_BY_EMAIL = 'EMAIL';
+    public const HOSTED_FIELDS_PARAMS_VERSION = '3.0';
 
     /**
      * @param Context $context
      * @param Registry $registry
      * @param Config $payplugConfig
+     * @param BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash
      * @param AbstractResource|null $resource
      * @param AbstractDb|null $resourceCollection
      * @param array $data
@@ -60,7 +56,8 @@ class Payment extends AbstractModel implements IdentityInterface
     public function __construct(
         Context $context,
         Registry $registry,
-        private Config $payplugConfig,
+        private readonly Config $payplugConfig,
+        private readonly BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash,
         ?AbstractResource $resource = null,
         ?AbstractDb $resourceCollection = null,
         array $data = []
@@ -156,6 +153,25 @@ class Payment extends AbstractModel implements IdentityInterface
     public function setIsSandbox(bool $isSandbox): self
     {
         return $this->setData(self::IS_SANDBOX, $isSandbox);
+    }
+
+    /**
+     * Get is Hosted fields payment
+     */
+    public function isHostedFieldsPayment(): bool
+    {
+        return (bool)$this->_getData(self::IS_HOSTED_FIELDS_PAYMENT);
+    }
+
+    /**
+     * Set is Hosted Fields Payment
+     *
+     * @param bool $isHostedFieldsPayment
+     * @return self
+     */
+    public function setIsHostedFieldsPayment(bool $isHostedFieldsPayment): self
+    {
+        return $this->setData(self::IS_HOSTED_FIELDS_PAYMENT, $isHostedFieldsPayment);
     }
 
     /**
@@ -294,15 +310,40 @@ class Payment extends AbstractModel implements IdentityInterface
      *
      * @param int|null $store
      * @param string|null $scope
-     * @return ResourcePayment
+     * @return ResourcePayment|null
      * @throws ConfigurationException
      * @throws ConfigurationNotSetException
+     * @throws LocalizedException
      */
-    public function retrieve(?int $store = null, ?string $scope = ScopeInterface::SCOPE_STORE): ResourcePayment
+    public function retrieve(?int $store = null, ?string $scope = ScopeInterface::SCOPE_STORE): ?ResourcePayment
     {
         $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox(), $scope);
 
-        return \Payplug\Payment::retrieve($this->getPaymentId());
+        if ($this->isHostedFieldsPayment() === false) {
+            return PaymentHelper::retrieve($this->getPaymentId());
+        }
+
+        $hostedFieldsIdentifier = $this->payplugConfig->getHostedFieldsIdentifier();
+
+        if ($hostedFieldsIdentifier === null) {
+            throw new LocalizedException(__('An error occurred while processing the order.'));
+        }
+
+        $payload = [
+            'method' => 'getTransactions',
+            'params' => [
+                'IDENTIFIER' => $hostedFieldsIdentifier,
+                'ORDERID' => $this->getOrderId(),
+                'VERSION' => self::HOSTED_FIELDS_PARAMS_VERSION
+            ]
+        ];
+
+        $payload['params']['HASH'] = $this->buildHostedFieldsParamsHash->execute(
+            $payload['params'],
+            BuildHostedFieldsParamsHash::SEPARATOR_ACCOUNT_KEY
+        );
+
+        return PaymentHelper::retrieve($payload, null, true);
     }
 
     /**
@@ -351,7 +392,7 @@ class Payment extends AbstractModel implements IdentityInterface
     {
         $this->payplugConfig->setPayplugApiKey($store, $this->isSandbox());
 
-        return \Payplug\Payment::abort($this->getPaymentId());
+        return PaymentHelper::abort($this->getPaymentId());
     }
 
     /**

@@ -60,6 +60,10 @@ class SendCustomMetadataAfterPlaceOrder
             return $orderId;
         }
 
+        if ($payplugPayment->isHostedFieldsPayment() === true) {
+            return $orderId;
+        }
+
         try {
             $resourcePayment = $payplugPayment->retrieve((int)$order->getStoreId());
 
