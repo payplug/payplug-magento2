@@ -14,6 +14,7 @@ use Laminas\Http\Response;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Raw;
 use Magento\Framework\Controller\Result\Redirect;
@@ -25,7 +26,11 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
+use Magento\Store\Model\ScopeInterface;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Exception\PayplugException;
+use Payplug\Exception\UnknownAPIResourceException;
 use Payplug\Notification;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Response\Standard\FetchTransactionInformationHandler;
@@ -33,19 +38,23 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Data\RefundRequestFactory;
+use Payplug\Payments\Model\Order\PaymentFactory as PayplugOrderPaymentFactory;
 use Payplug\Payments\Service\CreateOrderRefund;
 use Payplug\Resource\InstallmentPlan;
+use Payplug\Resource\IVerifiableAPIResource;
 use Payplug\Resource\Payment as PaymentResource;
 use Payplug\Resource\Refund;
 
 class Ipn extends AbstractPayment
 {
+    private const HOSTED_FIELDS_SUCCESS_CONTENT_RETURN = 'OK';
     /**
      * @param Config $payplugConfig
      * @param FetchTransactionInformationHandler $fetchTransactionInformationHandler
      * @param PaymentReturn $paymentReturn
      * @param MessageQueuePublisherInterface $messageQueuePublisher
      * @param RefundRequestFactory $refundRequestFactory
+     * @param PayplugOrderPaymentFactory $payplugOrderPaymentFactory
      * @param Context $context
      * @param Session $checkoutSession
      * @param OrderFactory $salesOrderFactory
@@ -59,6 +68,7 @@ class Ipn extends AbstractPayment
         private readonly PaymentReturn $paymentReturn,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
         private readonly RefundRequestFactory $refundRequestFactory,
+        private readonly PayplugOrderPaymentFactory $payplugOrderPaymentFactory,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
@@ -91,6 +101,11 @@ class Ipn extends AbstractPayment
             $request = $this->getRequest();
             $body = $request->getContent();
 
+            $this->logger->info($request->getUriString());
+            $this->logger->info('Received IPN body: ' . $body);
+
+            $debug = (int) $this->getRequest()->getParam('debug');
+
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
 
             $this->logger->info('This is not a debug call.');
@@ -99,10 +114,20 @@ class Ipn extends AbstractPayment
             $this->payplugConfig->setPayplugApiKey((int)$ipnStoreId, (bool) $ipnSandbox);
             $this->logger->info('Key submited');
 
-            $resource = Notification::treat($body);
+            $hostedFieldsIdentifier = $request->getParam('IDENTIFIER');
+
+            if ($hostedFieldsIdentifier) {
+                $resource = $this->treatHostedFieldsRequest($request);
+            } else {
+                $resource = Notification::treat($body);
+            }
 
             if ($resource instanceof PaymentResource) {
                 $this->processPayment($response, $resource);
+
+                if ($hostedFieldsIdentifier) {
+                    $response->setContents(self::HOSTED_FIELDS_SUCCESS_CONTENT_RETURN);
+                }
 
                 return $response;
             }
@@ -115,6 +140,10 @@ class Ipn extends AbstractPayment
 
             if ($resource instanceof Refund) {
                 $this->processRefund($response, $resource);
+
+                if ($hostedFieldsIdentifier) {
+                    $response->setContents(self::HOSTED_FIELDS_SUCCESS_CONTENT_RETURN);
+                }
 
                 return $response;
             }
@@ -137,6 +166,90 @@ class Ipn extends AbstractPayment
     }
 
     /**
+     * Treat a request made by the hosted fields IPN
+     *
+     * @param RequestInterface $request
+     * @return IVerifiableAPIResource
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
+     * @throws LocalizedException
+     * @throws UnknownAPIResourceException
+     */
+    private function treatHostedFieldsRequest(RequestInterface $request): IVerifiableAPIResource
+    {
+        $orderIncrementId = $request->getParam('ORDERID');
+        $operationType = $request->getParam('OPERATIONTYPE');
+
+        if (empty($orderIncrementId) || empty($operationType)) {
+            $this->logger->error('Transaction ID or Operation Type is missing');
+            throw new UnknownAPIResourceException('Data is missing');
+        }
+
+        if (in_array($operationType, ['payment', 'authorization', 'capture'])) {
+            $payplugOrderPayment = $this->payplugOrderPaymentFactory->create();
+            $payplugOrderPayment->setOrderId($orderIncrementId);
+            $payplugOrderPayment->setIsHostedFieldsPayment(true);
+
+            return $payplugOrderPayment->retrieve();
+        }
+
+        throw new UnknownAPIResourceException('Cannot handle operation type "' . $operationType . '".');
+    }
+
+    /**
+     * Get configuration value
+     *
+     * @param string $field
+     * @param int $storeId
+     * @param string|null $path
+     * @return mixed
+     */
+    private function getConfigValue(string $field, int $storeId, ?string $path = null): mixed
+    {
+        return $this->payplugConfig->getConfigValue($field, ScopeInterface::SCOPE_STORE, $storeId, $path);
+    }
+
+    /**
+     * Process debug ipn call
+     *
+     * @param Raw $response
+     *
+     * @return Raw|Json|ResultInterface
+     */
+    private function processDebugCall(Raw $response)
+    {
+        $this->logger->info('This is a debug call.');
+        $cid = (int) $this->payplugConfig->getConfigValue('company_id');
+        if ((int) $this->getRequest()->getParam('cid') == $cid) {
+            $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
+            $environmentMode = $this->getConfigValue('environmentmode', $ipnStoreId);
+            $embeddedMode = $this->getConfigValue('payment_page', $ipnStoreId);
+            $oneClick = $this->payplugConfig->isOneClick((int)$ipnStoreId);
+
+            $data = [
+                'is_module_active' => 1,
+                'sandbox_mode' => (int) ($environmentMode === Config::ENVIRONMENT_TEST),
+                'embedded_mode' => (int) ($embeddedMode === Config::PAYMENT_PAGE_EMBEDDED),
+                'one_click' => (int) $oneClick,
+                'cid' => 1
+            ];
+
+            /** @var Json $response */
+            $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
+            $response->setHttpResponseCode(200);
+            $response->setData($data);
+
+            return $response;
+        }
+
+        $this->logger->info('Access not granted.');
+        $response->setHttpResponseCode(403);
+        $response->setContents('Access not granted.');
+
+        return $response;
+    }
+
+    /**
      * Process ipn payment call
      *
      * @param Raw $response
@@ -149,7 +262,7 @@ class Ipn extends AbstractPayment
         $this->logger->info('This is a payment call.');
         $this->logger->info('Payment ID : ' . $paymentResource->id);
 
-        $orderIncrementId = $paymentResource->metadata['Order'] ?? '';
+        $orderIncrementId = $paymentResource->metadata['Order'] ?? $paymentResource->metadata['order_id'] ?? null;
 
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);

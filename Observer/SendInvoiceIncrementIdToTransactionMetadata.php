@@ -57,6 +57,10 @@ class SendInvoiceIncrementIdToTransactionMetadata implements ObserverInterface
             return;
         }
 
+        if ($payplugPayment->isHostedFieldsPayment() === true) {
+            return;
+        }
+
         $resourcePayment = $payplugPayment->retrieve((int)$order->getStoreId());
         $currentMetadata = $resourcePayment->metadata;
         $currentMetadata['Invoice'] = $invoice->getIncrementId();

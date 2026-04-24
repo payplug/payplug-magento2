@@ -121,15 +121,15 @@ class Info extends BaseInfo
             }
 
             $expirationDate = __('n/c');
-            if ($payment->card->exp_month !== null) {
-                $expirationDate = date('m/y', strtotime('01.'.$payment->card->exp_month.'.'.$payment->card->exp_year));
+            if ($payment->card->exp_month !== null && $payment->card->exp_year) {
+                $expirationDate = $payment->card->exp_month.'/'.$payment->card->exp_year;
             }
 
             $methodLines = [
                 'Credit card' => $cardType . ' (' . $country . ')',
                 'Card mask' => $cardMask,
-                '3-D Secure' => $payment->is_3ds ? __('Yes') : __('No'),
                 'Expiration Date' => $expirationDate,
+                '3-D Secure' => $payment->is_3ds ? __('Yes') : __('No'),
             ];
         }
 
@@ -137,9 +137,10 @@ class Info extends BaseInfo
             'Payplug Payment ID' => $payment->id,
             'Status' => $status,
             'Amount' => $amount,
-            'Created on' => date('d/m/Y H:i', $payment->created_at),
+            'Created on' => $payment->created_at ? date('d/m/Y H:i', $payment->created_at) : 'n/c',
+            'Paid at' => $payment->paid_at ? date('d/m/Y H:i', $payment->paid_at) : 'n/c'
         ], $methodLines, [
-            'Mode' => $payment->is_live ? __('PayPlug LIVE mode') : __('PayPlug TEST mode'),
+            'Mode' => $payment->is_live === false ? __('PayPlug TEST mode') : __('PayPlug LIVE mode'),
         ]);
     }
 }
