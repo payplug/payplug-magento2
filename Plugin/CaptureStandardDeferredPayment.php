@@ -19,9 +19,12 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment\Operations\ProcessInvoiceOperation;
 use Payplug\Payments\Gateway\Config\Standard;
+use Payplug\Payments\Helper\Config as PayplugConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Order\Payment;
 use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Service\BuildHostedFieldsParamsHash;
 
 class CaptureStandardDeferredPayment
 {
@@ -31,13 +34,17 @@ class CaptureStandardDeferredPayment
      * @param ManagerInterface $eventManager
      * @param OrderPaymentRepository $orderPaymentRepository
      * @param OrderRepositoryInterface $orderRepository
+     * @param PayplugConfig $payplugConfig
+     * @param BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash
      */
     public function __construct(
         private readonly Data $data,
         private readonly Logger $logger,
         private readonly ManagerInterface $eventManager,
         private readonly OrderPaymentRepository $orderPaymentRepository,
-        private readonly OrderRepositoryInterface $orderRepository
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly PayplugConfig $payplugConfig,
+        private readonly BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash,
     ) {
     }
 
@@ -98,7 +105,39 @@ class CaptureStandardDeferredPayment
                 $payplugPayment->getScope($order)
             );
 
-            $updatedPayplugPaymentResource = $payplugPaymentResource->capture();
+            if ($payplugPayment->isHostedFieldsPayment() === true) {
+                $payload = [
+                    'method' => 'capture',
+                    'params' => [
+                        'IDENTIFIER' => $this->payplugConfig->getHostedFieldsIdentifier(),
+                        'OPERATIONTYPE' => 'capture',
+                        'TRANSACTIONID' => $payplugPaymentId,
+                        'ORDERID' => $order->getIncrementId(),
+                        'DESCRIPTION' => 'Order #' . $order->getIncrementId(),
+                        'VERSION' => Payment::HOSTED_FIELDS_PARAMS_VERSION,
+                    ],
+                ];
+
+                $payload['params']['HASH'] = $this->buildHostedFieldsParamsHash->execute(
+                    $payload['params'],
+                    BuildHostedFieldsParamsHash::SEPARATOR_ACCOUNT_KEY
+                );
+
+                $result = $payplugPaymentResource->capture(null, $payload);
+                $execCode = $result['EXECCODE'] ?? null;
+
+                if ($execCode !== '0000') {
+                    $this->logger->error(sprintf('Could not capture hosted fields payment: %s', json_encode($result)));
+                    throw new Exception('Could not capture hosted fields payment');
+                }
+
+                $updatedPayplugPaymentResource = $payplugPayment->retrieve(
+                    $payplugPayment->getScopeId($order),
+                    $payplugPayment->getScope($order)
+                );
+            } else {
+                $updatedPayplugPaymentResource = $payplugPaymentResource->capture();
+            }
 
             if ($updatedPayplugPaymentResource) {
                 $orderPayment->setBaseAmountPaidOnline(
