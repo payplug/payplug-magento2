@@ -25,7 +25,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
-use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
@@ -91,13 +90,8 @@ class Ipn extends AbstractPayment
             /** @var Http $request */
             $request = $this->getRequest();
             $body = $request->getContent();
-            $debug = (int) $this->getRequest()->getParam('debug');
 
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
-
-            if ($debug == 1) {
-                return $this->processDebugCall($response);
-            }
 
             $this->logger->info('This is not a debug call.');
 
@@ -138,59 +132,6 @@ class Ipn extends AbstractPayment
 
             return $response;
         }
-
-        return $response;
-    }
-
-    /**
-     * Get configuration value
-     *
-     * @param string $field
-     * @param int $storeId
-     * @param string|null $path
-     * @return mixed
-     */
-    private function getConfigValue(string $field, int $storeId, ?string $path = null): mixed
-    {
-        return $this->payplugConfig->getConfigValue($field, ScopeInterface::SCOPE_STORE, $storeId, $path);
-    }
-
-    /**
-     * Process debug ipn call
-     *
-     * @param Raw $response
-     *
-     * @return Raw|Json|ResultInterface
-     */
-    private function processDebugCall(Raw $response)
-    {
-        $this->logger->info('This is a debug call.');
-        $cid = (int) $this->payplugConfig->getConfigValue('company_id');
-        if ((int) $this->getRequest()->getParam('cid') == $cid) {
-            $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
-            $environmentMode = $this->getConfigValue('environmentmode', $ipnStoreId);
-            $embeddedMode = $this->getConfigValue('payment_page', $ipnStoreId);
-            $oneClick = $this->payplugConfig->isOneClick((int)$ipnStoreId);
-
-            $data = [
-                'is_module_active' => 1,
-                'sandbox_mode' => (int) ($environmentMode === Config::ENVIRONMENT_TEST),
-                'embedded_mode' => (int) ($embeddedMode === Config::PAYMENT_PAGE_EMBEDDED),
-                'one_click' => (int) $oneClick,
-                'cid' => 1
-            ];
-
-            /** @var Json $response */
-            $response = $this->resultFactory->create(ResultFactory::TYPE_JSON);
-            $response->setHttpResponseCode(200);
-            $response->setData($data);
-
-            return $response;
-        }
-
-        $this->logger->info('Access not granted.');
-        $response->setHttpResponseCode(403);
-        $response->setContents('Access not granted.');
 
         return $response;
     }
