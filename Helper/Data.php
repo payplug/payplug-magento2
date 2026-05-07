@@ -228,7 +228,7 @@ class Data
             return false;
         }
 
-        $allowedStates = [
+        $allowedStatuses = [
             Standard::METHOD_CODE => [
                 Order::STATE_PENDING_PAYMENT,
                 Order::STATE_PAYMENT_REVIEW
@@ -289,7 +289,7 @@ class Data
             ],
         ];
 
-        if (!in_array($order->getState(), $allowedStates[$order->getPayment()->getMethod()])) {
+        if (!in_array($order->getStatus(), $allowedStatuses[$order->getPayment()->getMethod()])) {
             return false;
         }
 
