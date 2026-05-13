@@ -137,7 +137,7 @@ class Info extends BaseInfo
             'Payplug Payment ID' => $payment->id,
             'Status' => $status,
             'Amount' => $amount,
-            'Paid at' => date('d/m/Y H:i', $payment->created_at),
+            'Created on' => date('d/m/Y H:i', $payment->created_at),
         ], $methodLines, [
             'Mode' => $payment->is_live ? __('PayPlug LIVE mode') : __('PayPlug TEST mode'),
         ]);
