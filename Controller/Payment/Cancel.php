@@ -120,7 +120,7 @@ class Cancel extends AbstractPayment
         try {
             $this->payplugHelper->cancelOrderAndInvoice($order);
         } catch (Throwable) {
-            $this->logger->error(sprintf('Could not cancel order ID %1', $order->getId()));
+            $this->logger->error(sprintf('Could not cancel order ID %s', $order->getId()));
         }
 
         $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
