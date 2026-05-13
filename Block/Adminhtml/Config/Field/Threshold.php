@@ -65,8 +65,8 @@ class Threshold extends Text
         $maxAmount = (float) ($maxAmount / 100);
 
         $precision = PriceCurrencyInterface::DEFAULT_PRECISION;
-        $formatedMinAmount = $this->priceCurrency->convertAndFormat($minAmount, false, $precision, $minCurrency);
-        $formatedMaxAmount = $this->priceCurrency->convertAndFormat($maxAmount, false, $precision, $maxCurrency);
+        $formatedMinAmount = $this->priceCurrency->convertAndFormat($minAmount, false, $precision, null, $minCurrency);
+        $formatedMaxAmount = $this->priceCurrency->convertAndFormat($maxAmount, false, $precision, null, $maxCurrency);
 
         $this->addClass(sprintf('validate-number validate-number-range number-range-%d-%d', $minAmount, $maxAmount));
         $this->setData(
