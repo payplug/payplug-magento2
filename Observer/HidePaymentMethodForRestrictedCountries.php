@@ -14,7 +14,6 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Payment\Model\Method\Adapter as MethodAdapter;
 use Magento\Quote\Api\Data\CartInterface;
-use Payplug\Payments\Gateway\Config\Bancontact as BancontactConfig;
 use Payplug\Payments\Helper\Config as ConfigHelper;
 use Payplug\Payments\Helper\Data as PayplugDataHelper;
 use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
@@ -45,9 +44,7 @@ class HidePaymentMethodForRestrictedCountries implements ObserverInterface
         $methodAdapter = $observer->getEvent()->getData('method_instance');
         $paymentMethod = $methodAdapter->getCode();
 
-        if ($this->payplugDataHelper->isCodePayplugPaymentPpro($paymentMethod) === false
-            && $paymentMethod !== BancontactConfig::METHOD_CODE
-        ) {
+        if ($this->payplugDataHelper->isCodePayplugPaymentPpro($paymentMethod) === false) {
             return;
         }
 
