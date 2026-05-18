@@ -13,6 +13,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Store\Model\App\Emulation as AppEmulation;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
@@ -27,11 +28,13 @@ class CreateOrderInvoice
      * @param OrderRepositoryInterface $orderRepository
      * @param PayplugLogger $payplugLogger
      * @param AppEmulation $appEmulation
+     * @param InvoiceSender $invoiceSender
      */
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly PayplugLogger $payplugLogger,
-        private readonly AppEmulation $appEmulation
+        private readonly AppEmulation $appEmulation,
+        private readonly InvoiceSender $invoiceSender
     ) {
     }
 
@@ -118,6 +121,7 @@ class CreateOrderInvoice
 
         try {
             $this->orderRepository->save($order);
+            $this->invoiceSender->send($invoice);
         } catch (Throwable $e) {
             $this->payplugLogger->error($e->getMessage());
         }
