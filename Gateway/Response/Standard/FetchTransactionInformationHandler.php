@@ -7,6 +7,7 @@
 
 namespace Payplug\Payments\Gateway\Response\Standard;
 
+use Exception;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Payment\Gateway\Helper\SubjectReader;
 use Magento\Payment\Gateway\Response\HandlerInterface;
@@ -65,13 +66,17 @@ class FetchTransactionInformationHandler implements HandlerInterface
                 $payment->setIsTransactionDenied(true);
             } elseif ($payplugPayment->is_paid) {
                 $payment->setIsTransactionApproved(true);
+                $this->saveCustomerCard($payplugPayment, $order->getCustomerId(), $order->getStoreId());
+            }
+
+            $authorizedAt = $payplugPayment->authorization->authorized_at ?? null;
+
+            if ($payplugPayment->is_paid || $authorizedAt) {
                 try {
                     $this->orderSender->send($order);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $this->payplugLogger->critical($e->getMessage());
                 }
-
-                $this->saveCustomerCard($payplugPayment, $order->getCustomerId(), $order->getStoreId());
             }
         }
     }
