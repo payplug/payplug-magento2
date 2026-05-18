@@ -26,6 +26,7 @@ use Magento\Sales\Model\OrderFactory;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
 use Payplug\Payments\Gateway\Config\InstallmentPlan as InstallmentPlanConfig;
+use Payplug\Payments\Gateway\Config\Satispay as SatispayConfig;
 use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
@@ -38,7 +39,8 @@ class PaymentReturn extends AbstractPayment
 {
     public const PAYMENT_METHODS_WITH_NO_CANCEL_FAILURE_SUPPORT = [
         WeroConfig::METHOD_CODE,
-        ScalapayConfig::METHOD_CODE
+        ScalapayConfig::METHOD_CODE,
+        SatispayConfig::METHOD_CODE
     ];
 
     /**
