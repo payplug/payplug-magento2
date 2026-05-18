@@ -159,9 +159,6 @@ define([
                                 }
                             }
 
-                            let saveCard = window.checkoutConfig.payment.payplug_payments_standard.is_one_click && $('[name="save_card"]').is(':checked');
-                            self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
-
                             self.integratedApi.onCompleted(function () {
                                 $.ajax({
                                     url: checkPaymentUrl,
@@ -169,8 +166,6 @@ define([
                                     dataType: 'json',
                                     data: { payment_id: response.payment_id },
                                     success: function (res) {
-                                        fullScreenLoader.stopLoader();
-
                                         if (res.error === true) {
                                             window.location.replace(paymentReturnUrl + '?failure_message=' + res.message);
                                         } else {
@@ -180,7 +175,8 @@ define([
                                 });
                             });
 
-                            fullScreenLoader.stopLoader();
+                            const saveCard = window.checkoutConfig?.payment?.payplug_payments_standard?.is_one_click && document.querySelector('[name="save_card"]')?.checked;
+                            self.integratedApi.pay(response.payment_id, selectedScheme, {save_card: saveCard});
                         } else {
                             window.location.replace(paymentReturnUrl);
                         }
