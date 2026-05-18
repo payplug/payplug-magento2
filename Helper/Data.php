@@ -69,6 +69,16 @@ use Throwable;
 
 class Data
 {
+    public const PPRO_PAYMENT_METHODS = [
+        Bancontact::METHOD_CODE,
+        Satispay::METHOD_CODE,
+        Ideal::METHOD_CODE,
+        Mybank::METHOD_CODE,
+        Bizum::METHOD_CODE,
+        Wero::METHOD_CODE,
+        Scalapay::METHOD_CODE,
+    ];
+
     /**
      * @param PayplugOrderPaymentRepository $payplugOrderPaymentRepository
      * @param OrderPaymentRepositoryInterface $orderPaymentRepository
@@ -999,14 +1009,7 @@ class Data
      */
     public function isCodePayplugPaymentPpro(string $code): bool
     {
-        return in_array($code, [
-            Satispay::METHOD_CODE,
-            Ideal::METHOD_CODE,
-            Mybank::METHOD_CODE,
-            Bizum::METHOD_CODE,
-            Wero::METHOD_CODE,
-            Scalapay::METHOD_CODE
-        ]);
+        return in_array($code, self::PPRO_PAYMENT_METHODS);
     }
 
     /**

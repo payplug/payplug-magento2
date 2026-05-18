@@ -512,7 +512,7 @@ class Config
             'payment/payplug_payments_apple_pay/sort_order',
         ];
 
-        $pproMethods = [
+        $additionalPproMethods = [
             'satispay',
             'ideal',
             'mybank',
@@ -537,7 +537,7 @@ class Config
             'payplug_payments/general/can_use_%s',
         ];
 
-        foreach ($pproMethods as $method) {
+        foreach ($additionalPproMethods as $method) {
             foreach ($paths as $path) {
                 $keys[] = sprintf($path, $method);
             }
