@@ -413,8 +413,17 @@ abstract class AbstractBuilder extends AbstractHelper
                 ARRAY_FILTER_USE_KEY
             );
 
-            $hfToken = $transaction['params']['HFTOKEN'] ?? '';
-            $transaction['params']['HFTOKEN'] = $this->maskToken($hfToken);
+            $hfToken = (string) ($transaction['params']['HFTOKEN'] ?? '');
+
+            if ($hfToken !== '') {
+                $transaction['params']['HFTOKEN'] = $this->maskToken($hfToken);
+            }
+
+            $hfAlias = (string) ($transaction['params']['ALIAS'] ?? '');
+
+            if ($hfAlias !== '') {
+                $transaction['params']['ALIAS'] = $this->maskToken($hfAlias);
+            }
         }
 
         return array_diff_key($transaction, array_flip(['billing', 'shipping']));

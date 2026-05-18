@@ -26,11 +26,13 @@ class SetHostedFieldsAdditionalInformation extends AbstractDataAssignObserver
 
         $isHostedFieldsPayment = (bool) ($additionalData[OrderPaymentInterface::HF_PAYMENT_KEY] ?? false);
         $hostedFieldsToken = $additionalData[OrderPaymentInterface::HF_TOKEN_KEY] ?? null;
-        $hostedFieldsTBrand = $additionalData[OrderPaymentInterface::HF_BRAND_KEY] ?? null;
+        $hostedFieldsBrand = $additionalData[OrderPaymentInterface::HF_BRAND_KEY] ?? null;
+        $hostedFieldsSaveCard = (bool) ($additionalData[OrderPaymentInterface::HF_SAVE_CARD_KEY] ?? false);
 
         $payment = $this->readPaymentModelArgument($observer);
         $payment->setAdditionalInformation(OrderPaymentInterface::HF_PAYMENT_KEY, $isHostedFieldsPayment);
         $payment->setAdditionalInformation(OrderPaymentInterface::HF_TOKEN_KEY, $hostedFieldsToken);
-        $payment->setAdditionalInformation(OrderPaymentInterface::HF_BRAND_KEY, $hostedFieldsTBrand);
+        $payment->setAdditionalInformation(OrderPaymentInterface::HF_BRAND_KEY, $hostedFieldsBrand);
+        $payment->setAdditionalInformation(OrderPaymentInterface::HF_SAVE_CARD_KEY, $hostedFieldsSaveCard);
     }
 }

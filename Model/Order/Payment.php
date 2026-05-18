@@ -343,7 +343,8 @@ class Payment extends AbstractModel implements IdentityInterface
             '3DSECURE',
             'CARDCODE',
             'CARDVALIDITYDATE',
-            'TRANSACTION EXPIRATION DATE'
+            'TRANSACTION EXPIRATION DATE',
+            'ALIAS'
         ];
 
         $payload = [

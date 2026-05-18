@@ -128,7 +128,7 @@
                         </label>
                     </div>
                 </div>
-                <div class="pan-container">
+                <div class="pan-container" data-bind="visible: showFullForm">
                     <div id="brand-container" data-bind="visible: isHostedFieldsPayment"></div>
                     <div id="pan-input-container" class="pan-input-container input-container"></div>
                     <div class="error-container">
@@ -141,7 +141,7 @@
                     </div>
                 </div>
                 <div class="exp-cvv-container">
-                    <div>
+                    <div data-bind="visible: showFullForm">
                         <div id="exp-input-container" class="exp-input-container input-container"></div>
                         <div class="error-container">
                             <div class="invalid-field">
@@ -165,7 +165,7 @@
                     </div>
                 </div>
                 <!-- ko if: window.checkoutConfig.payment.payplug_payments_standard.is_one_click -->
-                <div class="save-card-container">
+                <div class="save-card-container" data-bind="visible: showFullForm">
                     <input type="checkbox"
                            name="save_card"
                            id="payplug_save_card">

@@ -6,6 +6,7 @@
 
 define([
     'jquery',
+    'ko',
     'Payplug_Payments/js/view/payment/method-renderer/payplug_payments_standard-method',
     'Magento_Checkout/js/model/full-screen-loader',
     'Magento_Ui/js/model/messageList',
@@ -13,6 +14,7 @@ define([
     'payplugHostedFields'
 ], function (
     $,
+    ko,
     Component,
     fullScreenLoader,
     messageList,
@@ -26,7 +28,47 @@ define([
         hostedFieldsToken: null,
         hostedFieldsSelectedBrand: null,
         availableLanguages: ['fr', 'en', 'de', 'es', 'it', 'nl', 'zh', 'ru', 'pt', 'sk'],
+        apiKeyId: window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key_id,
+        apiKey: window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key,
+        locale: window.checkoutConfig.payment.payplug_payments_standard.locale_code,
+        inputStyles: {
+            input: {
+                "font-size": "14px",
+                "line-height": "38px",
+            },
+            '::placeholder': {
+                'letter-spacing': '0.1em'
+            },
+            ':invalid':  {
+                "color": "red"
+            }
+        },
+        /**
+         * Init component
+         *
+         * @return {Object}
+         */
+        initialize: function () {
+            this._super();
 
+            this.isHostedFieldsPayment(true);
+
+            $('body').on('change', '[name="payment[payplug_payments_standard][customer_card_id]"]', function () {
+                let customerCard = $('.payplug-payments-customer-card:checked');
+
+                if (customerCard.length > 0 && customerCard.data('card-id') !== '') {
+                    this.showFullForm(false);
+                } else {
+                    this.showFullForm(true);
+                }
+
+                this.initPaymentForm();
+            }.bind(this));
+
+            if (this.getInitialSelectedCard()) {
+                this.showFullForm(false);
+            }
+        },
         /**
          * Init payment form
          * @returns {Boolean}
@@ -36,41 +78,36 @@ define([
                 return false;
             }
 
-            if (this.hostedFieldsApi !== null) {
-                return false;
+            if (this.hostedFieldsApi && this.hostedFieldsApi.dispose) {
+                this.hostedFieldsApi.dispose();
             }
 
-            const apiKeyId = window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key_id;
-            const apiKey = window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key;
-            const locale = window.checkoutConfig.payment.payplug_payments_standard.locale_code;
-            let lang = locale.split('_')[0];
+            let lang = this.locale.split('_')[0];
 
             if (!this.availableLanguages.includes(lang)) {
                 lang = 'fr';
             }
 
-            const inputStyles = {
-                input: {
-                    "font-size": "14px",
-                    "line-height": "38px",
-                },
-                '::placeholder': {
-                    'letter-spacing': '0.1em'
-                },
-                ':invalid':  {
-                    "color": "red"
-                }
-            }
-
-            this.hostedFieldsApi = dalenys.hostedFields({
+            let hostedFieldsConfig = {
                 key: {
-                    id: apiKeyId,
-                    value: apiKey,
+                    id: this.apiKeyId,
+                    value: this.apiKey,
                 },
                 theme: {
                     mode: 'light'
                 },
                 fields: {
+                    cryptogram: {
+                        id: 'cvv-input-container',
+                        placeholder: "CVV",
+                        style: this.inputStyles
+                    }
+                },
+                location: lang,
+            };
+
+            if (this.showFullForm() === true) {
+                Object.assign(hostedFieldsConfig.fields, {
                     brand: {
                         id: 'brand-container',
                         version: 2,
@@ -79,24 +116,19 @@ define([
                     },
                     card: {
                         id: 'pan-input-container',
-                        placeholder: "•••• •••• •••• ••••",
+                        placeholder: '•••• •••• •••• ••••',
                         enableAutospacing: true,
-                        style: inputStyles
+                        style: this.inputStyles
                     },
                     expiry: {
                         id: 'exp-input-container',
-                        placeholder: "MM/YY",
-                        style: inputStyles
-                    },
-                    cryptogram: {
-                        id: 'cvv-input-container',
-                        placeholder: "CVV",
-                        style: inputStyles
-                    },
-                },
-                location: lang,
-            });
+                        placeholder: 'MM/YY',
+                        style: this.inputStyles
+                    }
+                });
+            }
 
+            this.hostedFieldsApi = dalenys.hostedFields(hostedFieldsConfig);
             this.hostedFieldsApi.load();
 
             return true;
@@ -106,7 +138,7 @@ define([
          * @returns {Object}
          */
         placeOrder: function (data, event) {
-            if (this.isIntegrated() !== true || this.getSelectedCardId() !== '') {
+            if (this.isIntegrated() === false) {
                 this._super(data, event);
                 return;
             }
@@ -127,7 +159,8 @@ define([
                 }
 
                 self.hostedFieldsToken = result.hfToken;
-                self.hostedFieldsSelectedBrand = result.selectedBrand;
+
+                self.hostedFieldsSelectedBrand = self.showFullForm() === true ? result.selectedBrand : null;
                 original(data, event);
             });
         },

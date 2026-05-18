@@ -24,6 +24,25 @@ define([
     return Component.extend({
         integratedApi: null,
         integratedForm: null,
+        initialize: function () {
+            this._super();
+
+            this.isIntegratedPayment(true);
+
+            $('body').on('change', '[name="payment[payplug_payments_standard][customer_card_id]"]', function () {
+                var customerCard = $('.payplug-payments-customer-card:checked');
+
+                if (customerCard.length > 0 && customerCard.data('card-id') === '') {
+                    this.canDisplayPaymentForm(true);
+                } else {
+                    this.canDisplayPaymentForm(false);
+                }
+            }.bind(this));
+
+            if (!this.getInitialSelectedCard()) {
+                this.canDisplayPaymentForm(true);
+            }
+        },
         /**
          * Init payment form
          * @returns {Boolean}
