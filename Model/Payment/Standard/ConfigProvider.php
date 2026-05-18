@@ -134,7 +134,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      */
     public function getSelectedCardId()
     {
-        if (!$this->isOneClick()) {
+        if ($this->isOneClick() === false || $this->payplugConfig->isHostedFieldsActive() === true) {
             return '';
         }
 
@@ -144,7 +144,9 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         if ($lastCardId === 0) {
             return '';
         }
+
         $customerCardsForCurrentContext = $this->payplugCardHelper->getCardsByCustomer($customerId);
+
         foreach ($customerCardsForCurrentContext as $card) {
             if ($card->getCustomerCardId() === $lastCardId) {
                 return $lastCardId;

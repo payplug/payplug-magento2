@@ -5,46 +5,77 @@
  * See LICENSE for license details.
  */
 
+declare(strict_types=1);
+
 namespace Payplug\Payments\CustomerData;
 
+use Magento\Checkout\Model\Session as CustomerSession;
 use Magento\Customer\CustomerData\SectionSourceInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Serialize\SerializerInterface;
+use Payplug\Payments\Api\Data\PaymentTokenInterface;
 use Payplug\Payments\Helper\Card;
+use Payplug\Payments\Helper\Config as PayplugConfig;
+use Payplug\Payments\Service\GetHostedFieldsSavedCards;
+use Throwable;
 
 class Cards implements SectionSourceInterface
 {
     /**
-     * @var \Magento\Checkout\Model\Session
-     */
-    private $checkoutSession;
-
-    /**
-     * @var Card
-     */
-    private $helper;
-
-    /**
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param Card                            $helper
+     * @param CustomerSession $checkoutSession
+     * @param PayplugConfig $payplugConfig
+     * @param Card $helper
+     * @param GetHostedFieldsSavedCards $getHostedFieldsSavedCards
+     * @param SerializerInterface $serializer
      */
     public function __construct(
-        \Magento\Checkout\Model\Session $checkoutSession,
-        Card $helper
+        private readonly CustomerSession $checkoutSession,
+        private readonly PayplugConfig $payplugConfig,
+        private readonly Card $helper,
+        private readonly GetHostedFieldsSavedCards $getHostedFieldsSavedCards,
+        private readonly SerializerInterface $serializer
     ) {
-        $this->checkoutSession = $checkoutSession;
-        $this->helper = $helper;
     }
 
     /**
      * Get cards section data
      *
      * @return array
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
      */
-    public function getSectionData()
+    public function getSectionData(): array
     {
-        $customerId = $this->checkoutSession->getQuote()->getCustomer()->getId();
+        $customerId = (int) $this->checkoutSession->getQuote()->getCustomer()->getId();
+
+        if ($this->payplugConfig->isHostedFieldsActive() === true) {
+            $cards = $this->getHostedFieldsSavedCards($customerId);
+        } else {
+            $cards = $this->getPayplugRetailSavedCards($customerId);
+        }
+
+        if (!empty($cards)) {
+            $cards[] = [
+                'id' => '',
+            ];
+        }
+
+        return ['cards' => $cards];
+    }
+
+    /**
+     * Get Payplug Retail saved cards
+     *
+     * @param int $customerId
+     * @return array
+     */
+    private function getPayplugRetailSavedCards(int $customerId): array
+    {
         $customerCards = $this->helper->getCardsByCustomer($customerId);
 
         $cards = [];
+
         foreach ($customerCards as $card) {
             $cards[] = [
                 'id' => $card->getCustomerCardId(),
@@ -53,12 +84,47 @@ class Cards implements SectionSourceInterface
                 'exp_date' => $this->helper->getFormattedExpDate($card->getExpDate()),
             ];
         }
-        if (!empty($cards)) {
+
+        return $cards;
+    }
+
+    /**
+     * Get Hosted Fields saved cards
+     *
+     * @param int $customerId
+     * @return array
+     */
+    private function getHostedFieldsSavedCards(int $customerId): array
+    {
+        $customerCards = $this->getHostedFieldsSavedCards->execute($customerId);
+
+        $cards = [];
+
+        foreach ($customerCards as $card) {
+            $tokenDetailsSerialized = $card->getTokenDetails();
+
+            try {
+                $tokenDetails = $this->serializer->unserialize($tokenDetailsSerialized);
+            } catch (Throwable) {
+                continue;
+            }
+
+            $brand = $tokenDetails[PaymentTokenInterface::DETAIL_BRAND] ?? null;
+            $last4 = $tokenDetails[PaymentTokenInterface::MASKED_CC] ?? null;
+            $expDate = $tokenDetails[PaymentTokenInterface::EXP_DATE] ?? null;
+
+            if (empty($brand) || empty($last4) || empty($expDate)) {
+                continue;
+            }
+
             $cards[] = [
-                'id' => '',
+                'id' => $card->getPublicHash(),
+                'brand' => $brand,
+                'last4' => $last4,
+                'exp_date' => $expDate,
             ];
         }
 
-        return ['cards' => $cards];
+        return $cards;
     }
 }

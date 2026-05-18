@@ -38,7 +38,7 @@ define([
         redirectAfterPlaceOrder: false,
         cards: [],
         sessionCardId: 'payplug-payments-card-id',
-        isIntegratedPayment:  ko.observable(true),
+        isIntegratedPayment:  ko.observable(false),
         isHostedFieldsPayment:  ko.observable(false),
         canDisplayPaymentForm: ko.observable(false),
         inputStyle:{
@@ -185,10 +185,6 @@ define([
          * @returns {Number}
          */
         getInitialSelectedCard: function () {
-            if (sessionStorage.getItem(this.sessionCardId) !== null) {
-                return sessionStorage.getItem(this.sessionCardId);
-            }
-
             return window.checkoutConfig.payment.payplug_payments_standard.selected_card_id;
         },
 
@@ -230,7 +226,6 @@ define([
         selectCard: function (data) {
             this.selectPaymentMethod();
             $('.payplug-payments-error').hide();
-            sessionStorage.setItem(this.sessionCardId, data.id);
             return true;
         },
 
@@ -313,8 +308,6 @@ define([
 
             fullScreenLoader.startLoader();
 
-            sessionStorage.removeItem(this.sessionCardId);
-
             if (this.getSelectedCardId() !== '') {
                 redirectOnSuccessAction.execute();
                 return;
@@ -338,7 +331,6 @@ define([
                 type: 'GET',
                 dataType: 'json',
                 success: function (response) {
-                    console.log(response);
                     if (response.error === true) {
                         alert(response.message);
                         window.location.replace(response.url);

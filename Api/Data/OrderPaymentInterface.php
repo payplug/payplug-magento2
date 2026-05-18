@@ -16,4 +16,6 @@ interface OrderPaymentInterface extends BaseOrderPaymentInterface
     public const HF_PAYMENT_KEY = 'payplug_hosted_fields_payment';
     public const HF_TOKEN_KEY = 'payplug_hosted_fields_token';
     public const HF_BRAND_KEY = 'payplug_hosted_fields_brand';
+    public const HF_SAVE_CARD_KEY = 'payplug_hosted_fields_save_card';
+    public const HF_CARD_ID_KEY = 'payplug_payments_customer_card_id';
 }

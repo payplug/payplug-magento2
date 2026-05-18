@@ -53,7 +53,7 @@ class StandardClient extends AbstractClient
     {
         $result = Payment::create($payplugData);
 
-        if (is_array($result) && isset($payplugData['params']['HFTOKEN'])) {
+        if (is_array($result) && isset($payplugData['params']['HASH'])) {
             $execCode = $result['EXECCODE'] ?? null;
             $orderIncrementId = $payplugData['params']['ORDERID'] ?? null;
             $transactionId = $result['TRANSACTIONID'] ?? null;

@@ -190,7 +190,20 @@ class Ipn extends AbstractPayment
             $payplugOrderPayment->setOrderId($orderIncrementId);
             $payplugOrderPayment->setIsHostedFieldsPayment(true);
 
-            return $payplugOrderPayment->retrieve();
+            $paymentResource = $payplugOrderPayment->retrieve();
+
+            if ($paymentResource === null) {
+                $this->logger->error('Payment resource not found');
+                throw new UnknownAPIResourceException('Payment resource not found');
+            }
+
+            $cardAlias = $request->getParam('ALIAS');
+
+            if (!empty($paymentResource->card) && $cardAlias !== null) {
+                $paymentResource->card->id = (string) $cardAlias;
+            }
+
+            return $paymentResource;
         }
 
         throw new UnknownAPIResourceException('Cannot handle operation type "' . $operationType . '".');
@@ -269,7 +282,7 @@ class Ipn extends AbstractPayment
 
         if ($order->getId() === null) {
             $this->logger->info('Order not found for ' . $orderIncrementId);
-            return;
+            throw new LocalizedException(__('Order not found for %1', $orderIncrementId));
         }
 
         try {
@@ -303,13 +316,13 @@ class Ipn extends AbstractPayment
             return;
         }
 
-        $isAuthorizedOnly = $this->paymentReturn->isAuthorizedOnlyStandardPaymentFromMethod($orderPayment->getMethod());
+        $customerId = $order->getCustomerId();
 
-        if ($isAuthorizedOnly === true && $paymentResource->is_paid) {
+        if ($paymentResource->is_paid && $customerId !== null) {
             $this->fetchTransactionInformationHandler->saveCustomerCard(
                 $paymentResource,
-                $order->getCustomerId(),
-                $order->getStoreId()
+                (int) $customerId,
+                (int) $order->getStoreId()
             );
         }
 

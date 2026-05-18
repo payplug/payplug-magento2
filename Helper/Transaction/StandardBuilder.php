@@ -25,6 +25,7 @@ use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Vault\Model\PaymentTokenManagement;
 use Payplug\Payments\Api\Data\OrderPaymentInterface;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
@@ -43,6 +44,7 @@ class StandardBuilder extends AbstractBuilder
      * @param Header $header
      * @param RemoteAddress $remoteAddress
      * @param BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash
+     * @param PaymentTokenManagement $paymentTokenManagement
      * @param Context $context
      * @param Config $payplugConfig
      * @param Country $countryHelper
@@ -58,6 +60,7 @@ class StandardBuilder extends AbstractBuilder
         private readonly Header $header,
         private readonly RemoteAddress $remoteAddress,
         private readonly BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash,
+        private readonly PaymentTokenManagement $paymentTokenManagement,
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
@@ -234,13 +237,16 @@ class StandardBuilder extends AbstractBuilder
         $hostedFieldsToken = (string) $payment->getAdditionalInformation(OrderPaymentInterface::HF_TOKEN_KEY);
         $hostedFieldsApiKeyId = $this->payplugConfig->getHostedFieldsApiKeyId();
         $hostedFieldsSelectedBrand = (string) $payment->getAdditionalInformation(OrderPaymentInterface::HF_BRAND_KEY);
+        $mustSaveCard = (bool) $payment->getAdditionalInformation(OrderPaymentInterface::HF_SAVE_CARD_KEY);
+        $hostedFieldCardId = (string) $payment->getAdditionalInformation(OrderPaymentInterface::HF_CARD_ID_KEY);
+        $customerId = $order->getCustomerId();
 
-        if ($hostedFieldsIdentifier === null
-            || $hostedFieldsToken === ''
-            || $hostedFieldsApiKeyId === null
-            || $hostedFieldsSelectedBrand === ''
-        ) {
-            throw new Exception('Hosted Fields credentials are missing or token/brand are not set');
+        if ($hostedFieldsIdentifier === null || $hostedFieldsApiKeyId === null) {
+            throw new Exception('Hosted Fields credentials are missing');
+        }
+
+        if ($hostedFieldsToken === '' && $hostedFieldCardId === '') {
+            throw new Exception('Token or card id is not set');
         }
 
         $billingAddress = $order->getBillingAddress();
@@ -268,7 +274,6 @@ class StandardBuilder extends AbstractBuilder
                 'OPERATIONTYPE' => $paymentMethod,
                 'AMOUNT' => (int) round($order->getGrandTotalAmount() * 100),
                 'VERSION' => PayplugOrderPayment::HOSTED_FIELDS_PARAMS_VERSION,
-                'SELECTEDBRAND' => $hostedFieldsSelectedBrand,
                 'CLIENTIDENT' => $customerFullname,
                 'CLIENTEMAIL' => $billingAddress->getEmail(),
                 'CLIENTREFERRER' => $this->header->getHttpReferer(),
@@ -277,7 +282,6 @@ class StandardBuilder extends AbstractBuilder
                 'ORDERID' => $order->getOrderIncrementId(),
                 'DESCRIPTION' => 'Order #' . $order->getOrderIncrementId(),
                 'APIKEYID' => $hostedFieldsApiKeyId,
-                'HFTOKEN' => $hostedFieldsToken,
                 '3DSECUREDISPLAYMODE' => 'raw',
                 'REDIRECTURLSUCCESS' => $this->getReturnUrl($storeId, $quoteId),
                 'REDIRECTURLCANCEL' => $this->getCancelUrl($storeId, $quoteId),
@@ -288,6 +292,32 @@ class StandardBuilder extends AbstractBuilder
                 'MOBILEPHONE' => $billingAddress->getTelephone()
             ],
         ];
+
+        if ($hostedFieldsToken !== '') {
+            $payload['params']['HFTOKEN'] = $hostedFieldsToken;
+        }
+
+        if ($hostedFieldsSelectedBrand !== '') {
+            $payload['params']['SELECTEDBRAND'] = $hostedFieldsSelectedBrand;
+        }
+
+        if ($this->payplugConfig->isOneClick() === true && $customerId !== null) {
+            if ($mustSaveCard === true || $hostedFieldCardId !== '') {
+                $payload['params']['ALIASMODE'] = 'oneclick';
+            }
+
+            if ($mustSaveCard === true) {
+                $payload['params']['CREATEALIAS'] = true;
+            } elseif ($hostedFieldCardId !== '') {
+                $paymentToken = $this->paymentTokenManagement->getByPublicHash($hostedFieldCardId, $customerId);
+
+                if ($paymentToken === null) {
+                    throw new Exception('Cannot find payment token');
+                }
+
+                $payload['params']['ALIAS'] = $paymentToken->getGatewayToken();
+            }
+        }
 
         if ($paymentMethod === 'authorization') {
             $addInterval = new DateInterval(sprintf('P%dD', $this->payplugConfig->getAutoCaptureDelay()));

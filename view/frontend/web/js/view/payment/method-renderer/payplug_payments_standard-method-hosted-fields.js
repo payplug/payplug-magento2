@@ -26,7 +26,30 @@ define([
         hostedFieldsToken: null,
         hostedFieldsSelectedBrand: null,
         availableLanguages: ['fr', 'en', 'de', 'es', 'it', 'nl', 'zh', 'ru', 'pt', 'sk'],
-
+        apiKeyId: window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key_id,
+        apiKey: window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key,
+        locale: window.checkoutConfig.payment.payplug_payments_standard.locale_code,
+        inputStyles: {
+            input: {
+                "font-size": "14px",
+                "line-height": "38px",
+            },
+            '::placeholder': {
+                'letter-spacing': '0.1em'
+            },
+            ':invalid':  {
+                "color": "red"
+            }
+        },
+        /**
+         * Init component
+         *
+         * @return {Object}
+         */
+        initialize: function () {
+            this._super();
+            this.isHostedFieldsPayment(true);
+        },
         /**
          * Init payment form
          * @returns {Boolean}
@@ -40,32 +63,16 @@ define([
                 return false;
             }
 
-            const apiKeyId = window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key_id;
-            const apiKey = window.checkoutConfig.payment.payplug_payments_standard.hosted_fields_api_key;
-            const locale = window.checkoutConfig.payment.payplug_payments_standard.locale_code;
-            let lang = locale.split('_')[0];
+            let lang = this.locale.split('_')[0];
 
             if (!this.availableLanguages.includes(lang)) {
                 lang = 'fr';
             }
 
-            const inputStyles = {
-                input: {
-                    "font-size": "14px",
-                    "line-height": "38px",
-                },
-                '::placeholder': {
-                    'letter-spacing': '0.1em'
-                },
-                ':invalid':  {
-                    "color": "red"
-                }
-            }
-
-            this.hostedFieldsApi = dalenys.hostedFields({
+            let hostedFieldsConfig = {
                 key: {
-                    id: apiKeyId,
-                    value: apiKey,
+                    id: this.apiKeyId,
+                    value: this.apiKey,
                 },
                 theme: {
                     mode: 'light'
@@ -81,22 +88,23 @@ define([
                         id: 'pan-input-container',
                         placeholder: "•••• •••• •••• ••••",
                         enableAutospacing: true,
-                        style: inputStyles
+                        style: this.inputStyles
                     },
                     expiry: {
                         id: 'exp-input-container',
                         placeholder: "MM/YY",
-                        style: inputStyles
+                        style: this.inputStyles
                     },
                     cryptogram: {
                         id: 'cvv-input-container',
                         placeholder: "CVV",
-                        style: inputStyles
+                        style: this.inputStyles
                     },
                 },
                 location: lang,
-            });
+            };
 
+            this.hostedFieldsApi = dalenys.hostedFields(hostedFieldsConfig);
             this.hostedFieldsApi.load();
 
             return true;
@@ -106,7 +114,7 @@ define([
          * @returns {Object}
          */
         placeOrder: function (data, event) {
-            if (this.isIntegrated() !== true || this.getSelectedCardId() !== '') {
+            if (this.isIntegrated() === false || this.getSelectedCardId() !== '') {
                 this._super(data, event);
                 return;
             }

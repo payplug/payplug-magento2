@@ -24,6 +24,10 @@ define([
     return Component.extend({
         integratedApi: null,
         integratedForm: null,
+        initialize: function () {
+            this._super();
+            this.isIntegratedPayment(true);
+        },
         /**
          * Init payment form
          * @returns {Boolean}
