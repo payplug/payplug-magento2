@@ -19,6 +19,7 @@ use Magento\Payment\Model\Method\Adapter;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
+use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
@@ -94,7 +95,9 @@ class StandardAvailabilityObserver implements ObserverInterface
         if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $prefix = 'oney_';
             $path = Config::ONEY_CONFIG_PATH;
-        } elseif ($this->payplugHelper->isCodePayplugPaymentPpro($adapter->getCode())) {
+        } elseif ($this->payplugHelper->isCodePayplugPaymentPpro($adapter->getCode())
+            && $adapter->getCode() !== Bancontact::METHOD_CODE
+        ) {
             $prefix = str_replace('payplug_payments_', '', $adapter->getCode()) . '_';
         }
 

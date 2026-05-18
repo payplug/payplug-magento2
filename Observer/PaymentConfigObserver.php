@@ -1244,7 +1244,7 @@ class PaymentConfigObserver implements ObserverInterface
             'can_use_integrated_payments',
         ];
 
-        $pproMethods = [
+        $additionalPproMethods = [
             'satispay',
             'ideal',
             'mybank',
@@ -1252,7 +1252,8 @@ class PaymentConfigObserver implements ObserverInterface
             'wero',
             'scalapay'
         ];
-        foreach ($pproMethods as $method) {
+
+        foreach ($additionalPproMethods as $method) {
             $jsonAnswer['permissions']['can_use_' . $method] = $jsonAnswer['payment_methods'][$method]['enabled']
                 ?? false;
             $permissions[] = 'can_use_' . $method;
