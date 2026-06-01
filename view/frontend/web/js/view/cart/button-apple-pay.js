@@ -41,7 +41,7 @@ define([
             const workflowType = this.workflowType;
             const currencyCode = quote.totals()['quote_currency_code'];
             const config = Object.assign(window.checkoutConfig.payment.payplug_payments_apple_pay, { currencyCode });
-            
+
             this.isDisabled(true);
 
             payplugApplePay.clearOrderData();
@@ -53,6 +53,7 @@ define([
 
             payplugApplePay.applePaySession.oncancel = () => {
                 this.isDisabled(false);
+                payplugApplePay._cancelPayplugPayment();
             };
         },
 

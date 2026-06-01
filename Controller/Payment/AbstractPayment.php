@@ -17,11 +17,22 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\OrderFactory;
+use Payplug\Payments\Gateway\Config\ApplePay as ApplePayConfig;
+use Payplug\Payments\Gateway\Config\Satispay as SatispayConfig;
+use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
+use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 
 abstract class AbstractPayment extends Action
 {
+    public const PAYMENT_METHODS_WITH_NO_CANCEL_FAILURE_SUPPORT = [
+        WeroConfig::METHOD_CODE,
+        ScalapayConfig::METHOD_CODE,
+        SatispayConfig::METHOD_CODE,
+        ApplePayConfig::METHOD_CODE
+    ];
+
     /**
      * @param Context $context
      * @param Session $checkoutSession
@@ -57,5 +68,16 @@ abstract class AbstractPayment extends Action
     protected function getCheckout(): Session
     {
         return $this->checkoutSession;
+    }
+
+    /**
+     * Check if the payment method is supporting cancel return
+     *
+     * @param string $paymentMethod
+     * @return bool
+     */
+    protected function isMethodSupportingCancelFailureCode(string $paymentMethod): bool
+    {
+        return !in_array($paymentMethod, self::PAYMENT_METHODS_WITH_NO_CANCEL_FAILURE_SUPPORT);
     }
 }

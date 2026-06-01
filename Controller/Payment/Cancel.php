@@ -11,16 +11,19 @@ namespace Payplug\Payments\Controller\Payment;
 
 use Exception;
 use Magento\Checkout\Model\Session;
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Data\Form\FormKey\Validator as FormKeyValidator;
 use Magento\Framework\Url\DecoderInterface as UrlDecoderInterface;
-use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
+use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
+use Payplug\Payments\Helper\Config as PayplugConfigHelper;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Observer\MarkOrderPaymentAsHeadless;
 use Payplug\Payments\Service\GetCurrentOrder;
 use Throwable;
 
@@ -31,6 +34,8 @@ class Cancel extends AbstractPayment
      * @param RequestInterface $request
      * @param GetCurrentOrder $getCurrentOrder
      * @param UrlDecoderInterface $urlDecoder
+     * @param PayplugConfigHelper $payplugConfigHelper
+     * @param CustomerSession $customerSession
      * @param Context $context
      * @param Session $checkoutSession
      * @param OrderFactory $salesOrderFactory
@@ -42,6 +47,8 @@ class Cancel extends AbstractPayment
         private readonly RequestInterface $request,
         private readonly GetCurrentOrder $getCurrentOrder,
         private readonly UrlDecoderInterface $urlDecoder,
+        private readonly PayplugConfigHelper $payplugConfigHelper,
+        private readonly CustomerSession $customerSession,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
@@ -58,32 +65,63 @@ class Cancel extends AbstractPayment
      */
     public function execute(): Redirect
     {
+        $resultRedirect = $this->getResultRedirect();
+
         try {
             $order = $this->getCurrentOrder->execute();
-            $orderFromSession = $this->checkoutSession->getLastRealOrder();
-            $isFormKeyValidated = $this->formKeyValidator->validate($this->request);
-
-            if ($order !== null && $this->payplugHelper->isPaymentFailure($order) === true) {
-                /** Strict validation regardless of order origin (session or query parameter) */
-                $this->cancelAndRollback($order);
-            } elseif ($isFormKeyValidated === true && $orderFromSession->getStatus() === Order::STATE_PENDING_PAYMENT) {
-                /** Fallback validation using order from the checkout session only */
-                $this->cancelAndRollback($orderFromSession);
-            }
-
-            $failureMessage = $this->_request->getParam(
-                'failure_message',
-                __('The transaction was aborted and your card has not been charged')
-            );
-
-            $this->messageManager->addErrorMessage($failureMessage);
-
-            return $this->getResultRedirect();
         } catch (Exception $e) {
             $this->logger->error($e->getMessage());
-
-            return $this->getResultRedirect();
+            return $resultRedirect;
         }
+
+        $isFormKeyValidated = $this->formKeyValidator->validate($this->request);
+        $isHeadless = (bool) $order->getPayment()?->getAdditionalInformation(
+            MarkOrderPaymentAsHeadless::PAYPLUG_IS_HEADLESS
+        );
+
+        if ($isHeadless === false && $isFormKeyValidated === false) {
+            $this->logger->error('Form key validation failed');
+            return $resultRedirect;
+        }
+
+        if ($isHeadless === false && $order->getCustomerId() !== $this->customerSession->getCustomerId()) {
+            $this->logger->error('Order customer ID does not match session customer ID');
+            return $resultRedirect;
+        }
+
+        $orderPaymentMethod = $order->getPayment()?->getMethod();
+
+        if ($orderPaymentMethod === null
+            || $this->payplugHelper->isCodePayplugPayment($orderPaymentMethod) === false
+            || $order->getState() !== Order::STATE_PENDING_PAYMENT
+        ) {
+            return $resultRedirect;
+        }
+
+        $isMethodSupportingCancelFailureCode = $this->isMethodSupportingCancelFailureCode($orderPaymentMethod);
+        $isStandardMethodWithPopin = $orderPaymentMethod === StandardConfig::METHOD_CODE
+            && $this->payplugConfigHelper->isEmbedded() === true;
+
+        $checkFailureCode = $isMethodSupportingCancelFailureCode === true && $isStandardMethodWithPopin === false;
+
+        try {
+            $this->payplugHelper->cancelOrderAndInvoice($order, $checkFailureCode);
+        } catch (Throwable $e) {
+            $this->logger->error(sprintf('Could not cancel order ID %s', $order->getId()));
+            $this->logger->error($e->getMessage());
+        }
+
+        $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+        $this->checkoutSession->restoreQuote();
+
+        $failureMessage = $this->_request->getParam(
+            'failure_message',
+            __('The transaction was aborted and your card has not been charged')
+        );
+
+        $this->messageManager->addErrorMessage($failureMessage);
+
+        return $this->getResultRedirect();
     }
 
     /**
@@ -107,23 +145,5 @@ class Cancel extends AbstractPayment
         }
 
         return $resultRedirect;
-    }
-
-    /**
-     * Cancel order/invoice, and rollback cart
-     *
-     * @param OrderInterface $order
-     * @return void
-     */
-    private function cancelAndRollback(OrderInterface $order): void
-    {
-        try {
-            $this->payplugHelper->cancelOrderAndInvoice($order);
-        } catch (Throwable) {
-            $this->logger->error(sprintf('Could not cancel order ID %s', $order->getId()));
-        }
-
-        $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
-        $this->checkoutSession->restoreQuote();
     }
 }

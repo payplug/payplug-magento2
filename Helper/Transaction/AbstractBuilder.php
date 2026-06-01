@@ -29,6 +29,7 @@ use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCartContextForTransaction;
+use Payplug\Payments\Service\GetMaskedQuoteId;
 use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 abstract class AbstractBuilder extends AbstractHelper
@@ -49,6 +50,7 @@ abstract class AbstractBuilder extends AbstractHelper
      * @param UriHelper $uriHelper
      * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
      * @param GetCartContextForTransaction $getCartContextForTransaction
+     * @param GetMaskedQuoteId $getMaskedQuoteId
      */
     public function __construct(
         Context $context,
@@ -59,7 +61,8 @@ abstract class AbstractBuilder extends AbstractHelper
         protected FormKey $formKey,
         protected UriHelper $uriHelper,
         private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
-        protected readonly GetCartContextForTransaction $getCartContextForTransaction
+        protected readonly GetCartContextForTransaction $getCartContextForTransaction,
+        private readonly GetMaskedQuoteId $getMaskedQuoteId
     ) {
         parent::__construct($context);
     }
@@ -306,6 +309,12 @@ abstract class AbstractBuilder extends AbstractHelper
         $scopeIdForUrlBuilder = $this->getUrlBuilderScopeId($storeId);
         $typeForUrlBuilder = $this->getUrlBuilderType($storeId);
 
+        if ($quoteId) {
+            $maskedQuoteId = $this->getMaskedQuoteId->execute((int) $quoteId);
+        } else {
+            $maskedQuoteId = $this->placeOrderExtraParamsRegistry->getMaskedQuoteId();
+        }
+
         return [
             'force_3ds' => false,
             'notification_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
@@ -320,7 +329,7 @@ abstract class AbstractBuilder extends AbstractHelper
                     '_scope' => $scopeIdForUrlBuilder,
                     '_type' => $typeForUrlBuilder,
                     '_secure'  => true,
-                    'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
+                    'masked_quote_id' => $maskedQuoteId,
                     '_nosid' => true,
                     'form_key' => $this->formKey->getFormKey() ?: '',
                     'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterSuccessUrl(),
@@ -330,7 +339,7 @@ abstract class AbstractBuilder extends AbstractHelper
                     '_scope' => $scopeIdForUrlBuilder,
                     '_type' => $typeForUrlBuilder,
                     '_secure'  => true,
-                    'quote_id' => $quoteId ?: $this->placeOrderExtraParamsRegistry->getQuoteId(),
+                    'masked_quote_id' => $maskedQuoteId,
                     '_nosid' => true,
                     'form_key' => $this->formKey->getFormKey() ?: '',
                     'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterCancelUrl(),
