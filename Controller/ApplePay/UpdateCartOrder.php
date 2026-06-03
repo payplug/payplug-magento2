@@ -21,12 +21,16 @@ use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Locale\Resolver as LocaleResolver;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface;
 use Magento\Quote\Model\Quote\Address\ToOrder as QuoteAddressToOrder;
 use Magento\Sales\Api\Data\OrderAddressInterface;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderInterfaceFactory;
 use Magento\Sales\Api\OrderAddressRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use RuntimeException;
@@ -48,6 +52,8 @@ class UpdateCartOrder implements HttpPostActionInterface
      * @param QuoteAddressToOrder $quoteAddressToOrder
      * @param CustomerSession $customerSession
      * @param CheckoutSession $checkoutSession
+     * @param MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
+     * @param OrderInterfaceFactory $orderFactory
      */
     public function __construct(
         private readonly RequestInterface $request,
@@ -62,7 +68,9 @@ class UpdateCartOrder implements HttpPostActionInterface
         private readonly DataObjectHelper $dataObjectHelper,
         private readonly QuoteAddressToOrder $quoteAddressToOrder,
         private readonly CustomerSession $customerSession,
-        private readonly CheckoutSession $checkoutSession
+        private readonly CheckoutSession $checkoutSession,
+        private readonly MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
+        private readonly OrderInterfaceFactory $orderFactory
     ) {
     }
 
@@ -86,21 +94,38 @@ class UpdateCartOrder implements HttpPostActionInterface
 
         try {
             $params = $this->request->getParams();
-            $orderId = $params['order_id'] ?? null;
+            $maskedQuoteId = $params['masked_quote_id'] ?? null;
             $token = $params['token'] ?? null;
             $selectedShippingMethod = $params['shipping_method'] ?? null;
             $workflowType = $params['workflowType'] ?? null;
 
-            if (!$orderId || !$token) {
-                throw new Exception('Missing order_id or token parameter.');
+            if (!$maskedQuoteId || !$token) {
+                throw new Exception('Missing masked_quote_id or token parameter.');
             }
 
             $applePayBilling = $params['billing'] ?? [];
             $applePayShipping = $params['shipping'] ?? [];
 
-            $order = $this->orderRepository->get($orderId);
-            if (!$order || !$order->getId()) {
+            $quoteId = $this->maskedQuoteIdToQuoteId->execute((string)$maskedQuoteId);
+            $quote = $this->cartRepository->get($quoteId);
+
+            $order = $this->orderFactory->create();
+            $order->loadByIncrementId($quote->getReservedOrderId());
+
+            if (!$order->getId()) {
                 throw new Exception('Could not retrieve valid order.');
+            }
+
+            $orderPayment = $order->getPayment();
+
+            if ($orderPayment === null) {
+                throw new Exception('Could not retrieve order payment.');
+            }
+
+            if ($orderPayment->getMethod() !== ApplePay::METHOD_CODE
+                || $order->getState() !== Order::STATE_PENDING_PAYMENT
+            ) {
+                throw new Exception('Order is not eligible to be updated.');
             }
 
             if ($selectedShippingMethod) {
