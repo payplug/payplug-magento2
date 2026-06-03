@@ -18,6 +18,7 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\OrderFactory;
 use Payplug\Payments\Gateway\Config\ApplePay as ApplePayConfig;
+use Payplug\Payments\Gateway\Config\Mybank as MybankConfig;
 use Payplug\Payments\Gateway\Config\Satispay as SatispayConfig;
 use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
@@ -27,6 +28,7 @@ use Payplug\Payments\Logger\Logger;
 abstract class AbstractPayment extends Action
 {
     public const PAYMENT_METHODS_WITH_NO_CANCEL_FAILURE_SUPPORT = [
+        MybankConfig::METHOD_CODE,
         WeroConfig::METHOD_CODE,
         ScalapayConfig::METHOD_CODE,
         SatispayConfig::METHOD_CODE,
