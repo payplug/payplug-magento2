@@ -5,6 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.1](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.1) - 2026-05-18
+
+### ⚠ ACTION REQUIRED
+
+This notice applies only to the WERO and BIZUM payment methods.
+These payment methods are now subject to country restrictions dynamically provided by the API.
+
+**Impact:**  
+The country restrictions currently configured in Magento may no longer reflect the latest restrictions returned by the API.
+
+**Required action:**  
+Log in to your Magento Admin, navigate to Sales > Payplug Payments, and click Save Config without modifying any settings.
+This will automatically synchronize the configured country restrictions with the latest restrictions provided by the API.
+
+### Features
+
+- Fix incorrect loader handling and adjust onCompleted event placement (MAG-609)
+- Add Satispay to no-cancel-failure support list (MAG-711)
+- Send invoice email upon invoice creation (MAG-701)
+- Send order confirmation email on transaction approval (paid or authorized) (MAG-708)
+- Refactor PPRO methods handling for improved readability and maintainability (MAG-714)
+- Fix Scalapay threshold formatting exception (MAG-705)
+- Remove IPN debug mode (MAG-703)
+- Fix wording on payment info block (MAG-700)
+- Fix error log message during cancel and rollback operation (MAG-702)
+- Update CheckOrderConsistency to check orders within a new delayed window (MAG-669)
+- Make country restriction for APM available in GraphQL (MAG-671)
+- Fix TypeError in Oney ViewModel currency method by casting value to float (MAG-683)
+- Fix invoice status on payment when invoice is created at order placement (MAG-684)
+- Use masked quote ID for public endpoints (MAG-750)
+- Add MyBank to no-cancel-failure support list (MAG-756)
+- Remove hardcoded countries overrides for Bizum and Wero (MAG-751)
+- Update composer.json for PHP 8.5 compatibility and new SDK release (MAG-766)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.7.0...v4.7.1)**
+
+### Added
+
+- Add Satispay to no-cancel-failure support list (MAG-711) [#1976b621](https://github.com/payplug/payplug-magento2/commit/1976b6213e6ae00b72faa25442b02bb10b71ee9a)
+- Send invoice email upon invoice creation (MAG-701) [#8639b315](https://github.com/payplug/payplug-magento2/commit/8639b315b282213093c8f904efd5d3ec2e514b13)
+- Send order confirmation email on transaction approval (paid or authorized) (MAG-708) [#626e4d1d](https://github.com/payplug/payplug-magento2/commit/626e4d1da9e562df3b80b3e7d6b7ddab9f5c6809)
+- Make country restriction for APM available in GraphQL (MAG-671) [#edcdf75b](https://github.com/payplug/payplug-magento2/commit/edcdf75b09421d056dcc571afe435c5a29ea6b9a)
+- Add MyBank to no-cancel-failure support list (MAG-756) [#a949f41e](https://github.com/payplug/payplug-magento2/commit/a949f41e1fb0ae36a4d1435845c44f65d2249552)
+
+### Changed
+
+- Refactor PPRO methods handling for improved readability and maintainability (MAG-714) [#cfa07c53](https://github.com/payplug/payplug-magento2/commit/cfa07c53553a0bbed39f94e1c92e14b3931b9e9b)
+- Remove IPN debug mode (MAG-703) [#84796085](https://github.com/payplug/payplug-magento2/commit/84796085f481f7a8c419fbf8e0d6d988f14fcf3f)
+- Update CheckOrderConsistency to check orders within a new delayed window (MAG-669) [#b12d42c7](https://github.com/payplug/payplug-magento2/commit/b12d42c70e8d707574c00f976f1a3e439f58fc43)
+- Use masked quote ID for public endpoints (MAG-750) [#52aa6ba2](https://github.com/payplug/payplug-magento2/commit/52aa6ba2fab4efbe346c4e5ad78412b82320ae22)
+- Remove hardcoded countries overrides for Bizum and Wero (MAG-751) [#0586ce6b](https://github.com/payplug/payplug-magento2/commit/0586ce6b20b2d9a9e84b62591a5f030e5b719b51)
+- Update composer.json for PHP 8.5 compatibility and new SDK release (MAG-766) [#ce45a1bc](https://github.com/payplug/payplug-magento2/commit/ce45a1bc344e4ec9c8bbab82fb9d94c34f1cdbbb)
+
+### Fixed
+
+- Fix incorrect loader handling and adjust onCompleted event placement (MAG-609) [#3b17ec88](https://github.com/payplug/payplug-magento2/commit/3b17ec885cfdf0543c19b018ef3a56e31ecc69d9)
+- Fix Scalapay threshold formatting exception (MAG-705) [#b69ec467](https://github.com/payplug/payplug-magento2/commit/b69ec467278e9583e87ac8889aa2a0b43311f51a)
+- Fix wording on payment info block (MAG-700) [#54eec070](https://github.com/payplug/payplug-magento2/commit/54eec070730049fca076aac5b96197165dbcb86d)
+- Fix error log message during cancel and rollback operation (MAG-702) [#71fb08f5](https://github.com/payplug/payplug-magento2/commit/71fb08f5b8660a1b67bf6e8e862672f939376cd7)
+- Fix TypeError in Oney ViewModel currency method by casting value to float (MAG-683) [#eca79afd](https://github.com/payplug/payplug-magento2/commit/eca79afd8a25e9785a042b7f18bfcf7be574261e)
+- Fix invoice status on payment when invoice is created at order placement (MAG-684) [#5c8a9097](https://github.com/payplug/payplug-magento2/commit/5c8a909755442fd58da419d230ed964bcaf57cff)
+
 ## [4.7.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.0) - 2026-04-10
 
 ### ⚠ ACTION REQUIRED
