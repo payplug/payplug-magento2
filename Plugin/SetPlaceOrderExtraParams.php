@@ -12,23 +12,16 @@ namespace Payplug\Payments\Plugin;
 use Magento\Framework\GraphQl\Config\Element\Field;
 use Magento\Framework\GraphQl\Query\Resolver\ContextInterface;
 use Magento\Framework\GraphQl\Schema\Type\ResolveInfo;
-use Magento\QuoteGraphQl\Model\Cart\GetCartForCheckout;
 use Magento\QuoteGraphQl\Model\Resolver\PlaceOrder as PlaceOrderResolver;
 use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
-use Payplug\Payments\Logger\Logger as PayplugLogger;
-use Throwable;
 
 class SetPlaceOrderExtraParams
 {
     /**
      * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
-     * @param GetCartForCheckout $getCartForCheckout
-     * @param PayplugLogger $payplugLogger
      */
     public function __construct(
-        private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
-        private readonly GetCartForCheckout $getCartForCheckout,
-        private readonly PayplugLogger $payplugLogger
+        private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
     ) {
     }
 
@@ -59,16 +52,7 @@ class SetPlaceOrderExtraParams
         $this->placeOrderExtraParamsRegistry->setCustomAfterCancelUrl($input['payplug_after_cancel_url'] ?? null);
 
         if (!empty($input['cart_id'])) {
-            $maskedCartId = $args['input']['cart_id'];
-            $userId = (int)$context->getUserId();
-            $storeId = (int)$context->getExtensionAttributes()->getStore()->getId();
-
-            try {
-                $quote = $this->getCartForCheckout->execute($maskedCartId, $userId, $storeId);
-                $this->placeOrderExtraParamsRegistry->setQuoteId($quote->getId());
-            } catch (Throwable) {
-                $this->payplugLogger->error('Error while retrieving quote from cart_id');
-            }
+            $this->placeOrderExtraParamsRegistry->setMaskedQuoteId($input['cart_id']);
         }
 
         return null;

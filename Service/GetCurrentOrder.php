@@ -9,11 +9,12 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Service;
 
-use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\OrderFactory;
 
@@ -24,21 +25,23 @@ class GetCurrentOrder
      * @param Session $checkoutSession
      * @param OrderFactory $salesOrderFactory
      * @param CartRepositoryInterface $cartRepositoryInterface
+     * @param MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
      */
     public function __construct(
         private readonly RequestInterface $request,
         private readonly Session $checkoutSession,
         private readonly OrderFactory $salesOrderFactory,
         private readonly CartRepositoryInterface $cartRepositoryInterface,
+        private readonly MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
     ) {
     }
 
     /**
      * Attempt to retrieve the currently active order using multiple strategies.
      *
-     * @throws Exception
+     * @throws LocalizedException
      */
-    public function execute(): ?OrderInterface
+    public function execute(): OrderInterface
     {
         // 1) Try to load via last real order increment ID
         $order = $this->loadOrderByIncrementId(
@@ -49,19 +52,33 @@ class GetCurrentOrder
             return $order;
         }
 
-        // 2) Try to load via the first available quote ID
-        $quoteId = $this->request->getParam('quote_id')
-            ?? $this->checkoutSession->getLastQuoteId()
-            ?? $this->checkoutSession->getQuoteId();
+        // 2) Try to load via the first available quote ID from session
+        $quoteId = $this->checkoutSession->getLastQuoteId() ?? $this->checkoutSession->getQuoteId();
+        $order = $this->loadOrderByQuoteId((int) $quoteId);
 
-        $order = $this->loadOrderByQuoteId((int)$quoteId);
-
-        if ($order) {
+        if ($order !== null) {
             return $order;
         }
 
+        // 3) Try to load via masked quote id from query string
+        $requestMaskedQuoteId = (string) $this->request->getParam('masked_quote_id');
+
+        if ($requestMaskedQuoteId) {
+            try {
+                $quoteId = $this->maskedQuoteIdToQuoteId->execute($requestMaskedQuoteId);
+            } catch (NoSuchEntityException) {
+                throw new LocalizedException(__('Could not retrieve last order'));
+            }
+
+            $order = $this->loadOrderByQuoteId($quoteId);
+
+            if ($order !== null) {
+                return $order;
+            }
+        }
+
         // If all attempts failed:
-        throw new Exception('Could not retrieve last order id');
+        throw new LocalizedException(__('Could not retrieve last order'));
     }
 
     /**
@@ -87,7 +104,6 @@ class GetCurrentOrder
      *
      * @param int|null $quoteId
      * @return OrderInterface|null
-     * @throws NoSuchEntityException
      */
     private function loadOrderByQuoteId(?int $quoteId): ?OrderInterface
     {
@@ -95,7 +111,12 @@ class GetCurrentOrder
             return null;
         }
 
-        $quote = $this->cartRepositoryInterface->get($quoteId);
+        try {
+            $quote = $this->cartRepositoryInterface->get($quoteId);
+        } catch (NoSuchEntityException) {
+            return null;
+        }
+
         $reservedOrderId = $quote->getReservedOrderId();
 
         if (!$reservedOrderId) {

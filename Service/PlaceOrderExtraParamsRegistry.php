@@ -24,7 +24,7 @@ class PlaceOrderExtraParamsRegistry
     /**
      * @var string|null
      */
-    private ?string $quoteId = null;
+    private ?string $maskedQuoteId = null;
 
     /**
      * @var string|null
@@ -42,24 +42,24 @@ class PlaceOrderExtraParamsRegistry
     private ?string $customAfterCancelUrl = null;
 
     /**
-     * Get quote ID.
+     * Get masked quote ID.
      *
      * @return string|null
      */
-    public function getQuoteId(): ?string
+    public function getMaskedQuoteId(): ?string
     {
-        return $this->quoteId;
+        return $this->maskedQuoteId;
     }
 
     /**
-     * Set quote ID.
+     * Set masked quote ID.
      *
-     * @param string $quoteId
+     * @param string $maskedQuoteId
      * @return void
      */
-    public function setQuoteId(string $quoteId): void
+    public function setMaskedQuoteId(string $maskedQuoteId): void
     {
-        $this->quoteId = $quoteId;
+        $this->maskedQuoteId = $maskedQuoteId;
     }
 
     /**

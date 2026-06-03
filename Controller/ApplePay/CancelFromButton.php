@@ -65,15 +65,13 @@ class CancelFromButton implements HttpGetActionInterface
         try {
             $order = $this->getCurrentOrder->execute();
 
-            if ($order instanceof Order) {
-                $this->payplugHelper->cancelOrderAndInvoice($order);
+            $this->payplugHelper->cancelOrderAndInvoice($order, false);
 
-                $this->checkoutSession->setLastQuoteId(null);
-                $this->checkoutSession->setLastSuccessQuoteId(null);
-                $this->checkoutSession->setLastOrderId(null);
-                $this->checkoutSession->setLastRealOrderId(null);
-                $this->checkoutSession->setLastOrderStatus(null);
-            }
+            $this->checkoutSession->setLastQuoteId(null);
+            $this->checkoutSession->setLastSuccessQuoteId(null);
+            $this->checkoutSession->setLastOrderId(null);
+            $this->checkoutSession->setLastRealOrderId(null);
+            $this->checkoutSession->setLastOrderStatus(null);
 
             return $jsonResult->setData(
                 [
