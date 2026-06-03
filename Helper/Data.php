@@ -619,13 +619,12 @@ class Data
             }
         } catch (HttpException $e) {
             $this->payplugLogger->error('Could not abort payment', [
-                'exception' => $e,
                 'order' => $order->getId(),
                 'message' => $e->getErrorObject()['message'] ?? 'Payplug request error',
             ]);
         } catch (Exception $e) {
             $this->payplugLogger->error('Could not abort payment', [
-                'exception' => $e,
+                'message' => $e->getMessage(),
                 'order' => $order->getId(),
             ]);
         }
@@ -1187,15 +1186,18 @@ class Data
         ResourceInstallmentPlan|ResourcePayment $payment
     ): void {
         $orderPayment = $order->getPayment();
+        $authorizedAmount = $payment->authorization?->authorized_amount ?? null;
+        $authorizedAt = $payment->authorization?->authorized_at ?? null;
+        $expiresAt = $payment->authorization?->expires_at ?? null;
 
-        if ($orderPayment === null) {
+        if ($orderPayment === null || empty($authorizedAmount) || empty($authorizedAt)) {
             return;
         }
 
         $orderPayment->setAdditionalInformation('is_authorized', true);
-        $orderPayment->setAdditionalInformation('authorized_amount', $payment->authorization->authorized_amount);
-        $orderPayment->setAdditionalInformation('authorized_at', $payment->authorization->authorized_at);
-        $orderPayment->setAdditionalInformation('expires_at', $payment->authorization->expires_at);
+        $orderPayment->setAdditionalInformation('authorized_amount', $authorizedAmount);
+        $orderPayment->setAdditionalInformation('authorized_at', $authorizedAt);
+        $orderPayment->setAdditionalInformation('expires_at', $expiresAt);
         $orderPayment->setAdditionalInformation('payplug_payment_id', $payment->id);
 
         try {

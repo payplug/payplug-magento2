@@ -25,6 +25,7 @@ use Payplug\Payments\Helper\Oney;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCartContextForTransaction;
+use Payplug\Payments\Service\GetMaskedQuoteId;
 use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
 
 class OneyBuilder extends AbstractBuilder
@@ -40,6 +41,7 @@ class OneyBuilder extends AbstractBuilder
      * @param UriHelper $uriHelper
      * @param PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry
      * @param GetCartContextForTransaction $getCartContextForTransaction
+     * @param GetMaskedQuoteId $getMaskedQuoteId
      */
     public function __construct(
         private readonly Oney $oneyHelper,
@@ -51,7 +53,8 @@ class OneyBuilder extends AbstractBuilder
         FormKey $formKey,
         UriHelper $uriHelper,
         PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
-        GetCartContextForTransaction $getCartContextForTransaction
+        GetCartContextForTransaction $getCartContextForTransaction,
+        GetMaskedQuoteId $getMaskedQuoteId
     ) {
         parent::__construct(
             $context,
@@ -62,7 +65,8 @@ class OneyBuilder extends AbstractBuilder
             $formKey,
             $uriHelper,
             $placeOrderExtraParamsRegistry,
-            $getCartContextForTransaction
+            $getCartContextForTransaction,
+            $getMaskedQuoteId
         );
     }
 

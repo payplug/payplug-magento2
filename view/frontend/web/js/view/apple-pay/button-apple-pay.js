@@ -21,7 +21,7 @@ define([
 
     const payplugApplePay = {
         applePaySession: null,
-        orderId: null,
+        maskedQuoteId: null,
         baseAmount: 0,
         merchandName: null,
         shippingAmount: 0,
@@ -42,7 +42,7 @@ define([
             if (!applePayIsAvailable) {
                 return null;
             }
-            
+
             const versionNumber = this._getApplePayVersion();
             const sessionRequest = this.getPaymentRequest(config);
             this.applePaySession = new ApplePaySession(versionNumber, sessionRequest);
@@ -226,7 +226,7 @@ define([
                                     self.setBaseAmount(response.base_amount);
                                 }
 
-                                self.orderId = response.order_id;
+                                self.maskedQuoteId = response.masked_quote_id;
                                 self.applePaySession.completeMerchantValidation(response.merchantSession);
                             } catch (e) {
                                 self._cancelPayplugPaymentWithAbort();
@@ -260,7 +260,7 @@ define([
                             billing: event.payment.billingContact,
                             shipping: event.payment.shippingContact,
                             shipping_method: self.shippingMethod,
-                            order_id: self.orderId,
+                            masked_quote_id: self.maskedQuoteId,
                             workflowType: self.workflowType
                         }
                     }).done(function (response) {
@@ -430,7 +430,7 @@ define([
          * @returns {void}
          */
         clearOrderData: function () {
-            this.orderId = null;
+            this.maskedQuoteId = null;
             this.baseAmount = 0;
             this.shippingAmount = 0;
             this.shippingMethod = null;
@@ -460,7 +460,7 @@ define([
             this._cancelPayplugPayment();
             this.applePaySession.abort();
         },
-        
+
         /**
          * Cancel the payment with failure (close Payment UI and trigger ApplePay Session failure)
          *
@@ -483,7 +483,7 @@ define([
         _cancelPayplugPayment: function () {
             const self = this;
 
-            if (this.orderId) {
+            if (this.maskedQuoteId) {
                 $.ajax({
                     url: url.build(cancelUrl) + '?form_key=' + $.cookie('form_key'),
                     type: 'GET'
