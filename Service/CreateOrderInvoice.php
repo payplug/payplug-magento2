@@ -63,12 +63,14 @@ class CreateOrderInvoice
         }
 
         if ($order->getInvoiceCollection()->count() > 0) {
-            $this->payplugLogger->info(__(
-                '%s: "%s" invoice already created for order %s.',
-                __METHOD__,
-                CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
-                $order->getId()
-            ));
+            $this->payplugLogger->info(
+                sprintf(
+                    '%s: "%s" invoice already created for order %s.',
+                    __METHOD__,
+                    CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                    $order->getId()
+                )
+            );
 
             return;
         }
