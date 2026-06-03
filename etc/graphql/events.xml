@@ -14,4 +14,8 @@
         <observer name="payplug_payments_disable_satispay_payment_method_graphql"
                   instance="Payplug\Payments\Observer\DisableScalapayOutsideSubtotalRange"/>
     </event>
+    <event name="sales_model_service_quote_submit_before">
+        <observer name="payplug_payments_mark_order_payment_as_headless"
+                  instance="Payplug\Payments\Observer\MarkOrderPaymentAsHeadless" />
+    </event>
 </config>

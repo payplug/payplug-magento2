@@ -34,6 +34,7 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\GetMaskedQuoteId;
 use Payplug\Payments\Service\GetQuoteApplePayAvailableMethods;
 use Throwable;
 
@@ -57,6 +58,7 @@ class CreateMockOrder implements HttpPostActionInterface
      * @param RequestQuantityProcessor $requestQuantityProcessor
      * @param EventManagerInterface $eventManager
      * @param ResponseInterface $response
+     * @param GetMaskedQuoteId $getMaskedQuoteId
      */
     public function __construct(
         private readonly JsonFactory $resultJsonFactory,
@@ -75,7 +77,8 @@ class CreateMockOrder implements HttpPostActionInterface
         private readonly LocaleResolverInterface $localeResolver,
         private readonly RequestQuantityProcessor $requestQuantityProcessor,
         private readonly EventManagerInterface $eventManager,
-        private readonly ResponseInterface $response
+        private readonly ResponseInterface $response,
+        private readonly GetMaskedQuoteId $getMaskedQuoteId
     ) {
     }
 
@@ -195,9 +198,21 @@ class CreateMockOrder implements HttpPostActionInterface
             $grandTotal = (float)$order->getGrandTotal();
             $shippingAmount = (float)$order->getShippingAmount();
 
+            $quoteId = $order->getQuoteId();
+
+            if ($quoteId === null) {
+                throw new Exception('Could not retrieve quote id');
+            }
+
+            $maskedQuoteId = $this->getMaskedQuoteId->execute((int) $quoteId);
+
+            if ($maskedQuoteId === null) {
+                throw new Exception('Could not retrieve masked quote id');
+            }
+
             $response['error'] = false;
             $response['message'] = __('Order placed successfully.');
-            $response['order_id'] = $orderId;
+            $response['masked_quote_id'] = $maskedQuoteId;
             $response['base_amount'] = $grandTotal - $shippingAmount;
             $response['merchantSession'] = $merchantSession;
         } catch (Throwable $e) {
