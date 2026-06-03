@@ -38,6 +38,10 @@ class GetAllowedCountriesPerPaymentMethod
             $this->payplugConfigHelper->getConfigValue($paymentMethod . '_countries') ?? '[]'
         );
 
+        /**
+         * Accepted technical debt: the hardcoded configuration remains in place for the four legacy APMs :
+         * IDEAL, BANCONTACT, MYBANK and SATISPAY
+         */
         $restrictedCountryOverrideIds = $this->serializer->unserialize(
             $this->payplugConfigHelper->getConfigValue($paymentMethod . '_countries_override') ?? '[]'
         );
