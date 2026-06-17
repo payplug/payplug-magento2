@@ -18,6 +18,7 @@ use Magento\Framework\Serialize\JsonValidator;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Payplug\Authentication as PayplugAuthentication;
+use Payplug\Payments\Helper\ApiUrlInitializer;
 use Payplug\Payments\Helper\Config as ConfigHelper;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
 
@@ -34,6 +35,7 @@ class GetOauth2AccessTokenData
      * @param CacheInterface $cache
      * @param GetOauth2ClientData $getOauth2ClientData
      * @param PayplugLogger $payplugLogger
+     * @param ApiUrlInitializer $apiUrlInitializer
      */
     public function __construct(
         private readonly ReinitableConfigInterface $scopeConfig,
@@ -42,7 +44,8 @@ class GetOauth2AccessTokenData
         private readonly EncryptorInterface $encryptor,
         private readonly CacheInterface $cache,
         private readonly GetOauth2ClientData $getOauth2ClientData,
-        private readonly PayplugLogger $payplugLogger
+        private readonly PayplugLogger $payplugLogger,
+        private readonly ApiUrlInitializer $apiUrlInitializer
     ) {
     }
 
@@ -91,6 +94,7 @@ class GetOauth2AccessTokenData
      */
     private function regenerate(?int $websiteId = null): array
     {
+        $this->apiUrlInitializer->init();
         $currentEnvMode = $this->getCurrentEnvMode($websiteId);
         $clientData = $this->getOauth2ClientData->execute($currentEnvMode, $websiteId);
 

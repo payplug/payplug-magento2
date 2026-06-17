@@ -61,6 +61,7 @@ class Config
      * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
      * @param RequestInterface $request
      * @param ScopeConfigInterface $scopeConfig
+     * @param ApiUrlInitializer $apiUrlInitializer
      */
     public function __construct(
         private readonly WriterInterface $configWriter,
@@ -69,7 +70,8 @@ class Config
         private readonly StoreManagerInterface $storeManager,
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
         private readonly RequestInterface $request,
-        private readonly ScopeConfigInterface $scopeConfig
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly ApiUrlInitializer $apiUrlInitializer
     ) {
     }
 
@@ -167,6 +169,18 @@ class Config
     }
 
     /**
+     * Override API and service base URLs from environment variables.
+     * PAYPLUG_API_BASE_URL and PAYPLUG_SERVICE_BASE_URL allow pointing to staging/internal environments.
+     * When unset, the lib defaults (https://api.payplug.com / https://retail.service.payplug.com) are used.
+     *
+     * @return void
+     */
+    public function initApiUrls(): void
+    {
+        $this->apiUrlInitializer->init();
+    }
+
+    /**
      * Set the Payplug API key
      *
      * @param int|null $storeId
@@ -177,6 +191,7 @@ class Config
      */
     public function setPayplugApiKey(?int $storeId, bool $isSandbox, ?string $scope = ScopeInterface::SCOPE_STORE): void
     {
+        $this->initApiUrls();
         $key = $this->getApiKey($isSandbox, $storeId, $scope);
 
         if (!empty($key)) {

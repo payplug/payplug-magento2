@@ -12,6 +12,7 @@ use Payplug\Authentication;
 use Payplug\Exception\BadRequestException;
 use Payplug\Exception\NotFoundException;
 use Payplug\Exception\PayplugException;
+use Payplug\Payments\Helper\Config as ConfigHelper;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payplug;
 
@@ -20,10 +21,12 @@ class Login
     /**
      * @param Authentication $authentication
      * @param Logger $logger
+     * @param ConfigHelper $configHelper
      */
     public function __construct(
         private readonly Authentication $authentication,
-        private readonly Logger $logger
+        private readonly Logger $logger,
+        private readonly ConfigHelper $configHelper
     ) {
     }
 
@@ -43,6 +46,7 @@ class Login
         ];
 
         try {
+            $this->configHelper->initApiUrls();
             $answer = $this->authentication->getKeysByLogin($email, $password);
 
             $apiKeys = [];
@@ -87,6 +91,7 @@ class Login
         ];
 
         try {
+            $this->configHelper->initApiUrls();
             Payplug::init(['secretKey' => $apiKey]);
             $answer = $this->authentication->getAccount();
 

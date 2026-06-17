@@ -87,6 +87,8 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
         $this->adminAuthSession->setData(self::PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA, null);
 
         try {
+            $this->configHelper->initApiUrls();
+
             /**
              * Generate JWT OneShot, needed for fetching client secret
              */
