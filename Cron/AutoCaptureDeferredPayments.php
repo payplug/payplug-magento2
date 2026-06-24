@@ -80,6 +80,8 @@ class AutoCaptureDeferredPayments
             ->addFilter('additional_information', '%is_deferred_payment%', 'like')
             ->addFilter('additional_information', '%fail_to_capture%', 'nlike')
             ->addFilter('additional_information', '%is_authorized%', 'like')
+            /** Hosted Fields payments are only auto-captured by PSP */
+            ->addFilter('additional_information', '%payplug_hosted_fields_payment%', 'nlike')
             ->create();
 
         $orderPayments = $this->paymentRepository->getList($searchCriteria)->getItems();
