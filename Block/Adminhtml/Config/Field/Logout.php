@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Payplug - https://www.payplug.com/
  * Copyright © Payplug. All rights reserved.
  * See LICENSE for license details.
@@ -89,5 +89,16 @@ class Logout extends Field
         $element->unsScope()->unsCanUseWebsiteValue()->unsCanUseDefaultValue();
 
         return parent::render($element);
+    }
+
+    /**
+     * Return false to hide inherit checkbox
+     *
+     * @param mixed $element
+     * @return false
+     */
+    protected function _isInheritCheckboxRequired($element): bool
+    {
+        return false;
     }
 }

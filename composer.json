@@ -20,7 +20,8 @@
     "magento/module-sales": "102.0.*|103.0.*",
     "payplug/payplug-php": "^4.1.0",
     "giggsey/libphonenumber-for-php": "^8.10|^9.0",
-    "ext-openssl": "*"
+    "ext-openssl": "*",
+    "ext-intl": "*"
   },
   "autoload": {
     "files": [ "registration.php" ],

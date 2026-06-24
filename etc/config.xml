@@ -20,6 +20,7 @@
                 <default_country>FR</default_country>
                 <model>PayplugPaymentStandardFacade</model>
                 <payment_action>authorize_capture</payment_action>
+                <autocapture_delay>6</autocapture_delay>
                 <invoice_on_payment>1</invoice_on_payment>
                 <is_gateway>1</is_gateway>
                 <order_status>pending</order_status>
