@@ -12,10 +12,12 @@ use Magento\Customer\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Asset\Repository;
 use Magento\Payment\Helper\Data as PaymentHelper;
 use Magento\Payment\Model\MethodInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
@@ -38,6 +40,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      * @param Config $payplugConfig
      * @param Card $payplugCardHelper
      * @param Session $customerSession
+     * @param StoreManagerInterface $storeManager
      * @param PaymentHelper $paymentHelper
      * @param Repository $assetRepo
      * @param RequestInterface $request
@@ -48,6 +51,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         private readonly Config $payplugConfig,
         private readonly Card $payplugCardHelper,
         private readonly Session $customerSession,
+        private readonly StoreManagerInterface $storeManager,
         PaymentHelper $paymentHelper,
         Repository $assetRepo,
         RequestInterface $request
@@ -61,15 +65,21 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      * Get Standard payment config
      *
      * @return array
+     * @throws NoSuchEntityException
      */
     public function getConfig(): array
     {
+        $websiteId = (int) $this->storeManager->getStore()->getWebsiteId();
+
         return $this->method->isAvailable() ? [
             'payment' => [
                 $this->methodCode => [
                     'logo' => $this->getCardLogo(),
                     'is_embedded' => $this->payplugConfig->isEmbedded(),
                     'is_integrated' => $this->payplugConfig->isIntegrated(),
+                    'is_hosted_fields_active' => $this->payplugConfig->isHostedFieldsActive($websiteId),
+                    'hosted_fields_api_key_id' => $this->payplugConfig->getHostedFieldsApiKeyId($websiteId), // public
+                    'hosted_fields_api_key' => $this->payplugConfig->getHostedFieldsApiKey($websiteId), // public
                     'is_one_click' => $this->isOneClick(),
                     'brand_logos' => $this->getBrandLogos(),
                     'selected_card_id' => $this->getSelectedCardId(),
@@ -128,10 +138,13 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
      * Get selected card id
      *
      * @return int|string
+     * @throws NoSuchEntityException
      */
     public function getSelectedCardId()
     {
-        if (!$this->isOneClick()) {
+        $websiteId = (int) $this->storeManager->getStore()->getWebsiteId();
+
+        if ($this->isOneClick() === false || $this->payplugConfig->isHostedFieldsActive($websiteId) === true) {
             return '';
         }
 
@@ -141,7 +154,9 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
         if ($lastCardId === 0) {
             return '';
         }
+
         $customerCardsForCurrentContext = $this->payplugCardHelper->getCardsByCustomer($customerId);
+
         foreach ($customerCardsForCurrentContext as $card) {
             if ($card->getCustomerCardId() === $lastCardId) {
                 return $lastCardId;

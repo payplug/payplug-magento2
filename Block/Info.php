@@ -85,7 +85,12 @@ class Info extends BaseInfo
      */
     protected function buildPaymentDetails(Payment $payment, OrderInterface $order): array
     {
+        if (empty($payment->id)) {
+            return [];
+        }
+
         $status = __('Not Paid');
+
         if ($payment->is_refunded) {
             $status = __('Refunded');
         } elseif ($payment->amount_refunded > 0) {
@@ -96,50 +101,52 @@ class Info extends BaseInfo
             $status = __('Authorized');
         }
 
-        $amount = $order->getOrderCurrency()->formatPrecision((float)($payment->amount / 100), 2, [], false, false);
-
         if ($this->payplugHelper->isCodePayplugPaymentPpro($order->getPayment()->getMethod())) {
             $methodLines = [
                 'Payplug Payment Method' => __('SEPA Credit Transfer'),
             ];
         } else {
-            $cardType = __('Other');
-            if (in_array(strtolower($payment->card->brand ?? ''), ['visa', 'mastercard', 'maestro'])) {
-                $cardType = $payment->card->brand;
-            } elseif (strtolower($payment->card->brand ?? '') == 'carte_bancaire') {
-                $cardType = __('CB');
+            $cardMask = (string) ($payment->card->last4 ?? '');
+            $cardExpMonth = (string) ($payment->card->exp_month ?? '');
+            $cardExpYear = (string) ($payment->card->exp_year ?? '');
+            $cardBrand = (string) ($payment->card->brand ?? '');
+            $cardCountry = (string) ($payment->card->country ?? '');
+            $is3DS = (bool) ($payment->is_3ds ?? false);
+
+            if (in_array(strtolower($cardBrand), ['carte_bancaire', 'cb'])) {
+                $cardBrand = 'CB';
             }
 
-            $country = __('n/c');
-            if ($payment->card->country !== null) {
-                $country = $payment->card->country;
-            }
-
-            $cardMask = __('n/c');
-            if ($payment->card->last4 !== null) {
-                $cardMask = '**** **** **** ' . (string)$payment->card->last4;
-            }
-
-            $expirationDate = __('n/c');
-            if ($payment->card->exp_month !== null) {
-                $expirationDate = date('m/y', strtotime('01.'.$payment->card->exp_month.'.'.$payment->card->exp_year));
+            if ($cardExpMonth !== '' && $cardExpYear !== '') {
+                $expirationDate = $cardExpMonth . '/' . $cardExpYear;
+            } else {
+                $expirationDate = 'n/c';
             }
 
             $methodLines = [
-                'Credit card' => $cardType . ' (' . $country . ')',
-                'Card mask' => $cardMask,
-                '3-D Secure' => $payment->is_3ds ? __('Yes') : __('No'),
+                'Credit card' => ($cardBrand ?: __('Other')) . ' (' . ($cardCountry ?: 'n/c') . ')',
+                'Card mask' => $cardMask ? '**** **** **** ' . $cardMask : 'n/c',
                 'Expiration Date' => $expirationDate,
+                '3-D Secure' => $is3DS === true ? __('Yes') : __('No'),
             ];
+
+            $errorCode = $payment->failure?->code ?? null;
+
+            if ($errorCode !== null) {
+                $methodLines['Error Code'] = $errorCode;
+            }
         }
+
+        $amount = $order->getOrderCurrency()->formatPrecision((float)($payment->amount / 100), 2, [], false);
 
         return array_merge([
             'Payplug Payment ID' => $payment->id,
             'Status' => $status,
             'Amount' => $amount,
-            'Created on' => date('d/m/Y H:i', $payment->created_at),
+            'Created on' => $payment->created_at ? date('d/m/Y H:i', $payment->created_at) : 'n/c',
+            'Paid at' => $payment->paid_at ? date('d/m/Y H:i', $payment->paid_at) : 'n/c',
         ], $methodLines, [
-            'Mode' => $payment->is_live ? __('PayPlug LIVE mode') : __('PayPlug TEST mode'),
+            'Mode' => $payment->is_live === false ? __('PayPlug TEST mode') : __('PayPlug LIVE mode'),
         ]);
     }
 }

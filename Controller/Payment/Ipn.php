@@ -16,7 +16,6 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\Raw;
-use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Data\Form\FormKey;
@@ -25,6 +24,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\OrderFactory;
+use Payplug\Exception\ConfigurationException;
+use Payplug\Exception\ConfigurationNotSetException;
 use Payplug\Exception\PayplugException;
 use Payplug\Notification;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
@@ -33,19 +34,30 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Data\RefundRequestFactory;
+use Payplug\Payments\Model\Order\Payment;
+use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Payments\Service\BuildHostedFieldsParamsHash;
 use Payplug\Payments\Service\CreateOrderRefund;
+use Payplug\Payments\Service\HostedFieldsIpnLock;
 use Payplug\Resource\InstallmentPlan;
+use Payplug\Resource\IVerifiableAPIResource;
 use Payplug\Resource\Payment as PaymentResource;
 use Payplug\Resource\Refund;
+use Payplug\Responses\HostedFieldTransactionResource;
 
 class Ipn extends AbstractPayment
 {
+    private const HOSTED_FIELDS_SUCCESS_CONTENT_RETURN = 'OK';
+
     /**
      * @param Config $payplugConfig
      * @param FetchTransactionInformationHandler $fetchTransactionInformationHandler
      * @param PaymentReturn $paymentReturn
      * @param MessageQueuePublisherInterface $messageQueuePublisher
      * @param RefundRequestFactory $refundRequestFactory
+     * @param OrderPaymentRepository $orderPaymentRepository
+     * @param BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash
+     * @param HostedFieldsIpnLock $hostedFieldsIpnLock
      * @param Context $context
      * @param Session $checkoutSession
      * @param OrderFactory $salesOrderFactory
@@ -59,6 +71,9 @@ class Ipn extends AbstractPayment
         private readonly PaymentReturn $paymentReturn,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
         private readonly RefundRequestFactory $refundRequestFactory,
+        private readonly OrderPaymentRepository $orderPaymentRepository,
+        private readonly BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash,
+        private readonly HostedFieldsIpnLock $hostedFieldsIpnLock,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
@@ -76,9 +91,9 @@ class Ipn extends AbstractPayment
      *
      * Can update order status when payment or refund notification is received
      *
-     * @return Redirect|ResultInterface|Json
+     * @return ResultInterface
      */
-    public function execute()
+    public function execute(): ResultInterface
     {
         $this->logger->info('--- Starting IPN Action ---');
 
@@ -91,18 +106,28 @@ class Ipn extends AbstractPayment
             $request = $this->getRequest();
             $body = $request->getContent();
 
+            $this->logger->info($request->getUriString());
+
             $ipnStoreId = $this->getRequest()->getParam('ipn_store_id');
-
-            $this->logger->info('This is not a debug call.');
-
             $ipnSandbox = $this->getRequest()->getParam('ipn_sandbox');
+
             $this->payplugConfig->setPayplugApiKey((int)$ipnStoreId, (bool) $ipnSandbox);
             $this->logger->info('Key submited');
 
-            $resource = Notification::treat($body);
+            $hostedFieldsIdentifier = $request->getParam('IDENTIFIER');
+
+            if ($hostedFieldsIdentifier) {
+                $resource = $this->treatHostedFieldsRequest();
+            } else {
+                $resource = Notification::treat($body);
+            }
 
             if ($resource instanceof PaymentResource) {
                 $this->processPayment($response, $resource);
+
+                if ($hostedFieldsIdentifier) {
+                    $response->setContents(self::HOSTED_FIELDS_SUCCESS_CONTENT_RETURN);
+                }
 
                 return $response;
             }
@@ -115,6 +140,10 @@ class Ipn extends AbstractPayment
 
             if ($resource instanceof Refund) {
                 $this->processRefund($response, $resource);
+
+                if ($hostedFieldsIdentifier) {
+                    $response->setContents(self::HOSTED_FIELDS_SUCCESS_CONTENT_RETURN);
+                }
 
                 return $response;
             }
@@ -129,11 +158,83 @@ class Ipn extends AbstractPayment
             return $response;
         } catch (Exception $e) {
             $this->logger->error($e->getMessage());
+            $response->setHttpResponseCode(500);
 
             return $response;
         }
 
         return $response;
+    }
+
+    /**
+     * Treat a request made by the hosted fields IPN
+     *
+     * @return IVerifiableAPIResource
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws Exception
+     */
+    private function treatHostedFieldsRequest(): IVerifiableAPIResource
+    {
+        $request = $this->getRequest();
+        $transactionId = $request->getParam('TRANSACTIONID');
+        $operationType = $request->getParam('OPERATIONTYPE');
+        $orderIncrementId = $request->getParam('ORDERID');
+
+        if (empty($transactionId) || empty($operationType) || empty($orderIncrementId)) {
+            throw new LocalizedException(__('Transaction ID or Operation Type or Order ID is missing'));
+        }
+
+        /** Secure payment/auth reading via hash comparison */
+        if (in_array($operationType, ['payment', 'authorization'])) {
+            $websiteId = (int) $this->getRequest()->getParam('website_id');
+
+            if (empty($websiteId)) {
+                throw new LocalizedException(__('Website ID is missing'));
+            }
+
+            /**
+             * Sanitize ipn callback parameters. Assuming no extra params added.
+             * Url copied/pasted from backend (config) to Dalenys console.
+             */
+            $ipnParams = $request->getParams();
+            unset($ipnParams['form_key'], $ipnParams['HASH'], $ipnParams['website_id']);
+
+            $hashFromRequest = (string) $request->getParam('HASH');
+            $calculatedHash = $this->buildHostedFieldsParamsHash->execute(
+                $ipnParams,
+                BuildHostedFieldsParamsHash::SEPARATOR_ACCOUNT_KEY,
+                $websiteId
+            );
+
+            if (hash_equals($calculatedHash, $hashFromRequest) === false) {
+                throw new LocalizedException(__('Provided hash does not match calculated one'));
+            }
+
+            // The IPN can reach us before the checkout request has committed the order payment row.
+            // Wait for the checkout request to release the lock (row committed) before processing.
+            $this->hostedFieldsIpnLock->waitForRelease((string) $request->getParam('ORDERID'));
+
+            $hostedFieldsResourceObject = new HostedFieldTransactionResource(['DATA' => [$ipnParams]]);
+            $hostedFieldsResource = get_object_vars($hostedFieldsResourceObject);
+
+            return PaymentResource::fromAttributes($hostedFieldsResource);
+        }
+
+        /**
+         * Secure capture/refund call reading via API fetch
+         * API fetch is required to get aggregated captures with initial payment object
+         * IPN provide only single object. Assuming capture here.
+         */
+        if (in_array($operationType, ['capture', 'refund'])) {
+            $payplugOrderPayment = $this->orderPaymentRepository->get($orderIncrementId, Payment::ORDER_ID);
+
+            return $payplugOrderPayment->retrieve();
+        }
+
+        throw new LocalizedException(__('Cannot handle operation type "%1"', $operationType));
     }
 
     /**
@@ -149,14 +250,14 @@ class Ipn extends AbstractPayment
         $this->logger->info('This is a payment call.');
         $this->logger->info('Payment ID : ' . $paymentResource->id);
 
-        $orderIncrementId = $paymentResource->metadata['Order'] ?? '';
+        $orderIncrementId = $paymentResource->metadata['Order'] ?? $paymentResource->metadata['order_id'] ?? null;
 
         $order = $this->salesOrderFactory->create();
         $order->loadByIncrementId($orderIncrementId);
 
         if ($order->getId() === null) {
             $this->logger->info('Order not found for ' . $orderIncrementId);
-            return;
+            throw new LocalizedException(__('Order not found for %1', $orderIncrementId));
         }
 
         try {
@@ -190,19 +291,39 @@ class Ipn extends AbstractPayment
             return;
         }
 
-        $isAuthorizedOnly = $this->paymentReturn->isAuthorizedOnlyStandardPaymentFromMethod($orderPayment->getMethod());
+        $isAuthorizeOnly = $this->paymentReturn->isAuthorizedOnlyStandardPaymentFromMethod($orderPayment->getMethod());
+        $isHostedFields = (bool) ($paymentResource->is_hosted_fields ?? false);
 
-        if ($isAuthorizedOnly === true && $paymentResource->is_paid) {
+        $customerId = $order->getCustomerId();
+
+        if ($isHostedFields) {
+            /**
+             * A "paid" Hosted Fields payment transaction is considered valid and contains a card hash
+             * An "authorized" Hosted Fields transaction is considered valid and contains a card hash
+             */
+            $canSaveCard = $paymentResource->is_paid || $isAuthorizeOnly;
+        } else {
+            /**
+             * An "authorized" and "paid" Integrated Payment transaction is considered valid and contains a card hash
+             */
+            $canSaveCard = $isAuthorizeOnly && $paymentResource->is_paid;
+        }
+
+        if ($customerId !== null && $canSaveCard === true) {
+            /**
+             * Save customer card for all standard payment modes
+             */
             $this->fetchTransactionInformationHandler->saveCustomerCard(
                 $paymentResource,
-                $order->getCustomerId(),
-                $order->getStoreId()
+                (int) $customerId,
+                (int) $order->getStoreId()
             );
         }
 
         $anomymizedPaymentResource = clone $paymentResource;
         $anomymizedPaymentResource->__set('billing', null);
         $anomymizedPaymentResource->__set('shipping', null);
+        $anomymizedPaymentResource->__set('card', null);
 
         $this->logger->info('Gathering payment details...', [
             'details' => var_export($anomymizedPaymentResource, true),

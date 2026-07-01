@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use Exception;
 use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
@@ -60,9 +61,9 @@ abstract class AbstractBuilder extends AbstractHelper
         protected Logger $logger,
         protected FormKey $formKey,
         protected UriHelper $uriHelper,
-        private readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
+        protected readonly PlaceOrderExtraParamsRegistry $placeOrderExtraParamsRegistry,
         protected readonly GetCartContextForTransaction $getCartContextForTransaction,
-        private readonly GetMaskedQuoteId $getMaskedQuoteId
+        protected readonly GetMaskedQuoteId $getMaskedQuoteId
     ) {
         parent::__construct($context);
     }
@@ -298,54 +299,91 @@ abstract class AbstractBuilder extends AbstractHelper
      * @param CartInterface $quote
      *
      * @return array
-     * @throws LocalizedException
+     * @throws Exception
      */
     public function buildPaymentData($order, InfoInterface $payment, CartInterface $quote): array
     {
-        $quoteId = $quote->getId();
+        $maskedQuoteId = $this->getMaskedQuoteId($quote);
         $storeId = (int) $order->getStoreId();
 
+        return [
+            'force_3ds' => false,
+            'notification_url' => $this->getNotificationUrl($storeId),
+            'hosted_payment' => [
+                'return_url' => $this->getReturnUrl($storeId, $maskedQuoteId),
+                'cancel_url' => $this->getCancelUrl($storeId, $maskedQuoteId)
+            ]
+        ];
+    }
+
+    /**
+     * Get notification url
+     *
+     * @param int $storeId
+     * @return string
+     */
+    private function getNotificationUrl(int $storeId): string
+    {
         $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
         $scopeIdForUrlBuilder = $this->getUrlBuilderScopeId($storeId);
         $typeForUrlBuilder = $this->getUrlBuilderType($storeId);
 
-        if ($quoteId) {
-            $maskedQuoteId = $this->getMaskedQuoteId->execute((int) $quoteId);
-        } else {
-            $maskedQuoteId = $this->placeOrderExtraParamsRegistry->getMaskedQuoteId();
-        }
+        return $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
+            '_scope' => $scopeIdForUrlBuilder,
+            '_type' => $typeForUrlBuilder,
+            'ipn_store_id' => $storeId,
+            'ipn_sandbox'  => (int) $isSandbox,
+            '_nosid' => true,
+        ]);
+    }
 
-        return [
-            'force_3ds' => false,
-            'notification_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/ipn', [
-                '_scope' => $scopeIdForUrlBuilder,
-                '_type' => $typeForUrlBuilder,
-                'ipn_store_id' => $storeId,
-                'ipn_sandbox'  => (int)$isSandbox,
-                '_nosid' => true,
-            ]),
-            'hosted_payment' => [
-                'return_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
-                    '_scope' => $scopeIdForUrlBuilder,
-                    '_type' => $typeForUrlBuilder,
-                    '_secure'  => true,
-                    'masked_quote_id' => $maskedQuoteId,
-                    '_nosid' => true,
-                    'form_key' => $this->formKey->getFormKey() ?: '',
-                    'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterSuccessUrl(),
-                    'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterFailureUrl(),
-                ]),
-                'cancel_url' => $this->_urlBuilder->getUrl('payplug_payments/payment/cancel', [
-                    '_scope' => $scopeIdForUrlBuilder,
-                    '_type' => $typeForUrlBuilder,
-                    '_secure'  => true,
-                    'masked_quote_id' => $maskedQuoteId,
-                    '_nosid' => true,
-                    'form_key' => $this->formKey->getFormKey() ?: '',
-                    'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterCancelUrl(),
-                ]),
-            ]
-        ];
+    /**
+     * Get return url
+     *
+     * @param int $storeId
+     * @param string $maskedQuoteId
+     * @return string
+     * @throws LocalizedException
+     */
+    protected function getReturnUrl(int $storeId, string $maskedQuoteId): string
+    {
+        $scopeIdForUrlBuilder = $this->getUrlBuilderScopeId($storeId);
+        $typeForUrlBuilder = $this->getUrlBuilderType($storeId);
+
+        return $this->_urlBuilder->getUrl('payplug_payments/payment/paymentReturn', [
+            '_scope' => $scopeIdForUrlBuilder,
+            '_type' => $typeForUrlBuilder,
+            '_secure'  => true,
+            'masked_quote_id' => $maskedQuoteId,
+            '_nosid' => true,
+            'form_key' => $this->formKey->getFormKey() ?: '',
+            'afterSuccessUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterSuccessUrl(),
+            'afterFailureUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterFailureUrl(),
+        ]);
+    }
+
+    /**
+     * Get cancel url
+     *
+     * @param int $storeId
+     * @param string $maskedQuoteId
+     * @return string
+     * @throws LocalizedException
+     */
+    protected function getCancelUrl(int $storeId, string $maskedQuoteId): string
+    {
+        $scopeIdForUrlBuilder = $this->getUrlBuilderScopeId($storeId);
+        $typeForUrlBuilder = $this->getUrlBuilderType($storeId);
+
+        return $this->_urlBuilder->getUrl('payplug_payments/payment/cancel', [
+            '_scope' => $scopeIdForUrlBuilder,
+            '_type' => $typeForUrlBuilder,
+            '_secure'  => true,
+            'masked_quote_id' => $maskedQuoteId,
+            '_nosid' => true,
+            'form_key' => $this->formKey->getFormKey() ?: '',
+            'afterCancelUrl' => $this->placeOrderExtraParamsRegistry->getEncodedCustomAfterCancelUrl(),
+        ]);
     }
 
     /**
@@ -355,7 +393,7 @@ abstract class AbstractBuilder extends AbstractHelper
      * @param array $transaction
      * @return array
      */
-    private function getAnonymizedTransactionDetails(OrderAdapterInterface $order, array $transaction): array
+    protected function getAnonymizedTransactionDetails(OrderAdapterInterface $order, array $transaction): array
     {
         $maskedEmail = '***@***.***';
 
@@ -368,7 +406,54 @@ abstract class AbstractBuilder extends AbstractHelper
 
         $transaction['email'] = $maskedEmail;
 
+        if (!empty($transaction['params'])) {
+            $transaction['params'] = array_filter(
+                $transaction['params'],
+                function ($key) {
+                    return str_starts_with($key, 'CLIENT') === false
+                        && str_starts_with($key, 'BILLING') === false
+                        && $key !== 'MOBILEPHONE';
+                },
+                ARRAY_FILTER_USE_KEY
+            );
+
+            $hfToken = (string) ($transaction['params']['HFTOKEN'] ?? '');
+
+            if ($hfToken !== '') {
+                $transaction['params']['HFTOKEN'] = $this->maskToken($hfToken);
+            }
+
+            $hfAlias = (string) ($transaction['params']['ALIAS'] ?? '');
+
+            if ($hfAlias !== '') {
+                $transaction['params']['ALIAS'] = $this->maskToken($hfAlias);
+            }
+        }
+
         return array_diff_key($transaction, array_flip(['billing', 'shipping']));
+    }
+
+    /**
+     * Mask hosted field token
+     *
+     * @param string $token
+     * @return string
+     */
+    private function maskToken(string $token): string
+    {
+        $tokenLength = strlen($token);
+        $visibleCharLength = 4;
+        $maskChar = '*';
+
+        if ($tokenLength <= $visibleCharLength * 2) {
+            return str_repeat($maskChar, $tokenLength);
+        }
+
+        $start = substr($token, 0, $visibleCharLength);
+        $end = substr($token, - $visibleCharLength);
+        $masked = str_repeat($maskChar, $tokenLength - ($visibleCharLength * 2));
+
+        return $start . $masked . $end;
     }
 
     /**
@@ -439,5 +524,29 @@ abstract class AbstractBuilder extends AbstractHelper
     public function isMobilePhoneNumberWhiteListed(string $phoneNumber): bool
     {
         return in_array($phoneNumber, static::MOBILE_PHONE_NUMBER_WHITELIST);
+    }
+
+    /**
+     * Get masked quote id
+     *
+     * @param CartInterface $quote
+     * @return string
+     * @throws Exception
+     */
+    protected function getMaskedQuoteId(CartInterface $quote): string
+    {
+        $quoteId = $quote->getId();
+
+        if ($quoteId) {
+            $maskedQuoteId = $this->getMaskedQuoteId->execute((int) $quoteId);
+        } else {
+            $maskedQuoteId = $this->placeOrderExtraParamsRegistry->getMaskedQuoteId();
+        }
+
+        if ($maskedQuoteId === null) {
+            return '';
+        }
+
+        return $maskedQuoteId;
     }
 }
