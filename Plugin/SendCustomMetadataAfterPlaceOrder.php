@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Plugin;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
@@ -40,7 +41,12 @@ class SendCustomMetadataAfterPlaceOrder
      */
     public function afterPlaceOrder(CartManagementInterface $cartManagement, int $orderId): int
     {
-        $order = $this->orderRepository->get($orderId);
+        try {
+            $order = $this->orderRepository->get($orderId);
+        } catch (LocalizedException) {
+            return $orderId;
+        }
+
         $method = $order->getPayment()?->getMethod();
 
         if ($this->payplugDataHelper->isCodePayplugPayment($method) === false) {
