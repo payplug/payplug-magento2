@@ -40,6 +40,11 @@ class SendCustomMetadataAfterPlaceOrder
      */
     public function afterPlaceOrder(CartManagementInterface $cartManagement, int $orderId): int
     {
+        // Some payment modules (e.g. Scalapay, Satispay) return orderId=0 when redirecting to an external gateway before the order is created.
+        if ($orderId === 0) {
+            return $orderId;
+        }
+
         $order = $this->orderRepository->get($orderId);
         $method = $order->getPayment()?->getMethod();
 
