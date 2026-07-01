@@ -41,7 +41,6 @@ define([
         standard: 'payplug_payments/payment/standard',
         redirectAfterPlaceOrder: false,
         cards: [],
-        sessionCardId: 'payplug-payments-card-id',
         integratedApi: null,
         integratedForm: null,
         canDisplayIntegratedForm: ko.observable(false),
@@ -111,8 +110,6 @@ define([
          */
         afterPlaceOrder: function () {
             const self = this;
-
-            sessionStorage.removeItem(this.sessionCardId);
 
             if (this.getSelectedCardId() !== '') {
                 fullScreenLoader.stopLoader();
@@ -264,10 +261,6 @@ define([
          * @returns {Number}
          */
         getInitialSelectedCard: function () {
-            if (sessionStorage.getItem(this.sessionCardId) !== null) {
-                return sessionStorage.getItem(this.sessionCardId);
-            }
-
             return window.checkoutConfig.payment.payplug_payments_standard.selected_card_id;
         },
 
@@ -309,7 +302,6 @@ define([
         selectCard: function (data) {
             this.selectPaymentMethod();
             $('.payplug-payments-error').hide();
-            sessionStorage.setItem(this.sessionCardId, data.id);
             return true;
         },
 
