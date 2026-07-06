@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.2](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.2) - 2026-07-09
+
+### Features
+
+- Fix Oney simulation when authenticated with Oauth2 (MAG-790)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.7.1...v4.7.2)**
+
+### Fixed
+
+- Fix Oney simulation when authenticated with Oauth2 (MAG-790) [#a2ed8085](https://github.com/payplug/payplug-magento2/commit/a2ed808583df009774f01bda4ccc1769ce3e6b6a)
+
 ## [4.7.1](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.1) - 2026-05-18
 
 ### ⚠ ACTION REQUIRED
