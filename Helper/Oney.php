@@ -109,18 +109,16 @@ class Oney extends AbstractHelper
     public function canDisplayOney(): bool
     {
         $storeId = $this->storeManager->getStore()->getId();
-        $testApiKey = $this->scopeConfig->getValue(
-            Config::CONFIG_PATH . 'test_api_key',
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-        $liveApiKey = $this->scopeConfig->getValue(
-            Config::CONFIG_PATH . 'live_api_key',
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
 
-        if (empty($testApiKey) && empty($liveApiKey)) {
+        try {
+            $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
+            $apiKey = $this->payplugConfig->getApiKey($isSandbox, $storeId);
+        } catch (Exception) {
+            $this->logger->error('Could not retrieve Payplug API key for Oney');
+            return false;
+        }
+
+        if (empty($apiKey)) {
             return false;
         }
 
@@ -207,25 +205,11 @@ class Oney extends AbstractHelper
         }
 
         try {
-            $testApiKey = $this->scopeConfig->getValue(
-                Config::CONFIG_PATH . 'test_api_key',
-                ScopeInterface::SCOPE_STORE,
-                $storeId
-            );
-            $liveApiKey = $this->scopeConfig->getValue(
-                Config::CONFIG_PATH . 'live_api_key',
-                ScopeInterface::SCOPE_STORE,
-                $storeId
-            );
+            $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
+            $apiKey = $this->payplugConfig->getApiKey($isSandbox, $storeId);
 
-            $apiKey = $liveApiKey;
-            $environmentMode = $this->scopeConfig->getValue(
-                Config::CONFIG_PATH . 'environmentmode',
-                ScopeInterface::SCOPE_STORE,
-                $storeId
-            );
-            if ($environmentMode == Config::ENVIRONMENT_TEST) {
-                $apiKey = $testApiKey;
+            if (empty($apiKey)) {
+                return '';
             }
 
             $result = $this->login->getAccount($apiKey);
