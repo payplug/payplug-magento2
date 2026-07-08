@@ -4,14 +4,18 @@
 
 ### Pre-requirements
 
-- Adobe Commerce / Magento Open Source **2.4.1 – 2.4.8**
-- PHP **8.1 – 8.4**
+- Adobe Commerce / Magento Open Source **2.4.1 – 2.4.9**
+- PHP **8.1 – 8.5**
 - PHP extension **openssl** (required)
 
 ### Installation via Magento Back Office
 
-You can follow Magento’s instruction provided at
-[https://devdocs.magento.com/guides/v2.3/comp-mgr/extens-man/extensman-main-pg.html](https://devdocs.magento.com/guides/v2.3/comp-mgr/extens-man/extensman-main-pg.html)
+The Magento Back Office extension installer (Web Setup Wizard / Component Manager) was
+deprecated in Magento 2.3.6 and removed in Magento 2.4.0, so it is not available on the
+supported versions (2.4.1 – 2.4.9). Install the module via Composer instead (see below).
+
+For reference, Adobe's guide on managing third-party extensions is available at
+[https://experienceleague.adobe.com/en/docs/commerce-operations/installation-guide/tutorials/extensions](https://experienceleague.adobe.com/en/docs/commerce-operations/installation-guide/tutorials/extensions)
 
 ### Installation via composer
 
@@ -29,7 +33,6 @@ Run the following commands in Magento root directory:
 
 ```
 composer require payplug/payplug-magento2  # (*)
-composer install
 php bin/magento module:enable Payplug_Payments --clear-static-content
 php bin/magento setup:upgrade
 php bin/magento setup:di:compile
@@ -37,7 +40,7 @@ php bin/magento setup:static-content:deploy <languages>  # (**)(***)
 php bin/magento cache:clean
 ```
 
-(\*) If you didn’t save them when you installed Magento 2, this command will ask for your Magento authentication keys (https://devdocs.magento.com/guides/v2.3/install-gde/prereq/connect-auth.html).
+(\*) If you didn’t save them when you installed Magento 2, this command will ask for your Magento authentication keys (https://experienceleague.adobe.com/en/docs/commerce-operations/installation-guide/prerequisites/authentication-keys).
 Login = Public Key
 Password = Private Key
 
@@ -62,16 +65,15 @@ If you get a missing class error message while following the install process:
 [ReflectionException] Class Payplug\Authentication does not exist
 ```
 
-It’s likely that the Payplug PHP library was not installed along with the Magento module. This will happen if you did not run composer to install the module.
-To fix it, you should require the missing dependency with composer :
+It’s likely that the Payplug PHP library was not installed along with the Magento module.
+This normally never happens when installing through Composer, since the module already
+declares `payplug/payplug-php` and `giggsey/libphonenumber-for-php` (used to normalize the
+customers' phone number) as dependencies. If for any reason they are missing, you can require
+them explicitly:
 
 ```
-composer require payplug/payplug-php:^3.0
-```
-
-You will then need to install another library which we use to normalize the customers' phone number
-```
-composer require giggsey/libphonenumber-for-php:^8.10
+composer require payplug/payplug-php:^4.1
+composer require giggsey/libphonenumber-for-php:"^8.10|^9.0"
 ```
 
 ### Cron Job Configuration
@@ -93,6 +95,10 @@ For more information on how to properly configure and schedule Magento 2 cron jo
 For more information about the new **`payplug_payments_check_order_consistency`** cron, consult
 [the Payplug CRON documentation](docs/CRONS.md)
 
+### Additional Documentation
+
+- [Asynchronous order status updates (crons)](docs/CRONS.md)
+- [Using Payplug card payment with a headless application](docs/HEADLESS.md)
 
 ### Update Payplug Payments Module
 
@@ -100,7 +106,6 @@ Run the following commands in Magento root directory:
 
 ```
 composer require --update-with-all-dependencies payplug/payplug-magento2:VERSION_YOU_WANT_TO_UPDATE_TO  # (*)
-composer install
 php bin/magento setup:upgrade
 php bin/magento setup:di:compile
 php bin/magento setup:static-content:deploy <languages>  # (**)
@@ -110,7 +115,7 @@ php bin/magento cache:clean
 (\*) To determine which value for `VERSION_YOU_WANT_TO_UPDATE_TO`, you can check out our [last releases](https://github.com/payplug/payplug-magento2/releases)
 For example, you can run: 
 ```
-composer require --update-with-all-dependencies payplug/payplug-magento2:^1.5
+composer require --update-with-all-dependencies payplug/payplug-magento2:^4.8
 ```
 
 (\*\*) With the languages option, you can define for which language you want to generate your static content. Languages should be separated with a space. 
