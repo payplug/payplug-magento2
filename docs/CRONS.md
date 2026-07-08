@@ -1,6 +1,13 @@
-# Asynchronous Order Status Updates (from v4.3.0)
+# Asynchronous Processing (order statuses, invoices & refunds)
 
-Starting with **version 4.3.0**, the Payplug module for Magento introduces an **asynchronous** workflow that runs **in parallel** with the standard (immediate) payment flow. This addition ensures that orders are updated automatically when payment confirmations are delayed by the bank or by Payplug, preventing them from getting stuck in “payment review.”
+The Payplug module relies on Magento's cron for **two distinct asynchronous mechanisms**, both of which are required for the module to work correctly:
+
+1. **Order status reconciliation** (from **v4.3.0**) — runs in the **`payplug`** cron group. It ensures that orders are updated automatically when payment confirmations are delayed by the bank or by Payplug, preventing them from getting stuck in “payment review.”
+2. **Message queue consumers** for **invoice creation and refunds** — triggered by Magento's native `consumers_runner` job, which lives in the **`default`** cron group. See [Message Queue Consumers (invoices & refunds)](#message-queue-consumers-invoices--refunds) below.
+
+> ⚠️ **Both the `default` and the `payplug` cron groups must run.** Enabling only `payplug` reconciles order statuses but leaves invoices and refunds unprocessed.
+>
+> **Note:** The **`default`** cron group is not a Payplug-specific requirement — it is a prerequisite of *any* Magento installation. Magento's cron (the `default` group among others) already powers core features such as asynchronous order confirmation emails, reindexing, stock/inventory maintenance and admin grid updates. On a correctly configured store it is therefore **already running**. Before adding a dedicated crontab entry, first verify that it is actually being executed (see [Verifying Cron Execution and Logs](#verifying-cron-execution-and-logs)); only add one if the `default` group is missing.
 
 ---
 
@@ -14,6 +21,28 @@ As of v4.3.0, Magento leverages **Magento’s cron** to periodically check the p
 
 - **Immediate Confirmations**: If the payment is confirmed quickly, the order follows the regular workflow (no change).
 - **Delayed Confirmations**: If confirmation is delayed, a cron job runs in the background to reconcile the final payment status.
+
+---
+
+## Message Queue Consumers (invoices & refunds)
+
+Beyond order-status reconciliation, the module creates **invoices** and processes **refunds** asynchronously through Magento's message queue. Two consumers are declared in `etc/queue_consumer.xml` (both on the MySQL `db` connection):
+
+| Topic | Consumer | Handler | Purpose |
+| --- | --- | --- | --- |
+| `payplug.order.invoicing` | `payplug.order.invoicing` | `Payplug\Payments\Service\CreateOrderInvoice::execute` | Creates the invoice for a paid order |
+| `payplug.order.refunding` | `payplug.order.refunding` | `Payplug\Payments\Service\CreateOrderRefund::execute` | Creates the credit memo / refund for an order |
+
+When a payment is captured or a refund is received (e.g. via IPN), the module **publishes** a message to the relevant topic instead of processing it inline. The message is then picked up by the corresponding consumer.
+
+Because these consumers use the `db` connection, they are executed by Magento's native **`consumers_runner`** cron job, which belongs to the **`default`** cron group (module `Magento_MessageQueue`). In other words:
+
+- If the **`default`** cron group does **not** run, published messages pile up in the queue and **no invoice or refund is ever created**, even though payments and order statuses look fine.
+- This is independent from the `payplug` cron group, which only handles `check_order_consistency` and `auto_capture_deferred_payments`.
+
+> **Note:** `consumers_runner` behavior can be tuned in `app/etc/env.php` (`cron_run`, `max_messages`, `consumers`, `multiple_processes`). Make sure it is not disabled (`cron_run` must not be set to `false`) and, if the `consumers` allow-list is used, that `payplug.order.invoicing` and `payplug.order.refunding` are not excluded.
+>
+> ⚠️ **Do not configure `multiple_processes` for the Payplug consumers** (`payplug.order.invoicing`, `payplug.order.refunding`). Running several parallel processes for the same consumer can process messages targeting the same order concurrently, leading to race conditions such as duplicated invoices or refunds. Keep these consumers running as a single process.
 
 ---
 
@@ -48,13 +77,19 @@ Some users customize their crontab to run specific cron groups. For example, a c
 * * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=default 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
 ```
 
-In such cases, **you must add the `payplug` cron group** to your crontab to ensure that the asynchronous order status updates are processed. For example:
+In such cases, **you must make sure that both the `default` and the `payplug` cron groups run**:
+
+- The **`default`** group runs Magento's `consumers_runner` job, which processes the invoice and refund message queue consumers (see [Message Queue Consumers](#message-queue-consumers-invoices--refunds)).
+- The **`payplug`** group runs `payplug_payments_check_order_consistency` and `payplug_payments_auto_capture_deferred_payments`.
+
+For example:
 
 ```bash
+* * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=default 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
 * * * * * /usr/local/bin/php /var/www/project/magento/bin/magento cron:run --group=payplug 2>&1 | grep -v "Ran jobs by schedule" >> /var/www/project/magento/var/log/magento.cron.log
 ```
 
-This will ensure that the Payplug cron tasks (`payplug_payments_check_order_consistency` and `payplug_payments_auto_capture_deferred_payments`) are executed according to the schedule defined in your `crontab.xml`.
+> ⚠️ Running **only** `--group=payplug` reconciles order statuses but leaves the `default` group's `consumers_runner` unexecuted, so **invoices and refunds will never be created**.
 
 ## Dynamic Cron Group Execution
 
@@ -104,12 +139,13 @@ As an alternative approach, you could dynamically list all cron groups declared 
 
 ## Summary
 
-- **Change in v4.3.0**: An asynchronous mechanism now reconciles delayed payment confirmations automatically via the `payplug` cron group.
+- **Order status reconciliation (v4.3.0)**: An asynchronous mechanism reconciles delayed payment confirmations automatically via the `payplug` cron group.
+- **Invoices & refunds**: These are created asynchronously through Magento message queue consumers, executed by the `consumers_runner` job of the **`default`** cron group.
 - **No Impact on Standard Workflow**: Orders still follow the immediate confirmation process when payments are processed quickly.
 - **Required Merchant Action**:
-    1. If you use the native Magento cron installation (`bin/magento cron:install`), everything should work automatically.
-    2. If you have a custom crontab that runs specific groups, ensure that you add an entry for the **`payplug`** cron group.
-- **Benefit**: This asynchronous flow helps prevent orders from being stuck in “payment review” due to delayed confirmations.
+    1. If you use the native Magento cron installation (`bin/magento cron:install`), everything should work automatically (all groups run).
+    2. If you have a custom crontab that runs specific groups, ensure that **both** the **`default`** group (invoices/refunds via `consumers_runner`) **and** the **`payplug`** group (status reconciliation & auto-capture) are executed.
+- **Benefit**: This asynchronous flow prevents orders from being stuck in “payment review” and ensures invoices and refunds are processed reliably.
 
 ---
 
