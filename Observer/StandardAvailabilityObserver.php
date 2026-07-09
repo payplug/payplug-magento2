@@ -23,6 +23,7 @@ use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Payplug\Payments\Gateway\Config\Standard;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
@@ -71,6 +72,7 @@ class StandardAvailabilityObserver implements ObserverInterface
         }
 
         $storeId = (int)$quote->getStoreId();
+
         if (!$adapter->getConfigData('active', $storeId)) {
             $checkResult->setData('is_available', false);
             return;
@@ -87,6 +89,15 @@ class StandardAvailabilityObserver implements ObserverInterface
         if (empty($apiKey)) {
             $checkResult->setData('is_available', false);
 
+            return;
+        }
+
+        $websiteId = (int) $quote->getStore()->getWebsiteId();
+
+        if ($adapter->getCode() === Standard::METHOD_CODE
+            && $this->payplugConfig->isHostedFieldsActive($websiteId) === true
+        ) {
+            /** no other condition needed for Hosted fields */
             return;
         }
 

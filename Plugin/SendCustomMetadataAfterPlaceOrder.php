@@ -56,7 +56,10 @@ class SendCustomMetadataAfterPlaceOrder
         try {
             $payplugPayment = $this->payplugDataHelper->getOrderPayment($order->getIncrementId());
         } catch (NoSuchEntityException) {
-            $this->payplugLogger->error('Could not retrieve order payment when sending custom metadata');
+            return $orderId;
+        }
+
+        if ($payplugPayment->isHostedFieldsPayment() === true) {
             return $orderId;
         }
 

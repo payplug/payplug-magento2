@@ -82,7 +82,7 @@
             <argument name="client" xsi:type="object">Payplug\Payments\Helper\Http\StandardClient</argument>
         </arguments>
     </virtualType>
-    <virtualType name="PayplugPaymentStandardCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+    <virtualType name="PayplugPaymentStandardCaptureCommand" type="Payplug\Payments\Gateway\Command\GatewayCommand">
         <arguments>
             <argument name="requestBuilder" xsi:type="object">PayplugPaymentStandardCaptureRequest</argument>
             <argument name="transferFactory" xsi:type="object">Payplug\Payments\Gateway\Http\TransferFactory</argument>
@@ -1295,6 +1295,11 @@
             <argument name="commands" xsi:type="array">
                 <item name="payplug_payments_migrate_metadata_from_quote_to_order" xsi:type="object">Payplug\Payments\Console\Command\MigrateAuthorizationMetadata</item>
             </argument>
+        </arguments>
+    </type>
+    <type name="Payplug\Payments\Observer\CreateHostedFieldsPaymentAfterQuoteSubmit">
+        <arguments>
+            <argument name="commandPool" xsi:type="object">PayplugPaymentStandardCommandPool</argument>
         </arguments>
     </type>
 </config>

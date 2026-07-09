@@ -10,6 +10,7 @@ namespace Payplug\Payments\Gateway\Http\Client\Standard;
 use Exception;
 use Magento\Framework\App\Request\Http as HttpRequest;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Message\ManagerInterface as MessageManagerInterface;
 use Magento\Payment\Gateway\Http\ClientInterface;
 use Magento\Payment\Gateway\Http\TransferInterface;
@@ -59,6 +60,9 @@ class Refund implements ClientInterface
         } catch (PayplugException $e) {
             $this->payplugLogger->error($e->__toString());
             throw new Exception(__('Error while refunding online. Please try again or contact us.'));
+        } catch (LocalizedException $e) {
+            $this->payplugLogger->error($e->getMessage());
+            throw new Exception(__($e->getMessage()));
         } catch (Exception $e) {
             $this->payplugLogger->error($e->getMessage());
             throw new Exception(__('Error while refunding online. Please try again or contact us.'));

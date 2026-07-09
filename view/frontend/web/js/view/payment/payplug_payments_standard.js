@@ -10,10 +10,13 @@ define([
 ], function (Component, rendererList) {
     'use strict';
 
+    const isHostedFieldsActive = window.checkoutConfig.payment.payplug_payments_standard.is_hosted_fields_active;
+    const componentFile = isHostedFieldsActive === true ? 'payplug_payments_standard-method-hosted-fields' : 'payplug_payments_standard-method-integrated';
+
     rendererList.push(
         {
             type: 'payplug_payments_standard',
-            component: 'Payplug_Payments/js/view/payment/method-renderer/payplug_payments_standard-method'
+            component: 'Payplug_Payments/js/view/payment/method-renderer/' + componentFile
         }
     );
 

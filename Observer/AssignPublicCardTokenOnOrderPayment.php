@@ -11,7 +11,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Payment\Observer\AbstractDataAssignObserver;
 use Magento\Quote\Api\Data\PaymentInterface;
 
-class PaymentDataAssignObserver extends AbstractDataAssignObserver
+class AssignPublicCardTokenOnOrderPayment extends AbstractDataAssignObserver
 {
     /**
      * Add Card data to payment additional information

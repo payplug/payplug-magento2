@@ -42,6 +42,7 @@
         <column xsi:type="varchar" name="order_id" nullable="false" length="32" comment="Order Increment ID"/>
         <column xsi:type="varchar" name="payment_id" nullable="false" length="32" default="pay_xxxxxxxxxxxxxxxxxxxxx" comment="Payment ID"/>
         <column xsi:type="boolean" name="is_sandbox" nullable="false" default="0" comment="Is Sandbox"/>
+        <column xsi:type="boolean" name="is_hosted_fields_payment" nullable="false" default="0" comment="Is Hosted Fields Payment"/>
         <column xsi:type="boolean" name="is_installment_plan_payment_processed" nullable="true" comment="Payplug Payments Installment Plan Payment Processed Flag"/>
         <column xsi:type="varchar" name="sent_by" nullable="true" length="255" comment="Payplug Payments On demand - sent by"/>
         <column xsi:type="varchar" name="sent_by_value" nullable="true" length="255" comment="Payplug Payments On demand - sent by value"/>
