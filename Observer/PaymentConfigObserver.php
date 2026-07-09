@@ -31,9 +31,9 @@ use Payplug\Payments\Gateway\Config\Ondemand as OndemandConfig;
 use Payplug\Payments\Gateway\Config\Oney as OneyConfig;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees as OneyWithoutFeesConfig;
 use Payplug\Payments\Gateway\Config\Satispay as SatispayConfig;
+use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
-use Payplug\Payments\Gateway\Config\Scalapay as ScalapayConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
 use Payplug\Payments\Service\GetOauth2ClientData;
@@ -110,6 +110,8 @@ class PaymentConfigObserver implements ObserverInterface
             } else {
                 $this->processOauthGeneralConfig($groups);
             }
+
+            $this->processHostedFieldsConfig($groups);
 
             $this->setPostAndParamGroups($groups);
 
@@ -336,6 +338,27 @@ class PaymentConfigObserver implements ObserverInterface
         }
 
         $this->enforceIntegratedPaymentPermissions($groups, $fields);
+    }
+
+    /**
+     * Process Hosted Fields configuration
+     *
+     * @param array $groups
+     * @return void
+     */
+    private function processHostedFieldsConfig(array &$groups): void
+    {
+        $paymentPageMode = (string) ($groups['general']['fields']['payment_page']['value'] ?? '');
+        $hostedFieldsIsEnabled = (bool) ($groups['hostedfields']['fields']['active']['value'] ?? false);
+
+        if ($hostedFieldsIsEnabled === true && $paymentPageMode !== Config::PAYMENT_PAGE_INTEGRATED) {
+            $groups['general']['fields']['payment_page']['value'] = Config::PAYMENT_PAGE_INTEGRATED;
+            $groups['general']['fields']['payment_page']['inherit'] = 0;
+
+            $this->messageManager->addNoticeMessage(__(
+                'Integrated payment mode is enabled (required by Hosted Fields Advanced)'
+            ));
+        }
     }
 
     /**

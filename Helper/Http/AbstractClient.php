@@ -9,24 +9,19 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Http;
 
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
 use Payplug\Core\HttpClient;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Payments\Helper\Config;
 use Payplug\Resource\APIResource;
 
-abstract class AbstractClient extends AbstractHelper
+abstract class AbstractClient
 {
     /**
-     * @param Context $context
      * @param Config $payplugConfig
      */
     public function __construct(
-        Context $context,
-        private Config $payplugConfig
+        private readonly Config $payplugConfig
     ) {
-        parent::__construct($context);
     }
 
     /**

@@ -11,11 +11,13 @@ namespace Payplug\Payments\Observer;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Payplug\Exception\ConfigurationException;
 use Payplug\Exception\ConfigurationNotSetException;
+use Payplug\Payments\Api\Data\OrderPaymentInterface;
 use Payplug\Payments\Helper\Data as PayplugDataHelper;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
 
@@ -38,6 +40,9 @@ class SendInvoiceIncrementIdToTransactionMetadata implements ObserverInterface
      *
      * @param Observer $observer
      * @return void
+     * @throws ConfigurationException
+     * @throws ConfigurationNotSetException
+     * @throws LocalizedException
      */
     public function execute(Observer $observer): void
     {
@@ -47,6 +52,14 @@ class SendInvoiceIncrementIdToTransactionMetadata implements ObserverInterface
         $method = $order->getPayment()?->getMethod();
 
         if ($this->payplugDataHelper->isCodePayplugPayment($method) === false) {
+            return;
+        }
+
+        $isHostedFieldsPayment = (bool) $order->getPayment()->getAdditionalInformation(
+            OrderPaymentInterface::HF_PAYMENT_KEY
+        );
+
+        if ($isHostedFieldsPayment === true) {
             return;
         }
 

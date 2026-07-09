@@ -36,6 +36,7 @@
             "order_id": true,
             "payment_id": true,
             "is_sandbox": true,
+            "is_hosted_fields_payment": true,
             "is_installment_plan_payment_processed": true,
             "sent_by": true,
             "sent_by_value": true,

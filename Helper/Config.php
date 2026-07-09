@@ -14,6 +14,7 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\ScopeInterface;
@@ -31,6 +32,7 @@ class Config
     public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
     public const SCALAPAY_CONFIG_PATH = 'payment/payplug_payments_scalapay/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
+    public const PAYPLUG_PAYMENT_AUTOCAPTURE_DELAY_CONFIG_PATH = 'payment/payplug_payments_standard/autocapture_delay';
     public const EMAIL_WEBSITE_OWNER_CONFIG_PATH = 'trans_email/ident_general/email';
     public const ENVIRONMENT_TEST = 'test';
     public const ENVIRONMENT_LIVE = 'live';
@@ -61,6 +63,7 @@ class Config
      * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
      * @param RequestInterface $request
      * @param ScopeConfigInterface $scopeConfig
+     * @param EncryptorInterface $encryptor
      */
     public function __construct(
         private readonly WriterInterface $configWriter,
@@ -69,7 +72,8 @@ class Config
         private readonly StoreManagerInterface $storeManager,
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
         private readonly RequestInterface $request,
-        private readonly ScopeConfigInterface $scopeConfig
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly EncryptorInterface $encryptor
     ) {
     }
 
@@ -305,6 +309,116 @@ class Config
     public function isIntegrated(): bool
     {
         return (string)$this->getConfigValue('payment_page') === self::PAYMENT_PAGE_INTEGRATED;
+    }
+
+    /**
+     * Get if the payment page is hosted fields mode
+     *
+     * @param int $websiteId
+     * @return bool
+     */
+    public function isHostedFieldsActive(int $websiteId): bool
+    {
+        $isHostedFieldsActive = (bool) $this->getConfigValue(
+            'active',
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId,
+            'payplug_payments/hostedfields/'
+        );
+
+        return $this->isIntegrated() === true && $isHostedFieldsActive === true;
+    }
+
+    /**
+     * Get Hosted Fields API Key ID
+     *
+     * @param int $websiteId
+     * @return string|null
+     */
+    public function getHostedFieldsApiKeyId(int $websiteId): ?string
+    {
+        $apiKeyId = $this->getConfigValue(
+            'api_key_id',
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId,
+            'payplug_payments/hostedfields/'
+        );
+
+        return (string) $apiKeyId ?: null;
+    }
+
+    /**
+     * Get Hosted Fields API Key
+     *
+     * @param int $websiteId
+     * @return string|null
+     */
+    public function getHostedFieldsApiKey(int $websiteId): ?string
+    {
+        $apiKey = $this->getConfigValue(
+            'api_key',
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId,
+            'payplug_payments/hostedfields/'
+        );
+
+        return (string) $apiKey ?: null;
+    }
+
+    /**
+     * Get Hosted Fields Identifier
+     *
+     * @param int $websiteId
+     * @return string|null
+     */
+    public function getHostedFieldsIdentifier(int $websiteId): ?string
+    {
+        $identifier = $this->getConfigValue(
+            'identifier',
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId,
+            'payplug_payments/hostedfields/'
+        );
+
+        return (string) $identifier ?: null;
+    }
+
+    /**
+     * Get Hosted Fields Account Key
+     *
+     * @param int $websiteId
+     * @return string|null
+     */
+    public function getHostedFieldsAccountKey(int $websiteId): ?string
+    {
+        $encryptedAccountKey = $this->getConfigValue(
+            'account_key',
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId,
+            'payplug_payments/hostedfields/'
+        );
+
+        if ($encryptedAccountKey === null) {
+            return null;
+        }
+
+        return $this->encryptor->decrypt($encryptedAccountKey);
+    }
+
+    /**
+     * Get Auto-capture delay
+     *
+     * @param int|null $storeId
+     * @return int
+     */
+    public function getAutoCaptureDelay(?int $storeId = null): int
+    {
+        return (int) $this->getConfigValue(
+            '',
+            ScopeInterface::SCOPE_STORE,
+            $storeId,
+            self::PAYPLUG_PAYMENT_AUTOCAPTURE_DELAY_CONFIG_PATH
+        );
     }
 
     /**

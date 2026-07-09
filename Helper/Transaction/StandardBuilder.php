@@ -9,26 +9,46 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Helper\Transaction;
 
+use DateInterval;
+use DateTime;
+use DateTimeZone;
+use Exception;
 use Laminas\Uri\Http as UriHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Data\Form\FormKey;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\PaymentException;
+use Magento\Framework\HTTP\Header;
+use Magento\Framework\HTTP\PhpEnvironment\RemoteAddress;
+use Magento\Payment\Gateway\Data\OrderAdapterInterface;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Api\Data\CartInterface;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Vault\Api\PaymentTokenManagementInterface;
+use Payplug\Payments\Api\Data\OrderPaymentInterface;
 use Payplug\Payments\Helper\Card;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Country;
 use Payplug\Payments\Helper\Phone;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Order\Payment as PayplugOrderPayment;
+use Payplug\Payments\Service\BuildHostedFieldsParamsHash;
 use Payplug\Payments\Service\GetCartContextForTransaction;
 use Payplug\Payments\Service\GetMaskedQuoteId;
 use Payplug\Payments\Service\PlaceOrderExtraParamsRegistry;
+use Transliterator;
 
 class StandardBuilder extends AbstractBuilder
 {
     /**
      * @param Card $cardHelper
+     * @param Header $header
+     * @param RemoteAddress $remoteAddress
+     * @param BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash
+     * @param PaymentTokenManagementInterface $paymentTokenManagement
+     * @param StoreManagerInterface $storeManager
      * @param Context $context
      * @param Config $payplugConfig
      * @param Country $countryHelper
@@ -42,6 +62,11 @@ class StandardBuilder extends AbstractBuilder
      */
     public function __construct(
         private readonly Card $cardHelper,
+        private readonly Header $header,
+        private readonly RemoteAddress $remoteAddress,
+        private readonly BuildHostedFieldsParamsHash $buildHostedFieldsParamsHash,
+        private readonly PaymentTokenManagementInterface $paymentTokenManagement,
+        private readonly StoreManagerInterface $storeManager,
         Context $context,
         Config $payplugConfig,
         Country $countryHelper,
@@ -178,5 +203,160 @@ class StandardBuilder extends AbstractBuilder
     private function isOneClick(int $storeId): bool
     {
         return $this->payplugConfig->isOneClick($storeId);
+    }
+
+    /**
+     * Build PayPlug payment transaction
+     *
+     * @param OrderInterface|OrderAdapterInterface $order
+     * @param InfoInterface $payment
+     * @param CartInterface $quote
+     *
+     * @return array
+     * @throws Exception
+     */
+    public function buildTransaction($order, InfoInterface $payment, $quote): array
+    {
+        $isHostedFieldsPayment = (bool) $payment->getAdditionalInformation(OrderPaymentInterface::HF_PAYMENT_KEY);
+
+        if ($isHostedFieldsPayment === true) {
+            return $this->buildHostedFieldsTransaction($order, $payment, $quote);
+        }
+
+        return parent::buildTransaction($order, $payment, $quote);
+    }
+
+    /**
+     * Build PayPlug Hosted Fields payment transaction
+     *
+     * @param OrderAdapterInterface $order
+     * @param InfoInterface $payment
+     * @param CartInterface $quote
+     * @return array
+     * @throws LocalizedException
+     * @throws Exception
+     */
+    private function buildHostedFieldsTransaction(
+        OrderAdapterInterface $order,
+        InfoInterface $payment,
+        CartInterface $quote
+    ): array {
+        $websiteId = (int) $this->storeManager->getStore($order->getStoreId())->getWebsiteId();
+
+        $hostedFieldsIdentifier = $this->payplugConfig->getHostedFieldsIdentifier($websiteId);
+        $hostedFieldsApiKeyId = $this->payplugConfig->getHostedFieldsApiKeyId($websiteId);
+        $hostedFieldsToken = (string) $payment->getAdditionalInformation(OrderPaymentInterface::HF_TOKEN_KEY);
+        $hostedFieldsSelectedBrand = (string) $payment->getAdditionalInformation(OrderPaymentInterface::HF_BRAND_KEY);
+        $mustSaveCard = (bool) $payment->getAdditionalInformation(OrderPaymentInterface::HF_SAVE_CARD_KEY);
+        $hostedFieldCardId = (string) $payment->getAdditionalInformation(OrderPaymentInterface::HF_CARD_ID_KEY);
+        $hostedFieldsCardHolder = (string) $payment->getAdditionalInformation(
+            OrderPaymentInterface::HF_CARD_HOLDER_KEY
+        );
+
+        $transliterator = Transliterator::create('Any-Latin; Latin-ASCII');
+
+        if ($transliterator !== null) {
+            $hostedFieldsCardHolder = (string) $transliterator->transliterate($hostedFieldsCardHolder);
+            $hostedFieldsCardHolder = (string) preg_replace('/[^a-zA-Z1-9 -]/', '', $hostedFieldsCardHolder);
+            $hostedFieldsCardHolder = strtoupper($hostedFieldsCardHolder);
+        }
+
+        $customerId = $order->getCustomerId();
+
+        if ($hostedFieldsIdentifier === null || $hostedFieldsApiKeyId === null) {
+            throw new Exception('Hosted Fields credentials are missing');
+        }
+
+        if ($hostedFieldsToken === '' && $hostedFieldCardId === '') {
+            throw new Exception('Token or card id is not set');
+        }
+
+        $billingAddress = $order->getBillingAddress();
+
+        if ($billingAddress === null) {
+            throw new Exception('Billing address is not set');
+        }
+
+        $customerFullname = $billingAddress->getFirstname() . ' ' . $billingAddress->getLastname();
+        $streetFull = implode(', ', array_filter([
+            $billingAddress->getStreetLine1(),
+            $billingAddress->getStreetLine2()
+        ]));
+
+        $maskedQuoteId = $this->getMaskedQuoteId($quote);
+        $storeId = (int) $order->getStoreId();
+
+        $paymentMethod = $this->payplugConfig->isStandardPaymentModeDeferred() ? 'authorization' : 'payment';
+
+        $payload = [
+            'method' => $paymentMethod,
+            'store_id' => $storeId, // for internal use
+            'params' => [
+                'IDENTIFIER' => $hostedFieldsIdentifier,
+                'OPERATIONTYPE' => $paymentMethod,
+                'AMOUNT' => (int) round($order->getGrandTotalAmount() * 100),
+                'VERSION' => PayplugOrderPayment::HOSTED_FIELDS_PARAMS_VERSION,
+                'CLIENTIDENT' => $customerFullname,
+                'CLIENTEMAIL' => $billingAddress->getEmail(),
+                'CLIENTREFERRER' => $this->header->getHttpReferer(),
+                'CLIENTUSERAGENT' => $this->header->getHttpUserAgent(),
+                'CLIENTIP' => $this->remoteAddress->getRemoteAddress(),
+                'ORDERID' => $order->getOrderIncrementId(),
+                'DESCRIPTION' => 'Order #' . $order->getOrderIncrementId(),
+                'APIKEYID' => $hostedFieldsApiKeyId,
+                '3DSECUREDISPLAYMODE' => 'raw',
+                'REDIRECTURLSUCCESS' => $this->getReturnUrl($storeId, $maskedQuoteId),
+                'REDIRECTURLCANCEL' => $this->getCancelUrl($storeId, $maskedQuoteId),
+                'BILLINGADDRESS' => $streetFull,
+                'BILLINGPOSTALCODE' => $billingAddress->getPostcode(),
+                'BILLINGCITY' => $billingAddress->getCity(),
+                'BILLINGCOUNTRY' => $billingAddress->getCountryId(),
+                'CARDFULLNAME' => $hostedFieldsCardHolder ?: '-' // Fallback is working, despite not informative
+            ],
+        ];
+
+        if ($hostedFieldsToken !== '') {
+            $payload['params']['HFTOKEN'] = $hostedFieldsToken;
+        }
+
+        if ($hostedFieldsSelectedBrand !== '') {
+            $payload['params']['SELECTEDBRAND'] = $hostedFieldsSelectedBrand;
+        }
+
+        if ($this->payplugConfig->isOneClick() === true && $customerId !== null) {
+            if ($mustSaveCard === true || $hostedFieldCardId !== '') {
+                $payload['params']['ALIASMODE'] = 'oneclick';
+            }
+
+            if ($mustSaveCard === true) {
+                $payload['params']['CREATEALIAS'] = true;
+            } elseif ($hostedFieldCardId !== '') {
+                $paymentToken = $this->paymentTokenManagement->getByPublicHash($hostedFieldCardId, $customerId);
+
+                if ($paymentToken === null) {
+                    throw new Exception('Cannot find payment token');
+                }
+
+                $payload['params']['ALIAS'] = $paymentToken->getGatewayToken();
+            }
+        }
+
+        if ($paymentMethod === 'authorization') {
+            $addInterval = new DateInterval(sprintf('P%dD', $this->payplugConfig->getAutoCaptureDelay($storeId)));
+            $captureDate = new DateTime('now', new DateTimeZone('Europe/Paris'));
+            $captureDate->add($addInterval);
+            $payload['params']['CAPTUREDATE'] = $captureDate->format('Y-m-d');
+        }
+
+        $anonymizedTransactionDetails = $this->getAnonymizedTransactionDetails($order, $payload);
+        $this->logger->info('New transaction (Hosted Fields)', ['details' => $anonymizedTransactionDetails]);
+
+        $payload['params']['HASH'] = $this->buildHostedFieldsParamsHash->execute(
+            $payload['params'],
+            BuildHostedFieldsParamsHash::SEPARATOR_API_KEY,
+            $websiteId
+        );
+
+        return $payload;
     }
 }

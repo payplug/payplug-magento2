@@ -9,24 +9,23 @@
 //  _____________________________________________
 
 & when (@media-common = true) {
-    .form-integrated {
-        width: @pp-payment-integrated-form__width;
+    .payment-form {
+        max-width: @pp-payment-integrated-form__width;
         padding-left: @pp-payment-integrated-form__padding-left;
         margin-bottom: @pp-payment-integrated-form__margin-bottom;
 
+        .card-title {
+            color: #555D64;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
         .schemes-container {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 10px;
-            margin-top: 20px;
-
-            .card-title {
-                color: #555D64;
-                font-size: 14px;
-                font-weight: 700;
-                text-transform: uppercase;
-            }
 
             .schemes {
                 .scheme {
@@ -87,18 +86,39 @@
             }
         }
 
+        .pan-container {
+            position: relative;
+
+            #brand-container {
+                position: absolute;
+                min-width: 125px;
+                top: 5px;
+                right: 5px;
+                bottom: 5px;
+                z-index: 1;
+                height: 0;
+            }
+
+            .pan-input-container:not(.hosted-fields-empty-state) {
+                + .error-container {
+                    + #brand-container  {
+                        height: auto;
+                    }
+                }
+            }
+        }
+
         .input-container {
             position: relative;
             height: 40px;
-            width: calc(@pp-payment-integrated-form__width - 16px - 50px);
-            padding: 0 16px 0 50px;
+            padding: 0 16px 0 40px;
             border: 1px solid @oney-color6;
 
             &::before {
                 content: "";
                 position: absolute;
                 top: 20%;
-                left: 16px;
+                left: 10px;
                 width: 24px;
                 height: 24px;
                 background: #95999e 50% no-repeat;
@@ -131,6 +151,42 @@
             -webkit-mask-image: url('Payplug_Payments::images/icons/account.svg');
         }
 
+        .cardholder-input-container {
+            margin-bottom: 20px;
+        }
+
+        &.payment-form-hf .cardholder-input-container {
+            margin-bottom: 5px;
+
+            .cardholder {
+                padding: 0;
+
+                &::placeholder {
+                    color: darkgray;
+                }
+
+                &:focus {
+                    box-shadow: none;
+                }
+            }
+
+            + .error-container {
+                margin-bottom:10px;
+            }
+        }
+
+        .hosted-fields-invalid-state {
+            border: 1px solid red;
+        }
+
+        .hosted-fields-valid-state {
+            border: 1px solid green;
+        }
+
+        &.payment-form-hf .pan-input-container:not(.hosted-fields-empty-state) {
+            padding-right: 130px;
+        }
+
         .pan-input-container::before {
             mask-image: url('Payplug_Payments::images/icons/card.svg');
             -webkit-mask-image: url('Payplug_Payments::images/icons/card.svg');
@@ -153,11 +209,7 @@
             margin-top: 10px;
 
             > div {
-                width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap);
-
-                .input-container {
-                    width: calc(@pp-payment-integrated-form__width / 2 - @pp-payment-integrated-form-cvv__gap - 16px - 50px);
-                }
+                width: 100%;
             }
         }
 
@@ -203,7 +255,7 @@
         &.after-cards {
             margin-top: -(@indent__base);
 
-            .form-integrated {
+            .payment-form {
                 padding-left: 40px;
             }
         }
@@ -267,7 +319,7 @@
 //  _____________________________________________
 
 .media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
-    .form-integrated {
+    .payment-form {
         padding-left: 0;
     }
 
@@ -275,7 +327,7 @@
         &.after-cards {
             margin-top: 0;
 
-            .form-integrated {
+            .payment-form {
                 padding-left: @pp-payment-integrated-form__padding-left;
             }
         }
@@ -283,5 +335,26 @@
 
     .payplug-payments-cards {
         margin-top: -(@pp-checkout-payment-method-label-desktop__padding-y);
+    }
+}
+
+body.checkout-index-index > #info-container {
+    display: none!important; // cannot predict dynamic (random) position of info block. Workaround : hide block may be acceptable
+}
+
+//
+//  MOBILE
+//  _____________________________________________
+.media-width(@extremum, @break) when (@extremum = 'max') and (@break = @screen__xs) {
+    .payment-form-hf {
+        padding-left: 0;
+
+        .pan-input-container {
+            padding-left: 10px;
+
+            &:before {
+                content: none;
+            }
+        }
     }
 }
