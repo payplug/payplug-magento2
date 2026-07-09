@@ -13,10 +13,12 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Payment\Gateway\Response\HandlerInterface;
 use Magento\Sales\Model\Order\Payment;
+use Payplug\Payments\Api\Data\OrderPaymentInterface;
 use Payplug\Payments\Gateway\Helper\SubjectReader;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Order\PaymentFactory;
 use Payplug\Payments\Model\OrderPaymentRepository;
+use Payplug\Resource\Payment as PayplugPaymentResource;
 
 class PaymentHandler implements HandlerInterface
 {
@@ -47,51 +49,69 @@ class PaymentHandler implements HandlerInterface
     {
         $paymentDO = $this->subjectReader->readPayment($handlingSubject);
 
-        if ($paymentDO->getPayment() instanceof Payment) {
-            $payplugPayment = $response['payment'];
+        /** @var PayplugPaymentResource|null $payplugPaymentResource */
+        $payplugPaymentResource = $response['payment'] ?? null;
 
-            /** @var Payment $payment */
-            $payment = $paymentDO->getPayment();
-            $order = $payment->getOrder();
-            $order->setCanSendNewEmailFlag(false);
-
-            $isPaid = 1;
-
-            if (!$payplugPayment->is_paid && $payplugPayment->failure === null) {
-                // save payment url for pending redirect/lightbox payment
-                $payment->setAdditionalInformation(
-                    'payment_url',
-                    $payplugPayment->hosted_payment ? $payplugPayment->hosted_payment->payment_url : ''
-                );
-                $isPaid = 0;
-            }
-
-            $payment->setAdditionalInformation('is_paid', $isPaid);
-            $payment->setAdditionalInformation('payplug_payment_id', $payplugPayment->id);
-            $payment->setAdditionalInformation('quote_id', $order->getQuoteId());
-
-            if ($this->config->isStandardPaymentModeDeferred()) {
-                $payment->setAdditionalInformation('is_deferred_payment_standard', true);
-            }
-
-            if (isset($payplugPayment->payment_method['merchant_session'])) {
-                $payment->setAdditionalInformation(
-                    'merchand_session',
-                    $payplugPayment->payment_method['merchant_session']
-                );
-            }
-
-            $payment->setTransactionId($payplugPayment->id);
-            $payment->setIsTransactionPending(true);
-            $payment->setIsTransactionClosed(false);
-            $payment->setShouldCloseParentTransaction(false);
-
-            $orderPayment = $this->payplugPaymentFactory->create();
-            $orderPayment->setOrderId($order->getIncrementId());
-            $orderPayment->setPaymentId($payplugPayment->id);
-            $orderPayment->setIsSandbox(!$payplugPayment->is_live);
-
-            $this->orderPaymentRepository->save($orderPayment);
+        if ($paymentDO->getPayment() instanceof Payment === false || $payplugPaymentResource === null) {
+            return;
         }
+
+        /** @var Payment $payment */
+        $payment = $paymentDO->getPayment();
+        $order = $payment->getOrder();
+        $order->setCanSendNewEmailFlag(false);
+
+        $isPaid = 1;
+
+        if (!$payplugPaymentResource->is_paid && $payplugPaymentResource->failure === null) {
+            // save payment url for pending redirect/lightbox payment
+            $payment->setAdditionalInformation(
+                'payment_url',
+                $payplugPaymentResource->hosted_payment ? $payplugPaymentResource->hosted_payment->payment_url : ''
+            );
+
+            $payment->setAdditionalInformation(
+                'payment_url_post_params',
+                $payplugPaymentResource->hosted_payment->payment_url_post_params ?? ''
+            );
+
+            $isPaid = 0;
+        }
+
+        $payment->setAdditionalInformation('is_paid', $isPaid);
+        $payment->setAdditionalInformation('payplug_payment_id', $payplugPaymentResource->id);
+        $payment->setAdditionalInformation('quote_id', $order->getQuoteId());
+
+        if ($this->config->isStandardPaymentModeDeferred()) {
+            $payment->setAdditionalInformation('is_deferred_payment_standard', true);
+        }
+
+        if (isset($payplugPaymentResource->payment_method['merchant_session'])) {
+            $payment->setAdditionalInformation(
+                'merchand_session',
+                $payplugPaymentResource->payment_method['merchant_session']
+            );
+        }
+
+        $payment->setTransactionId($payplugPaymentResource->id);
+        $payment->setIsTransactionPending(true);
+        $payment->setIsTransactionClosed(false);
+        $payment->setShouldCloseParentTransaction(false);
+
+        $isHostedFieldsPayment = (bool) $payment->getAdditionalInformation(OrderPaymentInterface::HF_PAYMENT_KEY);
+
+        $orderPayment = $this->payplugPaymentFactory->create();
+        $orderPayment->setOrderId($order->getIncrementId());
+        $orderPayment->setPaymentId($payplugPaymentResource->id);
+        $orderPayment->setIsHostedFieldsPayment($isHostedFieldsPayment);
+
+        if ($isHostedFieldsPayment === true) {
+            $orderPayment->setIsSandbox(false); // Hosted Fields has Live only mode
+        } else {
+            $isLive = (bool) ($payplugPaymentResource->is_live ?? false);
+            $orderPayment->setIsSandbox($isLive === false);
+        }
+
+        $this->orderPaymentRepository->save($orderPayment);
     }
 }
