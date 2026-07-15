@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.8.0) - 2026-07-15
+
+### Features
+
+- Ensure Apple Pay is enabled only for websites with EUR as base currency (MAG-645)
+- Remove local session data usage for last public card token persistence (MAG-712)
+- Add Hosted Fields payment mode (MAG-632)
+- Fix Hosted Fields with Onclick + 3DS redirect (MAG-797)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.7.2...v4.8.0)**
+
+### Added
+
+- Add Hosted Fields payment mode (MAG-632) [#ebb24876](https://github.com/payplug/payplug-magento2/commit/ebb24876d997807526ebfab1bd6a41cdf7127810)
+
+### Fixed
+
+- Remove local session data usage for last public card token persistence (MAG-712) [#9c1185b8](https://github.com/payplug/payplug-magento2/commit/9c1185b8c9af34e03fee8612fa4af4f88a01ae0d)
+- Ensure Apple Pay is enabled only for websites with EUR as base currency (MAG-645) [#de1d6c10](https://github.com/payplug/payplug-magento2/commit/de1d6c10f3237de45d4f79fc7c573f6878f5d437)
+- Fix Hosted Fields with Onclick + 3DS redirect (MAG-797) [#5f5ae9e2](https://github.com/payplug/payplug-magento2/commit/5f5ae9e2eedcfd9ad79736adf7a8a5cb285db657)
+
 ## [4.7.2](https://github.com/payplug/payplug-magento2/releases/tag/v4.7.2) - 2026-07-09
 
 ### Features
