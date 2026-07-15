@@ -178,15 +178,11 @@ define([
             });
         },
         /**
-         * After place order
+         * @returns {void}
          */
         afterPlaceOrder: function () {
-            if (this.getSelectedCardId() !== '') {
-                window.location.replace(window.checkoutConfig.defaultSuccessPageUrl);
-                return;
-            }
-
-            this._super();
+            fullScreenLoader.startLoader();
+            this.processIntegratedAfterPlaceOrder();
         },
         /**
          * Get payment method data

@@ -290,14 +290,10 @@ define([
                 typeof window.checkoutConfig.payment.payplug_payments_standard.is_sandbox !== 'undefined';
         },
         /**
-         * After place order
-         * Triggered after a payment has been placed.
-         *
-         * @returns void
+         * Shared after-place-order dispatcher (abstract parent): saved-card redirect, classic
+         * lightbox/redirect, or integrated inline. Hosted Fields overrides this method entirely.
          */
         afterPlaceOrder: function () {
-            const self = this;
-
             fullScreenLoader.startLoader();
 
             if (this.getSelectedCardId() !== '') {
@@ -315,6 +311,13 @@ define([
                 return;
             }
 
+            this.processIntegratedAfterPlaceOrder();
+        },
+        /**
+         * @returns {void}
+         */
+        processIntegratedAfterPlaceOrder: function () {
+            const self = this;
             const standardUrl = url.build(this.standard) + '?should_redirect=0&has_payment_form=1';
             const paymentReturnUrl = url.build(this.paymentReturn);
 
