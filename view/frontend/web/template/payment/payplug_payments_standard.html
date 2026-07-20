@@ -26,6 +26,7 @@
         <label class="label" data-bind="attr: {'for': getCode()}">
             <span data-bind="text: getTitle()"></span>
             <img data-bind="
+                visible: isEuroCurrency(),
                 attr: {
                     'src': getCardLogo()
                 }"

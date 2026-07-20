@@ -372,6 +372,9 @@ define([
 
             const paymentReturnUrl = url.build(this.paymentReturn);
             window.location.replace(paymentReturnUrl);
+        },
+        isEuroCurrency: function () {
+            return quote.totals() && quote.totals().quote_currency_code === 'EUR';
         }
     });
 });
