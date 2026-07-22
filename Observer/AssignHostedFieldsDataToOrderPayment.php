@@ -27,6 +27,7 @@ class AssignHostedFieldsDataToOrderPayment extends AbstractDataAssignObserver
     public function execute(Observer $observer): void
     {
         $additionalData = $this->readDataArgument($observer)->getData(PaymentInterface::KEY_ADDITIONAL_DATA);
+        $payment = $this->readPaymentModelArgument($observer);
 
         $isHostedFieldsPayment = (bool) ($additionalData[OrderPaymentInterface::HF_PAYMENT_KEY] ?? false);
         $hostedFieldsToken = $additionalData[OrderPaymentInterface::HF_TOKEN_KEY] ?? null;
@@ -34,15 +35,24 @@ class AssignHostedFieldsDataToOrderPayment extends AbstractDataAssignObserver
         $hostedFieldsSaveCard = (bool) ($additionalData[OrderPaymentInterface::HF_SAVE_CARD_KEY] ?? false);
         $hostedFieldsCardHolder = $additionalData[OrderPaymentInterface::HF_CARD_HOLDER_KEY] ?? null;
 
+        $hostedFieldsData = [
+            OrderPaymentInterface::HF_PAYMENT_KEY => $isHostedFieldsPayment,
+            OrderPaymentInterface::HF_TOKEN_KEY => $hostedFieldsToken,
+            OrderPaymentInterface::HF_BRAND_KEY => $hostedFieldsBrand,
+            OrderPaymentInterface::HF_SAVE_CARD_KEY => $hostedFieldsSaveCard,
+            OrderPaymentInterface::HF_CARD_HOLDER_KEY => $hostedFieldsCardHolder,
+        ];
+
         if ($isHostedFieldsPayment === false) {
+            foreach (array_keys($hostedFieldsData) as $key) {
+                $payment->unsAdditionalInformation($key);
+            }
+
             return;
         }
 
-        $payment = $this->readPaymentModelArgument($observer);
-        $payment->setAdditionalInformation(OrderPaymentInterface::HF_PAYMENT_KEY, true);
-        $payment->setAdditionalInformation(OrderPaymentInterface::HF_TOKEN_KEY, $hostedFieldsToken);
-        $payment->setAdditionalInformation(OrderPaymentInterface::HF_BRAND_KEY, $hostedFieldsBrand);
-        $payment->setAdditionalInformation(OrderPaymentInterface::HF_SAVE_CARD_KEY, $hostedFieldsSaveCard);
-        $payment->setAdditionalInformation(OrderPaymentInterface::HF_CARD_HOLDER_KEY, $hostedFieldsCardHolder);
+        foreach ($hostedFieldsData as $key => $value) {
+            $payment->setAdditionalInformation($key, $value);
+        }
     }
 }
