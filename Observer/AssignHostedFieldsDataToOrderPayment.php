@@ -34,11 +34,17 @@ class AssignHostedFieldsDataToOrderPayment extends AbstractDataAssignObserver
         $hostedFieldsSaveCard = (bool) ($additionalData[OrderPaymentInterface::HF_SAVE_CARD_KEY] ?? false);
         $hostedFieldsCardHolder = $additionalData[OrderPaymentInterface::HF_CARD_HOLDER_KEY] ?? null;
 
+        $payment = $this->readPaymentModelArgument($observer);
+
         if ($isHostedFieldsPayment === false) {
+            $payment->unsAdditionalInformation(OrderPaymentInterface::HF_PAYMENT_KEY);
+            $payment->unsAdditionalInformation(OrderPaymentInterface::HF_TOKEN_KEY);
+            $payment->unsAdditionalInformation(OrderPaymentInterface::HF_BRAND_KEY);
+            $payment->unsAdditionalInformation(OrderPaymentInterface::HF_SAVE_CARD_KEY);
+            $payment->unsAdditionalInformation(OrderPaymentInterface::HF_CARD_HOLDER_KEY);
+
             return;
         }
-
-        $payment = $this->readPaymentModelArgument($observer);
         $payment->setAdditionalInformation(OrderPaymentInterface::HF_PAYMENT_KEY, true);
         $payment->setAdditionalInformation(OrderPaymentInterface::HF_TOKEN_KEY, $hostedFieldsToken);
         $payment->setAdditionalInformation(OrderPaymentInterface::HF_BRAND_KEY, $hostedFieldsBrand);
