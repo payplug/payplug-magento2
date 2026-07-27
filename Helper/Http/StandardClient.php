@@ -101,7 +101,7 @@ class StandardClient extends AbstractClient
         $this->payplugLogger->error(sprintf('Hosted field payment rejected : code %s', $execCode));
 
         throw new LocalizedException(__(
-            'The transaction was aborted and your card has not been charged.'
+            'The transaction was aborted and your card has not been charged'
         ));
     }
 }
