@@ -14,12 +14,18 @@
         padding-left: @pp-payment-integrated-form__padding-left;
         margin-bottom: @pp-payment-integrated-form__margin-bottom;
 
+        .card-title-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
         .card-title {
             color: #555D64;
             font-size: 14px;
             font-weight: 700;
             text-transform: uppercase;
-            margin-bottom: 10px;
         }
 
         .schemes-container {
@@ -237,7 +243,7 @@
 
             a {
                 display: block;
-                color: #909192;
+                color: @pp-payment-integrated-form-mention__color;
                 text-decoration: underline;
             }
         }
@@ -312,6 +318,63 @@
             }
         }
     }
+
+    // Hosted fields multi-devise tooltip
+    body {
+        &.checkout-index-index > #info-container {
+            display: none!important; // Hide native tooltip to add custom render and avoid side effects
+        }
+    }
+
+    // Custom tooltip
+    .hf-tooltip {
+        max-width: 420px;
+        padding: 10px;
+        color: @pp-payment-integrated-form-tooltip__color;
+        border-radius: 8px;
+        background: @pp-payment-integrated-form-tooltip__background-color !important;
+        font-size: @pp-payment-integrated-form-tooltip__font-size;
+        box-shadow: 0 0 7px black;
+        border: 0 none !important;
+
+        &-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: @pp-payment-integrated-form-mention__color;
+
+            &:hover {
+                cursor: pointer;
+            }
+        }
+
+        .arrow {
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            width: 70px;
+            height: 16px;
+            margin-left: -35px;
+            overflow: hidden;
+
+            &::after {
+                content: "";
+                position: absolute;
+                left: 20px;
+                top: -20px;
+                width: 25px;
+                height: 25px;
+                background: @pp-payment-integrated-form-tooltip__background-color !important;
+                box-shadow: 6px 5px 9px -9px black;
+                transform: rotate(45deg);
+            }
+
+            &.left {
+                left: 20px;
+            }
+        }
+    }
 }
 
 //
@@ -336,10 +399,6 @@
     .payplug-payments-cards {
         margin-top: -(@pp-checkout-payment-method-label-desktop__padding-y);
     }
-}
-
-body.checkout-index-index > #info-container {
-    display: none!important; // cannot predict dynamic (random) position of info block. Workaround : hide block may be acceptable
 }
 
 //
