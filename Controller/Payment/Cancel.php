@@ -93,7 +93,7 @@ class Cancel extends AbstractPayment
 
         if ($orderPaymentMethod === null
             || $this->payplugHelper->isCodePayplugPayment($orderPaymentMethod) === false
-            || $order->getState() !== Order::STATE_PENDING_PAYMENT
+            || in_array($order->getState(), [Order::STATE_CANCELED, Order::STATE_PENDING_PAYMENT], true) === false
         ) {
             return $resultRedirect;
         }
