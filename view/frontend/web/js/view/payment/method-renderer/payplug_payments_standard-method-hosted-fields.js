@@ -9,7 +9,8 @@ define([
     'Payplug_Payments/js/view/payment/method-renderer/payplug_payments_standard-method',
     'Magento_Checkout/js/model/full-screen-loader',
     'mage/translate',
-    'payplugHostedFields'
+    'payplugHostedFields',
+    'jquery-ui-modules/tooltip'
 ], function (
     $,
     Component,
@@ -68,6 +69,8 @@ define([
                 lang = 'fr';
             }
 
+            let self = this;
+
             let hostedFieldsConfig = {
                 key: {
                     id: this.apiKeyId,
@@ -88,6 +91,13 @@ define([
                         placeholder: '•••• •••• •••• ••••',
                         enableAutospacing: true,
                         style: this.inputStyles,
+                        onInput: function (event) {
+                            if (!event.brands || !event.brands.length) {
+                                return;
+                            }
+
+                            self.isMultiDevise(event.brands.length > 1);
+                        },
                     },
                     expiry: {
                         id: 'exp-input-container',
@@ -105,8 +115,6 @@ define([
 
             this.hostedFieldsApi = dalenys.hostedFields(hostedFieldsConfig);
             this.hostedFieldsApi.load();
-
-            let self = this;
 
             $('#cardholder').on('input blur', function () {
                 self.validateCardholder();
@@ -203,5 +211,28 @@ define([
 
             return data;
         },
+        /**
+         * Initialize the jQuery UI Tooltip on the multi-devise trigger element.
+         *
+         * @param {HTMLElement} tooltipTrigger
+         * @returns {void}
+         */
+        initMultiDeviseTooltip: function (tooltipTrigger) {
+            $(tooltipTrigger).tooltip({
+                tooltipClass: 'hf-tooltip',
+                position: {
+                    my: "left bottom-12",
+                    at: "left top",
+                    using: function( position, feedback ) {
+                        $(this).css(position);
+                        $('<div>')
+                            .addClass('arrow')
+                            .addClass(feedback.vertical)
+                            .addClass(feedback.horizontal)
+                            .appendTo(this);
+                    }
+                }
+            });
+        }
     });
 });

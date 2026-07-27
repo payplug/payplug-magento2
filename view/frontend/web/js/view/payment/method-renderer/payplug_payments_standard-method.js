@@ -40,6 +40,7 @@ define([
         isIntegratedPayment:  ko.observable(false),
         isHostedFieldsPayment:  ko.observable(false),
         canDisplayPaymentForm: ko.observable(false),
+        isMultiDevise: ko.observable(false),
         inputStyle:{
             default: {
                 color: '#2B343D',

@@ -87,8 +87,21 @@
                     </div>
                 </div>
 
-                <div class="card-title" data-bind="visible: isHostedFieldsPayment">
-                    <!-- ko i18n: 'Your card' --><!-- /ko -->
+                <div class="card-title-wrapper">
+                    <div class="card-title" data-bind="visible: isHostedFieldsPayment">
+                        <!-- ko i18n: 'Your card' --><!-- /ko -->                        
+                    </div>
+
+                    <div class="hf-tooltip-trigger"
+                        data-bind="
+                            visible: isMultiDevise,
+                            afterRender: initMultiDeviseTooltip,
+                            attr: {title: $t('Your card supports two networks, and you can choose which one to use for this payment. If you do not make a choice, the network selected by default by the merchant will be used.')}
+                        ">
+                        <span data-bind="i18n: 'Select your network'"></span>
+                        <img data-bind="attr: { src: require.toUrl('Payplug_Payments/images/icons/info.svg') }"
+                             alt="">
+                    </div>
                 </div>
 
                 <div class="schemes-container" data-bind="visible: isIntegratedPayment">
