@@ -99,11 +99,14 @@ define([
         },
 
         /**
-         * Get card logo
-         * @returns {String}
+         * Get card logo URL, null when the quote currency is not EUR.
+         *
+         * @returns {String|null}
          */
         getCardLogo: function () {
-            return window.checkoutConfig.payment.payplug_payments_standard.logo;
+            return window.checkoutConfig?.quoteData?.base_currency_code === 'EUR'
+                ? window.checkoutConfig.payment.payplug_payments_standard.logo
+                : null;
         },
 
         /**
