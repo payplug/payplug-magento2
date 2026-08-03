@@ -88,9 +88,10 @@
                     </div>
                 </div>
 
+                <!-- ko if: isHostedFieldsPayment -->
                 <div class="card-title-wrapper">
-                    <div class="card-title" data-bind="visible: isHostedFieldsPayment">
-                        <!-- ko i18n: 'Your card' --><!-- /ko -->                        
+                    <div class="card-title">
+                        <!-- ko i18n: 'Your card' --><!-- /ko -->
                     </div>
 
                     <div class="hf-tooltip-trigger"
@@ -104,6 +105,7 @@
                              alt="">
                     </div>
                 </div>
+                <!-- /ko -->
 
                 <div class="schemes-container" data-bind="visible: isIntegratedPayment">
                     <div class="card-title">
