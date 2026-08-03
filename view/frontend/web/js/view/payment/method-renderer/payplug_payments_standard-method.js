@@ -307,6 +307,7 @@ define([
 
             if (!this.isIntegrated()) {
                 if (window.checkoutConfig.payment.payplug_payments_standard.is_embedded) {
+                    fullScreenLoader.stopLoader();
                     lightboxOnSuccessAction.execute();
                     return;
                 }
