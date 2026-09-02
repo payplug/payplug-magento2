@@ -16,7 +16,9 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory as JsonResultFactory;
 use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Order;
+use Payplug\Payments\Gateway\Config\ApplePay;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
@@ -64,6 +66,13 @@ class CancelFromButton implements HttpGetActionInterface
 
         try {
             $order = $this->getCurrentOrder->execute();
+            $orderPayment = $order->getPayment();
+
+            if ($orderPayment->getMethod() !== ApplePay::METHOD_CODE
+                || $order->getState() !== Order::STATE_PENDING_PAYMENT
+            ) {
+                throw new LocalizedException(__('ApplePay User Cancel - Invalid order status or payment method'));
+            }
 
             $this->payplugHelper->cancelOrderAndInvoice($order, false);
 
