@@ -59,7 +59,15 @@ class LegacyAuthInfo extends Field
         if ($isLegacyConnected) {
             $message = __('Connected with <strong>%1</strong>', $this->helper->getConfigValue('email'));
         } elseif ($isOauthConnected) {
-            $message = __('Connected with OAuth2 Authentication');
+            $companyName = $this->helper->getConfigValue(
+                Config::OAUTH_COMPANY_NAME,
+                ScopeInterface::SCOPE_WEBSITE,
+                (int)$this->_request->getParam('website'),
+                Config::OAUTH_CONFIG_PATH
+            );
+
+            $message = $companyName ? __('Connected with OAuth2 Authentication (<strong>%1</strong>)', $companyName)
+                : __('Connected with OAuth2 Authentication');
         } elseif ($isDefaultLegacyConnected) {
             $message = __(
                 'Connected with <strong>%1</strong> in default scope',

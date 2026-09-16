@@ -110,6 +110,7 @@
                     <comment>Need to use old login / password authentication mode ? Please disconnect Oauth2 connection</comment>
                 </field>
                 <field id="email"/>
+                <field id="company_name"/>
                 <field id="client_data"/>
                 <field id="access_token_data"/>
             </group>

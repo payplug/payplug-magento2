@@ -42,6 +42,7 @@ class Config
     public const OAUTH_ENVIRONMENT_MODE = 'environmentmode';
     public const OAUTH_CLIENT_DATA = 'client_data';
     public const OAUTH_EMAIL = 'email';
+    public const OAUTH_COMPANY_NAME = 'company_name';
     public const APM_FILTERING_MODE_SHIPPING_ADDRESS = 'shipping_address';
     public const APM_FILTERING_MODE_BILLING_ADDRESS = 'billing_address';
     public const MODULE_VERSION = '4.8.1';
@@ -549,6 +550,7 @@ class Config
             'payplug_payments/general/can_use_integrated_payments',
             // OAUTH 2 configuration
             'payplug_payments/oauth2/email',
+            'payplug_payments/oauth2/company_name',
             'payplug_payments/oauth2/client_data',
             'payplug_payments/oauth2/access_token_data',
             // Payplug payment Standard configuration

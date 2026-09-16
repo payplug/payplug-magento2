@@ -39,6 +39,7 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
     public const PAYPLUG_OAUTH2_AUTHENTICATION_CONTEXT_DATA = 'payplug_oauth2_params';
     public const PAYPLUG_OAUTH2_BASE_ENVIRONMENT_MODE = 'test';
     public const PAYPLUG_OAUTH2_BASE_PAYMENT_PAGE_MODE = 'integrated';
+    private const PAYPLUG_OAUTH2_CLIENT_NAME_SEGMENTS = 3;
 
     /**
      * @param RequestInterface $request
@@ -169,6 +170,14 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
             $this->saveConfig(ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_EMAIL, $payloadDecode['email']);
 
             /**
+             * Store merchant company name into config
+             */
+            $this->saveConfig(
+                ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_COMPANY_NAME,
+                $this->extractCompanyName([$liveClientDataResult, $testClientDataResult])
+            );
+
+            /**
              * Cleanup legacy auth config
              */
             $this->configHelper->initScopeData();
@@ -195,6 +204,46 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
             'adminhtml/system_config/edit',
             ['section' => 'payplug_payments', 'website' => $this->getWebsiteId()]
         );
+    }
+
+    /**
+     * Extract the merchant company name from the name the portal gave to the clients created above
+     *
+     * The portal builds that name as "Plugin - <shop domain> - <company name> (<mode>)", the company name
+     * being the only human readable value telling two companies of a same merchant apart.
+     *
+     * @param array $clientDataResults
+     * @return string
+     */
+    private function extractCompanyName(array $clientDataResults): string
+    {
+        foreach ($clientDataResults as $clientDataResult) {
+            $clientName = $clientDataResult['httpResponse']['client_name'] ?? null;
+
+            if (!is_string($clientName)) {
+                continue;
+            }
+
+            $modePattern = sprintf(
+                '/\s*\(\s*(?:%s|%s)\s*\)\s*$/iu',
+                ConfigHelper::ENVIRONMENT_TEST,
+                ConfigHelper::ENVIRONMENT_LIVE
+            );
+            $segments = preg_split(
+                '/\s+[-\x{2010}-\x{2015}]\s+/u',
+                preg_replace($modePattern, '', $clientName),
+                self::PAYPLUG_OAUTH2_CLIENT_NAME_SEGMENTS
+            );
+            $companyName = count($segments) === self::PAYPLUG_OAUTH2_CLIENT_NAME_SEGMENTS
+                ? trim($segments[self::PAYPLUG_OAUTH2_CLIENT_NAME_SEGMENTS - 1])
+                : '';
+
+            if ($companyName !== '') {
+                return $companyName;
+            }
+        }
+
+        return '';
     }
 
     /**

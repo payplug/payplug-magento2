@@ -79,6 +79,14 @@ class Oauth2Logout extends AbstractOauth2
             $websiteId && $this->isEmailSetForCurrentScope() ? __('Website') : __('Default')
         );
 
+        $companyName = $this->getCompanyNameValue();
+
+        if ($companyName) {
+            $statusLabel = __('Company: <strong>%1</strong>', $this->escapeHtml($companyName))
+                . '<br>'
+                . $statusLabel;
+        }
+
         $info = <<<HTML
 <div class="message message-success">$statusLabel</div>
 HTML;
@@ -143,6 +151,22 @@ HTML;
 
         return $this->scopeConfig->getValue(
             'payplug_payments/oauth2/email',
+            $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            $websiteId ?: 0
+        );
+    }
+
+    /**
+     * Get the company name the account is attached to
+     *
+     * @return string|null
+     */
+    private function getCompanyNameValue(): ?string
+    {
+        $websiteId = $this->getCurrentWebsite();
+
+        return $this->scopeConfig->getValue(
+            Config::OAUTH_CONFIG_PATH . Config::OAUTH_COMPANY_NAME,
             $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $websiteId ?: 0
         );
