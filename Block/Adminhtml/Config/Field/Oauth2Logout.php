@@ -73,11 +73,15 @@ class Oauth2Logout extends AbstractOauth2
             'onclick' => "setLocation('$url')"
         ];
 
-        $statusLabel = __(
-            'You are currently authenticated with email <strong>%1</strong> (%2)',
-            $this->getEmailValue(),
-            $websiteId && $this->isEmailSetForCurrentScope() ? __('Website') : __('Default')
-        );
+        $statusLabel = __('You are currently authenticated with email <strong>%1</strong>', $this->getEmailValue());
+        $companyName = $this->getCompanyNameValue();
+
+        if ($companyName) {
+            $statusLabel .= ' (<strong>' . $this->escapeHtml($companyName) . '</strong>)';
+        }
+
+        $statusLabel .= '<br>'
+            . ($websiteId && $this->isEmailSetForCurrentScope() ? __('Scope: website') : __('Scope: default'));
 
         $info = <<<HTML
 <div class="message message-success">$statusLabel</div>
@@ -143,6 +147,22 @@ HTML;
 
         return $this->scopeConfig->getValue(
             'payplug_payments/oauth2/email',
+            $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            $websiteId ?: 0
+        );
+    }
+
+    /**
+     * Get the company name the account is attached to
+     *
+     * @return string|null
+     */
+    private function getCompanyNameValue(): ?string
+    {
+        $websiteId = $this->getCurrentWebsite();
+
+        return $this->scopeConfig->getValue(
+            Config::OAUTH_CONFIG_PATH . Config::OAUTH_COMPANY_NAME,
             $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $websiteId ?: 0
         );
