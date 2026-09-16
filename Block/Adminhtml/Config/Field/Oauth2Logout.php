@@ -15,6 +15,7 @@ use Magento\Config\Model\ResourceModel\Config\Data\CollectionFactory as ConfigDa
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\State;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Framework\Escaper;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Framework\View\Helper\SecureHtmlRenderer;
@@ -31,6 +32,7 @@ class Oauth2Logout extends AbstractOauth2
      * @param State $appState
      * @param TimezoneInterface $timezone
      * @param GetOauth2ClientData $getOauth2ClientData
+     * @param Escaper $escaper
      * @param ConfigDataCollectionFactory $configDatacollection
      * @param Context $context
      * @param array $data
@@ -42,6 +44,7 @@ class Oauth2Logout extends AbstractOauth2
         private readonly State $appState,
         private readonly TimezoneInterface $timezone,
         private readonly GetOauth2ClientData $getOauth2ClientData,
+        private readonly Escaper $escaper,
         ConfigDataCollectionFactory $configDatacollection,
         Context $context,
         array $data = [],
@@ -74,10 +77,17 @@ class Oauth2Logout extends AbstractOauth2
         ];
 
         $statusLabel = __(
-            'You are currently authenticated with email <strong>%1</strong> (%2)',
-            $this->getEmailValue(),
-            $websiteId && $this->isEmailSetForCurrentScope() ? __('Website') : __('Default')
+            'You are currently authenticated with email <strong>%1</strong>',
+            $this->escaper->escapeHtml($this->getEmailValue())
         );
+        $companyName = $this->getCompanyNameValue();
+
+        if ($companyName) {
+            $statusLabel .= ' (<strong>' . $this->escaper->escapeHtml($companyName) . '</strong>)';
+        }
+
+        $statusLabel .= '<br>'
+            . ($websiteId && $this->isEmailSetForCurrentScope() ? __('Scope: website') : __('Scope: default'));
 
         $info = <<<HTML
 <div class="message message-success">$statusLabel</div>
@@ -143,6 +153,22 @@ HTML;
 
         return $this->scopeConfig->getValue(
             'payplug_payments/oauth2/email',
+            $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            $websiteId ?: 0
+        );
+    }
+
+    /**
+     * Get the company name the account is attached to
+     *
+     * @return string|null
+     */
+    private function getCompanyNameValue(): ?string
+    {
+        $websiteId = $this->getCurrentWebsite();
+
+        return $this->scopeConfig->getValue(
+            Config::OAUTH_CONFIG_PATH . Config::OAUTH_COMPANY_NAME,
             $websiteId ? StoreScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             $websiteId ?: 0
         );

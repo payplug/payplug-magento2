@@ -31,6 +31,7 @@ use Payplug\Authentication as PayplugAuthentication;
 use Payplug\Payments\Helper\Config as ConfigHelper;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetOauth2AccessTokenData;
+use Payplug\Payments\Service\GetOauth2CompanyName;
 use Payplug\Payplug;
 
 class Oauth2FetchClientData extends Action implements HttpGetActionInterface
@@ -49,6 +50,7 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
      * @param SerializerInterface $serializer
      * @param ReinitableConfigInterface $scopeConfig
      * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
+     * @param GetOauth2CompanyName $getOauth2CompanyName
      * @param ConfigHelper $configHelper
      * @param EventManager $eventManager
      * @param TypeListInterface $typeList
@@ -65,6 +67,7 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
         private readonly SerializerInterface $serializer,
         private readonly ReinitableConfigInterface $scopeConfig,
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
+        private readonly GetOauth2CompanyName $getOauth2CompanyName,
         private readonly ConfigHelper $configHelper,
         private readonly EventManager $eventManager,
         private readonly TypeListInterface $typeList,
@@ -161,7 +164,7 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
              * Create first JWT for selected env mode
              */
             $websiteId = $this->getWebsiteId();
-            $this->getOauth2AccessTokenData->execute($this->getWebsiteId(), true);
+            $accessTokenData = $this->getOauth2AccessTokenData->execute($websiteId, true);
 
             /**
              * Store merchant email into config
@@ -181,6 +184,17 @@ class Oauth2FetchClientData extends Action implements HttpGetActionInterface
             $this->eventManager->dispatch(
                 'controller_action_predispatch_adminhtml_system_config_save',
                 ['request' => $this->request]
+            );
+
+            /**
+             * Store merchant company name into config
+             */
+            $this->saveConfig(
+                ConfigHelper::OAUTH_CONFIG_PATH . ConfigHelper::OAUTH_COMPANY_NAME,
+                $this->getOauth2CompanyName->execute(
+                    (string)($accessTokenData['access_token'] ?? ''),
+                    (string)($oauth2Params['company_id'] ?? '')
+                )
             );
 
             $this->typeList->cleanType('config');
