@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Payplug\Payments\Controller\Apm;
 
 use Exception;
+use Magento\Directory\Model\Country;
 use Magento\Directory\Model\ResourceModel\Country\CollectionFactory as CountryCollectionFactory;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -68,23 +69,24 @@ class IsAvailable extends Action
                     $countryCollection->addFieldToFilter('country_id', ['in' => $allowedCountryIds]);
                     $countryCollection->loadData();
 
-                    $countryNames = [];
+                    /**
+                     * @return string
+                     * @var Country $country
+                     */
+                    $countryNames = array_map(
+                        static fn (Country $country) => $country->getName(),
+                        $countryCollection->getItems()
+                    );
 
-                    foreach ($countryCollection as $country) {
-                        $countryNames[] = $country->getName();
-                    }
+                    $countries = implode(', ', $countryNames);
 
-                    if (count($countryNames) === 1) {
-                        $message = __(
-                            'Billing address is not eligible with this payment method. Allowed country : %1',
-                            implode(',', $countryNames)
-                        );
-                    } else {
-                        $message = __(
-                            'Billing address is not eligible with this payment method. Allowed countries : %1',
-                            implode(',', $countryNames)
-                        );
-                    }
+                    $message = count($countryNames) === 1 ? __(
+                        'Billing address is not eligible with this payment method. Allowed country : %1',
+                        $countries
+                    ) : __(
+                        'Billing address is not eligible with this payment method. Allowed countries : %1',
+                        $countries
+                    );
 
                     $result->setData([
                         'success' => false,
