@@ -64,6 +64,7 @@ class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInte
                     'is_italian' => false,
                     'more_info_url' => $this->oneyHelper->isMerchandItalian() ?
                         $this->oneyHelper->getMoreInfoUrl() : null,
+                    'widget' => $this->oneyHelper->getWidgetConfig(null, $this->methodCode),
                 ],
             ],
         ] : [];

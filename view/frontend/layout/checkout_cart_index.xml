@@ -18,7 +18,11 @@
 
         <referenceContainer name="checkout.cart.totals.container">
             <block name="payplug-payments-product-oney-wrapper" template="Payplug_Payments::oney/simulation_wrapper_checkout.phtml" after="checkout.cart.totals">
-                <block class="Payplug\Payments\Block\Oney\Simulation" name="payplug-payments-product-oney-simulation" template="Payplug_Payments::oney/simulation.phtml"/>
+                <block name="payplug-payments-product-oney-simulation" template="Payplug_Payments::oney/simulation.phtml">
+                    <arguments>
+                        <argument name="oney_view_model" xsi:type="object">Payplug\Payments\ViewModel\Oney</argument>
+                    </arguments>
+                </block>
             </block>
         </referenceContainer>
 

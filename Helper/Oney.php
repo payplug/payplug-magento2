@@ -7,16 +7,10 @@
 
 namespace Payplug\Payments\Helper;
 
-use DateMalformedStringException;
 use Exception;
-use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Directory\Model\CountryFactory;
-use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Locale\Resolver;
@@ -25,20 +19,12 @@ use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Pricing\Helper\Data as PricingHelper;
-use Payplug\Exception\ConfigurationException;
-use Payplug\Exception\ConfigurationNotSetException;
-use Payplug\Exception\ConnectionException;
-use Payplug\Exception\HttpException;
-use Payplug\Exception\PayplugException;
-use Payplug\Exception\UnexpectedAPIResponseException;
-use Payplug\OneySimulation;
+use Magento\Framework\Serialize\SerializerInterface;
 use Payplug\Payments\Gateway\Config\Oney as OneyConfig;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Logger\Logger;
-use Payplug\Payments\Model\Api\Login;
-use Payplug\Payments\Model\OneySimulation\Option;
-use Payplug\Payments\Model\OneySimulation\Result;
-use Payplug\Payments\Model\OneySimulation\Schedule;
+use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
+use Payplug\Payments\Service\SynchronizeAccountData;
 
 class Oney extends AbstractHelper
 {
@@ -55,10 +41,9 @@ class Oney extends AbstractHelper
 
     public const MAX_ITEMS = 1000;
 
-    /**
-     * @var AdapterInterface
-     */
-    private AdapterInterface $resourceConnection;
+    public const WIDGET_LOADER_URL_LIVE = 'https://assets.oney.io/build/loader.min.js';
+    public const WIDGET_LOADER_URL_TEST = 'https://assets-uat.oney.io/build/loader.min.js';
+
     /**
      * @var string|null
      */
@@ -72,12 +57,9 @@ class Oney extends AbstractHelper
      * @param CountryFactory $countryFactory
      * @param Resolver $localeResolver
      * @param Logger $logger
-     * @param CheckoutSession $checkoutSession
-     * @param CustomerSession $customerSession
      * @param PaymentDataHelper $paymentHelper
-     * @param Login $login
-     * @param WriterInterface $writer
-     * @param ResourceConnection $resourceConnection
+     * @param GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod
+     * @param SerializerInterface $serializer
      */
     public function __construct(
         Context $context,
@@ -87,16 +69,11 @@ class Oney extends AbstractHelper
         private readonly CountryFactory $countryFactory,
         private readonly Resolver $localeResolver,
         private readonly Logger $logger,
-        private readonly CheckoutSession $checkoutSession,
-        private readonly CustomerSession $customerSession,
         private readonly PaymentDataHelper $paymentHelper,
-        private readonly Login $login,
-        private readonly WriterInterface $writer,
-        ResourceConnection $resourceConnection
+        private readonly GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod,
+        private readonly SerializerInterface $serializer
     ) {
         parent::__construct($context);
-
-        $this->resourceConnection = $resourceConnection->getConnection();
     }
 
     /**
@@ -150,9 +127,15 @@ class Oney extends AbstractHelper
             return false;
         }
 
-        $storeLocale = $this->scopeConfig->getValue('general/locale/code', ScopeInterface::SCOPE_STORE, $storeId);
-        $localeCountry = explode('_', $storeLocale)[1] ?? null;
-        if ($localeCountry !== $this->getMerchandCountry()) {
+        if (\Locale::getRegion($this->localeResolver->getLocale()) !== $this->getMerchandCountry()) {
+            return false;
+        }
+
+        if ($this->getMerchantGuid() === '') {
+            $this->logger->warning(
+                'Oney merchant identifier is missing. Update your Payplug account information from the admin.'
+            );
+
             return false;
         }
 
@@ -160,10 +143,131 @@ class Oney extends AbstractHelper
     }
 
     /**
+     * Get Oney widget loader url according to environment mode
+     *
+     * @return string
+     */
+    public function getWidgetLoaderUrl(): string
+    {
+        return $this->payplugConfig->getIsSandbox()
+            ? self::WIDGET_LOADER_URL_TEST
+            : self::WIDGET_LOADER_URL_LIVE;
+    }
+
+    /**
+     * Is amount within Oney thresholds
+     *
+     * @param float $amount
+     * @param int|null $storeId
+     * @param string|null $currency
+     * @return bool
+     * @throws NoSuchEntityException
+     */
+    private function isAmountEligible(float $amount, ?int $storeId = null, ?string $currency = null): bool
+    {
+        $amountsByCurrency = $this->getOneyAmounts($storeId, $currency);
+        if ($amountsByCurrency === false) {
+            return false;
+        }
+
+        $amount = (int) round($amount * 100);
+
+        return $amount >= $amountsByCurrency['min_amount'] && $amount <= $amountsByCurrency['max_amount'];
+    }
+
+    /**
+     * Get Oney official widget configuration
+     *
+     * @param float|null $amount
+     * @param string|null $paymentMethod
+     * @return array
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function getWidgetConfig(?float $amount = null, ?string $paymentMethod = null): array
+    {
+        $paymentMethod = $paymentMethod ?? $this->getOneyMethod();
+        $amountsByCurrency = $this->getOneyAmounts();
+        $codes = $this->getBusinessTransactionCodes($paymentMethod);
+        $merchantGuid = $this->getMerchantGuid();
+        $isEnabled = $merchantGuid !== '' && !empty($codes);
+
+        return [
+            'payment_method' => $paymentMethod,
+            'loader_url' => $this->getWidgetLoaderUrl(),
+            'country' => (string) $this->getMerchandCountry(),
+            'language' => strtoupper(\Locale::getPrimaryLanguage($this->localeResolver->getLocale())),
+            'merchant_guid' => $merchantGuid,
+            'business_transaction_codes' => $codes,
+            'options' => $codes ? array_keys($codes) : array_values(
+                self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? []
+            ),
+            'allowed_countries' => $this->getAllowedCountries(),
+            'min_amount' => $amountsByCurrency ? $amountsByCurrency['min_amount'] / 100 : 0,
+            'max_amount' => $amountsByCurrency ? $amountsByCurrency['max_amount'] / 100 : 0,
+            'max_items' => self::MAX_ITEMS,
+            'amount' => $amount,
+            'is_enabled' => $isEnabled,
+            'is_eligible' => $isEnabled && $amount !== null && $this->isAmountEligible($amount),
+        ];
+    }
+
+    /**
+     * Get Oney merchant identifier provided by Payplug account
+     *
+     * @return string
+     */
+    private function getMerchantGuid(): string
+    {
+        return trim((string) $this->payplugConfig->getConfigValue(SynchronizeAccountData::ONEY_MERCHANT_GUID_FIELD));
+    }
+
+    /**
+     * Get Oney business transaction codes for a payment method, indexed by option type (3x, 4x)
+     *
+     * @param string $paymentMethod
+     * @return array
+     */
+    private function getBusinessTransactionCodes(string $paymentMethod): array
+    {
+        $businessCodes = $this->serializer->unserialize(
+            $this->payplugConfig->getConfigValue(SynchronizeAccountData::ONEY_BUSINESS_CODES_FIELD) ?: '[]'
+        );
+
+        $codes = [];
+        foreach (self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [] as $operation => $type) {
+            if (!empty($businessCodes[$operation])) {
+                $codes[$type] = (string) $businessCodes[$operation];
+            }
+        }
+
+        return $codes;
+    }
+
+    /**
+     * Get Oney allowed countries
+     *
+     * @return array
+     */
+    private function getAllowedCountries(): array
+    {
+        return array_values($this->getAllowedCountriesPerPaymentMethod->execute(OneyConfig::METHOD_CODE));
+    }
+
+    /**
+     * Is current store locale Italian (multi-store: an Italian store view of a non Italian merchant)
+     *
+     * @return bool
+     */
+    public function isItalianStore(): bool
+    {
+        return $this->localeResolver->getLocale() === 'it_IT';
+    }
+
+    /**
      * Is merchand Italian
      *
      * @return bool
-     * @throws NoSuchEntityException
      */
     public function isMerchandItalian(): bool
     {
@@ -191,77 +295,13 @@ class Oney extends AbstractHelper
     }
 
     /**
-     * Get PayPlug merchand country
+     * Get PayPlug merchand country, stored when the Payplug account information is synchronized
      *
-     * @return mixed|string
-     * @throws NoSuchEntityException
+     * @return string
      */
-    private function getMerchandCountry()
+    private function getMerchandCountry(): string
     {
-        $storeId = $this->storeManager->getStore()->getId();
-        $savedMerchandCountry = $this->getMerchandCountryFromConfig($storeId);
-        if (!empty($savedMerchandCountry)) {
-            return $savedMerchandCountry;
-        }
-
-        try {
-            $isSandbox = $this->payplugConfig->getIsSandbox($storeId);
-            $apiKey = $this->payplugConfig->getApiKey($isSandbox, $storeId);
-
-            if (empty($apiKey)) {
-                return '';
-            }
-
-            $result = $this->login->getAccount($apiKey);
-            if (!$result['status']) {
-                return '';
-            }
-            $country = $result['answer']['country'] ?? '';
-            $this->writer->save(
-                Config::CONFIG_PATH . 'merchand_country',
-                $country,
-                ScopeInterface::SCOPE_STORE,
-                $storeId
-            );
-
-            return $country;
-        } catch (Exception $e) {
-            $this->logger->error('Could not retrieve Payplug merchand country', [
-                'exception' => $e,
-            ]);
-
-            return '';
-        }
-    }
-
-    /**
-     * Get merchand country from configuration
-     *
-     * @param int $storeId
-     *
-     * @return mixed|string
-     */
-    private function getMerchandCountryFromConfig(int $storeId)
-    {
-        $savedMerchandCountry = $this->scopeConfig->getValue(
-            Config::CONFIG_PATH . 'merchand_country',
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-        if (!empty($savedMerchandCountry)) {
-            return $savedMerchandCountry;
-        }
-
-        $select = $this->resourceConnection->select()
-            ->from(
-                ['main_table' => $this->resourceConnection->getTableName('core_config_data')],
-                'value'
-            )
-            ->where('main_table.scope like ?', ScopeInterface::SCOPE_STORE . '%')
-            ->where('main_table.scope_id = ?', $storeId)
-            ->where('main_table.path = ?', Config::CONFIG_PATH . 'merchand_country');
-
-        return $this->resourceConnection->fetchOne($select);
+        return (string) $this->payplugConfig->getConfigValue('merchand_country');
     }
 
     /**
@@ -275,18 +315,33 @@ class Oney extends AbstractHelper
      */
     private function validateAmount($amount, $storeId = null, $currency = null): bool
     {
-        $amountsByCurrency = $this->getOneyAmounts($storeId, $currency);
-        $amount = (int) round($amount * 100);
-
-        if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
-            throw new Exception(__(
-                'To pay with Oney, the total amount of your cart must be between %1 and %2.',
-                $this->pricingHelper->currency($amountsByCurrency['min_amount'] / 100, true, false),
-                $this->pricingHelper->currency($amountsByCurrency['max_amount'] / 100, true, false)
-            ));
+        if (!$this->isAmountEligible((float) $amount, $storeId, $currency)) {
+            throw new Exception($this->getAmountRangeMessage($storeId, $currency));
         }
 
         return true;
+    }
+
+    /**
+     * Get the message explaining the Oney amount range
+     *
+     * @param int|null $storeId
+     * @param string|null $currency
+     * @return string
+     * @throws NoSuchEntityException
+     */
+    public function getAmountRangeMessage(?int $storeId = null, ?string $currency = null): string
+    {
+        $amountsByCurrency = $this->getOneyAmounts($storeId, $currency);
+        if ($amountsByCurrency === false) {
+            return '';
+        }
+
+        return (string) __(
+            'To pay with Oney, the total amount of your cart must be between %1 and %2.',
+            $this->pricingHelper->currency($amountsByCurrency['min_amount'] / 100, true, false),
+            $this->pricingHelper->currency($amountsByCurrency['max_amount'] / 100, true, false)
+        );
     }
 
     /**
@@ -327,13 +382,7 @@ class Oney extends AbstractHelper
      */
     private function validateCountry($countryCode, $throwException = true): bool
     {
-        $storeId = $this->storeManager->getStore()->getId();
-        $oneyCountries = $this->scopeConfig->getValue(
-            Config::CONFIG_PATH . 'oney_countries',
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-        $oneyCountries = json_decode($oneyCountries, true);
+        $oneyCountries = $this->getAllowedCountries();
 
         if (!in_array($countryCode, $oneyCountries)) {
             if (!$throwException) {
@@ -352,101 +401,6 @@ class Oney extends AbstractHelper
         }
 
         return true;
-    }
-
-    /**
-     * Get country for Oney
-     *
-     * @return string
-     * @throws NoSuchEntityException
-     * @throws LocalizedException
-     */
-    private function getDefaultCountry(): string
-    {
-        $quote = $this->checkoutSession->getQuote();
-        $billingAddress = $quote->getBillingAddress();
-        if (!empty($billingAddress->getCountryId())) {
-            return $billingAddress->getCountryId();
-        }
-
-        if (!$quote->isVirtual()) {
-            $shippingAddress = $quote->getShippingAddress();
-            if (!empty($shippingAddress->getCountryId())) {
-                return $shippingAddress->getCountryId();
-            }
-        }
-
-        if ($this->customerSession->isLoggedIn()) {
-            $defaultBilling = $this->customerSession->getCustomer()->getDefaultBillingAddress();
-            if ($defaultBilling !== false && !empty($defaultBilling->getCountryId())) {
-                return $defaultBilling->getCountryId();
-            }
-            if (!$quote->isVirtual()) {
-                $defaultShipping = $this->customerSession->getCustomer()->getDefaultShippingAddress();
-                if ($defaultShipping !== false && !empty($defaultShipping->getCountryId())) {
-                    return $defaultShipping->getCountryId();
-                }
-            }
-        }
-
-        return 'FR';
-    }
-
-    /**
-     * Get shipping method mapping for Oney
-     *
-     * @param string|null $shippingMethod
-     */
-    public function getShippingMethodMapping($shippingMethod = null): array
-    {
-        if ($shippingMethod === null) {
-            return [
-                'type' => 'edelivery',
-                'period' => 3,
-            ];
-        }
-
-        return [
-            'type' => 'storepickup',
-            'period' => 0,
-        ];
-    }
-
-    /**
-     * Get Oney simulation for checkout
-     *
-     * @param float|null $amount
-     * @param string|null $billingCountry
-     * @param string|null $shippingCountry
-     * @param string|null $paymentMethod
-     * @return Result
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
-     */
-    public function getOneySimulationCheckout(
-        ?float $amount,
-        ?string $billingCountry,
-        ?string $shippingCountry,
-        ?string $paymentMethod = null
-    ): Result {
-        $qty = $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems());
-        try {
-            $this->oneyCheckoutValidation($billingCountry, $shippingCountry, $qty);
-        } catch (Exception $e) {
-            $simulationResult = new Result();
-            $simulationResult->setSuccess(false);
-            $simulationResult->setMessage($e->getMessage());
-
-            return $simulationResult;
-        }
-
-        return $this->getOneySimulation(
-            $amount,
-            $billingCountry ?? $shippingCountry ?? null,
-            $qty,
-            false,
-            $paymentMethod
-        );
     }
 
     /**
@@ -557,157 +511,6 @@ class Oney extends AbstractHelper
     {
         $this->validateAmount($amount, $storeId, $currency);
         $this->validateCountry($countryCode);
-    }
-
-    /**
-     * Get Oney simulation
-     *
-     * @param float|null $amount
-     * @param string|null $countryCode
-     * @param int|null $qty
-     * @param bool $validationOnly
-     * @param string|null $paymentMethod
-     * @return Result
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
-     */
-    public function getOneySimulation(
-        ?float $amount = null,
-        ?string $countryCode = null,
-        ?int $qty = null,
-        bool $validationOnly = false,
-        ?string $paymentMethod = null
-    ): Result {
-        if ($amount === null) {
-            $amount = $this->checkoutSession->getQuote()->getGrandTotal();
-        }
-        if ($countryCode === null) {
-            $countryCode = $this->getDefaultCountry();
-        }
-        if ($qty === null) {
-            $qty = $this->getCartItemsCount($this->checkoutSession->getQuote()->getAllItems());
-        }
-        $paymentMethod = $paymentMethod ?? $this->getOneyMethod();
-        try {
-            $this->oneyValidation($amount, $countryCode);
-            $this->validateItemsCount($qty);
-
-            if ($validationOnly) {
-                $simulationResult = new Result();
-                $simulationResult->setSuccess(true);
-                $simulationResult->setMethod($paymentMethod);
-
-                return $simulationResult;
-            } else {
-                return $this->getSimulation($amount, $countryCode, $paymentMethod);
-            }
-        } catch (PayplugException $e) {
-            $this->logger->error($e->__toString());
-
-            return $this->getMockSimulationResult($paymentMethod);
-        } catch (Exception $e) {
-            $simulationResult = new Result();
-            $simulationResult->setSuccess(false);
-            $simulationResult->setMessage($e->getMessage());
-            $simulationResult->setMethod($paymentMethod);
-
-            return $simulationResult;
-        }
-    }
-
-    /**
-     * Get Oney mock simulation
-     *
-     * @param string $paymentMethod
-     *
-     * @return Result
-     */
-    private function getMockSimulationResult($paymentMethod): Result
-    {
-        $simulationResult = new Result();
-        $simulationResult->setSuccess(true);
-        $simulationResult->setMessage(__('Your payment schedule simulation is temporarily unavailable. ' .
-            'You will find this information at the payment stage.'));
-        $simulationResult->setMethod($paymentMethod);
-
-        $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
-
-        foreach ($operations as $type) {
-            $option = new Option();
-            $option->setType($type);
-            $simulationResult->addOption($option);
-        }
-
-        return $simulationResult;
-    }
-
-    /**
-     * Get Oney simulation
-     *
-     * @param float $amount
-     * @param string $countryCode
-     * @param string $paymentMethod
-     *
-     * @return Result
-     * @throws NoSuchEntityException
-     * @throws DateMalformedStringException
-     * @throws ConfigurationException
-     * @throws ConfigurationNotSetException
-     * @throws ConnectionException
-     * @throws HttpException
-     * @throws UnexpectedAPIResponseException
-     */
-    private function getSimulation($amount, $countryCode, $paymentMethod): Result
-    {
-        $storeId = $this->storeManager->getStore()->getId();
-        $isSandbox = $this->payplugConfig->getIsSandbox((int)$storeId);
-        $this->payplugConfig->setPayplugApiKey((int)$storeId, $isSandbox);
-
-        $operations = self::ALLOWED_OPERATIONS_BY_PAYMENT[$paymentMethod] ?? [];
-
-        $data = [
-            'amount' => (int) round($amount * 100),
-            'country' => $countryCode,
-            'operations' => array_keys($operations),
-        ];
-        $simulations = OneySimulation::getSimulations($data);
-
-        $result = new Result();
-        $result->setSuccess(true);
-        $result->setAmount($amount);
-        $result->setMethod($paymentMethod);
-
-        foreach ($operations as $operation => $type) {
-            if (!isset($simulations[$operation])) {
-                $this->logger->warning(sprintf(
-                    "Operation %s is not available. Amount was %f, country was %s",
-                    $operation,
-                    $amount,
-                    $countryCode
-                ));
-                continue;
-            }
-            $simulation = $simulations[$operation];
-            $option = new Option();
-
-            $totalCost = $simulation['down_payment_amount'];
-            foreach ($simulation['installments'] as $installment) {
-                $schedule = new Schedule();
-                $schedule->setAmount($installment['amount'] / 100);
-                $schedule->setDate(new \DateTime($installment['date']));
-                $totalCost += $installment['amount'];
-                $option->addSchedule($schedule);
-            }
-
-            $option->setType($type);
-            $option->setCost($simulation['total_cost'] / 100);
-            $option->setRate($simulation['effective_annual_percentage_rate']);
-            $option->setFirstDeposit($simulation['down_payment_amount'] / 100);
-            $option->setTotalAmount($totalCost / 100);
-            $result->addOption($option);
-        }
-
-        return $result;
     }
 
     /**

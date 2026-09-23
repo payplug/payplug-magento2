@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.1](https://github.com/payplug/payplug-magento2/releases/tag/v4.8.1) - 2026-09-21
+
+### ⚠ ACTION REQUIRED
+
+This notice applies only to the ONEY payment methods (with and without fees).
+The Oney payment schedule displayed on the product page, the cart and the checkout is now provided by the
+official Oney marketing widget, hosted by Oney, instead of the simulation computed and cached by Payplug.
+
+**Impact:**  
+The widget needs the Oney merchant identifier and business transaction codes exposed by your Payplug account.
+Until they are stored in Magento, the Oney call to action is hidden on the product page and the cart, and the
+schedule is not displayed on the checkout.
+
+**Required action:**  
+Log in to your Magento Admin, navigate to Stores > Configuration > Sales > Payplug Payments > General configuration,
+and click **Update account information** (or Save Config). Repeat this for each website scope on which a Payplug
+account is connected.
+If you enforce a Content Security Policy, make sure the `*.oney.io`, `oney.cdn.prismic.io` and (test mode)
+`widget-marketing-ws-uat.azurewebsites.net` hosts whitelisted by the module are deployed.
+
+### Features
+
+- Replace the Oney simulator by the official Oney marketing widget on product page, cart and checkout
+- Add an "Update account information" button with the last update date in the general configuration
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.8.0...v4.8.1)**
+
+### Added
+
+- Add an "Update account information" button with the last update date in the general configuration
+- Store the Oney merchant identifier, business transaction codes and legal notices flag from the Payplug account
+
+### Changed
+
+- Replace the Oney simulator by the official Oney marketing widget on product page, cart and checkout
+- Extract the Payplug account synchronization into a dedicated service
+
+### Removed
+
+- Remove the Oney simulation endpoints, block, models and templates based on the Payplug cached simulation
+  (`Block\Oney\Simulation`, `Controller\Oney\*`, `Model\OneySimulation\*`, the former `ViewModel\Oney`);
+  the Hyvä compatibility modules must be upgraded to their matching release
+
 ## [4.8.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.8.0) - 2026-07-15
 
 ### Features

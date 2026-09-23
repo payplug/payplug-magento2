@@ -15,6 +15,7 @@ use Laminas\Validator\NotEmpty;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
@@ -37,6 +38,7 @@ use Payplug\Payments\Gateway\Config\Wero as WeroConfig;
 use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Model\Api\Login;
 use Payplug\Payments\Service\GetOauth2ClientData;
+use Payplug\Payments\Service\SynchronizeAccountData;
 
 class PaymentConfigObserver implements ObserverInterface
 {
@@ -68,6 +70,7 @@ class PaymentConfigObserver implements ObserverInterface
      * @param ManagerInterface $messageManager
      * @param StoreManagerInterface $storeManager
      * @param GetOauth2ClientData $getOauth2ClientData
+     * @param SynchronizeAccountData $synchronizeAccountData
      */
     public function __construct(
         private readonly Http $request,
@@ -75,7 +78,8 @@ class PaymentConfigObserver implements ObserverInterface
         private readonly Config $helper,
         private readonly ManagerInterface $messageManager,
         private readonly StoreManagerInterface $storeManager,
-        private readonly GetOauth2ClientData $getOauth2ClientData
+        private readonly GetOauth2ClientData $getOauth2ClientData,
+        private readonly SynchronizeAccountData $synchronizeAccountData
     ) {
     }
 
@@ -1078,24 +1082,6 @@ class PaymentConfigObserver implements ObserverInterface
     }
 
     /**
-     * Save Oney Without Fees Config
-     *
-     * @param string $field
-     * @param mixed $value
-     * @return void
-     */
-    private function saveOneyWithoutFeesConfig(string $field, mixed $value): void
-    {
-        $this->helper->setConfigValue(
-            $field,
-            (string)$value,
-            ScopeInterface::SCOPE_STORE,
-            null,
-            Config::ONEY_WITHOUT_FEES_CONFIG_PATH
-        );
-    }
-
-    /**
      * Connect to payplug account. Handle flags for account connection, verification
      *
      * @param string $email
@@ -1158,170 +1144,15 @@ class PaymentConfigObserver implements ObserverInterface
     private function getAccountPermissions(string $apiKey): array
     {
         if (!array_key_exists($apiKey, $this->permissions)) {
-            $result = $this->login->getAccount($apiKey);
-
-            if (!$result['status']) {
-                $this->messageManager->addErrorMessage(__($result['message']));
+            try {
+                $this->permissions[$apiKey] = $this->synchronizeAccountData->execute($apiKey);
+            } catch (LocalizedException $e) {
+                $this->messageManager->addErrorMessage($e->getMessage());
                 $this->permissions[$apiKey] = [];
-            } else {
-                $this->permissions[$apiKey] = $this->treatAccountResponse($result['answer']);
             }
         }
 
         return $this->permissions[$apiKey];
-    }
-
-    /**
-     * Parse JSON Answer from PayPlug to save configurations and return permissions
-     *
-     * @param mixed $jsonAnswer
-     * @return array|null
-     */
-    private function treatAccountResponse(mixed $jsonAnswer): ?array
-    {
-        $id = $jsonAnswer['id'];
-
-        $configuration = [
-            'currencies' => $this->getConfig('currencies'),
-            'min_amounts' => $this->getConfig('min_amounts'),
-            'max_amounts' => $this->getConfig('max_amounts'),
-            'oney_countries' => $this->getConfig('oney_countries'),
-            'oney_min_amounts' => $this->getConfig('oney_min_amounts'),
-            'oney_max_amounts' => $this->getConfig('oney_max_amounts'),
-            'merchand_country' => $this->getConfig('merchand_country'),
-        ];
-        if (isset($jsonAnswer['configuration'])) {
-            if (!empty($jsonAnswer['configuration']['currencies'])) {
-                $configuration['currencies'] = [];
-                foreach ($jsonAnswer['configuration']['currencies'] as $value) {
-                    $configuration['currencies'][] = $value;
-                }
-            }
-            if (!empty($jsonAnswer['configuration']['min_amounts'])) {
-                $configuration['min_amounts'] = $this->processAmounts($jsonAnswer['configuration']['min_amounts']);
-            }
-            if (!empty($jsonAnswer['configuration']['max_amounts'])) {
-                $configuration['max_amounts'] = $this->processAmounts($jsonAnswer['configuration']['max_amounts']);
-            }
-            if (!empty($jsonAnswer['configuration']['oney'])) {
-                if (isset($jsonAnswer['configuration']['oney']['allowed_countries']) &&
-                    is_array($jsonAnswer['configuration']['oney']['allowed_countries'])
-                ) {
-                    $oneyCountries = $jsonAnswer['configuration']['oney']['allowed_countries'];
-                    $configuration['oney_countries'] = json_encode($oneyCountries);
-                }
-                if (!empty($jsonAnswer['configuration']['oney']['min_amounts'])) {
-                    $configuration['oney_min_amounts'] = $this->processAmounts(
-                        $jsonAnswer['configuration']['oney']['min_amounts']
-                    );
-                    $minAmounts = (int) $jsonAnswer['configuration']['oney']['min_amounts']['EUR'];
-                    $configuration['raw_oney_min_amounts'] = $minAmounts / 100;
-                }
-                if (!empty($jsonAnswer['configuration']['oney']['max_amounts'])) {
-                    $configuration['oney_max_amounts'] = $this->processAmounts(
-                        $jsonAnswer['configuration']['oney']['max_amounts']
-                    );
-                    $maxAmount = (int) $jsonAnswer['configuration']['oney']['max_amounts']['EUR'];
-                    $configuration['raw_oney_max_amounts'] = $maxAmount / 100;
-                }
-            }
-            if (!empty($jsonAnswer['country'])) {
-                $configuration['merchand_country'] = $jsonAnswer['country'];
-            }
-        }
-
-        $currencies = implode(';', $configuration['currencies']);
-        $this->saveConfig('currencies', $currencies);
-        $this->saveConfig('min_amounts', $configuration['min_amounts']);
-        $this->saveConfig('max_amounts', $configuration['max_amounts']);
-        $this->saveConfig('oney_countries', $configuration['oney_countries']);
-        $this->saveConfig('oney_min_amounts', $configuration['oney_min_amounts']);
-        $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
-
-        $this->saveOneyConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
-        $this->saveOneyConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
-
-        $this->saveOneyWithoutFeesConfig('oney_min_threshold', $configuration['raw_oney_min_amounts']);
-        $this->saveOneyWithoutFeesConfig('oney_max_threshold', $configuration['raw_oney_max_amounts']);
-
-        $this->saveConfig('company_id', $id);
-        $this->saveConfig('merchand_country', $configuration['merchand_country']);
-
-        // Harmonize bancontact/applepay/amex flags as a regular permission
-        $jsonAnswer['permissions']['can_use_bancontact'] =
-            $jsonAnswer['payment_methods']['bancontact']['enabled'] ?? false;
-        $jsonAnswer['permissions']['can_use_apple_pay'] =
-            $jsonAnswer['payment_methods']['apple_pay']['enabled'] ?? false;
-        $jsonAnswer['permissions']['can_use_amex'] =
-            $jsonAnswer['payment_methods']['american_express']['enabled'] ?? false;
-
-        $permissions = [
-            'use_live_mode',
-            'can_save_cards',
-            'can_create_installment_plan',
-            'can_create_deferred_payment',
-            'can_use_oney',
-            'can_use_bancontact',
-            'can_use_apple_pay',
-            'can_use_amex',
-            'can_use_integrated_payments',
-        ];
-
-        $additionalPproMethods = [
-            'satispay',
-            'ideal',
-            'mybank',
-            'bizum',
-            'wero',
-            'scalapay'
-        ];
-
-        foreach ($additionalPproMethods as $method) {
-            $jsonAnswer['permissions']['can_use_' . $method] = $jsonAnswer['payment_methods'][$method]['enabled']
-                ?? false;
-            $permissions[] = 'can_use_' . $method;
-            $this->saveConfig(
-                $method . '_countries',
-                json_encode($jsonAnswer['payment_methods'][$method]['allowed_countries'] ?? [])
-            );
-            $this->saveConfig(
-                $method . '_min_amounts',
-                $this->processAmounts(
-                    $jsonAnswer['payment_methods'][$method]['min_amounts'] ?? []
-                )
-            );
-            $this->saveConfig(
-                $method . '_max_amounts',
-                $this->processAmounts(
-                    $jsonAnswer['payment_methods'][$method]['max_amounts'] ?? []
-                )
-            );
-        }
-
-        foreach ($permissions as $permission) {
-            $this->saveConfig($permission, (int)$jsonAnswer['permissions'][$permission] ?? 0);
-        }
-
-        return $jsonAnswer['permissions'];
-    }
-
-    /**
-     * Process min/max amounts
-     *
-     * @param array|null $amounts
-     * @return string
-     */
-    private function processAmounts(?array $amounts): string
-    {
-        $configuration = '';
-        foreach ($amounts as $key => $value) {
-            if ($configuration !== '') {
-                $configuration .= ';';
-            }
-            $configuration .= $key . ':' . $value;
-        }
-
-        return $configuration;
     }
 
     /**

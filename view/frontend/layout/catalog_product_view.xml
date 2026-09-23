@@ -10,7 +10,11 @@
     <body>
         <referenceContainer name="product.info.main">
             <block class="Magento\Catalog\Block\Product\View" name="payplug-payments-product-oney-wrapper" after="product.info.price" template="Payplug_Payments::oney/simulation_wrapper.phtml">
-                <block class="Payplug\Payments\Block\Oney\Simulation" name="payplug-payments-product-oney-simulation" template="Payplug_Payments::oney/simulation.phtml"/>
+                <block name="payplug-payments-product-oney-simulation" template="Payplug_Payments::oney/simulation.phtml">
+                    <arguments>
+                        <argument name="oney_view_model" xsi:type="object">Payplug\Payments\ViewModel\Oney</argument>
+                    </arguments>
+                </block>
             </block>
         </referenceContainer>
     </body>

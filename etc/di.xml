@@ -1271,10 +1271,9 @@
             <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
         </arguments>
     </type>
-    <type name="Payplug\Payments\Helper\Oney">
+    <type name="Payplug\Payments\ViewModel\Oney">
         <arguments>
             <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
-            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session\Proxy</argument>
         </arguments>
     </type>
     <type name="Magento\Sales\Model\Order">

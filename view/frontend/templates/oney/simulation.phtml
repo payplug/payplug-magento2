@@ -8,35 +8,47 @@
 declare(strict_types=1);
 
 use Magento\Framework\Escaper;
-use Payplug\Payments\Block\Oney\Simulation;
-use Payplug\Payments\Gateway\Config\OneyWithoutFees;
+use Magento\Framework\View\Element\Template;
+use Payplug\Payments\ViewModel\Oney;
 
 /**
  * @var Escaper $escaper
- * @var Simulation $block
+ * @var Template $block
+ * @var Oney $oneyViewModel
  */
-$oneySimulation = $block->getOneySimulation(true);
-$isOneyWithoutFees = $oneySimulation->getMethod() === OneyWithoutFees::METHOD_CODE;
-$isItalianStore = $block->isItalianStore();
-$hasError = false;
-if (!$oneySimulation->getSuccess()) {
-    $hasError = true;
+$oneyViewModel = $block->getData('oney_view_model');
+if (!$oneyViewModel instanceof Oney || !$oneyViewModel->canDisplayOney()) {
+    return;
 }
+
+$isProduct = $block->getData('amount') !== null;
+$amount = $isProduct ? (float) $block->getData('amount') : $oneyViewModel->getCartAmount();
+$config = $oneyViewModel->getConfig($amount);
+if (empty($config) || !$config['is_enabled']) {
+    return;
+}
+
+$isOneyWithoutFees = $oneyViewModel->isWithoutFees($config);
+$isItalianStore = $oneyViewModel->isItalianStore();
+$isDisabled = !$config['is_eligible'];
 ?>
 <div class="oneyCta<?= $isOneyWithoutFees ? ' oney-without-fees' : ''; ?><?= $isItalianStore ? ' oney-it' : ''; ?>">
     <button type="button"
-            class="oneyCta_button<?php if ($hasError): ?> oneyCta_button-disabled<?php endif; ?>">
+            class="oneyCta_button<?php if ($isDisabled): ?> oneyCta_button-disabled<?php endif; ?>"
+            aria-disabled="<?= $isDisabled ? 'true' : 'false'; ?>">
         <span><?= $escaper->escapeHtml(__('Or pay in')); ?></span>
         <span class="oneyCta_logo oneyLogo oneyLogo-x3x4"></span>
         <span class="oneyCta_tooltip oneyLogo oneyLogo-tooltip"></span>
     </button>
-    <span class="oneyPopin<?php if ($hasError): ?> oneyPopin-error<?php endif; ?>"></span>
+    <p class="oneyCta_error" role="alert" hidden>
+        <?= $escaper->escapeHtml($oneyViewModel->getAmountRangeMessage()); ?>
+    </p>
 </div>
 
 <script type="text/x-magento-init">
     {
         ".oneyCta": {
-            "oneyPopin": {}
+            "oneyWidget": <?= /* @noEscape */ $oneyViewModel->getJsConfig($config, $isProduct); ?>
         }
     }
 </script>
