@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.9.0) - 2026-09-21
+
+### ⚠ ACTION REQUIRED
+
+ONEY only: the payment schedule (product page, cart, checkout) is now displayed by the official Oney widget.
+
+- Click **Update account information** in Stores > Configuration > Sales > Payplug Payments > General configuration,
+  on each website with a Payplug account: until then, the Oney schedule is not displayed.
+- Theme overrides of `oney/simulation.phtml`, `oney/simulation_content.phtml`, `oney/simulation_wrapper*.phtml` and
+  `oneyPopin` are no longer used: port them to the new `oney/simulation-*.phtml` templates.
+
 ## [4.8.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.8.0) - 2026-07-15
 
 ### Features

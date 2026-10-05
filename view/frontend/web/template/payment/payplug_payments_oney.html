@@ -7,13 +7,13 @@
 -->
 
 <div data-bind="
-        class: 'payment-method ' + getCode(), 
+        class: 'payment-method ' + getCode(),
         css: {
-            '_active': isActive, 
+            '_active': isActive,
             'oney-it': isOneyItalian()
         },
         attr: {
-            'data-oney-container': getCode(), 
+            'data-oney-container': getCode(),
         }
     ">
     <div class="payment-method-title field choice">
@@ -23,17 +23,18 @@
                data-bind="
                     attr: {
                         'id': getCode()
-                    }, 
-                    value: getCode(), 
-                    checked: isChecked, 
-                    click: selectPaymentMethod, 
+                    },
+                    value: getCode(),
+                    checked: isChecked,
+                    click: selectPaymentMethod,
                     visible: isRadioButtonVisible()
                 ">
         <label class="label" data-bind="attr: {'for': getCode()}">
             <span data-bind="text: getTitle()"></span>
-            <img data-bind="
+            <img class="oney-logo-checkout"
+                 data-bind="
                     attr: {
-                        src: getPaymentLogo(), 
+                        src: getPaymentLogo(),
                         alt: getTitle()
                     }"
                  width="166"
@@ -41,7 +42,7 @@
                  alt="3x 4x Oney"
             >
             <span data-bind="
-                i18n: 'Except prepaid cards', 
+                i18n: 'Except prepaid cards',
                 attr: {class: getPrepaidMentionClass()
             }
             "></span>
@@ -49,8 +50,50 @@
     </div>
 
     <div class="payment-method-content">
-        <div class="payment-method-error oney-checkout-error"></div>
-        <div class="oneyPayment"></div>
+        <div class="payment-method-error oney-checkout-error"
+             data-bind="text: oneyErrorMessage, css: {active: oneyErrorMessage() !== ''}"></div>
+        <div class="oneyPayment oneyPayment-open" data-bind="visible: oneyErrorMessage() === ''">
+            <div class="oneyOption_wrapper" data-bind="foreach: getOneyOptions()">
+                <label class="oneyOption"
+                       data-bind="
+                            css: 'oneyOption-' + $data + ($parent.selectedOption() === $data ? ' oneyOption-selected' : ''),
+                            attr: {'data-type': $data}
+                       ">
+                    <div class="oneyOption_title">
+                        <span data-bind="css: 'oneyOption_logo oneyLogo oneyLogo-' + $data"></span>
+                        <span data-bind="text: $parent.getOptionLabel($data)"></span>
+                    </div>
+                    <div class="oneyOption_radio">
+                        <div class="radio">
+                            <span>
+                                <input type="radio"
+                                       data-bind="
+                                            attr: {name: 'oney_type_' + $parent.getCode(), value: $data},
+                                            checked: $parent.selectedOption
+                                       ">
+                            </span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+            <div class="oneyWidget_notice" data-bind="text: oneyNotice, visible: oneyNotice() !== ''"></div>
+            <div class="oneyWidget"
+                 data-bind="
+                    css: {'oneyWidget-loading': isWidgetLoading},
+                    style: {minHeight: widgetMinHeight},
+                    attr: {'aria-busy': isWidgetLoading() ? 'true' : 'false'}
+                 ">
+                <div class="oneyWidget_loader" role="status" data-bind="visible: isWidgetLoading">
+                    <span class="sr-only" data-bind="i18n: 'Loading the Oney payment schedule...'"></span>
+                </div>
+                <div class="oneyWidget_checkout"
+                     data-bind="attr: {id: getPlaceholderId()}, afterRender: afterWidgetRender"></div>
+            </div>
+            <!-- ko if: getConfiguration().more_info_url -->
+            <a class="more-info" target="_blank"
+               data-bind="attr: {href: getConfiguration().more_info_url}, i18n: 'More info'"></a>
+            <!-- /ko -->
+        </div>
         <!-- ko foreach: getRegion('messages') -->
         <!-- ko template: getTemplate() --><!-- /ko -->
         <!--/ko-->
@@ -75,7 +118,7 @@
                             enable: (getCode() == isChecked()),
                         "
                         disabled>
-                    <span data-bind="i18n: 'Place Order'"></span>
+                    <span data-bind="text: placeOrderLabel"></span>
                 </button>
             </div>
         </div>
