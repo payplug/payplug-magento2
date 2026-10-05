@@ -8,27 +8,31 @@ define([
     'jquery',
     'ko',
     'mage/translate',
-    'mage/url',
     'Magento_Checkout/js/view/payment/default',
     'Magento_Checkout/js/model/full-screen-loader',
     'Magento_Checkout/js/model/quote',
     'Magento_Catalog/js/price-utils',
-    'Payplug_Payments/js/action/redirect-on-success'
-], function ($, ko, $t, url, Component, fullScreenLoader, quote, priceUtils, redirectOnSuccessAction) {
+    'Payplug_Payments/js/action/redirect-on-success',
+    'Payplug_Payments/js/model/oney-widget-loader'
+], function ($, ko, $t, Component, fullScreenLoader, quote, priceUtils, redirectOnSuccessAction, oneyWidgetLoader) {
     'use strict';
 
     return Component.extend({
         defaults: {
-            template: 'Payplug_Payments/payment/payplug_payments_oney'
+            template: 'Payplug_Payments/payment/payplug_payments_oney',
+            selectedOption: null,
+            preferredOption: null,
+            renderedWidgetKey: null,
+            widgetRenderId: 0,
+            widgetLoadingTimer: null,
+            isWidgetLoading: false,
+            widgetMinHeight: '',
+            oneyErrorMessage: '',
+            oneyNotice: ''
         },
         redirectAfterPlaceOrder: false,
-        isLoading: false,
-        isOneyPlaceOrderDisabled: ko.observable(false),
-        scheduleLabels: [
-            {days: 30, label: $t('In 30 days')},
-            {days: 60, label: $t('In 60 days')},
-            {days: 90, label: $t('In 90 days')},
-        ],
+        widgetLoadingTimeout: 15000,
+        isOneyPlaceOrderDisabled: ko.observable(true),
 
         /**
          * Init component
@@ -41,41 +45,37 @@ define([
             this._super();
 
             quote.paymentMethod.subscribe(function (value) {
-                self.isLoading = false;
                 if (value && value.method === self.getCode()) {
                     self.updateOney();
                 }
             });
 
             quote.shippingAddress.subscribe(function () {
-                if (self.getCode() === self.isChecked()) {
+                if (self.isSelected()) {
                     self.updateOney();
                 }
             });
 
             quote.billingAddress.subscribe(function () {
-                if (quote.billingAddress() !== null) {
-                    if (self.getCode() === self.isChecked()) {
-                        self.updateOney();
-                    }
+                if (quote.billingAddress() !== null && self.isSelected()) {
+                    self.updateOney();
                 }
             });
 
             quote.totals.subscribe(function () {
-                if (self.getCode() === self.isChecked()) {
-                    self.updateOney();
-                }
-            });
-            
-            quote.shippingMethod.subscribe(function () {
-                if (self.getCode() === self.isChecked()) {
+                if (self.isSelected()) {
                     self.updateOney();
                 }
             });
 
-            $('body').on('click', '.oneyPayment .oneyOption', function(e){
-                e.preventDefault();
-                self.selectOneyOption($(this));
+            quote.shippingMethod.subscribe(function () {
+                if (self.isSelected()) {
+                    self.updateOney();
+                }
+            });
+
+            this.selectedOption.subscribe(function () {
+                self.renderWidget();
             });
 
             return this;
@@ -86,13 +86,47 @@ define([
          * @return {Object}
          */
         initObservable: function () {
-            this._super();
+            this._super().observe([
+                'selectedOption',
+                'isWidgetLoading',
+                'widgetMinHeight',
+                'oneyErrorMessage',
+                'oneyNotice'
+            ]);
 
             this.isActive = ko.computed(function () {
                 return this.getCode() === this.isChecked() && '_active';
             }, this);
 
+            this.placeOrderLabel = ko.computed(function () {
+                var type = this.selectedOption();
+
+                return type ? this.getOptionLabel(type) : $t('Place Order');
+            }, this);
+
             return this;
+        },
+
+        /**
+         * Is this payment method currently selected
+         *
+         * @returns {Boolean}
+         */
+        isSelected: function () {
+            return this.getCode() === this.isChecked();
+        },
+
+        /**
+         * Refresh Oney once the form is rendered, when the method was already selected before (e.g. page reload).
+         *
+         * @returns void
+         */
+        afterWidgetRender: function () {
+            this.renderedWidgetKey = null;
+
+            if (this.isSelected()) {
+                this.updateOney();
+            }
         },
 
         /**
@@ -104,7 +138,7 @@ define([
             fullScreenLoader.stopLoader();
             redirectOnSuccessAction.execute();
         },
-        
+
         /**
          * Retrieve the payment logo set in the admin configuration
          *
@@ -113,132 +147,295 @@ define([
         getPaymentLogo: function () {
             return this.getConfiguration().logo;
         },
-        
+
         /**
-         * Fetches Oney payment details from the server and update the payment form with the schedule options.
+         * Retrieve the official Oney widget configuration
          *
-         * @returns {Boolean}
+         * @returns {Object}
          */
-        updateOney: function () {
-            const self = this;
-
-            if (self.isLoading) {
-                return false;
-            }
-
-            self.updateLoading(true);
-            this.isOneyPlaceOrderDisabled(true);
-
-            try {
-                $.ajax({
-                    url: url.build('payplug_payments/oney/simulationCheckout'),
-                    type: 'POST',
-                    data: {
-                        'amount': quote.totals()['base_grand_total'],
-                        'billingCountry': quote.billingAddress() ? quote.billingAddress().countryId : null,
-                        'shippingCountry': quote.shippingAddress() ? quote.shippingAddress().countryId : null,
-                        'isVirtual': quote.isVirtual() ? 1 : 0,
-                        'paymentMethod': self.getCode()
-                    }
-                }).done(function (response) {
-                    if (response.success && response.data.success) {
-                        self.processOneySuccess(response.data);
-                    } else {
-                        self.processOneyFailure(response.data.message);
-                    }
-                    
-                    self.updateLoading(false);
-                }).fail(function () {
-                    self.processOneyFailure($t('An error occurred while getting Oney details. Please try again.'));
-                    self.updateLoading(false);
-                });
-
-                return true;
-            } catch (e) {
-                self.updateLoading(false);
-                return false;
-            }
+        getWidgetConfig: function () {
+            return this.getConfiguration().widget || {};
         },
 
         /**
-         * Update the loading state of the payment method.
+         * Oney option types (3x, 4x) available for this payment method
          *
-         * @param {Boolean} isLoading
+         * @returns {Array}
+         */
+        getOneyOptions: function () {
+            return this.getWidgetConfig().options || [];
+        },
+
+        /**
+         * Label of an Oney option
+         *
+         * @param {String} type
+         * @returns {String}
+         */
+        getOptionLabel: function (type) {
+            return this.getPaymentTypeLabel().replace('%1', type);
+        },
+
+        /**
+         * Id of the container in which the Oney checkout section is rendered
+         *
+         * @returns {String}
+         */
+        getPlaceholderId: function () {
+            return 'oney-checkout-placeholder-' + this.getCode();
+        },
+
+        /**
+         * Amount to simulate
+         *
+         * @returns {Number}
+         */
+        getAmount: function () {
+            var totals = quote.totals();
+
+            return totals ? parseFloat(totals['base_grand_total']) || 0 : 0;
+        },
+
+        /**
+         * Validate Oney eligibility and refresh the payment form accordingly.
+         *
          * @returns void
          */
-        updateLoading: function (isLoading) {
-            this.isLoading = isLoading;
+        updateOney: function () {
+            var validation = this.validateOney();
 
-            if (isLoading) {
-                fullScreenLoader.startLoader();
-            } else {
-                fullScreenLoader.stopLoader();
+            if (!validation.valid) {
+                this.processOneyFailure(validation.message);
+
+                return;
             }
+
+            this.processOneySuccess();
         },
-        
+
         /**
-         * Handles the failure of the Oney payment process.
+         * Client side Oney eligibility checks, mirrored server side when placing the order.
+         *
+         * @returns {Object}
+         */
+        validateOney: function () {
+            var config = this.getWidgetConfig(),
+                amount = this.getAmount(),
+                billingAddress = quote.billingAddress(),
+                shippingAddress = quote.shippingAddress(),
+                billingCountry = billingAddress ? billingAddress.countryId : null,
+                shippingCountry = !quote.isVirtual() && shippingAddress ? shippingAddress.countryId : null,
+                country = billingCountry || shippingCountry,
+                totals = quote.totals(),
+                itemsQty = totals ? parseFloat(totals['items_qty']) || 0 : 0;
+
+            if (billingCountry && shippingCountry && billingCountry !== shippingCountry) {
+                return {
+                    valid: false,
+                    message: $t('Shipping and billing adresses must be both in the same country.')
+                };
+            }
+
+            if (country && config.allowed_countries && config.allowed_countries.indexOf(country) === -1) {
+                return {
+                    valid: false,
+                    message: $t('Unavailable for the specified country')
+                };
+            }
+
+            if (config.max_items && itemsQty >= config.max_items) {
+                return {
+                    valid: false,
+                    message: $t('To pay with Oney, your cart must contain less than %1 items.')
+                        .replace('%1', config.max_items)
+                };
+            }
+
+            if (amount < parseFloat(config.min_amount) || amount > parseFloat(config.max_amount)) {
+                return {
+                    valid: false,
+                    message: $t('To pay with Oney, the total amount of your cart must be between %1 and %2.')
+                        .replace('%1', this.getFormattedPrice(config.min_amount))
+                        .replace('%2', this.getFormattedPrice(config.max_amount))
+                };
+            }
+
+            return {
+                valid: true
+            };
+        },
+
+        /**
+         * Handles an Oney eligibility failure.
          *
          * @param {String} message
          */
         processOneyFailure: function (message) {
+            if (this.selectedOption()) {
+                this.preferredOption = this.selectedOption();
+            }
+
             this.isOneyPlaceOrderDisabled(true);
             this.updateOneyLogo(this.getConfiguration().logo_ko);
-            this.updateOneyError(message);
-            this.updatePlaceOrderButtonLabel(null);
-            this.getOneyContainer().find('.oneyPayment').removeClass('oneyPayment-open').html('');
+            this.oneyErrorMessage(message);
+            this.oneyNotice('');
+            this.selectedOption(null);
+            this.clearWidget();
         },
-        
+
         /**
-         * Handles the success of the Oney payment process.
+         * Handles an Oney eligibility success.
          *
-         * @param {Object} oneySimulationResult
          * @returns void
          */
-        processOneySuccess: function (oneySimulationResult) {
+        processOneySuccess: function () {
+            var options = this.getOneyOptions();
+
             this.isOneyPlaceOrderDisabled(false);
             this.updateOneyLogo(this.getConfiguration().logo);
-            this.updateOneyError('');
-            this.updatePlaceOrderButtonLabel('3x');
+            this.oneyErrorMessage('');
 
-            var optionTypeToSelect = null;
-            var oneyPayment = this.getOneyContainer().find('.oneyPayment');
-            var previouslySelectedOption = oneyPayment.find('input[type="radio"]:checked');
+            if (!this.selectedOption() && options.length > 0) {
+                this.selectedOption(options.indexOf(this.preferredOption) !== -1 ? this.preferredOption : options[0]);
 
-            if (previouslySelectedOption.length > 0 && previouslySelectedOption.val() !== '') {
-                optionTypeToSelect = previouslySelectedOption.val();
+                return;
             }
 
-            this.buildOneyDetail(oneySimulationResult);
-            oneyPayment.addClass('oneyPayment-open');
-
-            var optionToSelect = $(oneyPayment.find('.oneyOption')[0]);
-
-            if (optionTypeToSelect !== null) {
-                optionToSelect = $(oneyPayment.find('input[type="radio"][value="' + optionTypeToSelect + '"]').closest('.oneyOption'));
-            }
-
-            this.selectOneyOption(optionToSelect);
+            this.renderWidget();
         },
-        
+
         /**
-         * Handles the selection of an Oney option.
+         * Render the official Oney checkout section for the selected option,
+         * unless it is already rendered for the same business transaction code and amount.
          *
-         * @param {jQuery} option
          * @returns void
          */
-        selectOneyOption: function (option) {
-            var oneyPayment = this.getOneyContainer().find('.oneyPayment');
+        renderWidget: function () {
+            var self = this,
+                config = this.getWidgetConfig(),
+                type = this.selectedOption(),
+                code = type ? (config.business_transaction_codes || {})[type] : null,
+                amount = this.getAmount(),
+                widgetKey = code + '|' + amount,
+                renderId;
 
-            oneyPayment.find('.oneyOption').removeClass('oneyOption-selected');
-            option.addClass('oneyOption-selected');
+            if (!type) {
+                return;
+            }
 
-            oneyPayment.find('input[type="radio"]').prop('checked', false);
-            option.find('input[type="radio"]').prop('checked', true);
+            if (!config.is_enabled || !code) {
+                this.showWidgetUnavailable();
 
-            this.updatePlaceOrderButtonLabel(option.data('type'));
+                return;
+            }
+
+            if (widgetKey === this.renderedWidgetKey) {
+                return;
+            }
+
+            this.renderedWidgetKey = widgetKey;
+            renderId = ++this.widgetRenderId;
+            this.oneyNotice('');
+            this.startWidgetLoading();
+
+            oneyWidgetLoader.load(config.loader_url).done(function (oneyMerchantApp) {
+                if (self.widgetRenderId !== renderId) {
+                    return;
+                }
+
+                oneyMerchantApp.loadCheckoutSection({
+                    options: {
+                        country: config.country,
+                        language: config.language,
+                        merchant_guid: config.merchant_guid,
+                        payment_amount: amount,
+                        filter_by: 'business_transaction_code',
+                        business_transaction_code: code,
+                        checkout_placeholder: '#' + self.getPlaceholderId(),
+                        successCallback: function () {
+                            if (self.widgetRenderId === renderId) {
+                                self.stopWidgetLoading();
+                            }
+                        },
+                        errorCallback: function (status, response) {
+                            if (self.widgetRenderId === renderId) {
+                                self.handleWidgetError(status + ' - ' + response);
+                            }
+                        }
+                    }
+                });
+            }).fail(function (error) {
+                if (self.widgetRenderId === renderId) {
+                    self.handleWidgetError(error);
+                }
+            });
         },
-        
+
+        /**
+         * Show the loader while the Oney checkout section loads, keeping the height of the schedule being replaced.
+         *
+         * @returns void
+         */
+        startWidgetLoading: function () {
+            var self = this,
+                height = $('#' + this.getPlaceholderId()).outerHeight();
+
+            this.widgetMinHeight(height > 0 ? height + 'px' : '');
+            this.isWidgetLoading(true);
+
+            clearTimeout(this.widgetLoadingTimer);
+            this.widgetLoadingTimer = setTimeout(function () {
+                self.showWidgetUnavailable();
+            }, this.widgetLoadingTimeout);
+        },
+
+        /**
+         * Hide the Oney checkout section loader.
+         *
+         * @returns void
+         */
+        stopWidgetLoading: function () {
+            clearTimeout(this.widgetLoadingTimer);
+            this.isWidgetLoading(false);
+            this.widgetMinHeight('');
+        },
+
+        /**
+         * Oney widget errors must never block the checkout: log, clear the section and show a notice.
+         *
+         * @param {*} error
+         */
+        handleWidgetError: function (error) {
+            if (window.console && window.console.warn) {
+                window.console.warn('Oney widget error', error);
+            }
+
+            this.showWidgetUnavailable();
+        },
+
+        /**
+         * Show a non blocking notice when the Oney schedule cannot be displayed.
+         *
+         * @returns void
+         */
+        showWidgetUnavailable: function () {
+            this.clearWidget();
+            this.oneyNotice($t('Your payment schedule simulation is temporarily unavailable. ' +
+                'You will find this information at the payment stage.'));
+        },
+
+        /**
+         * Empty the Oney checkout section container.
+         *
+         * @returns void
+         */
+        clearWidget: function () {
+            this.stopWidgetLoading();
+            this.widgetRenderId++;
+            this.renderedWidgetKey = null;
+            $('#' + this.getPlaceholderId()).empty();
+        },
+
         /**
          * Updates the Oney logo.
          *
@@ -248,144 +445,7 @@ define([
         updateOneyLogo: function (logo) {
             this.getOneyContainer().find('.oney-logo-checkout').attr('src', logo);
         },
-        
-        /**
-         * Updates the Oney error message.
-         *
-         * @param {String} message
-         * @returns void
-         */
-        updateOneyError: function (message) {
-            let oneyError = this.getOneyContainer().find('.oney-checkout-error');
-            if (message === '') {
-                oneyError.removeClass('active');
-            } else {
-                oneyError.addClass('active');
-            }
-            oneyError.html(message);
-        },
-        
-        /**
-         * Updates the label of the Place Order button with the given type.
-         *
-         * @param {String|null} type
-         * @returns void
-         */
-        updatePlaceOrderButtonLabel: function (type) {
-            var label;
 
-            if (type === null) {
-                label = $t('Place Order');
-            } else {
-                label = this.getPaymentTypeLabel().replace('%1', type);
-            }
-
-            this.getOneyContainer().find('.oney-submit-button').find('span').html(label);
-        },
-        
-        /**
-         * Builds the Oney payment detail content, based on the given simulation result.
-         * 
-         * @param {Object} oneySimulationResult
-         * @returns void
-         */
-        buildOneyDetail: function (oneySimulationResult) {
-            var tmpDiv = $('<div></div>');
-            var optionsWrapper = $('<div></div>').addClass('oneyOption_wrapper');
-            var label = this.getPaymentTypeLabel();
-
-            for (var i = 0; i < oneySimulationResult.options.length; i++) {
-                var optionData = oneySimulationResult.options[i];
-                var type = optionData.type;
-                var option = $('<label></label>', { 'data-type': type }).addClass('oneyOption oneyOption-' + type);
-
-                // Title
-                var title = $('<div></div>').addClass('oneyOption_title');
-                title.append($('<span></span>').addClass('oneyOption_logo oneyLogo oneyLogo-' + type));
-                title.append(label.replace('%1', type));
-                option.append(title);
-
-                // Option detail
-                if (typeof optionData.schedules !== 'undefined' && optionData.schedules.length > 0) {
-                    var detail = $('<div></div>').addClass('oneyOption_prices');
-                    var list = $('<ul></ul>').addClass('oneyOption_list');
-
-                    var firstDeposit = $('<li></li>')
-                        .append($('<span></span>').html($t('Total order amount')))
-                        .append($('<span></span>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.first_deposit)));
-
-                    list.append(firstDeposit);
-
-                    var daysForPayment = 30;
-
-                    for (var j = 0; j < optionData.schedules.length; j++) {
-                        var scheduleData = optionData.schedules[j];
-
-                        var schedule = $('<li></li>')
-                            .append($('<span></span>').html(this.getScheduleLabel(daysForPayment)))
-                            .append($('<span></span>').addClass('oneyOption_price').html(this.getFormattedPrice(scheduleData.amount)));
-
-                        list.append(schedule);
-                        daysForPayment += 30;
-                    }
-
-                    var totalAmount = $('<li></li>')
-                        .append($('<span></span>').html($t('Total cost')))
-                        .append($('<span></span>').addClass('oneyOption_price').html(this.getFormattedPrice(optionData.total_amount)));
-
-                    list.append(totalAmount);
-                    detail.append(list);
-                    option.append(detail);
-                }
-
-                // Option radio button
-                var radio = $('<div></div>').addClass('oneyOption_radio').append(
-                    $('<div></div>').addClass('radio').append(
-                        $('<span></span>').append(
-                            $('<input>').attr('type', 'radio').attr('name', 'oney_type').val(type)
-                        )
-                    )
-                );
-
-                option.append(radio);
-                optionsWrapper.append(option);
-            }
-
-            tmpDiv.append(optionsWrapper);
-
-            if (this.getConfiguration().more_info_url) {
-                tmpDiv.append(
-                    $('<a></a>')
-                        .attr('class', 'more-info')
-                        .attr('href', this.getConfiguration().more_info_url)
-                        .attr('target', '_blank')
-                        .html($t('More info'))
-                );
-            }
-
-            this.getOneyContainer().find('.oneyPayment').html(tmpDiv.html());
-        },
-        
-        /**
-         * Retrieves the schedule label corresponding to the given number of days.
-         *
-         * @param {Number} days
-         * @returns {String|null}
-         */
-        getScheduleLabel: function (days) {
-            let label = null;
-            
-            this.scheduleLabels.forEach(function(item) {
-                if (item.days === days) {
-                    label = item.label;
-
-                    return false;
-                }
-            });
-
-            return label;
-        },
-        
         /**
          * Returns the given price, formatted according to the current quote's price format.
          *
@@ -395,7 +455,7 @@ define([
         getFormattedPrice: function (price) {
             return priceUtils.formatPrice(price, quote.getPriceFormat());
         },
-        
+
         /**
          * Retrieves the payment data, including additional data for the selected Oney option.
          *
@@ -404,23 +464,22 @@ define([
         getData: function () {
             var parentData = this._super();
 
-            var oneyOption = this.getOneyContainer().find('.oneyPayment').find('input[type="radio"]:checked');
-            if (oneyOption.length > 0 && oneyOption.val() !== '') {
+            if (this.selectedOption()) {
                 parentData['additional_data'] = {
-                    'payplug_payments_oney_option': oneyOption.val()
+                    'payplug_payments_oney_option': this.selectedOption()
                 };
             }
 
             return parentData;
         },
-        
+
         /**
          * Determines the CSS class to apply for prepaid card mentions.
-         * 
+         *
          * @returns {String}
          */
         getPrepaidMentionClass: function () {
-            let mentionClass = 'prepaid-card-mention';
+            var mentionClass = 'prepaid-card-mention';
 
             if (/^it/.test(navigator.language)) {
                 mentionClass += ' visible';
@@ -428,40 +487,40 @@ define([
 
             return mentionClass;
         },
-        
+
         /**
          * Retrieves the jQuery object representing the Oney container element.
          *
          * @returns {jQuery}
          */
-        getOneyContainer: function() {
+        getOneyContainer: function () {
             return $('[data-oney-container="' + this.getCode() + '"]');
         },
-        
+
         /**
          * Indicates whether the current Oney payment is for the Italian market.
          *
          * @returns {Boolean}
          */
-        isOneyItalian: function() {
+        isOneyItalian: function () {
             return this.getConfiguration().is_italian;
         },
-        
+
         /**
          * Returns the configuration object associated with the current payment method.
-         * 
+         *
          * @returns {Object}
          */
-        getConfiguration: function() {
+        getConfiguration: function () {
             return {};
         },
-        
+
         /**
          * Returns the label associated with the given payment type.
          *
          * @returns {String}
          */
-        getPaymentTypeLabel: function() {
+        getPaymentTypeLabel: function () {
             return '';
         }
     });

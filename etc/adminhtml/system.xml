@@ -14,6 +14,10 @@
             <resource>Payplug_Payments::general</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>PayPlug Payments - General configuration</label>
+                <field id="account_refresh" translate="label" type="button" sortOrder="1000" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Account information</label>
+                    <frontend_model>Payplug\Payments\Block\Adminhtml\Config\Field\RefreshAccount</frontend_model>
+                </field>
                 <field id="environmentmode" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Mode</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Mode</source_model>
@@ -49,6 +53,10 @@
                 <field id="oney_min_amounts"/>
                 <field id="oney_max_amounts"/>
                 <field id="can_use_oney"/>
+                <field id="oney_merchant_guid"/>
+                <field id="oney_business_codes"/>
+                <field id="oney_show_legal_notices"/>
+                <field id="account_last_update"/>
                 <field id="can_use_integrated_payments"/>
                 <field id="satispay_countries"/>
                 <field id="satispay_min_amounts"/>
