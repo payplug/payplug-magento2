@@ -13,6 +13,7 @@ use Magento\Backend\Block\Template\Context;
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Data\Form\Element\AbstractElement;
+use Magento\Framework\Escaper;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Payplug\Payments\Helper\Config;
@@ -21,11 +22,13 @@ class LegacyAuthInfo extends Field
 {
     /**
      * @param Config $helper
+     * @param Escaper $escaper
      * @param Context $context
      * @param array $data
      */
     public function __construct(
         private readonly Config $helper,
+        private readonly Escaper $escaper,
         Context $context,
         array $data = []
     ) {
@@ -59,7 +62,18 @@ class LegacyAuthInfo extends Field
         if ($isLegacyConnected) {
             $message = __('Connected with <strong>%1</strong>', $this->helper->getConfigValue('email'));
         } elseif ($isOauthConnected) {
-            $message = __('Connected with OAuth2 Authentication');
+            $companyName = $this->helper->getConfigValue(
+                Config::OAUTH_COMPANY_NAME,
+                ScopeInterface::SCOPE_WEBSITE,
+                (int)$this->_request->getParam('website'),
+                Config::OAUTH_CONFIG_PATH
+            );
+
+            $message = $companyName
+                ? __(
+                    'Connected with OAuth2 Authentication (<strong>%1</strong>)',
+                    $this->escaper->escapeHtml($companyName)
+                ) : __('Connected with OAuth2 Authentication');
         } elseif ($isDefaultLegacyConnected) {
             $message = __(
                 'Connected with <strong>%1</strong> in default scope',
