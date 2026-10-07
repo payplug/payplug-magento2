@@ -76,6 +76,21 @@ composer require payplug/payplug-php:^4.1
 composer require giggsey/libphonenumber-for-php:"^8.10|^9.0"
 ```
 
+### Payplug account information
+
+When you log in to your Payplug account from the Magento admin (legacy or OAuth2 authentication), the module
+fetches your account information from the Payplug API (allowed currencies, amounts, permissions, Oney merchant
+identifier and business transaction codes, ...) and stores it in the Magento configuration.
+
+This information can be refreshed at any time, without logging out, from
+**Stores > Configuration > Sales > Payplug Payments > General configuration**: once a Payplug account is connected,
+an **Update account information** button is displayed with the date of the last update. Click it whenever your
+Payplug account has been updated (new payment method enabled, Oney activation, new thresholds, ...).
+
+The Oney simulation displayed on the product page, the cart and the checkout relies on the official Oney widget, which
+needs the Oney merchant identifier provided by this account information. After upgrading from a version prior to
+4.9.0, click **Update account information** once to fetch it.
+
 ### Cron Job Configuration
 
 The Payplug Payments module introduces new cron tasks that are grouped under the **`payplug`** cron group in `etc/crontab.xml`. These cron jobs **must** run for the module to function properly.

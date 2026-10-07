@@ -7,65 +7,35 @@
 
 namespace Payplug\Payments\Model\Payment\Oney;
 
-use Magento\Checkout\Model\ConfigProviderInterface;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\View\Asset\Repository;
-use Magento\Payment\Helper\Data as PaymentHelper;
-use Magento\Payment\Model\MethodInterface;
 use Payplug\Payments\Gateway\Config\Oney;
-use Payplug\Payments\Model\Payment\PayplugConfigProvider;
+use Payplug\Payments\Model\Payment\AbstractOneyConfigProvider;
 
-class ConfigProvider extends PayplugConfigProvider implements ConfigProviderInterface
+class ConfigProvider extends AbstractOneyConfigProvider
 {
     /**
-     * @var string
+     * @inheritdoc
      */
-    private $methodCode = Oney::METHOD_CODE;
-
-    /**
-     * @var MethodInterface
-     */
-    private $method;
-
-    /**
-     * @var \Payplug\Payments\Helper\Oney
-     */
-    private $oneyHelper;
-
-    /**
-     * @param Repository                    $assetRepo
-     * @param RequestInterface              $request
-     * @param PaymentHelper                 $paymentHelper
-     * @param \Payplug\Payments\Helper\Oney $oneyHelper
-     */
-    public function __construct(
-        Repository $assetRepo,
-        RequestInterface $request,
-        PaymentHelper $paymentHelper,
-        \Payplug\Payments\Helper\Oney $oneyHelper
-    ) {
-        parent::__construct($assetRepo, $request);
-        $this->method = $paymentHelper->getMethodInstance($this->methodCode);
-        $this->oneyHelper = $oneyHelper;
+    protected function getMethodCode(): string
+    {
+        return Oney::METHOD_CODE;
     }
 
     /**
-     * Get Oney payment config
-     *
-     * @return array
+     * @inheritdoc
      */
-    public function getConfig()
+    protected function getLogos(): array
     {
-        return $this->method->isAvailable() ? [
-            'payment' => [
-                $this->methodCode => [
-                    'logo' => $this->getViewFileUrl('Payplug_Payments::images/logos/oney_3x_4x.svg'),
-                    'logo_ko' => $this->getViewFileUrl('Payplug_Payments::images/logos/oney_3x_4x_alt.svg'),
-                    'is_italian' => false,
-                    'more_info_url' => $this->oneyHelper->isMerchandItalian() ?
-                        $this->oneyHelper->getMoreInfoUrl() : null,
-                ],
-            ],
-        ] : [];
+        return [
+            'logo' => 'Payplug_Payments::images/logos/oney_3x_4x.svg',
+            'logo_ko' => 'Payplug_Payments::images/logos/oney_3x_4x_alt.svg',
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function getMoreInfoUrl(): string
+    {
+        return $this->oneyHelper->getMoreInfoUrl();
     }
 }
