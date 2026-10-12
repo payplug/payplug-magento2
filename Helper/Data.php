@@ -27,7 +27,6 @@ use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherIn
 use Magento\Framework\Model\AbstractModel;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Sales\Api\Data\OrderStatusHistoryInterfaceFactory;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Model\Order;
@@ -95,7 +94,6 @@ class Data
      * @param MessageQueuePublisherInterface $messageQueuePublisher
      * @param PayplugLogger $payplugLogger
      * @param OrderManagementInterface $orderManagement
-     * @param OrderStatusHistoryInterfaceFactory $orderStatusHistoryFactory
      */
     public function __construct(
         private readonly PayplugOrderPaymentRepository $payplugOrderPaymentRepository,
@@ -112,8 +110,7 @@ class Data
         private readonly OndemandHelper $ondemandHelper,
         private readonly MessageQueuePublisherInterface $messageQueuePublisher,
         private readonly PayplugLogger $payplugLogger,
-        private readonly OrderManagementInterface $orderManagement,
-        private readonly OrderStatusHistoryInterfaceFactory $orderStatusHistoryFactory
+        private readonly OrderManagementInterface $orderManagement
     ) {
     }
 
@@ -1157,10 +1154,21 @@ class Data
 
         $this->orderManagement->cancel($order->getEntityId());
 
-        $orderStatusHistory = $this->orderStatusHistoryFactory->create();
-        $orderStatusHistory->setComment(__('Payplug payment was not successfull.'));
+        /**
+         * Reload the order canceled by OrderService::cancel(): the instance passed in may be stale
+         */
+        $order = $this->orderRepository->get($order->getEntityId());
 
-        $this->orderManagement->addComment($order->getEntityId(), $orderStatusHistory);
+        if ($order instanceof Order) {
+            /**
+             * The comment is added with $order->addCommentToStatusHistory()
+             * instead of through OrderManagementInterface::addComment(),
+             * which resets the order status to null on Magento 2.4.4 to 2.4.6.
+             */
+            $order->addCommentToStatusHistory(__('Payplug payment was not successful.'));
+        }
+
+        $this->orderRepository->save($order);
     }
 
     /**
