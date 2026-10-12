@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace Payplug\Payments\Service;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Logger\Logger as PayplugLogger;
 use Payplug\Payments\Model\Api\Login;
 
 class SynchronizeAccountData
@@ -35,6 +37,8 @@ class SynchronizeAccountData
         'can_use_integrated_payments',
     ];
 
+    private const CONFIG_TABLE = 'core_config_data';
+
     private const ADDITIONAL_PPRO_METHODS = [
         'satispay',
         'ideal',
@@ -55,40 +59,124 @@ class SynchronizeAccountData
     private int $scopeId = 0;
 
     /**
+     * @var string[]
+     */
+    private array $syncedPaths = [];
+
+    /**
+     * @var array
+     */
+    private array $inheritingScopeIds = [];
+
+    /**
      * @param Login $login
      * @param Config $helper
      * @param DateTime $dateTime
      * @param SerializerInterface $serializer
+     * @param GetCredentialsScope $getCredentialsScope
+     * @param ResourceConnection $resourceConnection
+     * @param PayplugLogger $payplugLogger
      */
     public function __construct(
         private readonly Login $login,
         private readonly Config $helper,
         private readonly DateTime $dateTime,
-        private readonly SerializerInterface $serializer
+        private readonly SerializerInterface $serializer,
+        private readonly GetCredentialsScope $getCredentialsScope,
+        private readonly ResourceConnection $resourceConnection,
+        private readonly PayplugLogger $payplugLogger
     ) {
     }
 
     /**
-     * Fetch account data from Payplug API and persist it in the given configuration scope
+     * Fetch account data from Payplug API, persist it in the scope holding the Payplug credentials
+     * and remove its copies from the scopes inheriting these credentials
      *
-     * @param string $apiKey
      * @param string $scope
      * @param int $scopeId
+     * @param string|null $apiKey API key to use instead of the one of the scope holding the credentials
      * @return array Account permissions
      * @throws LocalizedException
      */
-    public function execute(string $apiKey, string $scope, int $scopeId): array
+    public function execute(string $scope, int $scopeId, ?string $apiKey = null): array
     {
-        $result = $this->login->getAccount($apiKey);
+        [$this->scope, $this->scopeId] = $this->getCredentialsScope->execute($scope, $scopeId);
+
+        $result = $this->login->getAccount($apiKey ?? $this->getApiKey());
 
         if (!$result['status']) {
             throw new LocalizedException(__($result['message']));
         }
 
-        $this->scope = $scope;
-        $this->scopeId = $scopeId;
+        $this->syncedPaths = [];
+        $this->inheritingScopeIds = $this->getCredentialsScope->getInheritingScopeIds($this->scope, $this->scopeId);
 
-        return $this->persist($result['answer']);
+        $permissions = $this->persist($result['answer']);
+        $this->purgeInheritedCopies();
+
+        return $permissions;
+    }
+
+    /**
+     * Get the API key of the scope holding the Payplug credentials, in the environment mode of this scope
+     *
+     * @return string
+     * @throws LocalizedException
+     */
+    private function getApiKey(): string
+    {
+        $environmentMode = $this->helper->getConfigValue('environmentmode', $this->scope, $this->scopeId);
+        $apiKey = $this->helper->getApiKey(
+            $environmentMode === Config::ENVIRONMENT_TEST,
+            $this->scopeId,
+            $this->scope
+        );
+
+        if (empty($apiKey)) {
+            throw new LocalizedException(__(
+                'We are not able to retrieve your account information. ' .
+                'Please go to section Sales > Payplug Payments to log in again.'
+            ));
+        }
+
+        return $apiKey;
+    }
+
+    /**
+     * Remove the synchronized account data copies saved in the websites and store views inheriting the credentials
+     *
+     * @return void
+     */
+    private function purgeInheritedCopies(): void
+    {
+        if (empty($this->syncedPaths)) {
+            return;
+        }
+
+        $connection = $this->resourceConnection->getConnection();
+
+        foreach ($this->inheritingScopeIds as $scope => $scopeIds) {
+            if (empty($scopeIds)) {
+                continue;
+            }
+
+            $deletedCount = $connection->delete($this->resourceConnection->getTableName(self::CONFIG_TABLE), [
+                'path IN (?)' => array_values(array_unique($this->syncedPaths)),
+                'scope = ?' => $scope,
+                'scope_id IN (?)' => $scopeIds,
+            ]);
+
+            if ($deletedCount > 0) {
+                $this->payplugLogger->info(sprintf(
+                    'Payplug account data: %d copies removed from %s %s, inheriting the credentials of %s %d',
+                    $deletedCount,
+                    $scope,
+                    implode(',', $scopeIds),
+                    $this->scope,
+                    $this->scopeId
+                ));
+            }
+        }
     }
 
     /**
@@ -342,6 +430,10 @@ class SynchronizeAccountData
      */
     private function saveConfig(string $field, mixed $value, string $path = Config::CONFIG_PATH): void
     {
+        if ($path === Config::CONFIG_PATH) {
+            $this->syncedPaths[] = $path . $field;
+        }
+
         $this->helper->setConfigValue($field, (string) $value, $this->scope, $this->scopeId, $path);
     }
 }

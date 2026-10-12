@@ -755,6 +755,15 @@ class Config
             $currentMaxAmount = $maxAmounts[$isoCode];
         }
 
+        if ($path === self::ONEY_CONFIG_PATH) {
+            $accountAmounts = $this->getAmountsByCurrency($isoCode, $storeId, self::CONFIG_PATH, $amountPrefix);
+
+            if ($accountAmounts !== false) {
+                $currentMinAmount = max($currentMinAmount, $accountAmounts['min_amount']);
+                $currentMaxAmount = min($currentMaxAmount, $accountAmounts['max_amount']);
+            }
+        }
+
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
     }
 
