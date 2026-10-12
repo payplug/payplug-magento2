@@ -59,9 +59,9 @@ class PaymentConfigObserver implements ObserverInterface
      */
     private string $liveApiKey;
     /**
-     * @var array
+     * @var array|null
      */
-    private array $permissions = [];
+    private ?array $permissions = null;
 
     /**
      * @param Http $request
@@ -271,16 +271,17 @@ class PaymentConfigObserver implements ObserverInterface
     private function enforceIntegratedPaymentPermissions(array &$groups, array $fields): void
     {
         $apiKey = $this->getCurrentApiKey();
+        $fallbackApiKey = null;
 
         if (!$apiKey && $this->payplugConfigConnected) {
-            $apiKey = $this->testApiKey ?: $this->getConfig('test_api_key');
+            $apiKey = $fallbackApiKey = $this->testApiKey ?: $this->getConfig('test_api_key');
         }
 
         if (!$apiKey) {
             return;
         }
 
-        $permissions = $this->getAccountPermissions($apiKey);
+        $permissions = $this->getAccountPermissions($fallbackApiKey);
         $paymentValue = $fields['payment_page']['value']
             ?? $fields['payment_page']['inherit']
             ?? null;
@@ -403,7 +404,7 @@ class PaymentConfigObserver implements ObserverInterface
                         'Please go to section Sales > Payplug Payments to log in again.')
                 );
             } else {
-                $permissions = $this->getAccountPermissions($apiKey);
+                $permissions = $this->getAccountPermissions();
 
                 if (empty($permissions['can_save_cards'])) {
                     $groups[StandardConfig::METHOD_CODE]['fields']['one_click']['value'] = 0;
@@ -441,7 +442,7 @@ class PaymentConfigObserver implements ObserverInterface
                         'Please go to section Sales > Payplug Payments to log in again.')
                 );
             } else {
-                $permissions = $this->getAccountPermissions($apiKey);
+                $permissions = $this->getAccountPermissions();
 
                 if (empty($permissions['can_create_installment_plan'])) {
                     $groups[InstallmentPlanConfig::METHOD_CODE]['fields']['active']['value'] = 0;
@@ -516,7 +517,7 @@ class PaymentConfigObserver implements ObserverInterface
                             'Please go to section Sales > Payplug Payments to log in again.')
                     );
                 } else {
-                    $permissions = $this->getAccountPermissions($apiKey);
+                    $permissions = $this->getAccountPermissions();
 
                     if (empty($permissions['can_use_oney'])) {
                         $groups[$oney]['fields']['active']['value'] = 0;
@@ -716,7 +717,7 @@ class PaymentConfigObserver implements ObserverInterface
                         'Please go to section Sales > Payplug Payments to log in again.')
                 );
             } else {
-                $permissions = $this->getAccountPermissions($apiKey);
+                $permissions = $this->getAccountPermissions();
                 if (empty($permissions['can_use_apple_pay'])) {
                     $groups[ApplePayConfig::METHOD_CODE]['fields']['active']['value'] = 0;
                     $message = 'You don\'t have access to this feature yet. ' .
@@ -970,7 +971,8 @@ class PaymentConfigObserver implements ObserverInterface
             return;
         }
 
-        $permissions = $this->getAccountPermissions($apiKey);
+        $permissions = $this->getAccountPermissions();
+
         if (empty($permissions['can_use_' . $method])) {
             $groups[$groupCode]['fields']['active']['value'] = 0;
             $this->messageManager->addErrorMessage($liveModeNoPermissionMessage);
@@ -1138,25 +1140,25 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Get PayPlug account permissions
      *
-     * @param string $apiKey
+     * @param string|null $apiKey API key to use instead of the one of the scope holding the credentials
      * @return array
      */
-    private function getAccountPermissions(string $apiKey): array
+    private function getAccountPermissions(?string $apiKey = null): array
     {
-        if (!array_key_exists($apiKey, $this->permissions)) {
+        if ($this->permissions === null) {
             try {
-                $this->permissions[$apiKey] = $this->synchronizeAccountData->execute(
-                    $apiKey,
+                $this->permissions = $this->synchronizeAccountData->execute(
                     (string) $this->helper->getConfigScope(),
-                    (int) $this->helper->getConfigScopeId()
+                    (int) $this->helper->getConfigScopeId(),
+                    $apiKey
                 );
             } catch (LocalizedException $e) {
                 $this->messageManager->addErrorMessage($e->getMessage());
-                $this->permissions[$apiKey] = [];
+                $this->permissions = [];
             }
         }
 
-        return $this->permissions[$apiKey];
+        return $this->permissions;
     }
 
     /**
