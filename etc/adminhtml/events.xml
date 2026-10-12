@@ -10,6 +10,10 @@
     <event name="controller_action_predispatch_adminhtml_system_config">
         <observer name="payplug_paymetns_display_notice" instance="Payplug\Payments\Observer\DisplayNoticeObserver" />
     </event>
+    <event name="controller_action_predispatch_adminhtml_system_config_edit">
+        <observer name="payplug_payments_sync_oauth2_company_name"
+                  instance="Payplug\Payments\Observer\SyncOauth2CompanyNameObserver"/>
+    </event>
     <event name="admin_system_config_changed_section_payplug_payments">
         <observer name="payplug_clean_oauth_token_data_on_change_mode"
                   instance="Payplug\Payments\Observer\CleanOauthTokenDataOnChangeMode"/>

@@ -148,6 +148,8 @@
 "Scope: website","Scope: website"
 "TEST client credentials available","TEST client credentials available"
 "The JWT is invalid.","The JWT is invalid."
+"The company name of your Payplug account could not be retrieved.","The company name of your Payplug account could not be retrieved."
+"The company name of your Payplug account has been synchronized: %1","The company name of your Payplug account has been synchronized: %1"
 "The delay must be between 1 and 6 days.","The delay must be between 1 and 6 days."
 "Or pay in","Or pay in"
 "Order Store (Automatic)","Order Store (Automatic)"

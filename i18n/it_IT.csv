@@ -146,6 +146,8 @@
 "Scope: website","Ambito: sito web"
 "TEST client credentials available","Credenziali client TEST disponibili"
 "The JWT is invalid.","Il JWT non è valido."
+"The company name of your Payplug account could not be retrieved.","Non è stato possibile recuperare il nome aziendale del tuo account Payplug."
+"The company name of your Payplug account has been synchronized: %1","Il nome aziendale del tuo account Payplug è stato sincronizzato: %1"
 "The delay must be between 1 and 6 days.","Il ritardo deve essere compreso tra 1 e 6 giorni."
 "Or pay in","PAGHI IN"
 "Order Store (Automatic)","Negozio dell’ordine (Automatico)"

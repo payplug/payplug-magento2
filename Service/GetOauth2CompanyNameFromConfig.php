@@ -21,11 +21,9 @@ class GetOauth2CompanyNameFromConfig
 
     /**
      * @param ConfigDataCollectionFactory $configDataCollectionFactory
-     * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
-        private readonly ConfigDataCollectionFactory $configDataCollectionFactory,
-        private readonly ScopeConfigInterface $scopeConfig
+        private readonly ConfigDataCollectionFactory $configDataCollectionFactory
     ) {
     }
 
@@ -37,25 +35,47 @@ class GetOauth2CompanyNameFromConfig
      */
     public function execute(?int $websiteId): ?string
     {
-        if (!$websiteId) {
-            return $this->scopeConfig->getValue(self::COMPANY_NAME_PATH);
+        $emailWebsiteId = $this->getEmailWebsiteId($websiteId);
+
+        return $this->getValue(
+            self::COMPANY_NAME_PATH,
+            $emailWebsiteId ? ScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            (int)$emailWebsiteId
+        );
+    }
+
+    /**
+     * Get the website holding its own Oauth2 email, null when the email comes from the default scope
+     *
+     * @param int|null $websiteId
+     * @return int|null
+     */
+    public function getEmailWebsiteId(?int $websiteId): ?int
+    {
+        if ($websiteId && $this->getValue(self::EMAIL_PATH, ScopeInterface::SCOPE_WEBSITES, $websiteId) !== null) {
+            return $websiteId;
         }
 
+        return null;
+    }
+
+    /**
+     * Get a value stored in the given scope, without scope fallback
+     *
+     * @param string $path
+     * @param string $scope
+     * @param int $scopeId
+     * @return string|null
+     */
+    private function getValue(string $path, string $scope, int $scopeId): ?string
+    {
         $collection = $this->configDataCollectionFactory->create();
-        $collection->addFieldToFilter('path', ['in' => [self::EMAIL_PATH, self::COMPANY_NAME_PATH]])
-            ->addFieldToFilter('scope', ScopeInterface::SCOPE_WEBSITES)
-            ->addFieldToFilter('scope_id', $websiteId);
+        $collection->addFieldToFilter('path', $path)
+            ->addFieldToFilter('scope', $scope)
+            ->addFieldToFilter('scope_id', $scopeId);
 
-        $values = [];
+        $item = $collection->getFirstItem();
 
-        foreach ($collection as $item) {
-            $values[$item->getData('path')] = $item->getData('value');
-        }
-
-        if (!array_key_exists(self::EMAIL_PATH, $values)) {
-            return $this->scopeConfig->getValue(self::COMPANY_NAME_PATH);
-        }
-
-        return $values[self::COMPANY_NAME_PATH] ?? null;
+        return $item->getId() ? (string)$item->getData('value') : null;
     }
 }

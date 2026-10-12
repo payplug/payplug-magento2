@@ -39,17 +39,19 @@ class GetOauth2CompanyNameFromApi
      * Retrieve the merchant company name from the Payplug users API
      *
      * @param string $accessToken
-     * @param string $companyId
+     * @param string|null $companyId
      * @return string
      */
-    public function execute(string $accessToken, string $companyId): string
+    public function execute(string $accessToken, ?string $companyId = null): string
     {
+        $companyId = $companyId ?: $this->getClaim($accessToken, 'company_id');
+
         if ($accessToken === '' || $companyId === '') {
             return '';
         }
 
         try {
-            $realmId = $this->getRealmId($accessToken);
+            $realmId = $this->getClaim($accessToken, 'realm_id');
 
             if ($realmId === '') {
                 $this->logger->warning('Could not retrieve the Oauth2 company name: no realm_id in the access token');
@@ -90,12 +92,13 @@ class GetOauth2CompanyNameFromApi
     }
 
     /**
-     * Get the realm id from the JWT payload
+     * Get a claim from the JWT payload
      *
      * @param string $accessToken
+     * @param string $claim
      * @return string
      */
-    private function getRealmId(string $accessToken): string
+    private function getClaim(string $accessToken, string $claim): string
     {
         try {
             $payload = $this->json->unserialize($this->urlDecoder->decode(explode('.', $accessToken)[1] ?? ''));
@@ -103,8 +106,8 @@ class GetOauth2CompanyNameFromApi
             $payload = null;
         }
 
-        $realmId = $payload['realm_id'] ?? $payload['ext']['realm_id'] ?? null;
+        $value = $payload[$claim] ?? $payload['ext'][$claim] ?? null;
 
-        return is_string($realmId) ? $realmId : '';
+        return is_string($value) ? $value : '';
     }
 }
