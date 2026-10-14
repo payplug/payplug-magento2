@@ -546,7 +546,6 @@ class Config
             'payplug_payments/general/can_use_oney',
             'payplug_payments/general/oney_merchant_guid',
             'payplug_payments/general/oney_business_codes',
-            'payplug_payments/general/oney_show_legal_notices',
             'payplug_payments/general/account_last_update',
             'payplug_payments/general/merchand_country',
             'payplug_payments/general/payment_page_backup',
