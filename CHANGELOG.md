@@ -27,6 +27,15 @@ ONEY only: the payment schedule (product page, cart, checkout) is now displayed 
 - Theme overrides of `oney/simulation.phtml`, `oney/simulation_content.phtml`, `oney/simulation_wrapper*.phtml` and
   `oneyPopin` are no longer used: port them to the new `oney/simulation-*.phtml` templates.
 
+### Removed
+
+ONEY only, former payment schedule code (breaks layout overrides, plugins or calls relying on it):
+
+- `Block\Oney\Simulation`, `Model\OneySimulation\*`
+- `Controller\Oney\Simulation` and `SimulationCheckout` (routes `payplug_payments/oney/simulation*`)
+- `Helper\Oney::getOneySimulation()`, `getOneySimulationCheckout()`, `getShippingMethodMapping()`
+- `ViewModel\Oney::currency()`
+
 ## [4.8.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.8.0) - 2026-07-15
 
 ### Features
