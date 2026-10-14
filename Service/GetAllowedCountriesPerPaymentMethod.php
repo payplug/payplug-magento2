@@ -35,7 +35,7 @@ class GetAllowedCountriesPerPaymentMethod
         $paymentMethod = str_replace('payplug_payments_', '', $paymentMethod);
 
         $restrictedCountryIds = $this->serializer->unserialize(
-            $this->payplugConfigHelper->getConfigValue($paymentMethod . '_countries') ?? '[]'
+            $this->payplugConfigHelper->getConfigValue($paymentMethod . '_countries') ?: '[]'
         );
 
         /**
@@ -43,7 +43,7 @@ class GetAllowedCountriesPerPaymentMethod
          * IDEAL, BANCONTACT, MYBANK and SATISPAY
          */
         $restrictedCountryOverrideIds = $this->serializer->unserialize(
-            $this->payplugConfigHelper->getConfigValue($paymentMethod . '_countries_override') ?? '[]'
+            $this->payplugConfigHelper->getConfigValue($paymentMethod . '_countries_override') ?: '[]'
         );
 
         if ($restrictedCountryOverrideIds) {

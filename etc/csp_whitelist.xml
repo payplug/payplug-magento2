@@ -15,11 +15,19 @@
                 <value id="payplug-api" type="host">api.payplug.com</value>
                 <value id="payplug-cdn" type="host">cdn.payplug.com</value>
                 <value id="dalenys-js" type="host">js.dalenys.com</value>
+                <value id="oney-all" type="host">*.oney.io</value>
             </values>
         </policy>
         <policy id="style-src">
             <values>
                 <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
+                <value id="oney-all" type="host">*.oney.io</value>
+            </values>
+        </policy>
+        <policy id="connect-src">
+            <values>
+                <value id="oney-all" type="host">*.oney.io</value>
+                <value id="oney-widget-uat" type="host">widget-marketing-ws-uat.azurewebsites.net</value>
             </values>
         </policy>
         <policy id="frame-src">
@@ -27,17 +35,21 @@
                 <value id="payplug-all" type="host">*.payplug.com</value>
                 <value id="dalenys-all" type="host">*.dalenys.com</value>
                 <value id="payplug-apple-pay" type="host">https://applepay.cdn-apple.com</value>
+                <value id="oney-all" type="host">*.oney.io</value>
             </values>
         </policy>
         <policy id="font-src">
             <values>
                 <value id="payplug-apple-pay" type="host">https://applepay.cdn-apple.com</value>
+                <value id="oney-all" type="host">*.oney.io</value>
             </values>
         </policy>
         <policy id="img-src">
             <values>
                 <value id="payplug-secure-magenta" type="host">https://secure-magenta.dalenys.com</value>
                 <value id="dalenys-all" type="host">*.dalenys.com</value>
+                <value id="oney-all" type="host">*.oney.io</value>
+                <value id="oney-prismic" type="host">oney.cdn.prismic.io</value>
             </values>
         </policy>
         <policy id="form-action">

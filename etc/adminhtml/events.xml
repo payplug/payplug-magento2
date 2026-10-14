@@ -13,5 +13,7 @@
     <event name="admin_system_config_changed_section_payplug_payments">
         <observer name="payplug_clean_oauth_token_data_on_change_mode"
                   instance="Payplug\Payments\Observer\CleanOauthTokenDataOnChangeMode"/>
+        <observer name="payplug_synchronize_account_data_on_change_mode"
+                  instance="Payplug\Payments\Observer\SynchronizeAccountDataOnChangeMode"/>
     </event>
 </config>
