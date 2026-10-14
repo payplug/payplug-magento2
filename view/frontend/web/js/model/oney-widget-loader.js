@@ -14,7 +14,7 @@ define([
 
     return {
         /**
-         * Load the official Oney widget once and resolve when oneyMerchantApp is available.
+         * Load the official Oney widget once and resolve when oneyMerchantApp is available, retrying after a failure.
          *
          * @param {String} loaderUrl
          * @returns {Promise}
@@ -34,7 +34,8 @@ define([
                 deferred.reject(new Error('Oney widget loading timed out.'));
             }, loadTimeout);
 
-            require([loaderUrl], function () {
+            // Not loaded with RequireJS: it keeps a failed script and require.undef() freezes the checkout loader
+            $.ajax({url: loaderUrl, dataType: 'script', cache: true, global: false}).done(function () {
                 if (deferred.state() !== 'pending') {
                     return;
                 }
@@ -52,12 +53,16 @@ define([
                         deferred.reject(new Error('Oney widget is not available.'));
                     }
                 });
-            }, function (error) {
-                deferred.reject(error);
+            }).fail(function () {
+                deferred.reject(new Error('Oney widget loader could not be loaded.'));
             });
 
             widgetPromise.always(function () {
                 clearTimeout(timer);
+            });
+
+            widgetPromise.fail(function () {
+                widgetPromise = null;
             });
 
             return widgetPromise;
