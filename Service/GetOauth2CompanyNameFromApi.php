@@ -46,7 +46,15 @@ class GetOauth2CompanyNameFromApi
     {
         $companyId = $companyId ?: $this->getClaim($accessToken, 'company_id');
 
-        if ($accessToken === '' || $companyId === '') {
+        if ($accessToken === '') {
+            $this->logger->warning('Could not retrieve the Oauth2 company name: no access token');
+
+            return '';
+        }
+
+        if ($companyId === '') {
+            $this->logger->warning('Could not retrieve the Oauth2 company name: no company_id in the access token');
+
             return '';
         }
 
