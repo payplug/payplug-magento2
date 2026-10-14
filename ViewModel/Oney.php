@@ -117,14 +117,14 @@ class Oney implements ArgumentInterface
     }
 
     /**
-     * Get current cart base grand total
+     * Get current cart grand total
      *
      * @return float
      */
     public function getCartAmount(): float
     {
         try {
-            return (float) $this->checkoutSession->getQuote()->getBaseGrandTotal();
+            return (float) $this->checkoutSession->getQuote()->getGrandTotal();
         } catch (Throwable $e) {
             $this->payplugLogger->error('Could not retrieve cart amount for Oney widget', ['exception' => $e]);
 

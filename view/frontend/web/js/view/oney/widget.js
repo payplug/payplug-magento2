@@ -147,13 +147,17 @@ define([
                 return;
             }
 
-            require(['Magento_Checkout/js/model/quote'], function (quote) {
-                quote.totals.subscribe(function (totals) {
-                    if (!totals) {
+            require(['Magento_Checkout/js/model/totals'], function (cartTotals) {
+                cartTotals.totals.subscribe(function () {
+                    // totals.grand_total excludes tax up to Magento 2.4.5, not the grand_total segment
+                    // @see https://github.com/magento/magento2/blob/2.4.5/app/code/Magento/Quote/Model/Cart/CartTotalRepository.php#L113-L116
+                    var grandTotal = cartTotals.getSegment('grand_total');
+
+                    if (!grandTotal) {
                         return;
                     }
 
-                    self.option('amount', parseFloat(totals['base_grand_total']) || 0);
+                    self.option('amount', parseFloat(grandTotal.value) || 0);
                     self._refreshEligibility();
                 });
             });

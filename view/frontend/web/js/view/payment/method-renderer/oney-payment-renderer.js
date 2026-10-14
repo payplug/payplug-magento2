@@ -11,10 +11,13 @@ define([
     'Magento_Checkout/js/view/payment/default',
     'Magento_Checkout/js/model/full-screen-loader',
     'Magento_Checkout/js/model/quote',
+    'Magento_Checkout/js/model/totals',
     'Magento_Catalog/js/price-utils',
     'Payplug_Payments/js/action/redirect-on-success',
     'Payplug_Payments/js/model/oney-widget-loader'
-], function ($, ko, $t, Component, fullScreenLoader, quote, priceUtils, redirectOnSuccessAction, oneyWidgetLoader) {
+], function ($, ko, $t, Component, fullScreenLoader, quote, cartTotals, priceUtils, redirectOnSuccessAction,
+    oneyWidgetLoader
+) {
     'use strict';
 
     return Component.extend({
@@ -191,9 +194,11 @@ define([
          * @returns {Number}
          */
         getAmount: function () {
-            var totals = quote.totals();
+            // totals.grand_total excludes tax up to Magento 2.4.5, not the grand_total segment
+            // @see https://github.com/magento/magento2/blob/2.4.5/app/code/Magento/Quote/Model/Cart/CartTotalRepository.php#L113-L116
+            var grandTotal = cartTotals.getSegment('grand_total');
 
-            return totals ? parseFloat(totals['base_grand_total']) || 0 : 0;
+            return grandTotal ? parseFloat(grandTotal.value) || 0 : 0;
         },
 
         /**
