@@ -132,15 +132,7 @@ class Oney extends AbstractHelper
             return false;
         }
 
-        if ($this->getMerchantGuid() === '') {
-            $this->logger->warning(
-                'Oney merchant identifier is missing. Update your Payplug account information from the admin.'
-            );
-
-            return false;
-        }
-
-        return true;
+        return $this->getMerchantGuid() !== '';
     }
 
     /**
