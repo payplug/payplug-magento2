@@ -53,11 +53,11 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * @var string
      */
-    private string $testApiKey;
+    private string $testApiKey = '';
     /**
      * @var string
      */
-    private string $liveApiKey;
+    private string $liveApiKey = '';
     /**
      * @var array|null
      */
@@ -1140,7 +1140,7 @@ class PaymentConfigObserver implements ObserverInterface
     /**
      * Get PayPlug account permissions
      *
-     * @param string|null $apiKey API key to use instead of the one of the scope holding the credentials
+     * @param string|null $apiKey API key to use instead of the one of the scope holding the account data
      * @return array
      */
     private function getAccountPermissions(?string $apiKey = null): array

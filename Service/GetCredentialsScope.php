@@ -26,19 +26,23 @@ class GetCredentialsScope
         Config::OAUTH_CONFIG_PATH . Config::OAUTH_CLIENT_DATA,
     ];
 
+    private const ENVIRONMENT_MODE_PATH = Config::CONFIG_PATH . 'environmentmode';
+
     /**
      * @param ConfigDataCollectionFactory $configDataCollectionFactory
      * @param StoreManagerInterface $storeManager
+     * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
         private readonly ConfigDataCollectionFactory $configDataCollectionFactory,
-        private readonly StoreManagerInterface $storeManager
+        private readonly StoreManagerInterface $storeManager,
+        private readonly ScopeConfigInterface $scopeConfig
     ) {
     }
 
     /**
-     * Get the scope holding the Payplug credentials for a configuration scope: its website when set there,
-     * else the default scope
+     * Get the scope holding the Payplug account data for a configuration scope: its website when it holds
+     * its own credentials or its own environment mode, else the default scope
      *
      * @param string $scope
      * @param int $scopeId
@@ -55,7 +59,7 @@ class GetCredentialsScope
             $websiteId = (int) $this->storeManager->getStore($scopeId)->getWebsiteId();
         }
 
-        if ($websiteId && in_array($websiteId, $this->getWebsiteIdsWithCredentials(), true)) {
+        if ($websiteId && in_array($websiteId, $this->getAccountWebsiteIds(), true)) {
             return [ScopeInterface::SCOPE_WEBSITES, $websiteId];
         }
 
@@ -63,7 +67,7 @@ class GetCredentialsScope
     }
 
     /**
-     * Get the websites and store views inheriting the Payplug credentials held by the given scope
+     * Get the websites and store views inheriting the Payplug account data held by the given scope
      *
      * @param string $credentialsScope
      * @param int $credentialsScopeId
@@ -77,7 +81,7 @@ class GetCredentialsScope
         if ($credentialsScope !== ScopeInterface::SCOPE_WEBSITES) {
             $websiteIds = array_values(array_diff(
                 array_map('intval', array_keys($this->storeManager->getWebsites())),
-                $this->getWebsiteIdsWithCredentials()
+                $this->getAccountWebsiteIds()
             ));
             $storeWebsiteIds = $websiteIds;
         }
@@ -96,17 +100,30 @@ class GetCredentialsScope
     }
 
     /**
-     * Get the websites holding their own Payplug credentials (legacy or OAuth2), not inherited from default scope
+     * Get the websites holding their own Payplug account data: their own credentials (legacy or OAuth2),
+     * or their own environment mode different from the default one
      *
      * @return int[]
      */
-    private function getWebsiteIdsWithCredentials(): array
+    private function getAccountWebsiteIds(): array
     {
+        $defaultEnvironmentMode = (string) $this->scopeConfig->getValue(self::ENVIRONMENT_MODE_PATH);
+
         $collection = $this->configDataCollectionFactory->create();
-        $collection->addFieldToFilter('path', ['in' => self::CREDENTIALS_PATHS])
+        $collection->addFieldToFilter('path', ['in' => [...self::CREDENTIALS_PATHS, self::ENVIRONMENT_MODE_PATH]])
             ->addFieldToFilter('scope', ScopeInterface::SCOPE_WEBSITES)
             ->addFieldToFilter('value', ['neq' => '']);
 
-        return array_values(array_unique(array_map('intval', $collection->getColumnValues('scope_id'))));
+        $websiteIds = [];
+
+        foreach ($collection as $item) {
+            if ($item->getData('path') !== self::ENVIRONMENT_MODE_PATH
+                || $item->getData('value') !== $defaultEnvironmentMode
+            ) {
+                $websiteIds[] = (int) $item->getData('scope_id');
+            }
+        }
+
+        return array_values(array_unique($websiteIds));
     }
 }

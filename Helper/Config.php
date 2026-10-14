@@ -762,6 +762,10 @@ class Config
                 $currentMinAmount = max($currentMinAmount, $accountAmounts['min_amount']);
                 $currentMaxAmount = min($currentMaxAmount, $accountAmounts['max_amount']);
             }
+
+            if ($currentMinAmount > $currentMaxAmount) {
+                return false;
+            }
         }
 
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];

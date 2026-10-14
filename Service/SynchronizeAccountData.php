@@ -89,12 +89,12 @@ class SynchronizeAccountData
     }
 
     /**
-     * Fetch account data from Payplug API, persist it in the scope holding the Payplug credentials
-     * and remove its copies from the scopes inheriting these credentials
+     * Fetch account data from Payplug API, persist it in the scope holding the Payplug account data
+     * and remove its copies from the scopes inheriting this data
      *
      * @param string $scope
      * @param int $scopeId
-     * @param string|null $apiKey API key to use instead of the one of the scope holding the credentials
+     * @param string|null $apiKey API key to use instead of the one of the scope holding the account data
      * @return array Account permissions
      * @throws LocalizedException
      */
@@ -118,7 +118,7 @@ class SynchronizeAccountData
     }
 
     /**
-     * Get the API key of the scope holding the Payplug credentials, in the environment mode of this scope
+     * Get the API key of the scope holding the Payplug account data, in the environment mode of this scope
      *
      * @return string
      * @throws LocalizedException
@@ -143,7 +143,7 @@ class SynchronizeAccountData
     }
 
     /**
-     * Remove the synchronized account data copies saved in the websites and store views inheriting the credentials
+     * Remove the synchronized account data copies saved in the websites and store views inheriting the account data
      *
      * @return void
      */
@@ -168,7 +168,7 @@ class SynchronizeAccountData
 
             if ($deletedCount > 0) {
                 $this->payplugLogger->info(sprintf(
-                    'Payplug account data: %d copies removed from %s %s, inheriting the credentials of %s %d',
+                    'Payplug account data: %d copies removed from %s %s, inheriting the account data of %s %d',
                     $deletedCount,
                     $scope,
                     implode(',', $scopeIds),
