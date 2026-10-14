@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace Payplug\Payments\Observer;
 
 use Magento\Backend\Model\Auth\Session as AuthSession;
+use Magento\Framework\App\Cache\Type\Config as ConfigCache;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
@@ -31,6 +33,9 @@ class SyncOauth2CompanyNameObserver implements ObserverInterface
     private const ACL_RESOURCE = 'Payplug_Payments::general';
     private const EMAIL_PATH = Config::OAUTH_CONFIG_PATH . Config::OAUTH_EMAIL;
     private const COMPANY_NAME_PATH = Config::OAUTH_CONFIG_PATH . Config::OAUTH_COMPANY_NAME;
+    private const FAILED_ATTEMPT_CACHE_KEY_PREFIX = 'payplug_oauth2_company_name_failed';
+    private const FAILED_ATTEMPT_FLAG = '1';
+    private const RETRY_DELAY = 3600;
 
     /**
      * @param RequestInterface $request
@@ -38,6 +43,7 @@ class SyncOauth2CompanyNameObserver implements ObserverInterface
      * @param AuthorizationInterface $authorization
      * @param ScopeConfigInterface $scopeConfig
      * @param WriterInterface $configWriter
+     * @param CacheInterface $cache
      * @param GetOauth2CompanyNameFromConfig $getOauth2CompanyNameFromConfig
      * @param GetOauth2CompanyNameFromApi $getOauth2CompanyNameFromApi
      * @param GetOauth2AccessTokenData $getOauth2AccessTokenData
@@ -50,6 +56,7 @@ class SyncOauth2CompanyNameObserver implements ObserverInterface
         private readonly AuthorizationInterface $authorization,
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly WriterInterface $configWriter,
+        private readonly CacheInterface $cache,
         private readonly GetOauth2CompanyNameFromConfig $getOauth2CompanyNameFromConfig,
         private readonly GetOauth2CompanyNameFromApi $getOauth2CompanyNameFromApi,
         private readonly GetOauth2AccessTokenData $getOauth2AccessTokenData,
@@ -80,7 +87,11 @@ class SyncOauth2CompanyNameObserver implements ObserverInterface
             return;
         }
 
-        if ((string)$this->getOauth2CompanyNameFromConfig->execute($emailWebsiteId) !== '') {
+        $failedAttemptCacheKey = self::FAILED_ATTEMPT_CACHE_KEY_PREFIX . '_' . (int)$emailWebsiteId;
+
+        if ((string)$this->getOauth2CompanyNameFromConfig->execute($emailWebsiteId) !== ''
+            || $this->cache->load($failedAttemptCacheKey)
+        ) {
             return;
         }
 
@@ -95,6 +106,12 @@ class SyncOauth2CompanyNameObserver implements ObserverInterface
         }
 
         if ($companyName === '') {
+            $this->cache->save(
+                self::FAILED_ATTEMPT_FLAG,
+                $failedAttemptCacheKey,
+                [ConfigCache::CACHE_TAG],
+                self::RETRY_DELAY
+            );
             $this->messageManager->addWarningMessage(
                 __('The company name of your Payplug account could not be retrieved.')
             );
