@@ -55,7 +55,6 @@
                 <field id="can_use_oney"/>
                 <field id="oney_merchant_guid"/>
                 <field id="oney_business_codes"/>
-                <field id="oney_show_legal_notices"/>
                 <field id="account_last_update"/>
                 <field id="can_use_integrated_payments"/>
                 <field id="satispay_countries"/>

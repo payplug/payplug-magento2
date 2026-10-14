@@ -23,7 +23,6 @@ class SynchronizeAccountData
     public const LAST_UPDATE_FIELD = 'account_last_update';
     public const ONEY_MERCHANT_GUID_FIELD = 'oney_merchant_guid';
     public const ONEY_BUSINESS_CODES_FIELD = 'oney_business_codes';
-    public const ONEY_SHOW_LEGAL_NOTICES_FIELD = 'oney_show_legal_notices';
 
     private const PERMISSIONS = [
         'use_live_mode',
@@ -197,7 +196,6 @@ class SynchronizeAccountData
             'merchand_country' => $this->getConfig('merchand_country'),
             self::ONEY_MERCHANT_GUID_FIELD => '',
             self::ONEY_BUSINESS_CODES_FIELD => '',
-            self::ONEY_SHOW_LEGAL_NOTICES_FIELD => '',
         ];
 
         $accountOneyAmounts = ['min' => null, 'max' => null];
@@ -242,9 +240,6 @@ class SynchronizeAccountData
                     $merchantData['oney_business_codes']
                 );
             }
-            if (array_key_exists('show_legal_notices', $oneyData)) {
-                $configuration[self::ONEY_SHOW_LEGAL_NOTICES_FIELD] = (int) (bool) $oneyData['show_legal_notices'];
-            }
         }
 
         $currencies = implode(';', (array) $configuration['currencies']);
@@ -256,7 +251,6 @@ class SynchronizeAccountData
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
         $this->saveConfig(self::ONEY_MERCHANT_GUID_FIELD, $configuration[self::ONEY_MERCHANT_GUID_FIELD]);
         $this->saveConfig(self::ONEY_BUSINESS_CODES_FIELD, $configuration[self::ONEY_BUSINESS_CODES_FIELD]);
-        $this->saveConfig(self::ONEY_SHOW_LEGAL_NOTICES_FIELD, $configuration[self::ONEY_SHOW_LEGAL_NOTICES_FIELD]);
 
         $this->saveOneyThresholds($accountOneyAmounts['min'], $accountOneyAmounts['max']);
 
