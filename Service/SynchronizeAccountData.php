@@ -242,6 +242,16 @@ class SynchronizeAccountData
             }
         }
 
+        $canUseOney = !empty($jsonAnswer['permissions']['can_use_oney']);
+
+        if ($canUseOney && $configuration[self::ONEY_MERCHANT_GUID_FIELD] === '') {
+            $this->payplugLogger->warning(sprintf(
+                'Payplug account data: Oney is allowed but no Oney merchant identifier is returned for %s %d',
+                $this->scope,
+                $this->scopeId
+            ));
+        }
+
         $currencies = implode(';', (array) $configuration['currencies']);
         $this->saveConfig('currencies', $currencies);
         $this->saveConfig('min_amounts', $configuration['min_amounts']);
