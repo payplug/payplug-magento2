@@ -9,9 +9,11 @@ declare(strict_types=1);
 
 namespace Payplug\Payments\Observer;
 
+use Magento\Backend\Model\Auth\Session as AuthSession;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\AuthorizationInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Message\ManagerInterface;
@@ -26,11 +28,14 @@ use Throwable;
 class SyncOauth2CompanyNameObserver implements ObserverInterface
 {
     private const SECTION = 'payplug_payments';
+    private const ACL_RESOURCE = 'Payplug_Payments::general';
     private const EMAIL_PATH = Config::OAUTH_CONFIG_PATH . Config::OAUTH_EMAIL;
     private const COMPANY_NAME_PATH = Config::OAUTH_CONFIG_PATH . Config::OAUTH_COMPANY_NAME;
 
     /**
      * @param RequestInterface $request
+     * @param AuthSession $authSession
+     * @param AuthorizationInterface $authorization
      * @param ScopeConfigInterface $scopeConfig
      * @param WriterInterface $configWriter
      * @param GetOauth2CompanyNameFromConfig $getOauth2CompanyNameFromConfig
@@ -41,6 +46,8 @@ class SyncOauth2CompanyNameObserver implements ObserverInterface
      */
     public function __construct(
         private readonly RequestInterface $request,
+        private readonly AuthSession $authSession,
+        private readonly AuthorizationInterface $authorization,
         private readonly ScopeConfigInterface $scopeConfig,
         private readonly WriterInterface $configWriter,
         private readonly GetOauth2CompanyNameFromConfig $getOauth2CompanyNameFromConfig,
@@ -59,7 +66,10 @@ class SyncOauth2CompanyNameObserver implements ObserverInterface
      */
     public function execute(Observer $observer): void
     {
-        if ($this->request->getParam('section') !== self::SECTION) {
+        if ($this->request->getParam('section') !== self::SECTION
+            || !$this->authSession->isLoggedIn()
+            || !$this->authorization->isAllowed(self::ACL_RESOURCE)
+        ) {
             return;
         }
 
