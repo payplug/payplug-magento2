@@ -545,6 +545,9 @@ class Config
             'payplug_payments/general/can_create_installment_plan',
             'payplug_payments/general/can_create_deferred_payment',
             'payplug_payments/general/can_use_oney',
+            'payplug_payments/general/oney_merchant_guid',
+            'payplug_payments/general/oney_business_codes',
+            'payplug_payments/general/account_last_update',
             'payplug_payments/general/merchand_country',
             'payplug_payments/general/payment_page_backup',
             'payplug_payments/general/can_use_integrated_payments',
@@ -749,6 +752,19 @@ class Config
         } else {
             $currentMinAmount = $minAmounts[$isoCode];
             $currentMaxAmount = $maxAmounts[$isoCode];
+        }
+
+        if ($path === self::ONEY_CONFIG_PATH) {
+            $accountAmounts = $this->getAmountsByCurrency($isoCode, $storeId, self::CONFIG_PATH, $amountPrefix);
+
+            if ($accountAmounts !== false) {
+                $currentMinAmount = max($currentMinAmount, $accountAmounts['min_amount']);
+                $currentMaxAmount = min($currentMaxAmount, $accountAmounts['max_amount']);
+            }
+
+            if ($currentMinAmount > $currentMaxAmount) {
+                return false;
+            }
         }
 
         return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
