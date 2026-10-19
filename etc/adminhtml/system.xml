@@ -344,13 +344,15 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="oney_min_amounts"/>
-                <field id="oney_min_threshold" type="Payplug\Payments\Block\Adminhtml\Config\Field\Threshold" translate="label" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
-                <field id="oney_max_amounts"/>
-                <field id="oney_max_threshold" type="Payplug\Payments\Block\Adminhtml\Config\Field\Threshold" translate="label" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
@@ -383,11 +385,15 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="oney_min_threshold" type="Payplug\Payments\Block\Adminhtml\Config\Field\Threshold" translate="label" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
-                <field id="oney_max_threshold" type="Payplug\Payments\Block\Adminhtml\Config\Field\Threshold" translate="label" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
@@ -428,6 +434,16 @@
                     <label>Default Country</label>
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
+                </field>
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="136" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
@@ -602,6 +618,16 @@
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
                 </field>
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="136" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
@@ -639,6 +665,16 @@
                     <label>Default Country</label>
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
+                </field>
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="136" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
@@ -678,6 +714,16 @@
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
                 </field>
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="136" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
@@ -715,6 +761,16 @@
                     <label>Default Country</label>
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
+                </field>
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="136" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
@@ -754,6 +810,16 @@
                     <source_model>Payplug\Payments\Model\Config\Source\DefaultCountry</source_model>
                     <comment><![CDATA[The default country passed in the payment request if the customer doesn't fill in a country with a country code listed in the ISO 3166-1 standard]]></comment>
                 </field>
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="136" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
+                </field>
                 <field id="sort_order" translate="label" type="text" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Sort Order</label>
                     <frontend_class>validate-number</frontend_class>
@@ -783,11 +849,15 @@
                     <label>Canceled order status</label>
                     <source_model>Payplug\Payments\Model\Config\Source\Order\Status\Canceled</source_model>
                 </field>
-                <field id="min_threshold" type="Payplug\Payments\Block\Adminhtml\Config\Field\Threshold" translate="label" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                <field id="min_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Minimum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
-                <field id="max_threshold" type="Payplug\Payments\Block\Adminhtml\Config\Field\Threshold" translate="label" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                <field id="max_order_total" translate="label" type="Payplug\Payments\Block\Adminhtml\Config\Field\OrderTotal" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                     <label>Maximum Order Total</label>
+                    <validate>validate-number validate-zero-or-greater</validate>
+                    <backend_model>Payplug\Payments\Model\Config\Backend\OrderTotal</backend_model>
                 </field>
                 <field id="allowspecific" translate="label comment" type="Payplug\Payments\Block\Adminhtml\Config\Field\AllowedCountriesSelect" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Payment from Applicable Countries</label>

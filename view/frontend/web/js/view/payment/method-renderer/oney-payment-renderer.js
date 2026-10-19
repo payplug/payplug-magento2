@@ -12,12 +12,9 @@ define([
     'Magento_Checkout/js/model/full-screen-loader',
     'Magento_Checkout/js/model/quote',
     'Magento_Checkout/js/model/totals',
-    'Magento_Catalog/js/price-utils',
     'Payplug_Payments/js/action/redirect-on-success',
     'Payplug_Payments/js/model/oney-widget-loader'
-], function ($, ko, $t, Component, fullScreenLoader, quote, cartTotals, priceUtils, redirectOnSuccessAction,
-    oneyWidgetLoader
-) {
+], function ($, ko, $t, Component, fullScreenLoader, quote, cartTotals, redirectOnSuccessAction, oneyWidgetLoader) {
     'use strict';
 
     return Component.extend({
@@ -225,7 +222,6 @@ define([
          */
         validateOney: function () {
             var config = this.getWidgetConfig(),
-                amount = this.getAmount(),
                 billingAddress = quote.billingAddress(),
                 shippingAddress = quote.shippingAddress(),
                 billingCountry = billingAddress ? billingAddress.countryId : null,
@@ -253,15 +249,6 @@ define([
                     valid: false,
                     message: $t('To pay with Oney, your cart must contain less than %1 items.')
                         .replace('%1', config.max_items)
-                };
-            }
-
-            if (amount < parseFloat(config.min_amount) || amount > parseFloat(config.max_amount)) {
-                return {
-                    valid: false,
-                    message: $t('To pay with Oney, the total amount of your cart must be between %1 and %2.')
-                        .replace('%1', this.getFormattedPrice(config.min_amount))
-                        .replace('%2', this.getFormattedPrice(config.max_amount))
                 };
             }
 
@@ -449,16 +436,6 @@ define([
          */
         updateOneyLogo: function (logo) {
             this.getOneyContainer().find('.oney-logo-checkout').attr('src', logo);
-        },
-
-        /**
-         * Returns the given price, formatted according to the current quote's price format.
-         *
-         * @param {Number} price
-         * @returns {String}
-         */
-        getFormattedPrice: function (price) {
-            return priceUtils.formatPrice(price, quote.getPriceFormat());
         },
 
         /**

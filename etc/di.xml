@@ -1296,6 +1296,21 @@
             </argument>
         </arguments>
     </type>
+    <type name="Payplug\Payments\Model\Payment\AmountBounds">
+        <arguments>
+            <argument name="methods" xsi:type="array">
+                <item name="payplug_payments_oney" xsi:type="string">oney_</item>
+                <item name="payplug_payments_oney_without_fees" xsi:type="string">oney_</item>
+                <item name="payplug_payments_bancontact" xsi:type="string"/>
+                <item name="payplug_payments_satispay" xsi:type="string">satispay_</item>
+                <item name="payplug_payments_ideal" xsi:type="string">ideal_</item>
+                <item name="payplug_payments_mybank" xsi:type="string">mybank_</item>
+                <item name="payplug_payments_bizum" xsi:type="string">bizum_</item>
+                <item name="payplug_payments_wero" xsi:type="string">wero_</item>
+                <item name="payplug_payments_scalapay" xsi:type="string">scalapay_</item>
+            </argument>
+        </arguments>
+    </type>
     <type name="Payplug\Payments\Observer\CreateHostedFieldsPaymentAfterQuoteSubmit">
         <arguments>
             <argument name="commandPool" xsi:type="object">PayplugPaymentStandardCommandPool</argument>

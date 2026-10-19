@@ -28,9 +28,6 @@ class Config
     public const CONFIG_PATH = 'payplug_payments/general/';
     public const OAUTH_CONFIG_PATH = 'payplug_payments/oauth2/';
     public const APPLE_PAY_CONFIG_PATH = 'payment/payplug_payments_apple_pay/';
-    public const ONEY_CONFIG_PATH = 'payment/payplug_payments_oney/';
-    public const ONEY_WITHOUT_FEES_CONFIG_PATH = 'payment/payplug_payments_oney_without_fees/';
-    public const SCALAPAY_CONFIG_PATH = 'payment/payplug_payments_scalapay/';
     public const PAYPLUG_PAYMENT_ACTION_CONFIG_PATH = 'payment/payplug_payments_standard/payment_action';
     public const PAYPLUG_PAYMENT_AUTOCAPTURE_DELAY_CONFIG_PATH = 'payment/payplug_payments_standard/autocapture_delay';
     public const EMAIL_WEBSITE_OWNER_CONFIG_PATH = 'trans_email/ident_general/email';
@@ -592,10 +589,8 @@ class Config
             'payment/payplug_payments_oney/title',
             'payment/payplug_payments_oney/processing_order_status',
             'payment/payplug_payments_oney/canceled_order_status',
-            'payment/payplug_payments_oney/oney_min_amounts',
-            'payment/payplug_payments_oney/oney_max_amounts',
-            'payment/payplug_payments_oney/oney_min_threshold',
-            'payment/payplug_payments_oney/oney_max_threshold',
+            'payment/payplug_payments_oney/min_order_total',
+            'payment/payplug_payments_oney/max_order_total',
             'payment/payplug_payments_oney/allowspecific',
             'payment/payplug_payments_oney/specificcountry',
             'payment/payplug_payments_oney/sort_order',
@@ -604,8 +599,8 @@ class Config
             'payment/payplug_payments_oney_without_fees/title',
             'payment/payplug_payments_oney_without_fees/processing_order_status',
             'payment/payplug_payments_oney_without_fees/canceled_order_status',
-            'payment/payplug_payments_oney_without_fees/oney_min_threshold',
-            'payment/payplug_payments_oney_without_fees/oney_max_threshold',
+            'payment/payplug_payments_oney_without_fees/min_order_total',
+            'payment/payplug_payments_oney_without_fees/max_order_total',
             'payment/payplug_payments_oney_without_fees/allowspecific',
             'payment/payplug_payments_oney_without_fees/specificcountry',
             'payment/payplug_payments_oney_without_fees/sort_order',
@@ -618,6 +613,8 @@ class Config
             'payment/payplug_payments_bancontact/specificcountry',
             'payment/payplug_payments_bancontact/default_country',
             'payment/payplug_payments_bancontact/sort_order',
+            'payment/payplug_payments_bancontact/min_order_total',
+            'payment/payplug_payments_bancontact/max_order_total',
             // Payplug payment Apple Pay configuration
             'payment/payplug_payments_apple_pay/active',
             'payment/payplug_payments_apple_pay/title',
@@ -648,8 +645,8 @@ class Config
             'payment/payplug_payments_%s/allowspecific',
             'payment/payplug_payments_%s/default_country',
             'payment/payplug_payments_%s/sort_order',
-            'payment/payplug_payments_%s/min_threshold',
-            'payment/payplug_payments_%s/max_threshold',
+            'payment/payplug_payments_%s/min_order_total',
+            'payment/payplug_payments_%s/max_order_total',
             'payplug_payments/general/%s_countries',
             'payplug_payments/general/%s_min_amounts',
             'payplug_payments/general/%s_max_amounts',
@@ -689,85 +686,6 @@ class Config
         }
 
         $this->systemConfigType->clean();
-    }
-
-    /**
-     * Get amounts allowed by currency
-     *
-     * @param string|null $isoCode
-     * @param int|null $storeId
-     * @param string|null $path
-     * @param string|null $amountPrefix
-     * @return array|bool
-     */
-    public function getAmountsByCurrency(
-        ?string $isoCode,
-        ?int $storeId,
-        ?string $path,
-        ?string $amountPrefix = ''
-    ): array|bool {
-        $minAmounts = [];
-        $maxAmounts = [];
-
-        if ($path === null) {
-            $path = self::CONFIG_PATH;
-        }
-
-        $minAmountsConfig = $this->getConfigValue(
-            $amountPrefix . 'min_amounts',
-            ScopeInterface::SCOPE_STORE,
-            $storeId,
-            $path
-        );
-        $maxAmountsConfig = $this->getConfigValue(
-            $amountPrefix . 'max_amounts',
-            ScopeInterface::SCOPE_STORE,
-            $storeId,
-            $path
-        );
-
-        if (empty($minAmountsConfig) || empty($maxAmountsConfig) || !$isoCode) {
-            return false;
-        }
-
-        foreach (explode(';', $minAmountsConfig) as $amountCur) {
-            $cur = [];
-            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
-                $minAmounts[$cur[1]] = (int)$cur[2];
-            } else {
-                return false;
-            }
-        }
-        foreach (explode(';', $maxAmountsConfig) as $amountCur) {
-            $cur = [];
-            if (preg_match('/^([A-Z]{3}):([0-9]*)$/', $amountCur, $cur)) {
-                $maxAmounts[$cur[1]] = (int)$cur[2];
-            } else {
-                return false;
-            }
-        }
-
-        if (!isset($minAmounts[$isoCode]) || !isset($maxAmounts[$isoCode])) {
-            return false;
-        } else {
-            $currentMinAmount = $minAmounts[$isoCode];
-            $currentMaxAmount = $maxAmounts[$isoCode];
-        }
-
-        if ($path === self::ONEY_CONFIG_PATH) {
-            $accountAmounts = $this->getAmountsByCurrency($isoCode, $storeId, self::CONFIG_PATH, $amountPrefix);
-
-            if ($accountAmounts !== false) {
-                $currentMinAmount = max($currentMinAmount, $accountAmounts['min_amount']);
-                $currentMaxAmount = min($currentMaxAmount, $accountAmounts['max_amount']);
-            }
-
-            if ($currentMinAmount > $currentMaxAmount) {
-                return false;
-            }
-        }
-
-        return ['min_amount' => $currentMinAmount, 'max_amount' => $currentMaxAmount];
     }
 
     /**
