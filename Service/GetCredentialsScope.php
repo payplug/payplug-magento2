@@ -105,7 +105,7 @@ class GetCredentialsScope
      *
      * @return int[]
      */
-    private function getAccountWebsiteIds(): array
+    public function getAccountWebsiteIds(): array
     {
         $defaultEnvironmentMode = (string) $this->scopeConfig->getValue(self::ENVIRONMENT_MODE_PATH);
 

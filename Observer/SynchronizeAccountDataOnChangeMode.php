@@ -17,24 +17,27 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Helper\Config;
+use Payplug\Payments\Service\GetCredentialsScope;
 use Payplug\Payments\Service\SynchronizeAccountData;
 
 class SynchronizeAccountDataOnChangeMode implements ObserverInterface
 {
     /**
      * @param SynchronizeAccountData $synchronizeAccountData
+     * @param GetCredentialsScope $getCredentialsScope
      * @param ReinitableConfigInterface $appConfig
      * @param ManagerInterface $messageManager
      */
     public function __construct(
         private readonly SynchronizeAccountData $synchronizeAccountData,
+        private readonly GetCredentialsScope $getCredentialsScope,
         private readonly ReinitableConfigInterface $appConfig,
         private readonly ManagerInterface $messageManager
     ) {
     }
 
     /**
-     * Synchronize the Payplug account data once the new environment mode is saved
+     * Synchronize the Payplug account data of the changed scope and, for a default change, of each account website
      *
      * @param Observer $observer
      * @return void
@@ -49,11 +52,29 @@ class SynchronizeAccountDataOnChangeMode implements ObserverInterface
 
         $websiteId = (int) $observer->getEvent()->getData('website');
 
+        if ($websiteId) {
+            $this->synchronize(ScopeInterface::SCOPE_WEBSITES, $websiteId);
+            return;
+        }
+
+        $this->synchronize(ScopeConfigInterface::SCOPE_TYPE_DEFAULT, 0);
+
+        foreach ($this->getCredentialsScope->getAccountWebsiteIds() as $accountWebsiteId) {
+            $this->synchronize(ScopeInterface::SCOPE_WEBSITES, $accountWebsiteId);
+        }
+    }
+
+    /**
+     * Synchronize the Payplug account data of a scope and reload the configuration
+     *
+     * @param string $scope
+     * @param int $scopeId
+     * @return void
+     */
+    private function synchronize(string $scope, int $scopeId): void
+    {
         try {
-            $this->synchronizeAccountData->execute(
-                $websiteId ? ScopeInterface::SCOPE_WEBSITES : ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
-                $websiteId
-            );
+            $this->synchronizeAccountData->execute($scope, $scopeId);
             $this->appConfig->reinit();
         } catch (LocalizedException $e) {
             $this->messageManager->addErrorMessage($e->getMessage());
