@@ -27,6 +27,9 @@ ONEY only: the payment schedule (product page, cart, checkout) is now displayed 
 - Theme overrides of `oney/simulation.phtml`, `oney/simulation_content.phtml`, `oney/simulation_wrapper*.phtml` and
   `oneyPopin` are no longer used: port them to the new `oney/simulation-*.phtml` templates.
 
+BANCONTACT only: new **Bancontact Card** logo. Replace the title **Pay with Bancontact** by **Pay with Bancontact Card**
+in Stores > Configuration > Sales > Payplug Payments > PayPlug Payments - Bancontact.
+
 ### Removed
 
 ONEY only, former payment schedule code (breaks layout overrides, plugins or calls relying on it):
