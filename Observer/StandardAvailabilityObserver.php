@@ -19,7 +19,6 @@ use Magento\Payment\Model\Method\Adapter;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Payments\Gateway\Config\ApplePay;
-use Payplug\Payments\Gateway\Config\Bancontact;
 use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Gateway\Config\Oney;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
@@ -28,6 +27,7 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Api\Login;
+use Payplug\Payments\Model\Payment\AmountBounds;
 
 class StandardAvailabilityObserver implements ObserverInterface
 {
@@ -37,13 +37,15 @@ class StandardAvailabilityObserver implements ObserverInterface
      * @param Login $login
      * @param Logger $logger
      * @param UriHelper $uriHelper
+     * @param AmountBounds $amountBounds
      */
     public function __construct(
         private readonly Config $payplugConfig,
         private readonly Data $payplugHelper,
         private readonly Login $login,
         private readonly Logger $logger,
-        private readonly UriHelper $uriHelper
+        private readonly UriHelper $uriHelper,
+        private readonly AmountBounds $amountBounds
     ) {
     }
 
@@ -101,32 +103,11 @@ class StandardAvailabilityObserver implements ObserverInterface
             return;
         }
 
-        $prefix = '';
-        $path = Config::CONFIG_PATH;
-        if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
-            $prefix = 'oney_';
-            $path = Config::ONEY_CONFIG_PATH;
-        } elseif ($this->payplugHelper->isCodePayplugPaymentPpro($adapter->getCode())
-            && $adapter->getCode() !== Bancontact::METHOD_CODE
-        ) {
-            $prefix = str_replace('payplug_payments_', '', $adapter->getCode()) . '_';
-        }
-
-        $currency = $quote->getCurrency()->getQuoteCurrencyCode();
-        $amountsByCurrency = $this->payplugConfig->getAmountsByCurrency(
-            $currency,
-            (int)$quote->getStoreId(),
-            $path,
-            $prefix
-        );
-
-        if ($amountsByCurrency === false) {
+        if (!$this->amountBounds->isQuoteWithinAccountBounds($adapter->getCode(), $quote)) {
             $checkResult->setData('is_available', false);
             return;
         }
 
-        // Oney can be displayed (disabled) in checkout
-        // Do not check amount to confirm validity
         if ($adapter->getCode() == Oney::METHOD_CODE || $adapter->getCode() == OneyWithoutFees::METHOD_CODE) {
             $canUseOney = $this->payplugConfig->getConfigValue(
                 'can_use_oney',
@@ -193,13 +174,6 @@ class StandardAvailabilityObserver implements ObserverInterface
 
                 return;
             }
-        }
-
-        $amount = (int) round($quote->getGrandTotal() * 100);
-
-        if ($amount < $amountsByCurrency['min_amount'] || $amount > $amountsByCurrency['max_amount']) {
-            $checkResult->setData('is_available', false);
-            return;
         }
 
         if ($adapter->getCode() == InstallmentPlan::METHOD_CODE) {

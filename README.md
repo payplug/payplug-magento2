@@ -91,6 +91,12 @@ The Oney simulation displayed on the product page, the cart and the checkout rel
 needs the Oney merchant identifier provided by this account information. After upgrading from a version prior to
 4.9.0, click **Update account information** once to fetch it.
 
+### Order total limits
+
+Oney and the APMs (Bancontact included) use Magento's native **Minimum Order Total** / **Maximum Order Total** fields,
+in base currency, within the Payplug limits shown under each field (empty = Payplug limit). Outside these limits, the
+payment method is hidden at checkout.
+
 ### Cron Job Configuration
 
 The Payplug Payments module introduces new cron tasks that are grouped under the **`payplug`** cron group in `etc/crontab.xml`. These cron jobs **must** run for the module to function properly.

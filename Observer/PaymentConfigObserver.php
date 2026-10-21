@@ -16,11 +16,9 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
 use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\StoreManagerInterface;
 use Payplug\Payments\Gateway\Config\Amex as AmexConfig;
 use Payplug\Payments\Gateway\Config\ApplePay as ApplePayConfig;
 use Payplug\Payments\Gateway\Config\Bancontact as BancontactConfig;
@@ -68,7 +66,6 @@ class PaymentConfigObserver implements ObserverInterface
      * @param Login $login
      * @param Config $helper
      * @param ManagerInterface $messageManager
-     * @param StoreManagerInterface $storeManager
      * @param GetOauth2ClientData $getOauth2ClientData
      * @param SynchronizeAccountData $synchronizeAccountData
      */
@@ -77,7 +74,6 @@ class PaymentConfigObserver implements ObserverInterface
         private readonly Login $login,
         private readonly Config $helper,
         private readonly ManagerInterface $messageManager,
-        private readonly StoreManagerInterface $storeManager,
         private readonly GetOauth2ClientData $getOauth2ClientData,
         private readonly SynchronizeAccountData $synchronizeAccountData
     ) {
@@ -487,7 +483,6 @@ class PaymentConfigObserver implements ObserverInterface
      *
      * @param array $groups
      * @return void
-     * @throws NoSuchEntityException
      */
     private function processOneyConfig(array &$groups): void
     {
@@ -530,91 +525,6 @@ class PaymentConfigObserver implements ObserverInterface
                         $isActive = true;
                     }
                 }
-
-                // If customer loggedin && have permissions
-                if ($isActive) {
-                    $storeId = (int)$this->storeManager->getStore()->getId();
-                    $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
-
-                    $minAmountsConfig = $this->helper->getConfigValue(
-                        'oney_min_amounts',
-                        ScopeInterface::SCOPE_STORE,
-                        null,
-                        Config::ONEY_CONFIG_PATH
-                    ) ?
-                        $this->helper->getConfigValue(
-                            'oney_min_amounts',
-                            ScopeInterface::SCOPE_STORE,
-                            null,
-                            Config::ONEY_CONFIG_PATH
-                        ) :
-                        $this->helper->getConfigValue(
-                            'oney_min_amounts',
-                            ScopeInterface::SCOPE_STORE,
-                            null,
-                            Config::CONFIG_PATH
-                        );
-
-                    $maxAmountsConfig = $this->helper->getConfigValue(
-                        'oney_max_amounts',
-                        ScopeInterface::SCOPE_STORE,
-                        null,
-                        Config::ONEY_CONFIG_PATH
-                    ) ?
-                        $this->helper->getConfigValue(
-                            'oney_max_amounts',
-                            ScopeInterface::SCOPE_STORE,
-                            null,
-                            Config::ONEY_CONFIG_PATH
-                        ) :
-                        $this->helper->getConfigValue(
-                            'oney_max_amounts',
-                            ScopeInterface::SCOPE_STORE,
-                            null,
-                            Config::CONFIG_PATH
-                        );
-
-                    $oneyDefaultThresholds = $this->helper->getAmountsByCurrency(
-                        $currency,
-                        null,
-                        Config::CONFIG_PATH,
-                        'oney_'
-                    );
-
-                    if (!$this->validateThresholdValues($fields, $oneyDefaultThresholds)) {
-
-                        $this->messageManager->addErrorMessage(
-                            __('The value is not within the specified range.')
-                        );
-                    }
-
-                    // Website scope value
-                    if (isset($groups[$oney]['fields']['oney_min_threshold']['value'])) {
-                        $min = $groups[$oney]['fields']['oney_min_threshold']['value'];
-                        $max = $groups[$oney]['fields']['oney_max_threshold']['value'];
-                    } else {
-                        // Inherit value
-                        $min = $groups[$oney]['fields']['oney_min_threshold']['inherit'];
-                        $max = $groups[$oney]['fields']['oney_max_threshold']['inherit'];
-                    }
-
-                    // Save thresholds on the same format as general/oney_max_amount
-                    $this->saveOneyConfig(
-                        'oney_min_amounts',
-                        preg_replace(
-                            "/(?<=:).*$/i",
-                            (string)((int)$min * 100),
-                            (string)$minAmountsConfig
-                        )
-                    );
-
-                    $this->saveOneyConfig('oney_max_amounts', preg_replace(
-                        "/(?<=:).*$/i",
-                        (string)((int)$max * 100),
-                        (string)$maxAmountsConfig
-                    ));
-                }
-
             }
             $bothActive = $bothActive && $isActive;
 
@@ -629,45 +539,6 @@ class PaymentConfigObserver implements ObserverInterface
                 $groups[$oney]['fields']['active']['value'] = $data['current'];
             }
         }
-    }
-
-    /**
-     * Validate threshold values
-     *
-     * @param array $fields
-     * @param bool|array $oneyThresholds
-     * @return bool
-     */
-    private function validateThresholdValues(array $fields, bool|array $oneyThresholds): bool
-    {
-        if (isset($fields['oney_min_threshold']["value"])) {
-            $minThreshold = (int) $fields['oney_min_threshold']['value'];
-            $maxThreshold = (int) $fields['oney_max_threshold']['value'];
-        } elseif (isset($fields['oney_min_threshold']["inherit"])) {
-            // Website scope has on inheriting
-            $minThreshold = (int) $fields['oney_min_threshold']['inherit'];
-            $maxThreshold = (int) $fields['oney_max_threshold']['inherit'];
-        } else {
-            return false;
-        }
-
-        if ($oneyThresholds === false) {
-            return false;
-        }
-
-        if ($minThreshold >= $maxThreshold) {
-            return false;
-        }
-
-        if ($minThreshold < ($oneyThresholds["min_amount"] / 100)) {
-            return false;
-        }
-
-        if ($maxThreshold > ($oneyThresholds["max_amount"] / 100)) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -899,22 +770,6 @@ class PaymentConfigObserver implements ObserverInterface
                 'Please switch your Payplug plugin to LIVE mode to activate it.'
             )
         );
-
-        $this->helper->initScopeData();
-
-        $fields = $groups[ScalapayConfig::METHOD_CODE]['fields'];
-        $this->validatePayplugConnection($fields, $groups, ScalapayConfig::METHOD_CODE);
-
-        $minAmount = 20;
-        $maxAmount = 2000;
-
-        if (isset($fields['min_threshold']['value']) && $fields['min_threshold']['value'] < $minAmount) {
-            $groups[ScalapayConfig::METHOD_CODE]['fields']['min_threshold']['value'] = $minAmount;
-        }
-
-        if (isset($fields['max_threshold']['value']) && $fields['max_threshold']['value'] > $maxAmount) {
-            $groups[InstallmentPlanConfig::METHOD_CODE]['fields']['max_threshold']['value'] = $maxAmount;
-        }
     }
 
     /**
@@ -1063,24 +918,6 @@ class PaymentConfigObserver implements ObserverInterface
     private function saveConfig(string $field, mixed $value): void
     {
         $this->helper->setConfigValue($field, (string)$value);
-    }
-
-    /**
-     * Save Oney Config
-     *
-     * @param string $field
-     * @param mixed $value
-     * @return void
-     */
-    private function saveOneyConfig(string $field, mixed $value): void
-    {
-        $this->helper->setConfigValue(
-            $field,
-            (string)$value,
-            ScopeInterface::SCOPE_STORE,
-            null,
-            Config::ONEY_CONFIG_PATH
-        );
     }
 
     /**

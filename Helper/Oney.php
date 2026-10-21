@@ -24,6 +24,7 @@ use Magento\Framework\Serialize\SerializerInterface;
 use Payplug\Payments\Gateway\Config\Oney as OneyConfig;
 use Payplug\Payments\Gateway\Config\OneyWithoutFees;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Model\Payment\AmountBounds;
 use Payplug\Payments\Service\GetAllowedCountriesPerPaymentMethod;
 use Payplug\Payments\Service\SynchronizeAccountData;
 
@@ -61,6 +62,7 @@ class Oney extends AbstractHelper
      * @param PaymentDataHelper $paymentHelper
      * @param GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod
      * @param SerializerInterface $serializer
+     * @param AmountBounds $amountBounds
      */
     public function __construct(
         Context $context,
@@ -72,7 +74,8 @@ class Oney extends AbstractHelper
         private readonly Logger $logger,
         private readonly PaymentDataHelper $paymentHelper,
         private readonly GetAllowedCountriesPerPaymentMethod $getAllowedCountriesPerPaymentMethod,
-        private readonly SerializerInterface $serializer
+        private readonly SerializerInterface $serializer,
+        private readonly AmountBounds $amountBounds
     ) {
         parent::__construct($context);
     }
@@ -124,7 +127,7 @@ class Oney extends AbstractHelper
         }
 
         $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
-        if ($this->getOneyAmounts($storeId, $currency) === false) {
+        if ($this->getOneyAmounts($storeId, $currency, $oneyPaymentMethod) === false) {
             return false;
         }
 
@@ -153,12 +156,17 @@ class Oney extends AbstractHelper
      * @param float $amount
      * @param int|null $storeId
      * @param string|null $currency
+     * @param string|null $methodCode
      * @return bool
      * @throws NoSuchEntityException
      */
-    private function isAmountEligible(float $amount, ?int $storeId = null, ?string $currency = null): bool
-    {
-        $amountsByCurrency = $this->getOneyAmounts($storeId, $currency);
+    private function isAmountEligible(
+        float $amount,
+        ?int $storeId = null,
+        ?string $currency = null,
+        ?string $methodCode = null
+    ): bool {
+        $amountsByCurrency = $this->getOneyAmounts($storeId, $currency, $methodCode);
         if ($amountsByCurrency === false) {
             return false;
         }
@@ -180,7 +188,7 @@ class Oney extends AbstractHelper
     public function getWidgetConfig(?float $amount = null, ?string $paymentMethod = null): array
     {
         $paymentMethod = $paymentMethod ?? $this->getOneyMethod();
-        $amountsByCurrency = $this->getOneyAmounts();
+        $amountsByCurrency = $this->getOneyAmounts(null, null, $paymentMethod);
         $codes = $this->getBusinessTransactionCodes($paymentMethod);
         $merchantGuid = $this->getMerchantGuid();
         $isEnabled = $merchantGuid !== '' && !empty($codes);
@@ -201,7 +209,9 @@ class Oney extends AbstractHelper
             'max_items' => self::MAX_ITEMS,
             'amount' => $amount,
             'is_enabled' => $isEnabled,
-            'is_eligible' => $isEnabled && $amount !== null && $this->isAmountEligible($amount),
+            'is_eligible' => $isEnabled
+                && $amount !== null
+                && $this->isAmountEligible($amount, null, null, $paymentMethod),
         ];
     }
 
@@ -342,11 +352,13 @@ class Oney extends AbstractHelper
      *
      * @param null|mixed $storeId
      * @param null|string $currency
+     * @param string|null $methodCode Oney payment method whose merchant limits apply, the available one by default
      *
-     * @return array|bool
+     * @return array|bool False when no order total fits both the Payplug and the merchant limits
+     * @throws LocalizedException
      * @throws NoSuchEntityException
      */
-    public function getOneyAmounts($storeId = null, $currency = null)
+    public function getOneyAmounts($storeId = null, $currency = null, ?string $methodCode = null)
     {
         if ($storeId === null) {
             $storeId = $this->storeManager->getStore()->getId();
@@ -355,12 +367,21 @@ class Oney extends AbstractHelper
             $currency = $this->storeManager->getStore()->getCurrentCurrencyCode();
         }
 
-        return $this->payplugConfig->getAmountsByCurrency(
-            $currency,
-            (int)$storeId,
-            Config::ONEY_CONFIG_PATH,
-            'oney_'
+        $bounds = $this->amountBounds->getEffectiveBounds(
+            $methodCode ?: ($this->getOneyMethod() ?: OneyConfig::METHOD_CODE),
+            (string) $currency,
+            ScopeInterface::SCOPE_STORE,
+            (int) $storeId
         );
+
+        if ($bounds === null) {
+            return false;
+        }
+
+        return [
+            'min_amount' => $bounds[AmountBounds::MIN],
+            'max_amount' => $bounds[AmountBounds::MAX],
+        ];
     }
 
     /**

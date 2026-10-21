@@ -198,8 +198,6 @@ class SynchronizeAccountData
             self::ONEY_BUSINESS_CODES_FIELD => '',
         ];
 
-        $accountOneyAmounts = ['min' => null, 'max' => null];
-
         if (isset($jsonAnswer['configuration'])) {
             if (!empty($jsonAnswer['configuration']['currencies'])) {
                 $configuration['currencies'] = array_values($jsonAnswer['configuration']['currencies']);
@@ -225,11 +223,9 @@ class SynchronizeAccountData
             }
             if (!empty($oneyData['min_amounts'])) {
                 $configuration['oney_min_amounts'] = $this->processAmounts($oneyData['min_amounts']);
-                $accountOneyAmounts['min'] = $this->getEurAmount($configuration['oney_min_amounts']);
             }
             if (!empty($oneyData['max_amounts'])) {
                 $configuration['oney_max_amounts'] = $this->processAmounts($oneyData['max_amounts']);
-                $accountOneyAmounts['max'] = $this->getEurAmount($configuration['oney_max_amounts']);
             }
             $merchantData = $this->getOneyMerchantData($oneyData, (string) $configuration['merchand_country']);
             if (!empty($merchantData['merchant_guid'])) {
@@ -261,8 +257,6 @@ class SynchronizeAccountData
         $this->saveConfig('oney_max_amounts', $configuration['oney_max_amounts']);
         $this->saveConfig(self::ONEY_MERCHANT_GUID_FIELD, $configuration[self::ONEY_MERCHANT_GUID_FIELD]);
         $this->saveConfig(self::ONEY_BUSINESS_CODES_FIELD, $configuration[self::ONEY_BUSINESS_CODES_FIELD]);
-
-        $this->saveOneyThresholds($accountOneyAmounts['min'], $accountOneyAmounts['max']);
 
         $this->saveConfig('company_id', $jsonAnswer['id'] ?? '');
         $this->saveConfig('merchand_country', $configuration['merchand_country']);
@@ -325,76 +319,6 @@ class SynchronizeAccountData
         $singleCountry = count($countriesMetadata) === 1 ? reset($countriesMetadata) : null;
 
         return is_array($singleCountry) ? $singleCountry : [];
-    }
-
-    /**
-     * Initialize the thresholds of both Oney payment methods with the account amounts, then keep them in this range
-     *
-     * @param int|null $minAmount
-     * @param int|null $maxAmount
-     * @return void
-     */
-    private function saveOneyThresholds(?int $minAmount, ?int $maxAmount): void
-    {
-        if ($minAmount === null || $maxAmount === null) {
-            return;
-        }
-
-        foreach (['min' => $minAmount, 'max' => $maxAmount] as $bound => $accountAmount) {
-            $thresholdField = sprintf('oney_%s_threshold', $bound);
-
-            foreach ([Config::ONEY_CONFIG_PATH, Config::ONEY_WITHOUT_FEES_CONFIG_PATH] as $path) {
-                $threshold = $this->getConfig($thresholdField, $path);
-                $thresholdAmount = is_numeric($threshold) ? (int) round((float) $threshold * 100) : null;
-                $amount = $thresholdAmount === null
-                    ? $accountAmount
-                    : $this->clampAmount($thresholdAmount, $minAmount, $maxAmount);
-
-                if ($amount !== $thresholdAmount) {
-                    $this->saveConfig($thresholdField, $amount / 100, $path);
-                }
-            }
-
-            $amountsField = sprintf('oney_%s_amounts', $bound);
-            $effectiveAmount = $this->getEurAmount($this->getConfig($amountsField, Config::ONEY_CONFIG_PATH));
-
-            if ($effectiveAmount === null) {
-                continue;
-            }
-
-            $amount = $this->clampAmount($effectiveAmount, $minAmount, $maxAmount);
-            if ($amount !== $effectiveAmount) {
-                $this->saveConfig($amountsField, 'EUR:' . $amount, Config::ONEY_CONFIG_PATH);
-            }
-        }
-    }
-
-    /**
-     * Keep an amount within the given range
-     *
-     * @param int $amount
-     * @param int $min
-     * @param int $max
-     * @return int
-     */
-    private function clampAmount(int $amount, int $min, int $max): int
-    {
-        return max($min, min($amount, $max));
-    }
-
-    /**
-     * Get the EUR amount in cents from an amounts configuration value (e.g. EUR:10000;GBP:9000)
-     *
-     * @param mixed $amounts
-     * @return int|null
-     */
-    private function getEurAmount(mixed $amounts): ?int
-    {
-        if (!is_string($amounts) || !preg_match('/(?:^|;)EUR:(\d+)/', $amounts, $matches)) {
-            return null;
-        }
-
-        return (int) $matches[1];
     }
 
     /**

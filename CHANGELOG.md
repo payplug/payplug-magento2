@@ -9,12 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ⚠ NOTICE
 
+#### Order comment email copy
+
 This notice applies only to stores where **Send Order Comments Email Copy Method** is set to **Separate Email** and **Send Order Comment Email Copy To** is filled in (Stores > Configuration > Sales > Sales Emails > Order Comments).
 
 **Impact:**  
 Since 4.7.0, a copy of the order comment email was sent to these addresses each time a failed payment canceled an order.
 From this version on, this copy is no longer sent, as before 4.7.0.
 The "Payplug payment was not successful." comment is still added to the order history.
+
+No action is required.
+
+#### Oney order total limits
+
+This notice applies only to the ONEY and ONEY WITHOUT FEES payment methods.
+
+**Impact:**  
+When the order total is outside the limits, the payment method is now hidden at checkout, as any Magento payment
+method is (`min_order_total` / `max_order_total`).
+It is no longer displayed disabled with the "To pay with Oney, the total amount of your cart must be between %1 and %2."
+message.
 
 No action is required.
 
@@ -27,7 +41,7 @@ ONEY only: the payment schedule (product page, cart, checkout) is now displayed 
 - Theme overrides of `oney/simulation.phtml`, `oney/simulation_content.phtml`, `oney/simulation_wrapper*.phtml` and
   `oneyPopin` are no longer used: port them to the new `oney/simulation-*.phtml` templates.
 
-### Removed
+### ⚠ BREAKING CHANGES
 
 ONEY only, former payment schedule code (breaks layout overrides, plugins or calls relying on it):
 
@@ -35,6 +49,9 @@ ONEY only, former payment schedule code (breaks layout overrides, plugins or cal
 - `Controller\Oney\Simulation` and `SimulationCheckout` (routes `payplug_payments/oney/simulation*`)
 - `Helper\Oney::getOneySimulation()`, `getOneySimulationCheckout()`, `getShippingMethodMapping()`
 - `ViewModel\Oney::currency()`
+
+Order total limits: `Helper\Config::getAmountsByCurrency()`, `ONEY_CONFIG_PATH`, `ONEY_WITHOUT_FEES_CONFIG_PATH`,
+`SCALAPAY_CONFIG_PATH`, `Observer\DisableScalapayOutsideSubtotalRange`, `Block\...\Field\Threshold` (now `OrderTotal`).
 
 ## [4.8.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.8.0) - 2026-07-15
 
