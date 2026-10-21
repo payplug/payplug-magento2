@@ -198,7 +198,10 @@ class PaymentReturn extends AbstractPayment
      */
     public function prepareErrorOnPayment(OrderInterface $order): void
     {
-        $this->payplugHelper->cancelOrderAndInvoice($order);
+        if ($this->payplugHelper->cancelOrderAndInvoice($order) === false) {
+            return;
+        }
+
         $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
         $this->checkoutSession->restoreQuote();
 
