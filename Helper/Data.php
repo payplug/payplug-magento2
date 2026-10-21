@@ -769,7 +769,7 @@ class Data
                 // Payment is already aborted, keep processing to cancel order
                 return true;
             }
-            throw new LocalizedException(__('An error occurred. Please try again.'));
+            throw new LocalizedException(__('An error occurred. Please try again.'), $e);
         }
     }
 
@@ -1137,6 +1137,11 @@ class Data
             return;
         }
 
+        // Ondemand payments are aborted by OrderCancelObserver, which fails on an already aborted payment
+        if ($order->getPayment()->getMethod() !== Ondemand::METHOD_CODE && !$this->abortPaymentBeforeCancel($order)) {
+            return;
+        }
+
         $invoiceCollection = $order->getInvoiceCollection();
 
         if ($invoiceCollection->count() > 0) {
@@ -1169,6 +1174,57 @@ class Data
         }
 
         $this->orderRepository->save($order);
+    }
+
+    /**
+     * Abort the Payplug payment so that it can no longer be paid once the order is canceled
+     *
+     * @param OrderInterface $order
+     * @return bool False when the payment could not be aborted and is not closed or could not be checked
+     */
+    private function abortPaymentBeforeCancel(OrderInterface $order): bool
+    {
+        try {
+            $this->cancelOrderPayment($order);
+
+            return true;
+        } catch (Throwable $e) {
+            $cause = $e->getPrevious() ?? $e;
+            $this->payplugLogger->info('Payplug payment was not aborted before order cancel', [
+                'order' => $order->getId(),
+                'message' => $cause instanceof HttpException
+                    ? $cause->getErrorObject()['message'] ?? $cause->getMessage()
+                    : $cause->getMessage(),
+            ]);
+        }
+
+        try {
+            $orderPayment = $this->getPaymentForOrder($order);
+
+            if ($orderPayment === null || $orderPayment->isHostedFieldsPayment()) {
+                return true;
+            }
+
+            $payplugPayment = $orderPayment->retrieve(
+                $orderPayment->getScopeId($order),
+                $orderPayment->getScope($order)
+            );
+        } catch (NoSuchEntityException) {
+            return true;
+        } catch (Throwable $e) {
+            $this->payplugLogger->error('Order was not canceled as its Payplug payment could not be checked', [
+                'order' => $order->getId(),
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+
+        if (!empty($payplugPayment->is_paid) || !empty($payplugPayment->authorization->authorized_at)) {
+            return false;
+        }
+
+        return in_array(strtolower((string)($payplugPayment->failure->code ?? '')), ['aborted', 'timeout'], true);
     }
 
     /**
