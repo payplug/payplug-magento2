@@ -140,7 +140,7 @@
             </payplug_payments_oney_without_fees>
             <payplug_payments_bancontact>
                 <active>0</active>
-                <title>Pay with Bancontact</title>
+                <title>Pay with Bancontact Card</title>
                 <processing_order_status>processing</processing_order_status>
                 <canceled_order_status>canceled</canceled_order_status>
                 <allowspecific>0</allowspecific>
