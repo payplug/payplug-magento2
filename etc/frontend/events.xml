@@ -14,4 +14,8 @@
         <observer name="payplug_payments_disable_satispay_payment_method_frontend"
                   instance="Payplug\Payments\Observer\DisableScalapayOutsideSubtotalRange"/>
     </event>
+    <event name="controller_action_predispatch_checkout_index_index">
+        <observer name="payplug_payments_restore_quote_on_checkout_return"
+                  instance="Payplug\Payments\Observer\RestoreQuoteOnCheckoutReturn"/>
+    </event>
 </config>
