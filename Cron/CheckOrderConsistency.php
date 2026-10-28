@@ -17,15 +17,19 @@ use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\MessageQueue\PublisherInterface as MessageQueuePublisherInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\OrderPaymentRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Payplug\Exception\PayplugException;
 use Payplug\Payments\Exception\OrderAlreadyProcessingException;
+use Payplug\Payments\Gateway\Config\InstallmentPlan;
 use Payplug\Payments\Helper\Data as PayplugDataHelper;
 use Payplug\Payments\Logger\Logger;
+use Payplug\Payments\Service\CreateOrderInvoice;
 use Payplug\Resource\Payment as ResourcePayment;
 
 class CheckOrderConsistency
@@ -39,13 +43,15 @@ class CheckOrderConsistency
      * @param OrderPaymentRepositoryInterface $paymentRepository
      * @param OrderRepositoryInterface $orderRepository
      * @param PayplugDataHelper $payplugHelper
+     * @param MessageQueuePublisherInterface $messageQueuePublisher
      */
     public function __construct(
         private readonly Logger $logger,
         private readonly SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
         private readonly OrderPaymentRepositoryInterface $paymentRepository,
         private readonly OrderRepositoryInterface $orderRepository,
-        private readonly PayplugDataHelper $payplugHelper
+        private readonly PayplugDataHelper $payplugHelper,
+        private readonly MessageQueuePublisherInterface $messageQueuePublisher
     ) {
     }
 
@@ -105,6 +111,25 @@ class CheckOrderConsistency
                 'Payplug payment_id %s is not processing in the API and will be updated in magento.',
                 $paymentId
             ));
+
+            if ($payplugPaymentResource->is_paid
+                && $magentoOrder->getState() === Order::STATE_PROCESSING
+                && $magentoOrder->getInvoiceCollection()->count() === 0
+                && $magentoOrder->getPayment()->getMethod() !== InstallmentPlan::METHOD_CODE
+            ) {
+                $this->messageQueuePublisher->publish(
+                    CreateOrderInvoice::MESSAGE_QUEUE_TOPIC,
+                    (int) $magentoOrder->getEntityId()
+                );
+
+                $this->logger->info(sprintf(
+                    'Paid order %s has no invoice: "%s" message published.',
+                    $magentoOrder->getEntityId(),
+                    CreateOrderInvoice::MESSAGE_QUEUE_TOPIC
+                ));
+
+                continue;
+            }
 
             $this->payplugHelper->checkPaymentFailureAndAbortPayment($magentoOrder);
             $this->payplugHelper->updateOrder($magentoOrder);
