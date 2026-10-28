@@ -18,7 +18,7 @@ define(
              * Provide redirect to page
              */
             execute: function () {
-                window.location.replace(url.build(this.redirectUrl));
+                window.location.href = url.build(this.redirectUrl);
             }
         };
     }
