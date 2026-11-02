@@ -11,6 +11,8 @@ namespace Payplug\Payments\Service;
 
 use Magento\Framework\App\Area;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Phrase;
+use Magento\Framework\Phrase\RendererInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
@@ -29,12 +31,14 @@ class CreateOrderInvoice
      * @param PayplugLogger $payplugLogger
      * @param AppEmulation $appEmulation
      * @param InvoiceSender $invoiceSender
+     * @param RendererInterface $phraseRenderer
      */
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly PayplugLogger $payplugLogger,
         private readonly AppEmulation $appEmulation,
-        private readonly InvoiceSender $invoiceSender
+        private readonly InvoiceSender $invoiceSender,
+        private readonly RendererInterface $phraseRenderer
     ) {
     }
 
@@ -87,6 +91,11 @@ class CreateOrderInvoice
 
         $invoice->setTransactionId($transactionId);
 
+        // Before Magento 2.4.7, app emulation does not set the phrase renderer, so the status history
+        // comment and the invoice email built from a queue consumer are not translated.
+        // @see https://github.com/magento/magento2/commit/6f72057cc4cbcde0154e724e3113d7146d568328
+        $initialPhraseRenderer = Phrase::getRenderer();
+
         if ($order->getPayment()->getMethod() == InstallmentPlan::METHOD_CODE) {
             // Order amounts and status history are already handled
             // In \Payplug\Payments\Gateway\Response\InstallmentPlan\FetchTransactionInformationHandler::handle
@@ -102,7 +111,9 @@ class CreateOrderInvoice
 
             $storeId = (int) $order->getStoreId();
             $this->appEmulation->startEnvironmentEmulation($storeId, Area::AREA_FRONTEND, true);
+            Phrase::setRenderer($this->phraseRenderer);
             $comment = __('Invoice is created') . '. ' . __('Transaction ID: "%1"', $transactionId);
+            Phrase::setRenderer($initialPhraseRenderer);
             $this->appEmulation->stopEnvironmentEmulation();
 
             $order->addStatusToHistory($defaultStatus, $comment);
@@ -121,9 +132,12 @@ class CreateOrderInvoice
 
         try {
             $this->orderRepository->save($order);
+            Phrase::setRenderer($this->phraseRenderer);
             $this->invoiceSender->send($invoice);
         } catch (Throwable $e) {
             $this->payplugLogger->error($e->getMessage());
+        } finally {
+            Phrase::setRenderer($initialPhraseRenderer);
         }
     }
 }
