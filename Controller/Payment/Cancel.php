@@ -104,11 +104,17 @@ class Cancel extends AbstractPayment
 
         $checkFailureCode = $isMethodSupportingCancelFailureCode === true && $isStandardMethodWithPopin === false;
 
+        $isOrderCanceled = false;
+
         try {
-            $this->payplugHelper->cancelOrderAndInvoice($order, $checkFailureCode);
+            $isOrderCanceled = $this->payplugHelper->cancelOrderAndInvoice($order, $checkFailureCode);
         } catch (Throwable $e) {
             $this->logger->error(sprintf('Could not cancel order ID %s', $order->getId()));
             $this->logger->error($e->getMessage());
+        }
+
+        if ($isOrderCanceled === false) {
+            return $this->getResultRedirect();
         }
 
         $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
