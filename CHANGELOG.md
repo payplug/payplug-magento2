@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.9.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.9.0) - 2026-10-07
+## [4.9.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.9.0) - 2026-11-09
 
 ### ⚠ NOTICE
 
@@ -55,6 +55,44 @@ ONEY only, former payment schedule code (breaks layout overrides, plugins or cal
 
 Order total limits: `Helper\Config::getAmountsByCurrency()`, `ONEY_CONFIG_PATH`, `ONEY_WITHOUT_FEES_CONFIG_PATH`,
 `SCALAPAY_CONFIG_PATH`, `Observer\DisableScalapayOutsideSubtotalRange`, `Block\...\Field\Threshold` (now `OrderTotal`).
+
+### Features
+
+- Skip custom metadata update when orderId is 0 (MAG-783)
+- Strengthen the security of the Apple Pay CancelButton route (MAG-771)
+- Add additional space in comma-separated string on the APM country list (MAG-713)
+- Refactor order cancellation comments for compatibility with Magento 2.4.6 (MAG-759)
+- Add support for displaying the merchant's company name in OAuth2 connection (MAG-670)
+- Add new hosted Oney Widget (MAG-781)
+- Refactor min/max amount validation and limits (MAG-773)
+- Update Bancontact Card logo and label (MAG-784)
+- Improve payment abortion handling during order cancellation (MAG-832)
+- Publish message to generate invoice for paid orders without invoice during cron job (MAG-805)
+- Implement quote restoration on checkout return and fix redirect logic (MAG-767)
+- Ensure proper phrase rendering during invoice email sending for Magento versions prior to 2.4.7 (MAG-776)
+
+**[View diff](https://github.com/payplug/payplug-magento2/compare/v4.8.0...v4.9.0)**
+
+### Added
+
+- Add support for displaying the merchant's company name in OAuth2 connection (MAG-670) [#e610366d](https://github.com/payplug/payplug-magento2/commit/e610366db9db8ead4829be37d4fb4f34190d3b36)
+- Add new hosted Oney Widget (MAG-781) [#027712f4](https://github.com/payplug/payplug-magento2/commit/027712f42814d3a425e297a7dde0d1c42090f454)
+
+### Fixed
+
+- Skip custom metadata update when orderId is 0 (MAG-783) [#7050d110](https://github.com/payplug/payplug-magento2/commit/7050d110f3535917c4f2db2a1d2dbcde2874f46a)
+- Strengthen the security of the Apple Pay CancelButton route (MAG-771) [#336d7ff6](https://github.com/payplug/payplug-magento2/commit/336d7ff6fb663823dee9badffecf3848c5b948f2)
+- Add additional space in comma-separated string on the APM country list (MAG-713) [#f07c91bd](https://github.com/payplug/payplug-magento2/commit/f07c91bd873917c94efeaaa8db02adf2f4aae883)
+- Refactor order cancellation comments for compatibility with Magento 2.4.6 (MAG-759) [#645b4f94](https://github.com/payplug/payplug-magento2/commit/645b4f9435ed39b08e8fe0b9b27375d32f3ec90e)
+- Improve payment abortion handling during order cancellation (MAG-832) [#f9fc5d90](https://github.com/payplug/payplug-magento2/commit/f9fc5d90d82f302202abb10efc296280153b43b5)
+- Publish message to generate invoice for paid orders without invoice during cron job (MAG-805) [#510e0ec5](https://github.com/payplug/payplug-magento2/commit/510e0ec5d018ab62bda99cf0b46906d9a7264fe5)
+- Implement quote restoration on checkout return and fix redirect logic (MAG-767) [#95635771](https://github.com/payplug/payplug-magento2/commit/956357711ab5ced416f106832b4a573ee75284bd)
+- Ensure proper phrase rendering during invoice email sending for Magento versions prior to 2.4.7 (MAG-776) [#72f18565](https://github.com/payplug/payplug-magento2/commit/72f18565f046ce4d33c59a2912f4b0a3a8e67b8b)
+
+### Changed
+
+- Refactor min/max amount validation and limits (MAG-773) [#9a96e6c1](https://github.com/payplug/payplug-magento2/commit/9a96e6c115bae56712d21070b19fae1767e87330)
+- Update Bancontact Card logo and label (MAG-784) [#9b7363d9](https://github.com/payplug/payplug-magento2/commit/9b7363d9662cdc8b9446f21861332aa78ed0c351)
 
 ## [4.8.0](https://github.com/payplug/payplug-magento2/releases/tag/v4.8.0) - 2026-07-15
 
