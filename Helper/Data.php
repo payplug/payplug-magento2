@@ -424,7 +424,7 @@ class Data
                         )
                     );
                     $order->setState(Order::STATE_PROCESSING);
-                } elseif (!empty($payplugPayment->authorization->authorized_at) && empty($payment->failure)) {
+                } elseif (!empty($payplugPayment->authorization->authorized_at) && empty($payplugPayment->failure)) {
                     $this->payplugLogger->info(
                         sprintf(
                             '%s: Updating Order: %s state to Payment Review.',
