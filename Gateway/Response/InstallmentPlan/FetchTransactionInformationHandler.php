@@ -15,6 +15,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Payment;
+use Magento\Sales\Model\ResourceModel\Order\Invoice as InvoiceResource;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Model\Order\PaymentFactory;
@@ -31,6 +32,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
      * @param OrderPaymentRepository $orderPaymentRepository
      * @param Data $payplugHelper
      * @param MessageQueuePublisherInterface $messageQueuePublisher
+     * @param InvoiceResource $invoiceResource
      */
     public function __construct(
         private readonly SubjectReader $subjectReader,
@@ -39,7 +41,8 @@ class FetchTransactionInformationHandler implements HandlerInterface
         private readonly OrderSender $orderSender,
         private readonly OrderPaymentRepository $orderPaymentRepository,
         private readonly Data $payplugHelper,
-        private readonly MessageQueuePublisherInterface $messageQueuePublisher
+        private readonly MessageQueuePublisherInterface $messageQueuePublisher,
+        private readonly InvoiceResource $invoiceResource
     ) {
     }
 
@@ -167,7 +170,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
         // Get order invoice
         foreach ($order->getInvoiceCollection() as $invoice) {
             if ($invoice->getTransactionId() == $payment->getTransactionId()) {
-                $invoice->load($invoice->getId());
+                $this->invoiceResource->load($invoice, $invoice->getId());
                 // to make sure all data will properly load (maybe not required)
             }
         }
@@ -175,7 +178,7 @@ class FetchTransactionInformationHandler implements HandlerInterface
         if (isset($invoice) && $invoice instanceof Invoice) {
             // Force Invoice to Paid to avoid fraud detection check
             $invoice->setState(\Magento\Sales\Model\Order\Invoice::STATE_PAID);
-            $invoice->save();
+            $this->invoiceResource->save($invoice);
         }
     }
 }

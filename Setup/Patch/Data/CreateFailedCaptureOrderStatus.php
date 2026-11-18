@@ -17,6 +17,7 @@ use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Status;
 use Magento\Sales\Model\Order\StatusFactory;
+use Magento\Sales\Model\ResourceModel\Order\Status as StatusResource;
 use Magento\Store\Model\StoreManagerInterface;
 
 class CreateFailedCaptureOrderStatus implements DataPatchInterface
@@ -35,12 +36,14 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
      * @param ModuleDataSetupInterface $moduleDataSetup
      * @param ResourceConnection $resource
      * @param StoreManagerInterface $storeManager
+     * @param StatusResource $statusResource
      */
     public function __construct(
         protected StatusFactory $statusFactory,
         protected ModuleDataSetupInterface $moduleDataSetup,
         protected ResourceConnection $resource,
-        protected StoreManagerInterface $storeManager
+        protected StoreManagerInterface $storeManager,
+        protected StatusResource $statusResource
     ) {
     }
 
@@ -86,7 +89,7 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
                 ]
             );
 
-            $status->save();
+            $this->statusResource->save($status);
 
             /**
              * Assign status to state
