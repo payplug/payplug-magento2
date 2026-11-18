@@ -44,6 +44,10 @@ ONEY only: the payment schedule (product page, cart, checkout) is now displayed 
 BANCONTACT only: new **Bancontact Card** logo. Replace the title **Pay with Bancontact** by **Pay with Bancontact Card**
 in Stores > Configuration > Sales > Payplug Payments > PayPlug Payments - Bancontact.
 
+SCALAPAY only: new default title **Pay with Scalapay**, to comply with European regulations. If you have overridden it,
+remove any reference to installments ("3x", "4x"...) in Stores > Configuration > Sales > Payplug Payments >
+PayPlug Payments - Scalapay.
+
 ### ⚠ BREAKING CHANGES
 
 ONEY only, former payment schedule code (breaks layout overrides, plugins or calls relying on it):
