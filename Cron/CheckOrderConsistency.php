@@ -200,10 +200,15 @@ class CheckOrderConsistency
         $from = (new DateTime())->modify('-' . self::WINDOW_FROM_HOURS . ' hours')->format('Y-m-d H:i:s');
         $to = (new DateTime())->modify('-' . self::WINDOW_TO_MINUTES . ' minutes')->format('Y-m-d H:i:s');
 
-        // Get all the order within a said delay (sales_order table)
+        /**
+         * Get all the orders within a said delay (sales_order table).
+         * Canceled orders are skipped: updateOrder() cannot change them anymore, and retrying to abort
+         * their already aborted payment fails with a 403 on every run.
+         */
         $searchOrderCriteria = $this->searchCriteriaBuilderFactory->create()
             ->addFilter(OrderInterface::CREATED_AT, $from, 'gteq')
             ->addFilter(OrderInterface::CREATED_AT, $to, 'lteq')
+            ->addFilter(OrderInterface::STATE, Order::STATE_CANCELED, 'neq')
             ->create();
 
         $orderIds = $this->orderRepository->getList($searchOrderCriteria)->getAllIds();
