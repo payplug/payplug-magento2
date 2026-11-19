@@ -43,7 +43,7 @@ class CreateFailedCaptureOrderStatus implements DataPatchInterface
         protected ModuleDataSetupInterface $moduleDataSetup,
         protected ResourceConnection $resource,
         protected StoreManagerInterface $storeManager,
-        protected StatusResource $statusResource
+        private readonly StatusResource $statusResource
     ) {
     }
 
