@@ -22,6 +22,7 @@ use Payplug\Payments\Gateway\Config\Standard as StandardConfig;
 use Payplug\Payments\Helper\Config as PayplugConfigHelper;
 use Payplug\Payments\Helper\Data as PayplugDataHelper;
 use Payplug\Payments\Logger\Logger as PayplugLogger;
+use Payplug\Payments\Service\InvalidateCustomerSectionData;
 use Throwable;
 
 class RestoreQuoteOnCheckoutReturn implements ObserverInterface
@@ -33,6 +34,7 @@ class RestoreQuoteOnCheckoutReturn implements ObserverInterface
      * @param PayplugDataHelper $payplugDataHelper
      * @param PayplugConfigHelper $payplugConfigHelper
      * @param PayplugLogger $payplugLogger
+     * @param InvalidateCustomerSectionData $invalidateCustomerSectionData
      */
     public function __construct(
         private readonly CheckoutSession $checkoutSession,
@@ -40,7 +42,8 @@ class RestoreQuoteOnCheckoutReturn implements ObserverInterface
         private readonly StoreManagerInterface $storeManager,
         private readonly PayplugDataHelper $payplugDataHelper,
         private readonly PayplugConfigHelper $payplugConfigHelper,
-        private readonly PayplugLogger $payplugLogger
+        private readonly PayplugLogger $payplugLogger,
+        private readonly InvalidateCustomerSectionData $invalidateCustomerSectionData
     ) {
     }
 
@@ -110,6 +113,7 @@ class RestoreQuoteOnCheckoutReturn implements ObserverInterface
             }
 
             $this->checkoutSession->restoreQuote();
+            $this->invalidateCustomerSectionData->execute();
         } catch (Throwable $e) {
             $this->payplugLogger->error('Could not restore the quote on checkout return', [
                 'order' => $order->getId(),

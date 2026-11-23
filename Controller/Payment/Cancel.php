@@ -25,6 +25,7 @@ use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Observer\MarkOrderPaymentAsHeadless;
 use Payplug\Payments\Service\GetCurrentOrder;
+use Payplug\Payments\Service\InvalidateCustomerSectionData;
 use Throwable;
 
 class Cancel extends AbstractPayment
@@ -36,6 +37,7 @@ class Cancel extends AbstractPayment
      * @param UrlDecoderInterface $urlDecoder
      * @param PayplugConfigHelper $payplugConfigHelper
      * @param CustomerSession $customerSession
+     * @param InvalidateCustomerSectionData $invalidateCustomerSectionData
      * @param Context $context
      * @param Session $checkoutSession
      * @param OrderFactory $salesOrderFactory
@@ -49,6 +51,7 @@ class Cancel extends AbstractPayment
         private readonly UrlDecoderInterface $urlDecoder,
         private readonly PayplugConfigHelper $payplugConfigHelper,
         private readonly CustomerSession $customerSession,
+        private readonly InvalidateCustomerSectionData $invalidateCustomerSectionData,
         Context $context,
         Session $checkoutSession,
         OrderFactory $salesOrderFactory,
@@ -119,6 +122,7 @@ class Cancel extends AbstractPayment
 
         $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
         $this->checkoutSession->restoreQuote();
+        $this->invalidateCustomerSectionData->execute();
 
         $failureMessage = $this->_request->getParam(
             'failure_message',
