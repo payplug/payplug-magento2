@@ -207,8 +207,8 @@ class UpdateCartOrder implements HttpPostActionInterface
         if (!$address) {
             throw new RuntimeException(
                 $isBilling
-                    ? __('No billing address found for this order.') . toString()
-                    : __('No shipping address found for this order.') . toString()
+                    ? (string)__('No billing address found for this order.')
+                    : (string)__('No shipping address found for this order.')
             );
         }
 

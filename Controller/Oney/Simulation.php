@@ -12,6 +12,7 @@ namespace Payplug\Payments\Controller\Oney;
 use Exception;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ResourceModel\Product as ProductResource;
 use Magento\ConfigurableProduct\Api\LinkManagementInterface;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -31,6 +32,7 @@ class Simulation extends Action
      * @param LayoutInterface $layout
      * @param LinkManagementInterface $linkManagement
      * @param OneyViewHelper $oneyViewHelper
+     * @param ProductResource $productResource
      */
     public function __construct(
         Context $context,
@@ -38,7 +40,8 @@ class Simulation extends Action
         private readonly ProductFactory $productFactory,
         private readonly LayoutInterface $layout,
         private readonly LinkManagementInterface $linkManagement,
-        private readonly OneyViewHelper $oneyViewHelper
+        private readonly OneyViewHelper $oneyViewHelper,
+        private readonly ProductResource $productResource
     ) {
         parent::__construct($context);
     }
@@ -68,8 +71,7 @@ class Simulation extends Action
                 $template = 'Payplug_Payments::oney/simulation.phtml';
             }
 
-            $block = $this->layout->createBlock(OneySimulationBlock::class)
-                ->setTemplate($template)
+            $block = $this->layout->createBlock(OneySimulationBlock::class, '', ['data' => ['template' => $template]])
                 ->setData('oneyViewHelper', $this->oneyViewHelper)
                 ->setAmount($productPrice)
                 ->setQty($qty);
@@ -99,7 +101,7 @@ class Simulation extends Action
         }
 
         $product = $this->productFactory->create();
-        $product->load($params['product']);
+        $this->productResource->load($product, $params['product']);
         if (!$product->getId()) {
             throw new LocalizedException(__('Product not found'));
         }
@@ -127,7 +129,7 @@ class Simulation extends Action
         $simpleProducts = $this->linkManagement->getChildren($product->getSku());
         foreach ($simpleProducts as $simpleProduct) {
             $loadedSimpleProduct = $this->productFactory->create();
-            $loadedSimpleProduct->load($simpleProduct->getId());
+            $this->productResource->load($loadedSimpleProduct, $simpleProduct->getId());
             if (!$product->getId()) {
                 continue;
             }
