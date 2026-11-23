@@ -7,8 +7,6 @@
 
 namespace Payplug\Payments\Logger;
 
-use Magento\Framework\Logger\Monolog;
-
-class Logger extends Monolog
+class Logger extends \Monolog\Logger
 {
 }
