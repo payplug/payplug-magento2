@@ -31,6 +31,7 @@ use Payplug\Payments\Helper\Config;
 use Payplug\Payments\Helper\Data;
 use Payplug\Payments\Logger\Logger;
 use Payplug\Payments\Service\GetCurrentOrder;
+use Payplug\Payments\Service\InvalidateCustomerSectionData;
 
 class PaymentReturn extends AbstractPayment
 {
@@ -43,6 +44,7 @@ class PaymentReturn extends AbstractPayment
      * @param Config $config
      * @param GetCurrentOrder $getCurrentOrder
      * @param UrlDecoderInterface $urlDecoder
+     * @param InvalidateCustomerSectionData $invalidateCustomerSectionData
      */
     public function __construct(
         Context $context,
@@ -52,7 +54,8 @@ class PaymentReturn extends AbstractPayment
         Data $payplugHelper,
         private readonly Config $config,
         private readonly GetCurrentOrder $getCurrentOrder,
-        private readonly UrlDecoderInterface $urlDecoder
+        private readonly UrlDecoderInterface $urlDecoder,
+        private readonly InvalidateCustomerSectionData $invalidateCustomerSectionData
     ) {
         parent::__construct($context, $checkoutSession, $salesOrderFactory, $logger, $payplugHelper);
     }
@@ -204,6 +207,7 @@ class PaymentReturn extends AbstractPayment
 
         $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
         $this->checkoutSession->restoreQuote();
+        $this->invalidateCustomerSectionData->execute();
 
         $failureMessage = $this->_request->getParam(
             'failure_message',
