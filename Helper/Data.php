@@ -1240,7 +1240,11 @@ class Data
             return false;
         }
 
-        return in_array(strtolower((string)($payplugPayment->failure->code ?? '')), ['aborted', 'timeout'], true);
+        return in_array(
+            strtolower((string)($payplugPayment->failure->code ?? '')),
+            ['aborted', 'timeout', 'refused_by_oney'],
+            true
+        );
     }
 
     /**
