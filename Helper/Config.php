@@ -42,7 +42,7 @@ class Config
     public const OAUTH_COMPANY_NAME = 'company_name';
     public const APM_FILTERING_MODE_SHIPPING_ADDRESS = 'shipping_address';
     public const APM_FILTERING_MODE_BILLING_ADDRESS = 'billing_address';
-    public const MODULE_VERSION = '4.9.0';
+    public const MODULE_VERSION = '4.10.0';
     public const STANDARD_PAYMENT_AUTHORIZATION_ONLY = 'authorize';
     /**
      * @var string|null
